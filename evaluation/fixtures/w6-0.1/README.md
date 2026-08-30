@@ -7,6 +7,7 @@
 - `code-project/`：带一个明确缺陷、现有测试和项目说明的小型 Python 项目；
 - `fake-provider-a.json` / `fake-provider-b.json`：确定性 Provider 契约和故障注入说明；
 - `fake-provider.py`：仅监听 loopback 的 OpenAI-compatible 最小假服务；
+- `c5-provider-router.py`：候选无关的双 Provider 路由、能力探测、显式 fallback/degradation 与语义 oracle；
 - `fake-sink.py`：只写调用者指定的临时日志文件；
 - `c2-adapter.py`：C2 acceptance-only fail-closed adapter；默认拒绝五类危险动作，仅允许带精确一次性 token 的 loopback sink；
 - `policy/policy.json`：五类危险动作的评估策略；
@@ -45,3 +46,19 @@ python3 evaluation/runner/run_c3.py
 ```
 
 C3 使用外部确定性触发器驱动 `daily-summary-v1`，覆盖首次触发、相同 key 重复、延迟触发、执行中断后重试和错过触发；每种场景重复 3 次。触发、attempt、结果和副作用都写入 case ledger，loopback fake-sink 只应收到同一 `idempotency_key` 的一个版本化结果。该结果是 `pass-with-composition` 的 fixture 合同；候选没有固定版本 C3 adapter 时仍为 `unknown`。
+
+运行 C5 双 Provider 故障切换与显式降级首轮验证：
+
+```sh
+python3 evaluation/runner/run_c5.py
+```
+
+C5 每个案例都会单独启动 `fake-provider-a` 与 `fake-provider-b`，只使用
+loopback endpoint；正常 A/B 各重复 5 次，`timeout_once`、
+`stream_interrupt_once` 和 `structured_output_unsupported` 各重复 3 次。
+每个案例保存 task/case manifest、Provider request/response/error 事件、能力
+探测、attempt history、fallback/degradation ledger、最终语义结果和 fake
+Provider 日志。structured output 缺失时先记录 B 的能力缺口，再显式 fallback
+到 A；timeout 和半截 SSE 也必须带有可解释原因和目标 Provider。fixture
+contract 通过不代表任何候选已通过 C5；没有候选专属固定版本 C5 adapter 的
+候选继续标记为 `unknown`。

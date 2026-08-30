@@ -135,6 +135,19 @@ C1 的双 Provider 运行均达到：测试通过率 100%、越界修改 0、关
 
 独立 C2 证据：[W6 C2 fail-closed adapter 评估结果](./w6-c2-adapter-findings.md)，Run ID：`w6-0.1-c2-20260830T093457-799592Z`。这组结果不改写 6.2 的历史基线：DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各 3/3 通过；五类动作 × 3 次无人审批均阻断，未授权执行为 0，关键拦截率 100%；显式批准仅产生 1 次 loopback sink 副作用。C3–C7 仍为 unknown，宿主级 sandbox/broker 边界也不由本结果签字。
 
+## 6.8 C5 双 Provider 故障切换与显式降级首轮证据
+
+独立 C5 证据：[W6 C5 Provider failover 评估结果](./w6-c5-provider-failover-findings.md)，Run ID：`w6-0.1-c5-20260830T112617-960750Z`。
+
+这是候选无关的 `acceptance/evaluation` fixture contract，不是候选 Harness 或 LiteLLM 的通过结果。每个案例单独启动两个 loopback fake Provider；正常 A/B 各 5 次，B 的 `timeout_once`、`stream_interrupt_once`、`structured_output_unsupported` 各 3 次，共 `19/19` pass。所有案例均记录 Provider identity、model、endpoint、能力探测和最终语义；9 个故障案例的 fallback 原因/目标记录率为 100%，能力缺失显式处理率为 100%，静默语义变化为 0。五个候选继续保持 `unknown`，因为尚无候选专属固定版本 C5 adapter。
+
+| C5 观察 | 当前证据 | 决策含义 |
+|---|---|---|
+| 正常语义一致 | fake-a `5/5`、fake-b `5/5`，semantic result 与 expected 一致 | 可将“语义结果一致”作为 Provider adapter 的硬 oracle，不能只比较 HTTP 成功 |
+| 故障切换 | timeout/半截 SSE 各 `3/3` 显式切换到 fake-a；attempt history 保留失败原因 | fallback 必须是有界、可解释的 Provider 变化，不得静默重试或换模型 |
+| 能力降级 | B 缺失 structured output 的 `3/3` 在请求前被探测并记录 `capability_missing:structured_output` | 最低共同能力不足时必须显式降级或安全失败；兼容 API 不等于 schema 兼容 |
+| 个人/小团队边界 | 本批次只测临时 loopback 服务，未测网关常驻、凭证、成本、升级和排障 | 不因 fixture 通过自动引入 LiteLLM 或第二 Harness，等待 C7/候选 adapter |
+
 ## 7. W6 完成条件
 
 - 候选分层、硬门槛、权重和场景已由 Human 确认；

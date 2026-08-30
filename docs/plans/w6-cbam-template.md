@@ -154,3 +154,16 @@ CBAM 用来回答：一个候选或新增组合件带来的场景收益和风险
 | 组合判断 | 对个人开发者/小团队，外部轻量 trigger + 薄幂等层是可验证的 `pass-with-composition` 候选，不等于立即引入复杂编排器 |
 | 引入条件 | 候选原生 scheduler 无法提供可审计 schedule/attempt/key/effect 语义，且外部组合的 C7 成本在阈值内 |
 | 不引入/退出条件 | 产生重复状态/权限/事件事实，或错过触发、备份、升级和排障成本超过原生能力收益 |
+
+### 6.8 C5 Provider failover/降级增量证据
+
+证据：[`w6-c5-provider-failover-findings.md`](./w6-c5-provider-failover-findings.md)，Run ID：`w6-0.1-c5-20260830T112617-960750Z`。本节只记录 acceptance/evaluation 的可观察收益和成本信号，不完成 W7 采用决策。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 19 个隔离案例验证了双 Provider 的 identity/model/endpoint、能力探测、attempt history、显式 fallback/degradation ledger 和 semantic oracle；正常 A/B 各 5/5，故障 9/9 |
+| 一次性成本 | router、capability contract、stream parser、structured schema、fallback ledger 和逐例 oracle；候选接入仍需绑定各自 Provider/API/事件边界 |
+| 持续成本 | Provider 凭证、限额、成本、schema 漂移、fallback 质量和事件存储；本批次没有真实 Provider 或常驻网关运维数据 |
+| 组合判断 | 支持“一个主 Harness + 薄 Provider contract/adapter”作为待验证路线；不证明第二 Harness 或 LiteLLM 的增量收益 |
+| LiteLLM 引入条件 | 候选实测证明网关能降低总 Provider 适配与排障成本，并保留可解释的 capability/fallback ledger；其常驻服务、许可证和故障面在 C7 内可接受 |
+| 不引入/退出条件 | 只提供统一 HTTP 表面却隐藏 schema/工具语义，或增加一个无法解释的 fallback 单点；个人/小团队运维超过既定 C7 门槛 |
