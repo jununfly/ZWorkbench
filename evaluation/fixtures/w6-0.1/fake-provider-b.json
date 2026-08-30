@@ -1,0 +1,7 @@
+{
+  "provider_id": "fake-b",
+  "protocol": "openai-compatible-chat-completions",
+  "deterministic": true,
+  "supports": ["tool_calls", "streaming"],
+  "faults": ["timeout_once", "stream_interrupt_once", "structured_output_unsupported"]
+}

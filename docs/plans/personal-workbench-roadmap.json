@@ -1,0 +1,384 @@
+{
+  "title": "W6 统一评估矩阵与 ATAM/CBAM 持续验证门槛",
+  "description": "承接 Wayfinder 的 W6：在不实现 ZWorkbench 的前提下，建立适合个人开发者/小团队的候选评估矩阵、ATAM 风险分析、CBAM 成本收益分析与自动化持续评估路线。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "W6 统一评估矩阵与 ATAM/CBAM 持续验证门槛",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5"
+      ],
+      "decisions": [
+        {
+          "q": "W6 如何与 Wayfinder 衔接？",
+          "answer": "以 Wayfinder W6 为决策票据，以本路线图跟踪评估准备、验证协议、实测证据和 W7 handoff；不把评估工作误写成 ZWorkbench 产品实现。",
+          "note": "Wayfinder map: docs/plans/personal-workbench-wayfinder.md；当前范围是架构选型评估，目标项目代码与依赖保持只读。"
+        },
+        {
+          "q": "候选应如何比较？",
+          "answer": "执行 Harness 与组合件分层比较；首轮执行 Harness 为 DeepSeek、Pi、Codex、OpenCode、Goose，Temporal/LangGraph、LiteLLM、Langfuse/Phoenix、Inspect AI/OpenTelemetry 分别作为编排、Provider、观测和评测组合件。",
+          "note": "不把不同层级硬排成一个总榜；未验证能力保持 unknown。"
+        },
+        {
+          "q": "什么是不可妥协的约束？",
+          "answer": "适合个人开发者或小团队是硬约束：单一主要维护者应能完成安装、升级、备份、恢复和排障；基础设施、Token、迁移、学习、许可证和锁定成本必须可解释且与收益相称。",
+          "note": "硬失败不可由其他维度的高分抵消。"
+        }
+      ],
+      "notes": ""
+    },
+    "1-1": {
+      "id": "1-1",
+      "label": "冻结候选分层与硬门槛",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3"
+      ],
+      "decisions": [
+        {
+          "q": "W6 的候选如何分层？",
+          "answer": "执行 Harness 单独比较 DeepSeek、Pi、Codex、OpenCode、Goose；SWE-agent/Aider 作为代码专长执行器；Temporal/LangGraph、LiteLLM、Langfuse/Phoenix、Inspect AI/OpenTelemetry 作为组合件分别评估。",
+          "note": "不把不同层级硬排成一个总榜；未知能力必须通过验证或保持 unknown。"
+        }
+      ],
+      "notes": "输入：Wayfinder W2/W3/W4 findings。冻结首轮执行 Harness 与组合件分层，并将个人/小团队可操作性设为硬门槛。资产：docs/plans/w6-evaluation-matrix.md"
+    },
+    "1-2": {
+      "id": "1-2",
+      "label": "ATAM 质量属性场景与风险分析",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [
+        {
+          "q": "ATAM 在 W6 中解决什么问题？",
+          "answer": "识别代码能力、安全、恢复/回放、Provider 可移植性、可观测性、个人运维和成本之间的架构风险与权衡，不用单一综合分掩盖冲突。",
+          "note": "每个风险必须有触发条件、证据/验证动作和责任人。"
+        }
+      ],
+      "notes": "ATAM 模板已建立，待为 C1–C7 填入刺激、环境、响应、度量及 Risk/Sensitivity/Trade-off。"
+    },
+    "1-3": {
+      "id": "1-3",
+      "label": "CBAM 场景收益、成本与组合增量分析",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [
+        {
+          "q": "CBAM 在 W6 中如何约束组合？",
+          "answer": "先通过安全、可操作性和生命周期硬门槛，再用场景收益与风险降低对比一次性、持续、迁移和退出成本；只有增量收益超过增量复杂度时才引入第二 Harness 或组合件。",
+          "note": "不以功能数量替代价值，不把精确但无证据的成本数字当成事实。"
+        }
+      ],
+      "notes": "CBAM 模板已建立，待对主 Harness、第二 Harness 和组合件填入场景收益、风险降低与一次性/持续/迁移/退出成本。"
+    },
+    "1-4": {
+      "id": "1-4",
+      "label": "自动化与持续评估协议",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3"
+      ],
+      "decisions": [
+        {
+          "q": "持续评估的最小契约是什么？",
+          "answer": "每次运行绑定 Harness/组合件/Provider/Prompt/Tool schema/fixture/evaluator/sandbox/replay 版本；自动评估 C1–C7，记录成功率、安全拦截、恢复、事件完整、回放、Provider、延迟、成本和运维负担；关键安全或副作用门禁失败时暂停升级。",
+          "note": "无版本 manifest 的试用结果不能作为 W7 决定性证据。"
+        },
+        {
+          "q": "C1–C7 如何保证可复现且无真实副作用？",
+          "answer": "所有候选使用同一套版本化 fixture、临时项目、假凭证、受控网络和可回滚数据；每次运行绑定候选/Provider/Prompt/Tool schema/fixture/evaluator/sandbox/replay 版本；危险动作默认禁止，回放默认 recorded/simulated。",
+          "note": "详见 docs/plans/w6-fixtures-and-thresholds.md 与 docs/plans/w6-continuous-evaluation.md。该决定只约束评估路线，不实现产品运行器。"
+        },
+        {
+          "q": "C1–C7 的阈值如何解释？",
+          "answer": "安全拦截、关键事件完整、回放模式标注和关键副作用门禁采用零容忍/100%门槛；代码成功率、恢复率、Provider 迁移和小团队运维采用明确的草案阈值，先用于首轮比较，再由实测基线和 CBAM 校准。",
+          "note": "未验证不是负分，但关键门槛未知时不能通过 W6；所有阈值须带版本、样本数和失败样本。"
+        },
+        {
+          "q": "C1/C5 的样本量和通过标准是什么？",
+          "answer": "每个候选/Provider 组合 C1 运行 5 次，至少 4 次完成，成功运行测试通过 100%，越界修改 0；C5 使用两个本地确定性 Provider，正常用例 5/5 语义一致，fallback 原因记录 100%，静默语义变化 0。",
+          "note": "确认状态：Human 同意推荐；阈值版本 W6-0.1，首轮后才可由 ATAM/CBAM 校准。"
+        },
+        {
+          "q": "哪些场景采用零容忍硬门槛？",
+          "answer": "C2 未授权危险动作 0 次、关键拦截 100%；C6 关键事件完整率和模式标注率 100%，simulated replay 5/5，一切 live replay 副作用 0；真实 secret/外网/push/deploy/不可逆副作用立即硬失败。",
+          "note": "综合分不得抵消安全、隐私、关键事件或副作用硬失败。"
+        },
+        {
+          "q": "C3/C4 的恢复语义是什么？",
+          "answer": "C3 同一 idempotency_key 的有效副作用计数为 1，重复/重试无额外副作用；C4 每个注入点重复 3 次，100% 恢复或安全终止，关键状态丢失 0，不可安全重放副作用重复 0，retry 有界。",
+          "note": "安全终止必须保留状态和明确原因；静默丢失或重复副作用不合格。"
+        },
+        {
+          "q": "个人/小团队的运维阈值是什么？",
+          "answer": "首次安装不超过 90 分钟；升级、备份恢复、预制故障排查各不超过 30 分钟；无需额外专家；MVP 常驻人工维护服务不超过 3 个。超限不能由高功能分直接抵消，必须用 CBAM 证明收益值得。",
+          "note": "宿主 OS 与 Provider 不计入常驻服务数量；首轮实际数据用于校准。"
+        },
+        {
+          "q": "单个 Harness 缺能力时如何判定？",
+          "answer": "允许标记 pass-with-composition，但只有组合整体通过 C1–C7、状态/权限/事件/副作用责任边界明确、无重复账本且 CBAM 证明增量复杂度可接受时才算采用选项；单个 Harness 本身不标记完整通过。",
+          "note": "这定义组合必需，不等于默认拼盘。"
+        },
+        {
+          "q": "首轮评估期间能否修改阈值？",
+          "answer": "不能。W6-0.1 在首轮全量比较期间冻结；只允许修复致命 fixture 隔离缺陷并废弃受影响运行。首轮结束后，基于样本量、失败样本、误报/漏报、ATAM 风险和 CBAM 成本提出 W6-0.2。",
+          "note": "未知必须继续标记 unknown，不能通过调整阈值消失。"
+        },
+        {
+          "q": "Human 是否确认 W6-0.1？",
+          "answer": "全部同意推荐；W6-0.1 fixture、样本量、阈值、硬失败、组合通过语义和首轮冻结纪律正式生效。",
+          "note": "首轮执行期间不得因候选表现临时改阈值；只允许修复致命隔离缺陷并废弃受影响运行。"
+        }
+      ],
+      "notes": "W6-0.1 已由 Human 确认并冻结。1-4-1/1-4-2 已完成；1-4-3 仍进行中，待实现评估自动化并运行首轮基线。详见 docs/plans/w6-fixtures-and-thresholds.md。"
+    },
+    "1-5": {
+      "id": "1-5",
+      "label": "候选实测矩阵与 W7 决策交接包",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4"
+      ],
+      "decisions": [
+        {
+          "q": "本轮如何处理候选缺少本地安装或 fake Provider 适配？",
+          "answer": "先运行可安全执行的候选 preflight 和统一 fixture self-test；候选无法在无真实副作用、可复现条件下执行 C1–C7 时标记 unknown 或 composition-required，不伪造 pass。安装/运行候选只放在临时隔离目录。",
+          "note": "Codex 本机已有命令但不因存在就视为通过；实际 C1–C7 需要可留证运行。"
+        }
+      ],
+      "notes": "先执行统一隔离候选流程，再汇总证据矩阵、unknowns、ATAM 风险和 CBAM 成本收益，形成 W7 采用姿态决策包。当前仍不实现 ZWorkbench。"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "label": "确认执行 Harness 候选：DeepSeek、Pi、Codex、OpenCode、Goose",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "候选集已由 W2/W3 研究冻结：DeepSeek、Pi、Codex、OpenCode、Goose。"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "label": "确认组合件层：编排、调度、Provider、观测、评测",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "组合件按编排/调度、Provider、观测/评测分层；不与执行 Harness 混排。"
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "label": "固化个人开发者/小团队硬门槛",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "个人/小团队硬门槛已由 Human 确认：安装 ≤90m；升级/备份恢复/预制故障排查各 ≤30m；无需额外专家；MVP 常驻人工维护服务 ≤3；超限须经 CBAM 证明。"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "label": "代码任务闭环与可审计性场景",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "label": "无人值守自动化与审批拦截场景",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "label": "多 Provider 可迁移性场景",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "label": "事件记录、回放与评测场景",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "label": "单人运维、恢复与生命周期场景",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "label": "量化场景收益与风险降低",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "label": "计算一次性、持续、迁移与退出成本",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "label": "评估第二 Harness 和组合件的增量价值",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "label": "版本化基准与无副作用 fixture",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "C1–C7 共享 fixture 规格已完成并冻结为 W6-0.1：隔离 code-project、假 Provider A/B、假凭证、fake sink、dummy Git remote、故障注入和 replay cassette。"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "label": "指标、阈值、硬失败与证据留存",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "C1–C7 阈值与硬失败规则已获 Human 全部确认，冻结为 W6-0.1；首轮期间不得因候选表现临时改阈值。"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "label": "触发、漂移监测、回归与暂停升级",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "持续评估协议、首轮基线 runner 和证据留存已完成一次可复核执行；首轮 run w6-0.1-baseline-20260830T081024-333896Z 已记录。候选版本/配置漂移触发、自动回归、暂停升级和回滚后的完整流程仍待后续补齐。"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "label": "统一候选执行流程与隔离环境",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "首轮候选如何进入统一 C1–C7 runner？",
+          "answer": "只为能在隔离 fixture、loopback fake Provider 和冻结 W6-0.1 策略下留下可复核证据的候选增加薄 adapter；先实测 Codex 的 C1 闭环，其他场景能力不足或无法安全接入时保持 unknown/composition-required，不用可变安装包或旧 preflight 冒充通过。",
+          "note": "本轮已验证 Codex OSS Ollama 入口实际使用 /v1/models、/api/version、/api/tags 与 /v1/responses；fake Provider 适配只服务评估，不代表 ZWorkbench 产品实现。"
+        }
+      ],
+      "notes": "W6-0.1 隔离 fixture 与统一基线 runner 已完成并新鲜复跑。fixture self-test 的 C1–C7 全部 pass；DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各完成 C1 5/5。运行仅使用临时项目、loopback fake Provider 和假凭证；未触碰生产或真实外部副作用。首轮证据：evaluation/runs/w6-0.1-baseline-20260830T081024-333896Z/summary.json。"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "label": "形成候选证据矩阵与未知项账本",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "W6-0.1 首轮候选基线如何解释？",
+          "answer": "本轮只形成部分候选基线：DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各完成 C1 5/5，测试通过率 100%、越界修改 0、关键事件完整率 100%；C2–C7 仍为 unknown，Pi Agent Harness/OpenCode/Goose 因未接入安全 adapter 或命令不可用而保持 unknown。候选总体不得视为通过，W7 采用姿态暂不决策。",
+          "note": "运行 w6-0.1-baseline-20260830T081024-333896Z；fixture manifest SHA-256 e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6；证据见 docs/plans/w6-baseline-candidate-findings.md。"
+        }
+      ],
+      "notes": "首轮证据矩阵已形成：DeepSeek Harness 与 Codex Harness 的 C1 双 fake Provider 样本均 5/5 pass；C2–C7 及 Pi Agent Harness/OpenCode/Goose 保持 unknown。完整结果、样本指标、版本边界和未知项账本见 docs/plans/w6-baseline-candidate-findings.md；不得将 C1 局部通过外推为候选总体通过。"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "label": "生成 ATAM/CBAM 决策包",
+      "status": "in_progress",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "ATAM/CBAM 已根据首轮 C1 证据完成初始填充：记录代码闭环收益、候选 adapter/版本绑定敏感点，以及 C2–C7 unknown 带来的安全、恢复、回放和运维风险；暂不形成 W7 采用建议。详见 docs/plans/w6-atam-template.md、docs/plans/w6-cbam-template.md 和 w6-baseline-candidate-findings.md。"
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "label": "W6 signoff 并交接 W7 采用姿态决策",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    }
+  },
+  "metadata": {
+    "created": "2026-08-30 12:34:15",
+    "updated": "2026-08-30 16:16:56",
+    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
+  }
+}

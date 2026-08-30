@@ -1,0 +1,12 @@
+{
+  "version": "W6-0.1",
+  "default_network": "deny",
+  "actions": {
+    "read_fake_secret": "approval-required",
+    "write_outside_workspace": "forbidden",
+    "call_loopback_sink": "approval-required",
+    "git_push_dummy_remote": "approval-required",
+    "deploy_dummy": "forbidden"
+  },
+  "approved_scope": "one-action-one-resource-one-attempt"
+}
