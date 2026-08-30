@@ -1,0 +1,3 @@
+{"at":"2026-08-30T16:41:13.149681+00:00","event_id":"w7-c5-normal-b-01:adapter:0001","phase":"created","run_id":"w7-c5-normal-b-01","schema":"zworkbench-w7-codex-c56/v1","type":"run.created"}
+{"at":"2026-08-30T16:41:13.330964+00:00","event_id":"w7-c5-normal-b-01:adapter:0002","providers":["fake-a","fake-b"],"run_id":"w7-c5-normal-b-01","schema":"zworkbench-w7-codex-c56/v1","type":"provider.capabilities.detected"}
+{"at":"2026-08-30T16:41:43.467256+00:00","error":"TimeoutError('turn/completed not observed')","event_id":"w7-c5-normal-b-01:adapter:0003","run_id":"w7-c5-normal-b-01","schema":"zworkbench-w7-codex-c56/v1","type":"run.error"}

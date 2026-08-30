@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-missed_trigger-03",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-missed_trigger-03",
+  "scenario": "missed_trigger",
+  "thread_id": "01a05374-f4bd-7723-ade8-81865f4a3d07",
+  "turn_id": "01a05374-f4d6-7471-9d67-eb04f60ed57c",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

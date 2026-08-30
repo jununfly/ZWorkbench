@@ -1,0 +1,1 @@
+{"idempotency_key":"codex-c3-c4-v1:w7-c4-provider_timeout-idempotent-02","operation_id":"w7-c4-provider_timeout-idempotent-02:operation-1","payload":"case-local-only","physical_effect_count":1,"run_id":"w7-c4-provider_timeout-idempotent-02","schema":"zworkbench-w7-codex-effect/v1","side_effect_class":"idempotent"}

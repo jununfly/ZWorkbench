@@ -1,0 +1,5 @@
+{"timestamp":"2026-08-30T16:23:51.303592Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:23:51.312541Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:23:51.327510Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:23:51.330003Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:23:51.342618Z","level":"WARN","fields":{"message":"Model personality requested but model_messages is missing, falling back to base instructions.","model":"fake-model","personality":"pragmatic"},"target":"codex_protocol::openai_models"}

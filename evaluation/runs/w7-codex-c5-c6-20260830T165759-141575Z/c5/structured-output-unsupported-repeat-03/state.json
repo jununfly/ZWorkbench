@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-structured-output-unsupported-03",
+  "scenario": "c5:structured-output-unsupported",
+  "status": "completed",
+  "thread_id": "01a0539b-8485-7a00-bda6-69113ebe9841",
+  "turn_id": "01a0539b-849b-76b1-bb77-d5b55c886b11",
+  "last_checkpoint": "turn-completed"
+}

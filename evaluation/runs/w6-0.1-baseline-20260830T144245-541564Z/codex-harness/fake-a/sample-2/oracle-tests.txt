@@ -1,0 +1,8 @@
+test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests) ... ok
+test_empty_label_is_stable (test_normalize.NormalizeLabelTests) ... ok
+test_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK

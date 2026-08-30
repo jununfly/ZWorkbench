@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-first_trigger-03",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-first_trigger-03",
+  "scenario": "first_trigger",
+  "thread_id": "01a0536d-48f8-7293-a5cb-9c3c8656ed1e",
+  "turn_id": "01a0536d-4916-7aa1-be22-ac20fca31377",
+  "phase": "stop",
+  "status": "unknown",
+  "retry_count": 0,
+  "last_checkpoint": "error",
+  "effect_status": "pending",
+  "result_status": "unknown",
+  "safe_stop_reason": "TimeoutError('Codex event wait timed out')"
+}

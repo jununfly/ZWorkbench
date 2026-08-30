@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w6-c4-case/v1",
+  "run_id": "w6-c4-after_tool_before_commit-read-only-03",
+  "fault": "after_tool_before_commit",
+  "tool_class": "read-only",
+  "repeat": 3,
+  "fixture_version": "W6-0.1",
+  "approval_granted": false
+}

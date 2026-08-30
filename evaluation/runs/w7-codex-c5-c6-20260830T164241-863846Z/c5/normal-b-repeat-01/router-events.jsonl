@@ -1,0 +1,3 @@
+{"fallback":null,"pre_dispatch_reason":null,"primary":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","type":"router.started"}
+{"attempt":1,"endpoint":"http://127.0.0.1:61615","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":1,"endpoint":"http://127.0.0.1:61615","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}

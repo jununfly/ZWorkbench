@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "replay_mode": "simulated_replay",
+  "cassette_only": true,
+  "execution_performed": false,
+  "semantic_result": "fixture-ok",
+  "provider_access_count": 0,
+  "tool_invocation_count": 0,
+  "network_access_count": 0
+}

@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-stream-interrupt-once-01",
+  "scenario": "c5:stream-interrupt-once",
+  "status": "unknown",
+  "thread_id": "01a0538e-a853-76f2-a446-257fd9a826a6",
+  "turn_id": "01a0538e-a866-7b23-83a5-6f7ee6eeb355",
+  "last_checkpoint": "stop",
+  "error": "TimeoutError('turn/completed not observed')"
+}

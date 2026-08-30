@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c4-process_interrupt-approval-required-02",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c4-process_interrupt-approval-required-02",
+  "scenario": "c4:process_interrupt",
+  "thread_id": "01a05376-c9b8-7da0-b6c5-eaf5c0e1e60d",
+  "turn_id": "01a05376-caba-7040-b240-57848e7cebea",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

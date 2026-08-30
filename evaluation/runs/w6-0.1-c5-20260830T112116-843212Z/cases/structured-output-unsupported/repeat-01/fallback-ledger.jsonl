@@ -1,0 +1,1 @@
+{"from_provider": "fake-b", "observed_at": "2026-08-30T11:21:21.475596+00:00", "reason": "capability_missing:structured_output", "required_capability": "structured_output", "retry_policy": "switch-provider-no-same-provider-retry", "to_provider": "fake-a", "type": "provider.fallback"}

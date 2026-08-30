@@ -1,0 +1,383 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-codex-c3-c4-20260830T161706-030125Z",
+  "mode": "c3",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "Codex Harness",
+    "version": "codex-cli 0.139.0",
+    "entrypoint": "/opt/homebrew/bin/codex"
+  },
+  "adapter": {
+    "version": "w7-codex-c3-c4-composition-adapter/v1",
+    "fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c3-c4"
+  },
+  "threshold": {
+    "scenarios": [
+      "first_trigger",
+      "same_key_duplicate",
+      "delayed_trigger",
+      "interrupted_retry",
+      "missed_trigger"
+    ],
+    "repeats_per_scenario": 3,
+    "same_key_effective_side_effects": 1,
+    "duplicate_extra_effects": 0,
+    "native_scheduler": "not measured; external deterministic trigger"
+  },
+  "status": "pass-with-composition",
+  "cases_passed": 15,
+  "cases_total": 15,
+  "checks": {
+    "all_cases_pass": true,
+    "one_effect_per_key": true,
+    "missing_evidence_stops": true
+  },
+  "cases": [
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-d4e8-7b40-a751-cd9eb6c727ef",
+        "turn_id": "01a05375-d50a-7d52-9930-151ce66f8ec5",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/first_trigger/repeat-01"
+    },
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-d7b6-7812-9893-29e4ed91b89e",
+        "turn_id": "01a05375-d7d2-7571-bc8a-78609c3748c8",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/first_trigger/repeat-02"
+    },
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-da7b-7181-b96a-14aaeb7201d1",
+        "turn_id": "01a05375-da98-7a22-9eea-e49648129124",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/first_trigger/repeat-03"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-dd42-7572-aff5-980a8639bdb5",
+        "turn_id": "01a05375-dd5a-7442-a7c9-3a28252db3cd",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/same_key_duplicate/repeat-01"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-e005-7aa2-b961-40c1d2714b77",
+        "turn_id": "01a05375-e01e-7dc3-b9d4-84c494d74231",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/same_key_duplicate/repeat-02"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-e2ca-7fb0-92d6-71862a2efc29",
+        "turn_id": "01a05375-e2e3-7892-97be-5c85bac87938",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/same_key_duplicate/repeat-03"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-e588-76a0-8995-0af72918fb4e",
+        "turn_id": "01a05375-e5a0-73c0-9091-041613ec2fd2",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/delayed_trigger/repeat-01"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-e847-7ad3-89fc-b1bc68ccbfa5",
+        "turn_id": "01a05375-e860-7223-9529-90135f84a6c1",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/delayed_trigger/repeat-02"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-e97b-7d40-8dab-fb68be311362",
+        "turn_id": "01a05375-e997-7701-9540-693547be906e",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/delayed_trigger/repeat-03"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-ec46-71b2-acd0-9a1799aebe0d",
+        "turn_id": "01a05375-ed40-7443-8171-63e81ec4b9e6",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/interrupted_retry/repeat-01"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-efe5-7ae3-b3ed-848c61e7a71f",
+        "turn_id": "01a05375-f0e7-7c43-bb6a-3b2d281f78a3",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/interrupted_retry/repeat-02"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-f395-7482-ae2e-6eea34e29f16",
+        "turn_id": "01a05375-f48c-70a2-99c3-d90a8fbc61cb",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/interrupted_retry/repeat-03"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-f74a-7d73-8442-fdabed63350d",
+        "turn_id": "01a05375-f765-7cd1-974a-a776f4880837",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/missed_trigger/repeat-01"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-fa0e-70d0-8c77-6a226ff4a78c",
+        "turn_id": "01a05375-fa25-7aa0-b3a5-5ee07c1aff29",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/missed_trigger/repeat-02"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "thread_id": "01a05375-fcc8-7721-bab3-c9edac14ec15",
+        "turn_id": "01a05375-fce1-7443-a34b-1bcc2ba833e8",
+        "final_status": "completed"
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T161706-030125Z/c3/missed_trigger/repeat-03"
+    }
+  ]
+}

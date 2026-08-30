@@ -1,0 +1,13 @@
+{
+  "schema": "zworkbench-w6-c5-case-manifest/v1",
+  "case_id": "structured-output-unsupported-repeat-01",
+  "case_type": "structured-output-unsupported",
+  "repeat": 1,
+  "primary_provider": "fake-b",
+  "fallback_provider": "fake-a",
+  "fault": "structured_output_unsupported",
+  "fault_scope": "fake-b only",
+  "fixture_version": "W6-0.1",
+  "real_credentials": false,
+  "network": "loopback-only"
+}

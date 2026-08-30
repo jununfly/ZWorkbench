@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:06:53.361686+00:00","fault":"tool_timeout","point":"tool_timeout","reason":"tool result timeout after the attempt boundary","run_id":"w6-c4-tool_timeout-approval-required-02","schema":"zworkbench-w6-c4-state/v1","seq":8,"type":"fault.injected"}

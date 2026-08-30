@@ -1,0 +1,2 @@
+{"at":"2026-08-30T16:58:00.316205+00:00","capabilities":["tool_calls","streaming","structured_output"],"endpoint":"http://127.0.0.1:57695/v1/responses","model":"fake-model","provider_id":"fake-a","run_id":"w7-c5-normal-a-02","schema":"zworkbench-w7-codex-c56/v1"}
+{"at":"2026-08-30T16:58:00.317556+00:00","capabilities":["tool_calls","streaming","structured_output"],"endpoint":"http://127.0.0.1:57696/v1/responses","model":"fake-model","provider_id":"fake-b","run_id":"w7-c5-normal-a-02","schema":"zworkbench-w7-codex-c56/v1"}

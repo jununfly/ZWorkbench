@@ -1,0 +1,26 @@
+{
+  "install": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 90,
+    "note": "Fill with a real single-operator stopwatch measurement; do not use runner machine_elapsed_seconds."
+  },
+  "upgrade": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Fill with a real single-operator stopwatch measurement; do not use runner machine_elapsed_seconds."
+  },
+  "backup_restore": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Fill with a real single-operator stopwatch measurement; do not use runner machine_elapsed_seconds."
+  },
+  "fault_diagnosis": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Fill with a real single-operator stopwatch measurement; do not use runner machine_elapsed_seconds."
+  }
+}

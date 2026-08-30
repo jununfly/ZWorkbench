@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c6-recorded-01",
+  "scenario": "c6:recorded_view",
+  "status": "running",
+  "thread_id": null,
+  "turn_id": null,
+  "last_checkpoint": "created"
+}

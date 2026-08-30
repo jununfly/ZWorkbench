@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-timeout-once-02",
+  "scenario": "c5:timeout-once",
+  "status": "completed",
+  "thread_id": "01a0539a-25e3-79d3-9db3-912f6d3022d1",
+  "turn_id": "01a0539a-25f9-78d3-a59f-5d800aa2ec8e",
+  "last_checkpoint": "turn-completed"
+}

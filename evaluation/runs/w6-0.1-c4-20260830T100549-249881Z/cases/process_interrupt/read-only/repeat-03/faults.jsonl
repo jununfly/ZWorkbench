@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:05:51.243630+00:00","fault":"process_interrupt","point":"process_interrupt","reason":"SIGTERM after durable effect boundary and before result commit","run_id":"w6-c4-process_interrupt-read-only-03","schema":"zworkbench-w6-c4-state/v1","seq":7,"type":"fault.injected"}

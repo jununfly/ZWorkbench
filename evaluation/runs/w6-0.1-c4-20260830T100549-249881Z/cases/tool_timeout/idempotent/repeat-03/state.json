@@ -1,0 +1,21 @@
+{
+  "schema": "zworkbench-w6-c4-state/v1",
+  "run_id": "w6-c4-tool_timeout-idempotent-03",
+  "fault": "tool_timeout",
+  "tool": {
+    "name": "write_idempotent_result",
+    "side_effect_class": "idempotent",
+    "operation_id": "w6-c4-tool_timeout-idempotent-03:operation-1",
+    "requires_approval": false,
+    "replay_safe": true
+  },
+  "phase": "completed",
+  "status": "completed",
+  "invocation_count": 2,
+  "provider_attempts": 1,
+  "tool_attempts": 2,
+  "retry_count": 1,
+  "approval_granted": false,
+  "last_checkpoint": "completed",
+  "safe_stop_reason": null
+}

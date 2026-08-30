@@ -1,0 +1,1 @@
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"fake-a","kind":"capability_probe","path":"/v1/capabilities","capabilities":["tool_calls","streaming","structured_output"]}

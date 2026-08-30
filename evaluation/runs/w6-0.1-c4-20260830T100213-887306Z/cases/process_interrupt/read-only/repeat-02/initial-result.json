@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/read-only/repeat-02",
+    "--run-id",
+    "w6-c4-process_interrupt-read-only-02",
+    "--tool-class",
+    "read-only",
+    "--fault",
+    "process_interrupt",
+    "--mode",
+    "initial"
+  ],
+  "returncode": -15,
+  "stdout": "",
+  "stderr": "",
+  "duration_ms": 21,
+  "timed_out": false
+}

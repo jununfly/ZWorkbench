@@ -1,0 +1,60 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-normal-a-05",
+  "status": "completed",
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:56139",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "started",
+      "type": "provider.attempt"
+    },
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:56139",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "succeeded",
+      "type": "provider.attempt"
+    }
+  ],
+  "capability_detection": [
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:56:11.273207+00:00",
+      "run_id": "w7-c5-normal-a-05",
+      "provider_id": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:56139/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming",
+        "structured_output"
+      ]
+    },
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:56:11.274470+00:00",
+      "run_id": "w7-c5-normal-a-05",
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:56140/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming",
+        "structured_output"
+      ]
+    }
+  ],
+  "fallback_ledger": [],
+  "degradation_ledger": [],
+  "final": {
+    "provider": "fake-a",
+    "semantic_result": "fixture-ok",
+    "silent_semantic_change": false
+  }
+}

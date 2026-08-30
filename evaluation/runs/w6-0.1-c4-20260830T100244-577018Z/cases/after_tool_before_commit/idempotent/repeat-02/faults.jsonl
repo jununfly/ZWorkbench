@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:02:45.306784+00:00","fault":"after_tool_before_commit","point":"after_tool_before_commit","reason":"tool result exists but commit is not durable","run_id":"w6-c4-after_tool_before_commit-idempotent-02","schema":"zworkbench-w6-c4-state/v1","seq":9,"type":"fault.injected"}

@@ -1,0 +1,5 @@
+{"capabilities":["tool_calls","streaming","structured_output"],"kind":"capability_probe","path":"/v1/capabilities","provider_id":"fake-a","schema":"zworkbench-w7-codex-c56-provider/v1"}
+{"function_call_output_count":0,"kind":"responses_request","mode":"normal","model":"fake-model","path":"/v1/responses","provider_id":"fake-a","request_number":1,"response_kind":"message","schema":"zworkbench-w7-codex-c56-provider/v1","stream":true}
+{"kind":"responses_result","provider_id":"fake-a","request_number":1,"response_kind":"message","schema":"zworkbench-w7-codex-c56-provider/v1","status":"completed"}
+{"capabilities":["tool_calls","streaming","structured_output"],"kind":"capability_probe","path":"/v1/capabilities","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-provider/v1"}
+{"function_call_output_count":0,"kind":"responses_request","mode":"stream_interrupt_once","model":"fake-model","path":"/v1/responses","provider_id":"fake-b","request_number":1,"response_kind":"message","schema":"zworkbench-w7-codex-c56-provider/v1","stream":true}

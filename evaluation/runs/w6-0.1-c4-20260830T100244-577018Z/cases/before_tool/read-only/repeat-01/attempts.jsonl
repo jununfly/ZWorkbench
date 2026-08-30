@@ -1,0 +1,2 @@
+{"at":"2026-08-30T10:02:44.597914+00:00","invocation":1,"mode":"initial","phase":"ready","run_id":"w6-c4-before_tool-read-only-01","schema":"zworkbench-w6-c4-state/v1","seq":2,"type":"invocation.attempt"}
+{"at":"2026-08-30T10:02:44.621678+00:00","invocation":2,"mode":"resume","phase":"provider_succeeded","run_id":"w6-c4-before_tool-read-only-01","schema":"zworkbench-w6-c4-state/v1","seq":6,"type":"invocation.attempt"}

@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:02:14.944510+00:00","result":{"effect_action":"applied","result":"fixture-ok","side_effect_class":"idempotent","tool":"write_idempotent_result","tool_attempt":1},"run_id":"w6-c4-committed_before_next_step-idempotent-01","schema":"zworkbench-w6-c4-state/v1","seq":8,"tool_attempt":1,"type":"tool.result"}

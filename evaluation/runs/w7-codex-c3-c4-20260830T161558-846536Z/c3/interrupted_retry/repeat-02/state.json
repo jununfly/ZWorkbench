@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-interrupted_retry-02",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-interrupted_retry-02",
+  "scenario": "interrupted_retry",
+  "thread_id": "01a05374-e7f1-7513-b10e-8b15f33a5197",
+  "turn_id": "01a05374-e8eb-7fb0-8f74-ffb904841b80",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c4-provider_timeout-idempotent-03",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c4-provider_timeout-idempotent-03",
+  "scenario": "c4:provider_timeout",
+  "thread_id": "01a0537b-2309-7d91-b8b6-1d3e39ed2812",
+  "turn_id": "01a0537b-269b-72a2-a16d-be1052d9024a",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 1,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

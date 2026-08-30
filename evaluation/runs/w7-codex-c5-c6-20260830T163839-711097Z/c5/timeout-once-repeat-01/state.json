@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-timeout-once-01",
+  "scenario": "c5:timeout-once",
+  "status": "unknown",
+  "thread_id": "01a0538a-23af-7b61-8839-1f10b2687e80",
+  "turn_id": "01a0538a-23c3-7550-90f4-2a29ad603f3e",
+  "last_checkpoint": "stop",
+  "error": "TimeoutError('turn/completed not observed')"
+}

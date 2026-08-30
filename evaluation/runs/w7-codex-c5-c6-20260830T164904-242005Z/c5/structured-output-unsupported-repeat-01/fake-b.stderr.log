@@ -1,0 +1,7 @@
+usage: fake-provider.py [-h] [--host HOST] [--port PORT] --provider-id
+                        PROVIDER_ID
+                        [--mode {normal,timeout_once,stream_interrupt_once}]
+                        [--capabilities CAPABILITIES] [--emit-tool]
+                        [--command COMMAND] --request-log REQUEST_LOG
+                        --ready-file READY_FILE
+fake-provider.py: error: argument --mode: invalid choice: 'structured_output_unsupported' (choose from 'normal', 'timeout_once', 'stream_interrupt_once')

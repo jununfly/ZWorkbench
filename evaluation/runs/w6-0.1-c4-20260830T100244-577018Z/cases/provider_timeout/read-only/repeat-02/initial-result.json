@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100244-577018Z/cases/provider_timeout/read-only/repeat-02",
+    "--run-id",
+    "w6-c4-provider_timeout-read-only-02",
+    "--tool-class",
+    "read-only",
+    "--fault",
+    "provider_timeout",
+    "--mode",
+    "initial"
+  ],
+  "returncode": 0,
+  "stdout": "{\"outcome\": \"completed\", \"run_id\": \"w6-c4-provider_timeout-read-only-02\", \"status\": \"completed\"}\n",
+  "stderr": "",
+  "duration_ms": 26,
+  "timed_out": false
+}

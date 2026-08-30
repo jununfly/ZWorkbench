@@ -1,0 +1,2 @@
+{"at":"2026-08-30T16:42:14.194535+00:00","event_id":"w7-c5-structured-output-unsupported-01:adapter:0001","phase":"created","run_id":"w7-c5-structured-output-unsupported-01","schema":"zworkbench-w7-codex-c56/v1","type":"run.created"}
+{"at":"2026-08-30T16:42:14.317910+00:00","error":"RuntimeError('process exited before readiness: 2')","event_id":"w7-c5-structured-output-unsupported-01:adapter:0002","run_id":"w7-c5-structured-output-unsupported-01","schema":"zworkbench-w7-codex-c56/v1","type":"run.error"}

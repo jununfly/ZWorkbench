@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c4-turn_interrupt-read-only-02",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c4-turn_interrupt-read-only-02",
+  "scenario": "c4:turn_interrupt",
+  "thread_id": "01a05376-2f1e-7d60-93cf-19c532a8e398",
+  "turn_id": "01a05376-3150-7af3-aeae-bcada3cb9dfe",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 1,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "none",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

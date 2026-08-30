@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w6-c4-case/v1",
+  "run_id": "w6-c4-after_tool_before_commit-idempotent-01",
+  "fault": "after_tool_before_commit",
+  "tool_class": "idempotent",
+  "repeat": 1,
+  "fixture_version": "W6-0.1",
+  "approval_granted": false
+}

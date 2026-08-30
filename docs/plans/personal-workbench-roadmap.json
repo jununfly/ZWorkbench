@@ -6,7 +6,7 @@
     "1": {
       "id": "1",
       "label": "W6 统一评估矩阵与 ATAM/CBAM 持续验证门槛",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -80,7 +80,7 @@
     "1-3": {
       "id": "1-3",
       "label": "CBAM 场景收益、成本与组合增量分析",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -306,32 +306,44 @@
     "1-3-1": {
       "id": "1-3-1",
       "label": "量化场景收益与风险降低",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "W6-0.1 如何量化场景收益与风险降低，且不把 fixture pass 误当成产品或候选收益？",
+          "answer": "采用“场景合同收益 + 可观察风险降低 + 证据覆盖”三层量化，不计算伪造的生产概率或单一综合分。当前可报告 7 个场景、150 个隔离/候选观察案例的逐场景结果：C1 20/20 candidate baseline pass；C2 15/15 无人审批阻断、未授权执行 0；C3 15/15 pass-with-composition 且每个 idempotency key 只有 1 次有效 delivery；C4 54/54 恢复或安全终止、状态丢失 0、不可安全副作用重复 0；C5 19/19、fallback 原因/目标 9/9、静默语义变化 0；C6 15/15、事件字段/模式标签 100%、live 副作用 0；C7 12/12 machine pass 但真人计时 0/12，人工门 unknown。C2/C4/C6 的安全与副作用指标作为硬门禁，不参与平均；C1/C3/C5/C7 的通过数只表示对应证据层级。采用后净收益和成本不提前相减，1-3-2 单独计算集成、持续、迁移与退出成本。",
+          "note": "这些数量说明的是 W6 fixture 或局部候选 adapter 的合同覆盖，不是线上风险下降百分比、Token 节省、MTTR 或人时节省。候选无固定版本 adapter、C7 无真人 stopwatch、真实 Provider/服务/许可证未测的场景必须保留 unknown；未知不能用其他场景的 100% 抵消。第二 Harness、LiteLLM、Temporal/LangGraph、观测后端只有在单独场景产生非重复收益且成本可接受时才可进入后续 CBAM。"
+        }
+      ],
+      "notes": "CBAM 场景收益/风险降低已量化并收口：采用三层指标（场景合同收益、可观察风险降低、证据覆盖），不计算伪造的生产概率或单一综合分。共 7 个场景、150 个案例级观察：C1 20/20 candidate baseline；C2 15/15 无人审批阻断且未授权执行 0；C3 15/15 pass-with-composition 且每 key 单次有效 delivery；C4 54/54 恢复/安全终止、状态丢失 0、不可安全副作用重复 0；C5 19/19、fallback 9/9、静默语义变化 0；C6 15/15、事件/模式标签 100%、live 副作用 0；C7 12/12 machine pass 但真人计时 0/12、人工门 unknown。C2/C4/C6 作为 hard gate 不参与平均；毛收益不等于净收益，1-3-2 单独计算一次性/持续/迁移/退出成本。当前姿态仍为一个主 Harness + 必要薄层，第二 Harness、LiteLLM、Temporal/LangGraph、观测后端需非重复收益与小团队成本证据。专项文档见 docs/plans/w6-cbam-benefits-risk-reduction.md。"
     },
     "1-3-2": {
       "id": "1-3-2",
       "label": "计算一次性、持续、迁移与退出成本",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "CBAM 成本账已收口：按一次性、持续、迁移/锁定、退出四类记录成本与单位，严格区分 machine_elapsed、human_elapsed、工程适配人时和 Provider latency。W6 可观察信号：C1 DeepSeek 5.920s/10 次、Codex 11.827s/10 次（仅运行时，不是总成本）；C7 machine 12/12 pass、真人计时 0/12、参考维护服务 2/3（scheduler、evidence-ledger，Provider/宿主 OS 排除）、参考专家介入 0；真实 Provider/Token/存储费用、候选 adapter 工程量、常驻部署、许可证、迁移与退出演练均 unknown。未计算 TCO 或收益/成本比；下一节点 1-3-3 需复用本成本分类，证明第二 Harness/组合件的非重复收益覆盖小团队总生命周期成本。专项文档见 docs/plans/w6-cbam-cost-ledger.md。"
     },
     "1-3-3": {
       "id": "1-3-3",
       "label": "评估第二 Harness 和组合件的增量价值",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "第二 Harness 或组合件何时具有值得引入的非重复增量价值？",
+          "answer": "采用“非重复场景收益 + 固定版本证据 + owner 不重复 + C7 生命周期成本在门内”四项门槛。第二 Harness 必须在至少一个 C2–C6 关键场景提供现有主路线无法提供的 measured-candidate 结果，且不能只增加 C1 交叉样本；LiteLLM 必须实测减少 Provider adapter/路由/排障工作且不隐藏 tool/stream/structured 语义；Temporal/LangGraph 必须证明主 Harness + 薄层无法满足的 durable/schedule/retry 收益；Langfuse/Phoenix/Inspect AI/OTel 必须证明查询、数据集或评测净收益，同时不接管 replay/副作用边界。所有选项都必须记录一次性、持续、迁移/锁定、退出成本，服务数≤3、单人运维门在 90/30/30/30 分钟内、无需额外专家，并能共享或清晰隔离状态/权限/事件 owner。当前没有满足这些门槛的候选增量证据，保留一个主 Harness + 必要薄层，不引入第二 Harness 或组合件。",
+          "note": "C1 交叉基线、fixture contract 通过或理论功能列表都不构成非重复收益；不能用 C2–C7 fixture 的通过抵消候选 adapter 和 C7 人工成本 unknown。任何新增组件若复制状态、权限、事件、备份、升级或排障责任，或不能导出/替换/退出，即使功能更多也延后。该决策是条件性门槛，不是永久排除；必须通过后续候选实测和成本账重新打开。"
+        }
+      ],
+      "notes": "CBAM 组合件增量价值已收口：新增选项必须同时满足非重复关键场景收益、固定版本 measured-candidate 证据、状态/权限/事件/replay/备份/升级/诊断 owner 不重复、个人/小团队 C7 成本在门内并可导出/替换/退出。当前第二 Harness 只有 C1 交叉基线价值，无 C2–C6 非重复证据，暂不引入；LiteLLM 等 gateway、Temporal/LangGraph、Langfuse/Phoenix/Inspect AI/OTel 保持条件候选；从零重写 Agent loop 排除。当前路线假设仍为一个主 Harness + 必要薄层，W6 不做最终采用签署。专项文档见 docs/plans/w6-cbam-incremental-value.md。"
     },
     "1-4-1": {
       "id": "1-4-1",
@@ -593,7 +605,7 @@
   },
   "metadata": {
     "created": "2026-08-30 12:34:15",
-    "updated": "2026-08-30 21:26:07",
+    "updated": "2026-08-30 22:34:00",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
   }
 }

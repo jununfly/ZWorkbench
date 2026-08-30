@@ -1,0 +1,2 @@
+{"at":"2026-08-30T10:02:47.124230+00:00","invocation":1,"mode":"initial","phase":"ready","run_id":"w6-c4-process_interrupt-idempotent-01","schema":"zworkbench-w6-c4-state/v1","seq":2,"type":"invocation.attempt"}
+{"at":"2026-08-30T10:02:47.147888+00:00","invocation":2,"mode":"resume","phase":"tool_started","run_id":"w6-c4-process_interrupt-idempotent-01","schema":"zworkbench-w6-c4-state/v1","seq":9,"type":"invocation.attempt"}

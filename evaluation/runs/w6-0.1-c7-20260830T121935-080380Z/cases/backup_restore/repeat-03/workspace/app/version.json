@@ -1,0 +1,5 @@
+{
+  "schema": "fixture-app-version/v1",
+  "version": "0.1",
+  "marker": "initial-install"
+}

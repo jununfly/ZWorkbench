@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c6-recorded-01",
+  "replay_mode": "cassette-source",
+  "event_ledger_sha256": "3eecb0183e11d59a243f44e12a135d3a152cbcef3298b7e472d20415984b57e9",
+  "environment_sha256": "404aeee0af547c65e6470535ad9d744bbfd4354a4a4f96ec82bd95338dc66775",
+  "expected_output": {
+    "semantic_result": "fixture-ok",
+    "tool_execution": "case-local-read-only-command"
+  },
+  "provider": "w7-fake-codex-c6",
+  "model": "fake-model",
+  "endpoint": "http://127.0.0.1:11434/v1/responses"
+}

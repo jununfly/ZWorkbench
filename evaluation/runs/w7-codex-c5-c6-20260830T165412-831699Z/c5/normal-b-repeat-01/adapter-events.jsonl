@@ -1,0 +1,2 @@
+{"at":"2026-08-30T16:54:13.945677+00:00","event_id":"w7-c5-normal-b-01:adapter:0001","phase":"created","run_id":"w7-c5-normal-b-01","schema":"zworkbench-w7-codex-c56/v1","type":"run.created"}
+{"at":"2026-08-30T16:54:14.118917+00:00","event_id":"w7-c5-normal-b-01:adapter:0002","providers":["fake-a","fake-b"],"run_id":"w7-c5-normal-b-01","schema":"zworkbench-w7-codex-c56/v1","type":"provider.capabilities.detected"}

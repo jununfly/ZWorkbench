@@ -1,0 +1,1 @@
+{"capabilities": ["streaming", "structured_output", "tool_calls"], "capability_endpoint": "http://127.0.0.1:56338/v1/capabilities", "duration_ms": 5, "endpoint": "http://127.0.0.1:56338", "model": "fake-model", "observed_at": "2026-08-30T11:21:16.993294+00:00", "provider_id": "fake-a", "status": "success", "type": "provider.capability_detection"}

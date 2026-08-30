@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100244-577018Z/cases/before_tool/approval-required/repeat-01",
+    "--run-id",
+    "w6-c4-before_tool-approval-required-01",
+    "--tool-class",
+    "approval-required",
+    "--fault",
+    "before_tool",
+    "--mode",
+    "initial"
+  ],
+  "returncode": 75,
+  "stdout": "{\"exit_code\": 75, \"outcome\": \"fault-injected\", \"run_id\": \"w6-c4-before_tool-approval-required-01\"}\n",
+  "stderr": "",
+  "duration_ms": 25,
+  "timed_out": false
+}

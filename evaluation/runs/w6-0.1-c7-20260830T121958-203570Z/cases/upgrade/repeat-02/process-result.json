@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c7-operations.py",
+    "--scenario",
+    "upgrade",
+    "--workspace",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T121958-203570Z/cases/upgrade/repeat-02/workspace",
+    "--output-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T121958-203570Z/cases/upgrade/repeat-02/operation",
+    "--run-id",
+    "w6-c7-upgrade-repeat-02"
+  ],
+  "returncode": 23,
+  "stdout": "{\"error\":\"fixture-error-FileNotFoundError\",\"status\":\"failed\"}\n",
+  "stderr": "",
+  "duration_ms": 25,
+  "timed_out": false
+}

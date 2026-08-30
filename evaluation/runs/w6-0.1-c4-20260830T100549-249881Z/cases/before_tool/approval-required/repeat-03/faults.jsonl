@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:05:49.595942+00:00","fault":"before_tool","point":"before_tool","reason":"fault before any tool execution","run_id":"w6-c4-before_tool-approval-required-03","schema":"zworkbench-w6-c4-state/v1","seq":5,"type":"fault.injected"}

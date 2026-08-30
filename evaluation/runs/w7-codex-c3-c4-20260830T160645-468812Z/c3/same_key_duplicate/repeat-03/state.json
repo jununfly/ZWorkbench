@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-same_key_duplicate-03",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-same_key_duplicate-03",
+  "scenario": "same_key_duplicate",
+  "thread_id": "01a0536e-ab80-7111-a682-d4520393b6cd",
+  "turn_id": "01a0536e-ab99-7c41-b74c-8f4cb5d0ec19",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

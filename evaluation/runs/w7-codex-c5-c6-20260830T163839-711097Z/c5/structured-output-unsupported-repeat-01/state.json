@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-structured-output-unsupported-01",
+  "scenario": "c5:structured-output-unsupported",
+  "status": "unknown",
+  "thread_id": null,
+  "turn_id": null,
+  "last_checkpoint": "stop",
+  "error": "RuntimeError('process exited before readiness: 2')"
+}

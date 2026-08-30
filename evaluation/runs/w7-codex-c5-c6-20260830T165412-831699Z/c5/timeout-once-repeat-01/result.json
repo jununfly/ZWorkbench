@@ -1,0 +1,88 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-timeout-once-01",
+  "status": "completed",
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:54455",
+      "model": "fake-model",
+      "provider_id": "fake-b",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "started",
+      "type": "provider.attempt"
+    },
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:54455",
+      "model": "fake-model",
+      "provider_id": "fake-b",
+      "reason": "timeout",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "failed",
+      "type": "provider.attempt"
+    },
+    {
+      "attempt": 2,
+      "endpoint": "http://127.0.0.1:54454",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "started",
+      "type": "provider.attempt"
+    },
+    {
+      "attempt": 2,
+      "endpoint": "http://127.0.0.1:54454",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "succeeded",
+      "type": "provider.attempt"
+    }
+  ],
+  "capability_detection": [
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:54:15.014125+00:00",
+      "run_id": "w7-c5-timeout-once-01",
+      "provider_id": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:54454/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming",
+        "structured_output"
+      ]
+    },
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:54:15.015112+00:00",
+      "run_id": "w7-c5-timeout-once-01",
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:54455/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming",
+        "structured_output"
+      ]
+    }
+  ],
+  "fallback_ledger": [
+    {
+      "attempt": 1,
+      "from_provider": "fake-b",
+      "reason": "timeout",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "to_provider": "fake-a",
+      "type": "provider.fallback"
+    }
+  ],
+  "degradation_ledger": [],
+  "final": {
+    "provider": "fake-a",
+    "semantic_result": "fixture-ok",
+    "silent_semantic_change": false
+  }
+}

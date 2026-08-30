@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c4-tool_timeout-approval-required-02",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c4-tool_timeout-approval-required-02",
+  "scenario": "c4:tool_timeout",
+  "thread_id": "01a05376-a99d-7b20-be09-0dd819c4cf18",
+  "turn_id": "01a05376-acd3-7ec2-aad8-0ecb4858b691",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

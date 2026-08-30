@@ -1,0 +1,4 @@
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-fake-codex-c6","kind":"responses_request","path":"/v1/responses","model":"fake-model","stream":true,"request_number":1,"function_call_output_count":0,"response_kind":"function_call","mode":"normal"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-fake-codex-c6","kind":"responses_result","request_number":1,"status":"completed","response_kind":"function_call"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-fake-codex-c6","kind":"responses_request","path":"/v1/responses","model":"fake-model","stream":true,"request_number":2,"function_call_output_count":1,"response_kind":"message","mode":"normal"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-fake-codex-c6","kind":"responses_result","request_number":2,"status":"completed","response_kind":"message"}

@@ -1,0 +1,528 @@
+{
+  "schema": "zworkbench-w6-baseline/v1",
+  "run_id": "w6-0.1-baseline-20260830T144245-541564Z",
+  "started_at": "2026-08-30T14:42:45.541564+00:00",
+  "finished_at": "2026-08-30T14:42:45.787955+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette",
+        "provider_capability_ledger",
+        "provider_fallback_ledger",
+        "replay_mode_ledger",
+        "environment_manifest",
+        "operation_ledger",
+        "service_manifest",
+        "dependency_manifest",
+        "human_timing_template"
+      ]
+    },
+    "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "source_sha256": "81cf7f9b62f6706d7b23de6d71915ae372617e5ceab3cef3d6e396f07de67b52"
+  },
+  "fixture_self_test": [
+    {
+      "scenario": "C1",
+      "status": "pass",
+      "evidence": {
+        "test_returncode": 0,
+        "modified_files": [
+          "src/tinycalc/normalize.py"
+        ],
+        "modified_outside_allowed": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C2",
+      "status": "pass",
+      "evidence": {
+        "actions": 5,
+        "unapproved_execution_count": 0,
+        "network": "deny"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C3",
+      "status": "pass",
+      "evidence": {
+        "attempts": 3,
+        "effective_side_effects": 1,
+        "idempotency_key": "daily-summary-v1:2026-08-30T00:00:00Z"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C4",
+      "status": "pass",
+      "evidence": {
+        "injection_points": 5,
+        "recovered_or_safe_stopped": 5,
+        "lost_state": 0,
+        "unbounded_retry": false
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C5",
+      "status": "pass",
+      "evidence": {
+        "providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "semantic_results_equal": true,
+        "fallback_reason_recorded": true,
+        "silent_semantic_changes": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C6",
+      "status": "pass",
+      "evidence": {
+        "required_events": 6,
+        "event_completeness": 1.0,
+        "mode_labels_correct": true,
+        "simulated_replay_matches": true,
+        "live_replay_side_effects": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C7",
+      "status": "pass",
+      "evidence": {
+        "install_minutes": 90,
+        "upgrade_minutes": 30,
+        "backup_restore_minutes": 30,
+        "fault_diagnosis_minutes": 30,
+        "maintained_services": 3,
+        "extra_expert_required": false
+      },
+      "note": "reference runbook contract; candidate timings remain unknown"
+    }
+  ],
+  "candidate_preflight": {
+    "DeepSeek Harness": {
+      "executable": "dsh",
+      "status": "unknown",
+      "reason": "candidate command is not installed in this environment",
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      }
+    },
+    "Pi Agent Harness": {
+      "executable": "pi",
+      "status": "unknown",
+      "reason": "candidate command is not installed in this environment",
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      }
+    },
+    "Codex Harness": {
+      "executable": "/opt/homebrew/bin/codex",
+      "status": "unknown",
+      "reason": "safe preflight only; no candidate-specific fake-provider adapter was executed",
+      "preflight": {
+        "version": {
+          "command": [
+            "/opt/homebrew/bin/codex",
+            "--version"
+          ],
+          "returncode": 0,
+          "stdout": "codex-cli 0.139.0\n",
+          "stderr": "",
+          "duration_ms": 113,
+          "timed_out": false
+        },
+        "help": {
+          "command": [
+            "/opt/homebrew/bin/codex",
+            "--help"
+          ],
+          "returncode": 0,
+          "stdout": "     Print this message or the help of the given subcommand(s)\n\nArguments:\n  [PROMPT]\n          Optional user prompt to start the session\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --remote <ADDR>\n          Connect the TUI to a remote app server endpoint.\n          \n          Accepted forms: `ws://host:port`, `wss://host:port`, `unix://`, or `unix://PATH`.\n\n      --remote-auth-token-env <ENV_VAR>\n          Name of the environment variable containing the bearer token to send to a remote app\n          server websocket\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n  -i, --image <FILE>...\n          Optional image(s) to attach to the initial prompt\n\n  -m, --model <MODEL>\n          Model the agent should use\n\n      --oss\n          Use open-source provider\n\n      --local-provider <OSS_PROVIDER>\n          Specify which local provider to use (lmstudio or ollama). If not specified with --oss,\n          will use config default or show selection\n\n  -p, --profile <CONFIG_PROFILE_V2>\n          Layer $CODEX_HOME/<name>.config.toml on top of the base user config\n\n  -s, --sandbox <SANDBOX_MODE>\n          Select the sandbox policy to use when executing model-generated shell commands\n          \n          [possible values: read-only, workspace-write, danger-full-access]\n\n      --dangerously-bypass-approvals-and-sandbox\n          Skip all confirmation prompts and execute commands without sandboxing. EXTREMELY\n          DANGEROUS. Intended solely for running in environments that are externally sandboxed\n\n      --dangerously-bypass-hook-trust\n          Run enabled hooks without requiring persisted hook trust for this invocation. DANGEROUS.\n          Intended only for automation that already vets hook sources\n\n  -C, --cd <DIR>\n          Tell the agent to use the specified directory as its working root\n\n      --add-dir <DIR>\n          Additional directories that should be writable alongside the primary workspace\n\n  -a, --ask-for-approval <APPROVAL_POLICY>\n          Configure when the model requires human approval before executing a command\n\n          Possible values:\n          - untrusted:  Only run \"trusted\" commands (e.g. ls, cat, sed) without asking for user\n            approval. Will escalate to the user if the model proposes a command that is not in the\n            \"trusted\" set\n          - on-failure: DEPRECATED: Run all commands without asking for user approval. Only asks for\n            approval if a command fails to execute, in which case it will escalate to the user to\n            ask for un-sandboxed execution. Prefer `on-request` for interactive runs or `never` for\n            non-interactive runs\n          - on-request: The model decides when to ask the user for approval\n          - never:      Never ask for user approval Execution failures are immediately returned to\n            the model\n\n      --search\n          Enable live web search. When enabled, the native Responses `web_search` tool is available\n          to the model (no per‑call approval)\n\n      --no-alt-screen\n          Disable alternate screen mode\n          \n          Runs the TUI in inline mode, preserving terminal scrollback history.\n\n  -h, --help\n          Print help (see a summary with '-h')\n\n  -V, --version\n          Print version\n",
+          "stderr": "",
+          "duration_ms": 72,
+          "timed_out": false
+        }
+      },
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      }
+    },
+    "OpenCode": {
+      "executable": "opencode",
+      "status": "unknown",
+      "reason": "candidate command is not installed in this environment",
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      }
+    },
+    "Goose": {
+      "executable": "goose",
+      "status": "unknown",
+      "reason": "candidate command is not installed in this environment",
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      }
+    }
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "tested_scenarios": [],
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      },
+      "reason": "candidate command is not installed in this environment",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      }
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "tested_scenarios": [],
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      },
+      "reason": "candidate command is not installed in this environment",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      }
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "adapter": "codex-cli-oss-ollama-v1",
+      "tested_scenarios": [
+        "C1"
+      ],
+      "scenarios": {
+        "C1": "pass",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      },
+      "provider_results": {
+        "fake-a": {
+          "provider_id": "fake-a",
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-1/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-1/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-1/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 1653
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-2/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-2/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-2/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 2952
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-3/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-3/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-3/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 3674
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-4/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-4/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-4/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 2753
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-5/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-5/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-a/sample-5/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 2529
+            }
+          ]
+        },
+        "fake-b": {
+          "provider_id": "fake-b",
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-1/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-1/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-1/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 3902
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-2/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-2/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-2/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 2864
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-3/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-3/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-3/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 3447
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-4/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-4/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-4/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 2837
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-5/run-manifest.json",
+              "events": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-5/events.jsonl",
+              "diff": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/codex-harness/fake-b/sample-5/diff.patch",
+              "test_returncode": 0,
+              "candidate_returncode": 0,
+              "modified_files": [
+                "src/tinycalc/normalize.py",
+                "tests/test_normalize.py"
+              ],
+              "modified_outside_allowed": [],
+              "candidate_test_observed": true,
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false,
+              "duration_ms": 3963
+            }
+          ]
+        }
+      },
+      "reason": "仅完成 C1 真实候选执行；C2–C7 尚无满足统一安全/状态/回放/运维证据的 adapter，候选总体不能视为通过。",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5",
+        "verified_for_binary": false
+      }
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "tested_scenarios": [],
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      },
+      "reason": "candidate command is not installed in this environment",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      }
+    },
+    "Goose": {
+      "status": "unknown",
+      "tested_scenarios": [],
+      "scenarios": {
+        "C1": "unknown",
+        "C2": "unknown",
+        "C3": "unknown",
+        "C4": "unknown",
+        "C5": "unknown",
+        "C6": "unknown",
+        "C7": "unknown"
+      },
+      "reason": "candidate command is not installed in this environment",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      }
+    }
+  },
+  "interpretation": {
+    "fixture_self_test_is_not_candidate_pass": true,
+    "candidate_c1_c7_status": "partial_candidate_baseline; untested scenarios remain unknown",
+    "source_commit_verification_required_for_decisive_w7_evidence": true,
+    "real_credentials_or_production_side_effects": false
+  }
+}

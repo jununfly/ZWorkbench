@@ -1,0 +1,13 @@
+{
+  "schema": "zworkbench-w6-c5-case-manifest/v1",
+  "case_id": "stream-interrupt-once-repeat-01",
+  "case_type": "stream-interrupt-once",
+  "repeat": 1,
+  "primary_provider": "fake-b",
+  "fallback_provider": "fake-a",
+  "fault": "stream_interrupt_once",
+  "fault_scope": "fake-b only",
+  "fixture_version": "W6-0.1",
+  "real_credentials": false,
+  "network": "loopback-only"
+}

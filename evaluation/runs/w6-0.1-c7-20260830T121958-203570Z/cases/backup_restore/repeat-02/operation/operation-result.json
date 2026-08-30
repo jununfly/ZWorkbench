@@ -1,0 +1,33 @@
+{
+  "schema": "zworkbench-w6-c7-operations/v1",
+  "run_id": "w6-c7-backup_restore-repeat-02",
+  "scenario": "backup_restore",
+  "status": "completed",
+  "machine_elapsed_seconds": 0.001619,
+  "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+  "human_timed": false,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "human_timing_source": "not-provided",
+  "human_steps": [
+    "生成状态备份并记录内容摘要",
+    "模拟状态损坏或升级失败",
+    "恢复备份并校验状态摘要与版本"
+  ],
+  "human_step_count": 3,
+  "precondition": {
+    "prepared": true,
+    "state_status": "healthy",
+    "corruption_injected": true
+  },
+  "checks": {
+    "backup_present": true,
+    "restored_digest_matches": true,
+    "restored_state_healthy": true
+  },
+  "machine_side_effect_scope": "case-local reversible files only",
+  "network_calls": 0,
+  "real_credentials": false,
+  "production_data": false,
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T121958-203570Z/cases/backup_restore/repeat-02/workspace"
+}

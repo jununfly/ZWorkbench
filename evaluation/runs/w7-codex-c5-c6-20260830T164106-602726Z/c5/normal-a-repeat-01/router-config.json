@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "primary": "fake-a",
+  "fallback": null,
+  "pre_dispatch_reason": null,
+  "providers": {
+    "fake-a": {
+      "endpoint": "http://127.0.0.1:59887"
+    },
+    "fake-b": {
+      "endpoint": "http://127.0.0.1:59891"
+    }
+  }
+}

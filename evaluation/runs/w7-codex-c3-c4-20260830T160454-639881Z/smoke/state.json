@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-smoke-01",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-smoke-01",
+  "scenario": "smoke",
+  "thread_id": "01a0536a-abe3-7db0-9723-383cf9effed2",
+  "turn_id": "01a0536a-ac03-7442-a0b3-15e331ce72db",
+  "phase": "turn-started",
+  "status": "running",
+  "retry_count": 0,
+  "last_checkpoint": "turn-started",
+  "effect_status": "unknown",
+  "result_status": "unknown",
+  "safe_stop_reason": null
+}

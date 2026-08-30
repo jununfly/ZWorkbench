@@ -1,0 +1,12 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-normal-a-02",
+  "candidate": "Codex Harness",
+  "candidate_version": "codex-cli 0.139.0",
+  "adapter_version": "w7-codex-c5-c6-composition-adapter/v1",
+  "provider_router": "case-local loopback 127.0.0.1:11434",
+  "primary": "fake-a",
+  "fallback": null,
+  "fault": null,
+  "requires_structured_output": false
+}

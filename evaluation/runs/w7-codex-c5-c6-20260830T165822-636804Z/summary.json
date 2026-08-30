@@ -1,0 +1,408 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "mode": "c6",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "Codex Harness",
+    "version": "codex-cli 0.139.0",
+    "entrypoint": "/opt/homebrew/bin/codex"
+  },
+  "adapter": {
+    "version": "w7-codex-c5-c6-composition-adapter/v1",
+    "fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c5-c6"
+  },
+  "threshold": {
+    "modes": [
+      "recorded_view",
+      "simulated_replay",
+      "live_replay"
+    ],
+    "repeats_per_mode": 5,
+    "required_event_types": [
+      "run.started",
+      "environment.snapshot",
+      "provider.request",
+      "provider.response",
+      "tool.call",
+      "policy.decision",
+      "tool.result",
+      "state.transition",
+      "diff.created",
+      "test.output",
+      "run.completed"
+    ],
+    "required_event_fields": [
+      "event_id",
+      "run_id",
+      "type",
+      "logical_time",
+      "source"
+    ],
+    "mode_label_correctness": "100%",
+    "simulated_replay_expected_match": "5/5",
+    "live_replay_side_effects": 0
+  },
+  "status": "pass-with-composition",
+  "cases_passed": 15,
+  "cases_total": 15,
+  "checks": {
+    "all_cases_pass": true,
+    "recorded_capture_complete": true,
+    "required_event_fields_100_percent": true,
+    "mode_labels_100_percent": true,
+    "simulated_replay_matches": true,
+    "live_replay_default_deny": true,
+    "replay_side_effects_zero": true,
+    "missing_evidence_stops": true
+  },
+  "cases": [
+    {
+      "mode": "recorded_view",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "required_event_types": [
+          "diff.created",
+          "environment.snapshot",
+          "policy.decision",
+          "provider.request",
+          "provider.response",
+          "run.completed",
+          "run.started",
+          "state.transition",
+          "test.output",
+          "tool.call",
+          "tool.result"
+        ],
+        "effect_guard_unchanged": true
+      },
+      "checks": {
+        "real_codex_capture": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "capture_effect_guard_zero": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/recorded_view/repeat-01"
+    },
+    {
+      "mode": "recorded_view",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "required_event_types": [
+          "diff.created",
+          "environment.snapshot",
+          "policy.decision",
+          "provider.request",
+          "provider.response",
+          "run.completed",
+          "run.started",
+          "state.transition",
+          "test.output",
+          "tool.call",
+          "tool.result"
+        ],
+        "effect_guard_unchanged": true
+      },
+      "checks": {
+        "real_codex_capture": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "capture_effect_guard_zero": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/recorded_view/repeat-02"
+    },
+    {
+      "mode": "recorded_view",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "required_event_types": [
+          "diff.created",
+          "environment.snapshot",
+          "policy.decision",
+          "provider.request",
+          "provider.response",
+          "run.completed",
+          "run.started",
+          "state.transition",
+          "test.output",
+          "tool.call",
+          "tool.result"
+        ],
+        "effect_guard_unchanged": true
+      },
+      "checks": {
+        "real_codex_capture": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "capture_effect_guard_zero": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/recorded_view/repeat-03"
+    },
+    {
+      "mode": "recorded_view",
+      "repeat": 4,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "required_event_types": [
+          "diff.created",
+          "environment.snapshot",
+          "policy.decision",
+          "provider.request",
+          "provider.response",
+          "run.completed",
+          "run.started",
+          "state.transition",
+          "test.output",
+          "tool.call",
+          "tool.result"
+        ],
+        "effect_guard_unchanged": true
+      },
+      "checks": {
+        "real_codex_capture": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "capture_effect_guard_zero": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/recorded_view/repeat-04"
+    },
+    {
+      "mode": "recorded_view",
+      "repeat": 5,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "required_event_types": [
+          "diff.created",
+          "environment.snapshot",
+          "policy.decision",
+          "provider.request",
+          "provider.response",
+          "run.completed",
+          "run.started",
+          "state.transition",
+          "test.output",
+          "tool.call",
+          "tool.result"
+        ],
+        "effect_guard_unchanged": true
+      },
+      "checks": {
+        "real_codex_capture": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "capture_effect_guard_zero": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/recorded_view/repeat-05"
+    },
+    {
+      "mode": "simulated_replay",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": "fixture-ok",
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "cassette_only": true,
+        "semantic_result_matches": true,
+        "no_provider_tool_network": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/simulated_replay/repeat-01"
+    },
+    {
+      "mode": "simulated_replay",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": "fixture-ok",
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "cassette_only": true,
+        "semantic_result_matches": true,
+        "no_provider_tool_network": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/simulated_replay/repeat-02"
+    },
+    {
+      "mode": "simulated_replay",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": "fixture-ok",
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "cassette_only": true,
+        "semantic_result_matches": true,
+        "no_provider_tool_network": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/simulated_replay/repeat-03"
+    },
+    {
+      "mode": "simulated_replay",
+      "repeat": 4,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": "fixture-ok",
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "cassette_only": true,
+        "semantic_result_matches": true,
+        "no_provider_tool_network": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/simulated_replay/repeat-04"
+    },
+    {
+      "mode": "simulated_replay",
+      "repeat": 5,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": "fixture-ok",
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "cassette_only": true,
+        "semantic_result_matches": true,
+        "no_provider_tool_network": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/simulated_replay/repeat-05"
+    },
+    {
+      "mode": "live_replay",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": null,
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "default_deny": true,
+        "no_provider_tool_network": true,
+        "no_external_effect": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/live_replay/repeat-01"
+    },
+    {
+      "mode": "live_replay",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": null,
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "default_deny": true,
+        "no_provider_tool_network": true,
+        "no_external_effect": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/live_replay/repeat-02"
+    },
+    {
+      "mode": "live_replay",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": null,
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "default_deny": true,
+        "no_provider_tool_network": true,
+        "no_external_effect": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/live_replay/repeat-03"
+    },
+    {
+      "mode": "live_replay",
+      "repeat": 4,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": null,
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "default_deny": true,
+        "no_provider_tool_network": true,
+        "no_external_effect": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/live_replay/repeat-04"
+    },
+    {
+      "mode": "live_replay",
+      "repeat": 5,
+      "status": "pass",
+      "observed": {
+        "event_count": 13,
+        "semantic_result": null,
+        "execution_performed": false,
+        "external_effect_count": 0
+      },
+      "checks": {
+        "mode_label": true,
+        "default_deny": true,
+        "no_provider_tool_network": true,
+        "no_external_effect": true,
+        "identity_complete": true,
+        "effect_guard_unchanged": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/c6/live_replay/repeat-05"
+    }
+  ],
+  "run_id": "w7-codex-c5-c6-20260830T165822-636804Z",
+  "started_at": "2026-08-30T16:58:22.636804+00:00",
+  "finished_at": "2026-08-30T16:58:26.389043+00:00"
+}

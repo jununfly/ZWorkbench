@@ -1,0 +1,2 @@
+{"function_call_output_count":0,"mode":"normal","model":"fake-model","path":"/v1/responses","prompt_markers":["W7_INITIAL"],"provider_id":"w7-fake-codex","request_number":1,"stream":true}
+{"function_call_output_count":1,"mode":"normal","model":"fake-model","path":"/v1/responses","prompt_markers":["W7_INITIAL"],"provider_id":"w7-fake-codex","request_number":2,"stream":true}

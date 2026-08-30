@@ -1,0 +1,5 @@
+{
+  "status": "degraded",
+  "run_id": "w6-c7-fault_diagnosis-repeat-02",
+  "fault_id": "provider-timeout-001"
+}

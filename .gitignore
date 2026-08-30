@@ -1,2 +1,6 @@
 __pycache__/
 *.py[cod]
+
+# Codex app-server runtime state is local evidence-generation residue, not a
+# portable evaluation artifact.
+evaluation/runs/**/codex-home/

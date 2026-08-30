@@ -1,0 +1,8 @@
+{"timestamp":"2026-08-30T16:39:47.566820Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:39:47.566841Z","level":"WARN","fields":{"message":"Model personality requested but model_messages is missing, falling back to base instructions.","model":"fake-model","personality":"pragmatic"},"target":"codex_protocol::openai_models"}
+{"timestamp":"2026-08-30T16:39:47.590124Z","level":"WARN","fields":{"message":"Unknown model fake-model is used. This will use fallback model metadata."},"target":"codex_models_manager::model_info"}
+{"timestamp":"2026-08-30T16:39:47.621366Z","level":"WARN","fields":{"message":"stream disconnected - retrying sampling request (1/5 in 203ms)..."},"target":"codex_core::responses_retry"}
+{"timestamp":"2026-08-30T16:39:47.833028Z","level":"WARN","fields":{"message":"stream disconnected - retrying sampling request (2/5 in 408ms)..."},"target":"codex_core::responses_retry"}
+{"timestamp":"2026-08-30T16:39:48.248507Z","level":"WARN","fields":{"message":"stream disconnected - retrying sampling request (3/5 in 805ms)..."},"target":"codex_core::responses_retry"}
+{"timestamp":"2026-08-30T16:39:49.070059Z","level":"WARN","fields":{"message":"stream disconnected - retrying sampling request (4/5 in 1.442s)..."},"target":"codex_core::responses_retry"}
+{"timestamp":"2026-08-30T16:39:50.530065Z","level":"WARN","fields":{"message":"stream disconnected - retrying sampling request (5/5 in 2.913s)..."},"target":"codex_core::responses_retry"}

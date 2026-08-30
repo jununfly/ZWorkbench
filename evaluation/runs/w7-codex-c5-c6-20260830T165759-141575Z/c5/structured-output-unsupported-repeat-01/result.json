@@ -1,0 +1,78 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-structured-output-unsupported-01",
+  "status": "completed",
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:58016",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "started",
+      "type": "provider.attempt"
+    },
+    {
+      "attempt": 1,
+      "endpoint": "http://127.0.0.1:58016",
+      "model": "fake-model",
+      "provider_id": "fake-a",
+      "schema": "zworkbench-w7-codex-c56-router/v1",
+      "status": "succeeded",
+      "type": "provider.attempt"
+    }
+  ],
+  "capability_detection": [
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:58:14.022169+00:00",
+      "run_id": "w7-c5-structured-output-unsupported-01",
+      "provider_id": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:58016/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming",
+        "structured_output"
+      ]
+    },
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:58:14.023264+00:00",
+      "run_id": "w7-c5-structured-output-unsupported-01",
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:58017/v1/responses",
+      "capabilities": [
+        "tool_calls",
+        "streaming"
+      ]
+    }
+  ],
+  "fallback_ledger": [
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:58:14.023336+00:00",
+      "run_id": "w7-c5-structured-output-unsupported-01",
+      "from_provider": "fake-b",
+      "to_provider": "fake-a",
+      "reason": "capability_missing:structured_output"
+    }
+  ],
+  "degradation_ledger": [
+    {
+      "schema": "zworkbench-w7-codex-c56/v1",
+      "at": "2026-08-30T16:58:14.023339+00:00",
+      "run_id": "w7-c5-structured-output-unsupported-01",
+      "provider_id": "fake-b",
+      "capability": "structured_output",
+      "decision": "fallback",
+      "reason": "capability_missing:structured_output"
+    }
+  ],
+  "final": {
+    "provider": "fake-a",
+    "semantic_result": "fixture-ok",
+    "silent_semantic_change": false
+  }
+}

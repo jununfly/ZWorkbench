@@ -1,0 +1,16 @@
+{"fallback":"fake-a","pre_dispatch_reason":null,"primary":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","type":"router.started"}
+{"attempt":1,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":1,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","reason":"timeout","schema":"zworkbench-w7-codex-c56-router/v1","status":"failed","type":"provider.attempt"}
+{"attempt":1,"from_provider":"fake-b","reason":"timeout","schema":"zworkbench-w7-codex-c56-router/v1","to_provider":"fake-a","type":"provider.fallback"}
+{"attempt":2,"endpoint":"http://127.0.0.1:58400","model":"fake-model","provider_id":"fake-a","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":2,"endpoint":"http://127.0.0.1:58400","model":"fake-model","provider_id":"fake-a","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}
+{"attempt":2,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":2,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}
+{"attempt":3,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":3,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}
+{"attempt":4,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":4,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}
+{"attempt":5,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":5,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}
+{"attempt":6,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"started","type":"provider.attempt"}
+{"attempt":6,"endpoint":"http://127.0.0.1:58403","model":"fake-model","provider_id":"fake-b","schema":"zworkbench-w7-codex-c56-router/v1","status":"succeeded","type":"provider.attempt"}

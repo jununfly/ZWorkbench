@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c5-normal-a-03",
+  "scenario": "c5:normal-a",
+  "status": "completed",
+  "thread_id": "01a0539b-4b60-7f70-b0bd-d5f5760e23b7",
+  "turn_id": "01a0539b-4b74-7b21-9ca2-8b009ce4192b",
+  "last_checkpoint": "turn-completed"
+}

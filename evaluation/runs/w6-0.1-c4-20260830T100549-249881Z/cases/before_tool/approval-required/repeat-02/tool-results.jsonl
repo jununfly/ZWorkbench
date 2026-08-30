@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:05:49.575012+00:00","result":{"effect_action":"applied","result":"fixture-ok","side_effect_class":"approval-required","tool":"publish_approved_result","tool_attempt":1},"run_id":"w6-c4-before_tool-approval-required-02","schema":"zworkbench-w6-c4-state/v1","seq":10,"tool_attempt":1,"type":"tool.result"}

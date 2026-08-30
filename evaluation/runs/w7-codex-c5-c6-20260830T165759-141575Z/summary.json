@@ -1,0 +1,595 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "mode": "c5",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "Codex Harness",
+    "version": "codex-cli 0.139.0",
+    "entrypoint": "/opt/homebrew/bin/codex"
+  },
+  "adapter": {
+    "version": "w7-codex-c5-c6-composition-adapter/v1",
+    "fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c5-c6",
+    "provider_router": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c5-c6/provider-router.py"
+  },
+  "threshold": {
+    "normal_cases_per_provider": 5,
+    "fault_cases_per_kind": 3,
+    "cases_total": 19,
+    "fallback_reason_and_target": "100%",
+    "silent_semantic_change": 0,
+    "capability_missing_explicit": "100%"
+  },
+  "status": "pass-with-composition",
+  "cases_passed": 19,
+  "cases_total": 19,
+  "checks": {
+    "all_cases_pass": true,
+    "fallback_reasons_explicit": true,
+    "capability_detection_complete": true,
+    "silent_semantic_change_zero": true,
+    "missing_evidence_stops": true
+  },
+  "cases": [
+    {
+      "case_id": "normal-a-repeat-01",
+      "case_type": "normal-a",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-a-repeat-01"
+    },
+    {
+      "case_id": "normal-a-repeat-02",
+      "case_type": "normal-a",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-a-repeat-02"
+    },
+    {
+      "case_id": "normal-a-repeat-03",
+      "case_type": "normal-a",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-a-repeat-03"
+    },
+    {
+      "case_id": "normal-a-repeat-04",
+      "case_type": "normal-a",
+      "repeat": 4,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-a-repeat-04"
+    },
+    {
+      "case_id": "normal-a-repeat-05",
+      "case_type": "normal-a",
+      "repeat": 5,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-a-repeat-05"
+    },
+    {
+      "case_id": "normal-b-repeat-01",
+      "case_type": "normal-b",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-b",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-b-repeat-01"
+    },
+    {
+      "case_id": "normal-b-repeat-02",
+      "case_type": "normal-b",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-b",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-b-repeat-02"
+    },
+    {
+      "case_id": "normal-b-repeat-03",
+      "case_type": "normal-b",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-b",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-b-repeat-03"
+    },
+    {
+      "case_id": "normal-b-repeat-04",
+      "case_type": "normal-b",
+      "repeat": 4,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-b",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-b-repeat-04"
+    },
+    {
+      "case_id": "normal-b-repeat-05",
+      "case_type": "normal-b",
+      "repeat": 5,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-b",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 0,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/normal-b-repeat-05"
+    },
+    {
+      "case_id": "timeout-once-repeat-01",
+      "case_type": "timeout-once",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/timeout-once-repeat-01"
+    },
+    {
+      "case_id": "timeout-once-repeat-02",
+      "case_type": "timeout-once",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/timeout-once-repeat-02"
+    },
+    {
+      "case_id": "timeout-once-repeat-03",
+      "case_type": "timeout-once",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/timeout-once-repeat-03"
+    },
+    {
+      "case_id": "stream-interrupt-once-repeat-01",
+      "case_type": "stream-interrupt-once",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/stream-interrupt-once-repeat-01"
+    },
+    {
+      "case_id": "stream-interrupt-once-repeat-02",
+      "case_type": "stream-interrupt-once",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/stream-interrupt-once-repeat-02"
+    },
+    {
+      "case_id": "stream-interrupt-once-repeat-03",
+      "case_type": "stream-interrupt-once",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-b",
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 0
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/stream-interrupt-once-repeat-03"
+    },
+    {
+      "case_id": "structured-output-unsupported-repeat-01",
+      "case_type": "structured-output-unsupported",
+      "repeat": 1,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 1
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/structured-output-unsupported-repeat-01"
+    },
+    {
+      "case_id": "structured-output-unsupported-repeat-02",
+      "case_type": "structured-output-unsupported",
+      "repeat": 2,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 1
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/structured-output-unsupported-repeat-02"
+    },
+    {
+      "case_id": "structured-output-unsupported-repeat-03",
+      "case_type": "structured-output-unsupported",
+      "repeat": 3,
+      "status": "pass",
+      "observed": {
+        "attempt_providers": [
+          "fake-a"
+        ],
+        "capability_providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "final_provider": "fake-a",
+        "semantic_result": "fixture-ok",
+        "fallback_count": 1,
+        "degradation_count": 1
+      },
+      "checks": {
+        "real_codex_turn_completed": true,
+        "provider_metadata_complete": true,
+        "attempt_history_complete": true,
+        "capability_detection_complete": true,
+        "explicit_fallback": true,
+        "semantic_result_stable": true,
+        "no_silent_semantic_change": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/c5/structured-output-unsupported-repeat-03"
+    }
+  ],
+  "run_id": "w7-codex-c5-c6-20260830T165759-141575Z",
+  "started_at": "2026-08-30T16:57:59.141575+00:00",
+  "finished_at": "2026-08-30T16:58:16.750615+00:00"
+}

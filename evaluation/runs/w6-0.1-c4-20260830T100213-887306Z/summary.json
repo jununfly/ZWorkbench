@@ -1,0 +1,3304 @@
+{
+  "schema": "zworkbench-w6-c4/v1",
+  "run_id": "w6-0.1-c4-20260830T100213-887306Z",
+  "started_at": "2026-08-30T10:02:13.887306+00:00",
+  "finished_at": "2026-08-30T10:02:16.524350+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette"
+      ]
+    },
+    "manifest_sha256": "e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6",
+    "source_sha256": "554d746f8f152b81c73eecb936f1399dd6dd08e99f5eaf3ba8a7151d0a57a200",
+    "state_machine": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "state_machine_sha256": "ae68758820726ed3a28e18e644071e9d636f0c85b55c06cea1fda7591d6a3898"
+  },
+  "threshold": {
+    "injection_points": [
+      "before_tool",
+      "after_tool_before_commit",
+      "committed_before_next_step",
+      "provider_timeout",
+      "tool_timeout",
+      "process_interrupt"
+    ],
+    "repeats_per_injection_point": 3,
+    "tool_classes": [
+      "read-only",
+      "idempotent",
+      "approval-required"
+    ],
+    "total_cases": 54,
+    "recovered_or_safe_terminated": "100%",
+    "critical_state_loss": 0,
+    "unsafe_side_effect_duplicate": 0,
+    "max_retry_count": 1
+  },
+  "fixture_contract": {
+    "status": "fail",
+    "cases_passed": 51,
+    "cases_total": 54,
+    "checks": {
+      "all_cases_pass": false,
+      "each_fault_repeated_three_times": true,
+      "each_tool_class_covered": true,
+      "critical_state_loss": 0,
+      "unsafe_side_effect_duplicates": 0,
+      "unbounded_retries": 0,
+      "explainable_recovery": 0
+    },
+    "case_results": [
+      {
+        "case_id": "before_tool-read_only-repeat-01",
+        "fault": "before_tool",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/read-only/repeat-01"
+      },
+      {
+        "case_id": "before_tool-read_only-repeat-02",
+        "fault": "before_tool",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/read-only/repeat-02"
+      },
+      {
+        "case_id": "before_tool-read_only-repeat-03",
+        "fault": "before_tool",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/read-only/repeat-03"
+      },
+      {
+        "case_id": "before_tool-idempotent-repeat-01",
+        "fault": "before_tool",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/idempotent/repeat-01"
+      },
+      {
+        "case_id": "before_tool-idempotent-repeat-02",
+        "fault": "before_tool",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/idempotent/repeat-02"
+      },
+      {
+        "case_id": "before_tool-idempotent-repeat-03",
+        "fault": "before_tool",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/idempotent/repeat-03"
+      },
+      {
+        "case_id": "before_tool-approval_required-repeat-01",
+        "fault": "before_tool",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/approval-required/repeat-01"
+      },
+      {
+        "case_id": "before_tool-approval_required-repeat-02",
+        "fault": "before_tool",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/approval-required/repeat-02"
+      },
+      {
+        "case_id": "before_tool-approval_required-repeat-03",
+        "fault": "before_tool",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/before_tool/approval-required/repeat-03"
+      },
+      {
+        "case_id": "after_tool_before_commit-read_only-repeat-01",
+        "fault": "after_tool_before_commit",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/read-only/repeat-01"
+      },
+      {
+        "case_id": "after_tool_before_commit-read_only-repeat-02",
+        "fault": "after_tool_before_commit",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/read-only/repeat-02"
+      },
+      {
+        "case_id": "after_tool_before_commit-read_only-repeat-03",
+        "fault": "after_tool_before_commit",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/read-only/repeat-03"
+      },
+      {
+        "case_id": "after_tool_before_commit-idempotent-repeat-01",
+        "fault": "after_tool_before_commit",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/idempotent/repeat-01"
+      },
+      {
+        "case_id": "after_tool_before_commit-idempotent-repeat-02",
+        "fault": "after_tool_before_commit",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/idempotent/repeat-02"
+      },
+      {
+        "case_id": "after_tool_before_commit-idempotent-repeat-03",
+        "fault": "after_tool_before_commit",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/idempotent/repeat-03"
+      },
+      {
+        "case_id": "after_tool_before_commit-approval_required-repeat-01",
+        "fault": "after_tool_before_commit",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/approval-required/repeat-01"
+      },
+      {
+        "case_id": "after_tool_before_commit-approval_required-repeat-02",
+        "fault": "after_tool_before_commit",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/approval-required/repeat-02"
+      },
+      {
+        "case_id": "after_tool_before_commit-approval_required-repeat-03",
+        "fault": "after_tool_before_commit",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/after_tool_before_commit/approval-required/repeat-03"
+      },
+      {
+        "case_id": "committed_before_next_step-read_only-repeat-01",
+        "fault": "committed_before_next_step",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/read-only/repeat-01"
+      },
+      {
+        "case_id": "committed_before_next_step-read_only-repeat-02",
+        "fault": "committed_before_next_step",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/read-only/repeat-02"
+      },
+      {
+        "case_id": "committed_before_next_step-read_only-repeat-03",
+        "fault": "committed_before_next_step",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 12,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/read-only/repeat-03"
+      },
+      {
+        "case_id": "committed_before_next_step-idempotent-repeat-01",
+        "fault": "committed_before_next_step",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/idempotent/repeat-01"
+      },
+      {
+        "case_id": "committed_before_next_step-idempotent-repeat-02",
+        "fault": "committed_before_next_step",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/idempotent/repeat-02"
+      },
+      {
+        "case_id": "committed_before_next_step-idempotent-repeat-03",
+        "fault": "committed_before_next_step",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/idempotent/repeat-03"
+      },
+      {
+        "case_id": "committed_before_next_step-approval_required-repeat-01",
+        "fault": "committed_before_next_step",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/approval-required/repeat-01"
+      },
+      {
+        "case_id": "committed_before_next_step-approval_required-repeat-02",
+        "fault": "committed_before_next_step",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/approval-required/repeat-02"
+      },
+      {
+        "case_id": "committed_before_next_step-approval_required-repeat-03",
+        "fault": "committed_before_next_step",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 75,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 75,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/committed_before_next_step/approval-required/repeat-03"
+      },
+      {
+        "case_id": "provider_timeout-read_only-repeat-01",
+        "fault": "provider_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/read-only/repeat-01"
+      },
+      {
+        "case_id": "provider_timeout-read_only-repeat-02",
+        "fault": "provider_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/read-only/repeat-02"
+      },
+      {
+        "case_id": "provider_timeout-read_only-repeat-03",
+        "fault": "provider_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/read-only/repeat-03"
+      },
+      {
+        "case_id": "provider_timeout-idempotent-repeat-01",
+        "fault": "provider_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/idempotent/repeat-01"
+      },
+      {
+        "case_id": "provider_timeout-idempotent-repeat-02",
+        "fault": "provider_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/idempotent/repeat-02"
+      },
+      {
+        "case_id": "provider_timeout-idempotent-repeat-03",
+        "fault": "provider_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/idempotent/repeat-03"
+      },
+      {
+        "case_id": "provider_timeout-approval_required-repeat-01",
+        "fault": "provider_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/approval-required/repeat-01"
+      },
+      {
+        "case_id": "provider_timeout-approval_required-repeat-02",
+        "fault": "provider_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/approval-required/repeat-02"
+      },
+      {
+        "case_id": "provider_timeout-approval_required-repeat-03",
+        "fault": "provider_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 2,
+          "tool_attempts": 1,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/provider_timeout/approval-required/repeat-03"
+      },
+      {
+        "case_id": "tool_timeout-read_only-repeat-01",
+        "fault": "tool_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/read-only/repeat-01"
+      },
+      {
+        "case_id": "tool_timeout-read_only-repeat-02",
+        "fault": "tool_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/read-only/repeat-02"
+      },
+      {
+        "case_id": "tool_timeout-read_only-repeat-03",
+        "fault": "tool_timeout",
+        "tool_class": "read-only",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/read-only/repeat-03"
+      },
+      {
+        "case_id": "tool_timeout-idempotent-repeat-01",
+        "fault": "tool_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 16,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/idempotent/repeat-01"
+      },
+      {
+        "case_id": "tool_timeout-idempotent-repeat-02",
+        "fault": "tool_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 16,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/idempotent/repeat-02"
+      },
+      {
+        "case_id": "tool_timeout-idempotent-repeat-03",
+        "fault": "tool_timeout",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 16,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 1,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/idempotent/repeat-03"
+      },
+      {
+        "case_id": "tool_timeout-approval_required-repeat-01",
+        "fault": "tool_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "safe_stopped",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "safe_stopped",
+          "final_status": "safe_stopped",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "safe_stopped"
+            ]
+          ],
+          "event_count": 11,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/approval-required/repeat-01"
+      },
+      {
+        "case_id": "tool_timeout-approval_required-repeat-02",
+        "fault": "tool_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "safe_stopped",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "safe_stopped",
+          "final_status": "safe_stopped",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "safe_stopped"
+            ]
+          ],
+          "event_count": 11,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/approval-required/repeat-02"
+      },
+      {
+        "case_id": "tool_timeout-approval_required-repeat-03",
+        "fault": "tool_timeout",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": 0,
+          "final_status": "safe_stopped",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": 0,
+          "resume_returncode": 0,
+          "final_phase": "safe_stopped",
+          "final_status": "safe_stopped",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "safe_stopped"
+            ]
+          ],
+          "event_count": 11,
+          "attempt_history_count": 2,
+          "fault_records": 0,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/tool_timeout/approval-required/repeat-03"
+      },
+      {
+        "case_id": "process_interrupt-read_only-repeat-01",
+        "fault": "process_interrupt",
+        "tool_class": "read-only",
+        "status": "fail",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": false
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/read-only/repeat-01"
+      },
+      {
+        "case_id": "process_interrupt-read_only-repeat-02",
+        "fault": "process_interrupt",
+        "tool_class": "read-only",
+        "status": "fail",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": false
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/read-only/repeat-02"
+      },
+      {
+        "case_id": "process_interrupt-read_only-repeat-03",
+        "fault": "process_interrupt",
+        "tool_class": "read-only",
+        "status": "fail",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 2,
+          "retry_count": 1,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 14,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 1,
+          "effect_records": 0,
+          "physical_effects_applied": 0,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": false
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/read-only/repeat-03"
+      },
+      {
+        "case_id": "process_interrupt-idempotent-repeat-01",
+        "fault": "process_interrupt",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/idempotent/repeat-01"
+      },
+      {
+        "case_id": "process_interrupt-idempotent-repeat-02",
+        "fault": "process_interrupt",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/idempotent/repeat-02"
+      },
+      {
+        "case_id": "process_interrupt-idempotent-repeat-03",
+        "fault": "process_interrupt",
+        "tool_class": "idempotent",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/idempotent/repeat-03"
+      },
+      {
+        "case_id": "process_interrupt-approval_required-repeat-01",
+        "fault": "process_interrupt",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/approval-required/repeat-01"
+      },
+      {
+        "case_id": "process_interrupt-approval_required-repeat-02",
+        "fault": "process_interrupt",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/approval-required/repeat-02"
+      },
+      {
+        "case_id": "process_interrupt-approval_required-repeat-03",
+        "fault": "process_interrupt",
+        "tool_class": "approval-required",
+        "status": "pass",
+        "expected": {
+          "initial_returncode": -15,
+          "final_status": "completed",
+          "max_retries": 1
+        },
+        "observed": {
+          "initial_returncode": -15,
+          "resume_returncode": 0,
+          "final_phase": "completed",
+          "final_status": "completed",
+          "provider_attempts": 1,
+          "tool_attempts": 1,
+          "retry_count": 0,
+          "transition_pairs": [
+            [
+              "ready",
+              "provider_succeeded"
+            ],
+            [
+              "provider_succeeded",
+              "tool_started"
+            ],
+            [
+              "tool_started",
+              "committed"
+            ],
+            [
+              "committed",
+              "completed"
+            ]
+          ],
+          "event_count": 13,
+          "attempt_history_count": 2,
+          "fault_records": 1,
+          "tool_result_records": 0,
+          "effect_records": 1,
+          "physical_effects_applied": 1,
+          "unsafe_duplicate_count": 0
+        },
+        "checks": {
+          "initial_fault_contract": true,
+          "resume_contract": true,
+          "state_not_lost": true,
+          "state_transition_order": true,
+          "fault_recording": true,
+          "retry_bounded": true,
+          "retry_semantics": true,
+          "effect_ledger_deduplicated": true,
+          "side_effect_class_contract": true,
+          "unsafe_side_effect_duplicate_free": true,
+          "durable_reconciliation": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100213-887306Z/cases/process_interrupt/approval-required/repeat-03"
+      }
+    ]
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C4 adapter; fixture contract is not candidate evidence"
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C4 adapter; fixture contract is not candidate evidence"
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C4 adapter; fixture contract is not candidate evidence"
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C4 adapter; fixture contract is not candidate evidence"
+    },
+    "Goose": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C4 adapter; fixture contract is not candidate evidence"
+    }
+  },
+  "interpretation": {
+    "fixture_contract_is_not_candidate_pass": true,
+    "candidate_c4_requires_fixed_source_adapter": true,
+    "missing_candidate_evidence_remains_unknown": true,
+    "no_real_provider_or_external_side_effect": true,
+    "approval_required_timeout_policy": "safe-stop and preserve durable state; no automatic retry",
+    "process_interrupt_policy": "resume from checkpoint and reconcile effect ledger before any replay"
+  }
+}

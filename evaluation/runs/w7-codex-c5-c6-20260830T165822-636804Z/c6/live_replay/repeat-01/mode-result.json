@@ -1,0 +1,13 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "replay_mode": "live_replay",
+  "approval_required": true,
+  "approval_granted": false,
+  "decision": "deny",
+  "safe_denial": true,
+  "execution_performed": false,
+  "provider_access_count": 0,
+  "tool_invocation_count": 0,
+  "network_access_count": 0,
+  "external_effect_count": 0
+}

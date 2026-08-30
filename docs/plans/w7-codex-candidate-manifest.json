@@ -1,0 +1,116 @@
+{
+  "schema": "zworkbench-w7-candidate-manifest/v1",
+  "classification": "acceptance/evaluation",
+  "status": "identity-pinned-release-level",
+  "candidate": {
+    "name": "Codex Harness",
+    "canonical_repository": "https://github.com/openai/codex",
+    "role": "priority-validation-candidate",
+    "adoption_decision": "not-yet-decided"
+  },
+  "source": {
+    "release_tag": "rust-v0.139.0",
+    "resolved_commit": "a7dff904308535e965aee87680c1fc5ef1d19eec",
+    "tag_resolution_evidence": "git ls-remote refs/tags/rust-v0.139.0^{}",
+    "package_version_match": "0.139.0",
+    "binary_build_provenance": "unknown",
+    "source_to_binary_verified": false,
+    "interpretation": "The release/tag, package version, and artifact digests are pinned. No build attestation proves that this binary was reproducibly built from the resolved commit."
+  },
+  "runtime": {
+    "os": "Darwin 25.5.0",
+    "architecture": "arm64",
+    "node": "v22.23.1",
+    "cli_version_observed": "codex-cli 0.139.0"
+  },
+  "artifacts": {
+    "wrapper": {
+      "path": "/opt/homebrew/bin/codex",
+      "sha256": "d3be844c45c4fd89392536e56e1010963f94785592596b50cd0c45bb8a341406"
+    },
+    "npm_package": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/package.json",
+      "sha256": "c6e68915c8c7c2c5169ccb6d326789850a9a540875cbc3b04dc3df4d775e7412",
+      "version": "0.139.0",
+      "license": "Apache-2.0"
+    },
+    "platform_package": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
+      "sha256": "e690d7640a91f7045f621e18aa493e23a9b390e239834988eb6096676d21ca3a",
+      "version": "0.139.0-darwin-arm64"
+    },
+    "vendor_binary": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+      "sha256": "c6ede9ef9b672ef5a99384e507bec5476cbb60934c03f19cbd0355d9fdd83915",
+      "format": "Mach-O 64-bit executable arm64"
+    }
+  },
+  "entrypoints": {
+    "cli": [
+      "/opt/homebrew/bin/codex"
+    ],
+    "version_check": [
+      "/opt/homebrew/bin/codex",
+      "--version"
+    ],
+    "app_server_help_check": [
+      "/opt/homebrew/bin/codex",
+      "app-server",
+      "--help"
+    ]
+  },
+  "evaluation_contract": {
+    "fixture_version": "W6-0.1",
+    "fixture_manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "fixture_source_sha256": "81cf7f9b62f6706d7b23de6d71915ae372617e5ceab3cef3d6e396f07de67b52",
+    "prompt_sha256": "c9f2fefbc731399e1a8c796e1d23e8be191e7ab9b1d41680b8ad0c76a7814e6b",
+    "tool_schema_sha256": "b29fe0c86ba2a4b102326b2b4bc5b8d4b8f7de321d36942a0db3183be29b9a5e",
+    "evaluator": "evaluation/runner/run_baseline.py",
+    "evaluator_sha256": "5e53f7a43d77a2a9cb2e65259a7f273a0476b637333e751b9dc04b973bec2b4f",
+    "provider": {
+      "ids": [
+        "fake-a",
+        "fake-b"
+      ],
+      "protocol": "OpenAI-compatible Responses via Ollama-compatible local endpoint",
+      "config_sha256": "81d1891cff584da5d1a6f0d2ef4788596003f7764cdd8fdb5b66f98b51c210fa",
+      "network": "loopback-only"
+    },
+    "sandbox": {
+      "mode": "workspace-write",
+      "approval_policy": "never",
+      "network": "loopback-only fixture endpoint"
+    },
+    "side_effect_policy": "No real credentials, external network, Git push, deployment, or irreversible effect is permitted."
+  },
+  "smoke_evidence": {
+    "run_id": "w6-0.1-baseline-20260830T144245-541564Z",
+    "summary": "evaluation/runs/w6-0.1-baseline-20260830T144245-541564Z/summary.json",
+    "fixture_self_test": "7/7 pass",
+    "candidate_c1": {
+      "fake-a": "5/5 pass",
+      "fake-b": "5/5 pass",
+      "test_pass_rate": "100%",
+      "out_of_scope_modifications": 0,
+      "candidate_overall": "unknown"
+    }
+  },
+  "gate_status": {
+    "release_or_source_identity": "pass-at-release-level",
+    "artifact_digest": "pass",
+    "entrypoint_version_check": "pass",
+    "app_server_entrypoint_discovery": "pass-help-only",
+    "c1_smoke": "pass",
+    "candidate_c2_scripted_adapter": "pass",
+    "c2_unapproved_execution": 0,
+    "c2_critical_interception_rate": 1.0,
+    "c2_run_id": "w6-0.1-c2-20260830T144743-847310Z",
+    "reproducible_build_attestation": "unknown",
+    "candidate_c2_to_c7": "unknown",
+    "human_c7_timing": "unknown"
+  },
+  "rollback_target": {
+    "identity": "rust-v0.139.0 / a7dff904308535e965aee87680c1fc5ef1d19eec",
+    "rollback_evidence": "Not exercised; W7-1 only freezes the target identity."
+  }
+}

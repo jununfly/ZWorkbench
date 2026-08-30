@@ -1,0 +1,1 @@
+{"effect_action":"none","idempotency_key":"codex-c3-c4-v1:w7-c4-turn_interrupt-read-only-01","logical_effect_count":0,"operation_id":"w7-c4-turn_interrupt-read-only-01:operation-1","run_id":"w7-c4-turn_interrupt-read-only-01","schema":"zworkbench-w7-codex-effect/v1","side_effect_class":"read-only","tool_result":"fixture-ok"}

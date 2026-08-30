@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w6-c4-case/v1",
+  "run_id": "w6-c4-before_tool-approval-required-02",
+  "fault": "before_tool",
+  "tool_class": "approval-required",
+  "repeat": 2,
+  "fixture_version": "W6-0.1",
+  "approval_granted": true
+}

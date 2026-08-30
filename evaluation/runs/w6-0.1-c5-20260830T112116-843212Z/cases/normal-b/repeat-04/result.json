@@ -1,0 +1,78 @@
+{
+  "schema": "zworkbench-w6-c5-case/v1",
+  "router_version": "w6-c5-provider-router/v1",
+  "status": "completed",
+  "task": {
+    "schema": "zworkbench-w6-c5-task/v1",
+    "task_id": "provider-failover-v1",
+    "prompt": "Return the deterministic W6 C5 fixture answer.",
+    "requires_structured_output": false,
+    "expected_semantic_result": {
+      "answer": "fixture-ok"
+    }
+  },
+  "primary_provider": {
+    "provider_id": "fake-b",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:56428"
+  },
+  "fallback_provider": null,
+  "capability_detection": [
+    {
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:56428",
+      "status": "success",
+      "capabilities": [
+        "streaming",
+        "tool_calls"
+      ]
+    }
+  ],
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "phase": "provider_request",
+      "status": "success",
+      "started_at": "2026-08-30T11:21:18.280013+00:00",
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:56428",
+      "structured_output_requested": false,
+      "finished_at": "2026-08-30T11:21:18.280857+00:00",
+      "duration_ms": 1,
+      "semantic_result": {
+        "answer": "fixture-ok"
+      },
+      "semantic_signature": "fed41083fa8492f1e976a8413fcd1a901172bb6e6d73b09445c60a44a0f24c11",
+      "http_status": 200,
+      "response_metadata": {
+        "protocol": "chat-completions",
+        "stream_complete": true,
+        "finish_reason": "stop",
+        "content": "fixture-ok"
+      }
+    }
+  ],
+  "fallback_ledger": [],
+  "degradation_ledger": [],
+  "final": {
+    "provider": "fake-b",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:56428",
+    "semantic_result": {
+      "answer": "fixture-ok"
+    },
+    "semantic_signature": "fed41083fa8492f1e976a8413fcd1a901172bb6e6d73b09445c60a44a0f24c11",
+    "expected_semantic_result": {
+      "answer": "fixture-ok"
+    },
+    "silent_semantic_change": false
+  },
+  "decision": {
+    "outcome": "primary_success",
+    "reason": null,
+    "same_provider_retry": false
+  },
+  "local_only": true
+}

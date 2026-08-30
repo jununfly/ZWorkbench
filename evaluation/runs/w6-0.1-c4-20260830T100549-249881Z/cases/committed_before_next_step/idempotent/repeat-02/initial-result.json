@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T100549-249881Z/cases/committed_before_next_step/idempotent/repeat-02",
+    "--run-id",
+    "w6-c4-committed_before_next_step-idempotent-02",
+    "--tool-class",
+    "idempotent",
+    "--fault",
+    "committed_before_next_step",
+    "--mode",
+    "initial"
+  ],
+  "returncode": 75,
+  "stdout": "{\"exit_code\": 75, \"outcome\": \"fault-injected\", \"run_id\": \"w6-c4-committed_before_next_step-idempotent-02\"}\n",
+  "stderr": "",
+  "duration_ms": 24,
+  "timed_out": false
+}

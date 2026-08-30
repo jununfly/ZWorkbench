@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w7-codex-c56/v1",
+  "run_id": "w7-c6-recorded-02",
+  "candidate": "Codex Harness",
+  "candidate_version": "codex-cli 0.139.0",
+  "entrypoint": "/opt/homebrew/bin/codex",
+  "sandbox": "workspace-write",
+  "approval_policy": "never",
+  "provider": "w7-fake-codex-c6",
+  "model": "fake-model",
+  "endpoint": "http://127.0.0.1:11434/v1/responses",
+  "thread_id": "01a0539b-a01a-7731-9dd5-41c428afecd2",
+  "turn_id": "01a0539b-a047-7933-b713-56362a1d642d"
+}

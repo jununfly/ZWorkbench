@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-delayed_trigger-03",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-delayed_trigger-03",
+  "scenario": "delayed_trigger",
+  "tool_class": "idempotent",
+  "fault": null,
+  "fixture": "w7-codex-c3-c4",
+  "candidate": "Codex Harness",
+  "candidate_version": "codex-cli 0.139.0",
+  "provider": "w7-fake-codex via loopback /v1/responses",
+  "adapter_version": "w7-codex-c3-c4-composition-adapter/v1"
+}

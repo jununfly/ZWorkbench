@@ -1,0 +1,2 @@
+{"capabilities": ["tool_calls", "streaming"], "kind": "capability_probe", "model": "fake-model", "path": "/v1/capabilities", "provider_id": "fake-b"}
+{"fault_configured": null, "fault_injected": false, "function_call_output_count": 0, "input_types": [], "model": "fake-model", "path": "/v1/chat/completions", "provider_id": "fake-b", "response_format": null, "stream": true, "structured_output_requested": false}

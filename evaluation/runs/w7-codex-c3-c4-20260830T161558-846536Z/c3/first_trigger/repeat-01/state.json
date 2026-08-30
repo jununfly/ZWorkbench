@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-c3-first_trigger-01",
+  "schedule_id": "codex-c3-c4-v1",
+  "idempotency_key": "codex-c3-c4-v1:w7-c3-first_trigger-01",
+  "scenario": "first_trigger",
+  "thread_id": "01a05374-ce7e-70e3-bac9-8f574a45080b",
+  "turn_id": "01a05374-cea5-70c0-9d79-31cd5389bebc",
+  "phase": "completed",
+  "status": "completed",
+  "retry_count": 0,
+  "last_checkpoint": "result-recorded",
+  "effect_status": "applied",
+  "result_status": "completed",
+  "safe_stop_reason": null
+}

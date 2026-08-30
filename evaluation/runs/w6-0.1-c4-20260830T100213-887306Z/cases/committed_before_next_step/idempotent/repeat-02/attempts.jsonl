@@ -1,0 +1,2 @@
+{"at":"2026-08-30T10:02:14.993612+00:00","invocation":1,"mode":"initial","phase":"ready","run_id":"w6-c4-committed_before_next_step-idempotent-02","schema":"zworkbench-w6-c4-state/v1","seq":2,"type":"invocation.attempt"}
+{"at":"2026-08-30T10:02:15.020162+00:00","invocation":2,"mode":"resume","phase":"committed","run_id":"w6-c4-committed_before_next_step-idempotent-02","schema":"zworkbench-w6-c4-state/v1","seq":11,"type":"invocation.attempt"}

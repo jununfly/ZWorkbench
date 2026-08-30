@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:06:53.762700+00:00","operation_id":"w6-c4-process_interrupt-approval-required-03:operation-1","payload":"fixture-local-only","physical_effect_count":1,"replay_safe":false,"run_id":"w6-c4-process_interrupt-approval-required-03","schema":"zworkbench-w6-c4-state/v1","side_effect_class":"approval-required"}

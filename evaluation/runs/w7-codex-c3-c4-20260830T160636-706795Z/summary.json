@@ -1,0 +1,15 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w7-codex-c3-c4-20260830T160636-706795Z",
+  "mode": "smoke",
+  "result": {
+    "status": "pass",
+    "initial": {
+      "initial_status": "completed",
+      "initial_returncode": 0,
+      "interrupted": false
+    },
+    "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T160636-706795Z/smoke"
+  },
+  "classification": "acceptance/evaluation"
+}
