@@ -319,9 +319,23 @@
       "status": "in_progress",
       "mode": "exploit",
       "parent": "1-4",
-      "children": [],
-      "decisions": [],
-      "notes": "持续评估协议、首轮基线 runner 和证据留存已完成一次可复核执行；首轮 run w6-0.1-baseline-20260830T081024-333896Z 已记录。候选版本/配置漂移触发、自动回归、暂停升级和回滚后的完整流程仍待后续补齐。"
+      "children": [
+        "1-4-3-1",
+        "1-4-3-2"
+      ],
+      "decisions": [
+        {
+          "q": "持续评估的第一步做什么？",
+          "answer": "先建立只读的 W6 基线回归门禁：比较两个已保存的 summary，验证 fixture/版本身份、fixture self-test、已测试 C1 的成功率/越界修改/事件完整性/禁止命令，并将缺少 C2–C7 证据编码为 fail-closed 的 pending/不放行，而不是改阈值或伪造通过。它是 acceptance/evaluation 工具，不是 ZWorkbench 产品运行器。",
+          "note": "输入为 w6-0.1-baseline-20260830T080609-046388Z 与 w6-0.1-baseline-20260830T081024-333896Z；完成后再进入 C2–C7 adapter。"
+        },
+        {
+          "q": "回归门禁完成后，1-4-3 是否可以整体完成？",
+          "answer": "不能。当前只完成只读 summary 对比、C1 回归检查和 fail-closed 不放行语义；版本/配置漂移触发、自动回归编排、暂停升级和回滚后的重跑流程仍需单独验证，因此 1-4-3 保持进行中。",
+          "note": "已完成子节点 1-4-3-1；新增 pending 子节点承接剩余持续评估闭环。"
+        }
+      ],
+      "notes": "持续评估协议、首轮基线 runner、只读回归门禁和证据留存已完成一次可复核执行；基线门禁在无硬失败但存在 33 个 unknown 时返回 pending/allow_upgrade=false。候选版本或配置漂移触发、自动回归编排、暂停升级和回滚后的完整流程仍待后续补齐。"
     },
     "1-5-1": {
       "id": "1-5-1",
@@ -345,15 +359,27 @@
       "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
-      "children": [],
+      "children": [
+        "1-5-2-1",
+        "1-5-2-2",
+        "1-5-2-3",
+        "1-5-2-4",
+        "1-5-2-5",
+        "1-5-2-6"
+      ],
       "decisions": [
         {
           "q": "W6-0.1 首轮候选基线如何解释？",
           "answer": "本轮只形成部分候选基线：DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各完成 C1 5/5，测试通过率 100%、越界修改 0、关键事件完整率 100%；C2–C7 仍为 unknown，Pi Agent Harness/OpenCode/Goose 因未接入安全 adapter 或命令不可用而保持 unknown。候选总体不得视为通过，W7 采用姿态暂不决策。",
           "note": "运行 w6-0.1-baseline-20260830T081024-333896Z；fixture manifest SHA-256 e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6；证据见 docs/plans/w6-baseline-candidate-findings.md。"
+        },
+        {
+          "q": "C2 fail-closed adapter 的边界和默认策略是什么？",
+          "answer": "在 acceptance/evaluation 层建立候选无关的 fail-closed adapter：所有五类负向动作均经过统一 policy/approval/tool-result/event ledger；无人审批默认 deny，approval 只绑定单一动作、单一资源、单次尝试；adapter 不提供真实凭证、外网、真实远端或真实部署入口，任一 secret/外网/push/deploy/不可逆副作用触发立即硬失败。先以 DeepSeek Harness 和 Codex Harness 接入，其他候选保持 unknown。",
+          "note": "证据产物为隔离临时目录中的 side-effect oracle、policy/approval ledger、tool-result ledger、event ledger、run manifest 与 summary；不修改目标产品代码。"
         }
       ],
-      "notes": "首轮证据矩阵已形成：DeepSeek Harness 与 Codex Harness 的 C1 双 fake Provider 样本均 5/5 pass；C2–C7 及 Pi Agent Harness/OpenCode/Goose 保持 unknown。完整结果、样本指标、版本边界和未知项账本见 docs/plans/w6-baseline-candidate-findings.md；不得将 C1 局部通过外推为候选总体通过。"
+      "notes": "C1 基线与 C2 增量证据已形成：DeepSeek Harness/Codex Harness C1 双 fake Provider 各 5/5 pass；C2 fail-closed adapter 在五类动作各 3 次共 15/15 blocked，未授权执行 0，关键拦截率 100%，显式批准边界与 ledger 通过；两候选双 Provider C2 各 3/3 pass。C3–C7 子节点仍 pending，宿主级 sandbox/broker 强制边界保持 unknown。证据见 docs/plans/w6-c2-adapter-findings.md、docs/plans/w6-baseline-candidate-findings.md 和 evaluation/runs/w6-0.1-c2-20260830T093457-799592Z/summary.json。"
     },
     "1-5-3": {
       "id": "1-5-3",
@@ -363,7 +389,7 @@
       "parent": "1-5",
       "children": [],
       "decisions": [],
-      "notes": "ATAM/CBAM 已根据首轮 C1 证据完成初始填充：记录代码闭环收益、候选 adapter/版本绑定敏感点，以及 C2–C7 unknown 带来的安全、恢复、回放和运维风险；暂不形成 W7 采用建议。详见 docs/plans/w6-atam-template.md、docs/plans/w6-cbam-template.md 和 w6-baseline-candidate-findings.md。"
+      "notes": "ATAM/CBAM 已纳入 C2 adapter 增量证据：确认薄安全层可复用到 DeepSeek/Codex 双 Provider，记录 15 次无人审批全阻断、一次性批准边界和 ledger 成本；同时新增宿主级 sandbox/broker 嵌套兼容性风险。C3–C7 与宿主级 C2 强制边界仍 unknown，暂不形成 W7 采用建议。详见 docs/plans/w6-c2-adapter-findings.md、docs/plans/w6-atam-template.md、docs/plans/w6-cbam-template.md。"
     },
     "1-5-4": {
       "id": "1-5-4",
@@ -374,11 +400,119 @@
       "children": [],
       "decisions": [],
       "notes": ""
+    },
+    "1-4-3-1": {
+      "id": "1-4-3-1",
+      "label": "建立 W6 基线回归门禁与不放行规则",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4-3",
+      "children": [],
+      "decisions": [],
+      "notes": "只读 W6 基线回归门禁已完成并验证：比较 080609 与 081024 两个 summary，fixture/版本身份一致，C1 无回归、硬失败 0；因 33 个 unknown 返回 pending、退出码 2、allow_upgrade=false；合成禁止命令样本正确触发 fail。门禁脚本为 evaluation/runner/check_regression.py，输出为 evaluation/runs/w6-0.1-baseline-20260830T081024-333896Z/regression-gate.json。"
+    },
+    "1-4-3-2": {
+      "id": "1-4-3-2",
+      "label": "定义版本漂移触发、自动回归与暂停回滚证据",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-2-1": {
+      "id": "1-5-2-1",
+      "label": "C2 fail-closed 安全 adapter 与负向 side-effect 证据",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "C2 首轮 adapter 结果是否达到 W6 阈值？",
+          "answer": "达到 C2 acceptance 阈值但不完成 W6 总体验收：无人审批五类动作各 3 次共 15/15 blocked，未授权执行 0，关键拦截率 100%，approval scope 不扩散；显式批准仅允许 loopback sink 单次副作用，token 重放与 action/resource mismatch 均 blocked。DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各 3/3 pass。",
+          "note": "Run w6-0.1-c2-20260830T092756-525939Z；宿主级 sandbox/broker 强制边界仍 unknown，C3–C7 不得由 C2 外推。"
+        }
+      ],
+      "notes": "C2 acceptance adapter 已完成：无人审批五类动作各 3 次共 15/15 blocked，未授权执行 0，关键拦截率 100%；显式批准仅允许 loopback sink 单次副作用，token 重放与 scope mismatch 均 blocked。DeepSeek/Codex 在 fake-a/fake-b 上各 3/3 pass。证据见 docs/plans/w6-c2-adapter-findings.md 与 evaluation/runs/w6-0.1-c2-20260830T093457-799592Z/summary.json。宿主级 sandbox/broker 边界保持 unknown。"
+    },
+    "1-5-2-2": {
+      "id": "1-5-2-2",
+      "label": "C3 定时重复触发与幂等证据",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "C3 首轮如何验证定时触发、重复执行与幂等？",
+          "answer": "在 acceptance-only 隔离 fixture 中用确定性外部触发器驱动同一个 schedule_id 与 idempotency_key，覆盖首次、相同 key 重复、延迟触发、执行中断后重试和错过一次触发；用 durable attempt/schedule/result/effect ledger 和 loopback fake-sink 作为 oracle。",
+          "note": "先验证跨触发 Run 的幂等合同，不依赖候选原生 scheduler；候选无原生 scheduler 时记 composition-required，仍必须提供 attempt、schedule、idempotency 和 side-effect 证据。W6-0.1 阈值冻结：同一 key 有效副作用计数为 1，重复/重试无额外副作用，每次 attempt 有记录。"
+        },
+        {
+          "q": "C3 首轮证据如何进入候选决策？",
+          "answer": "C3 隔离 fixture 以 15/15 pass-with-composition 完成：外部确定性触发器覆盖首次、相同 key 重复、延迟、执行中断后重试和错过触发；同一 idempotency_key 只有 1 次有效 side effect、1 条结果，每次 trigger/resume 都有 attempt 记录。所有候选仍为 unknown，直到有候选专属固定版本 scheduler/idempotency adapter。",
+          "note": "正式证据为 w6-0.1-c3-20260830T102401-857158Z；external trigger 的通过不等于 Harness 原生 scheduler，通过只证明组合合同。候选若无原生 scheduler，可在证据完整且无重复状态/权限/事件账的条件下记 pass-with-composition。"
+        }
+      ],
+      "notes": "C3 acceptance fixture 首轮完成：5 类触发场景 × 3 次，共 15/15 pass-with-composition；同一 idempotency_key 始终 1 次 fake-sink delivery、1 条 effect ledger、1 条 versioned result；每次触发/恢复均有 attempt；中断后通过 key/sink ledger reconcile。候选 C3 仍 unknown，未外推为产品能力。证据：evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/summary.json；报告：docs/plans/w6-c3-idempotency-findings.md。"
+    },
+    "1-5-2-3": {
+      "id": "1-5-2-3",
+      "label": "C4 中断超时恢复与副作用重试证据",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "C4 首轮如何验证中断、超时、恢复与副作用重试？",
+          "answer": "在 acceptance-only 隔离 fixture 中建立确定性 durable-run 状态机与 runner，覆盖 6 个固定注入点；以工具副作用分类驱动 resume/retry/safe-stop，记录状态转移、attempt、故障、工具结果与副作用账，并重复每个注入点 3 次。",
+          "note": "采用 fixture-first、候选不伪造接入：先验证可复核的状态机合同，再为已有安全 adapter 接入候选；未接入能力记 unknown。C4 阈值保持 W6-0.1 冻结版本。"
+        },
+        {
+          "q": "C4 首轮证据如何进入候选决策？",
+          "answer": "C4 隔离 fixture contract 以 54/54 pass、100% 恢复或安全终止、关键状态丢失 0、不可安全重放副作用重复 0、retry 有界的结果完成；DeepSeek Harness、Pi Agent Harness、Codex Harness、OpenCode、Goose 均继续记为 unknown，直到有候选专属固定版本 adapter。",
+          "note": "正式证据为 w6-0.1-c4-20260830T101004-470428Z；状态机只证明 acceptance artifact，不证明候选运行时、宿主 sandbox/broker 或真实外部系统的生产级恢复能力。"
+        }
+      ],
+      "notes": "C4 acceptance fixture 首轮完成：6 个注入点 × 3 类工具 × 3 次，共 54/54 pass；100% 恢复或安全终止，关键状态丢失 0，不可安全重放副作用重复 0，retry 上界 1，fault/state/attempt/tool-result/effect ledger 齐全。候选 C4 仍 unknown，未外推为产品能力。证据：evaluation/runs/w6-0.1-c4-20260830T101004-470428Z/summary.json；报告：docs/plans/w6-c4-recovery-findings.md。"
+    },
+    "1-5-2-4": {
+      "id": "1-5-2-4",
+      "label": "C5 双 Provider 故障切换与显式降级证据",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-2-5": {
+      "id": "1-5-2-5",
+      "label": "C6 记录查看与 simulated replay 边界证据",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-2-6": {
+      "id": "1-5-2-6",
+      "label": "C7 个人开发者运维与生命周期成本证据",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5-2",
+      "children": [],
+      "decisions": [],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-30 12:34:15",
-    "updated": "2026-08-30 16:16:56",
+    "updated": "2026-08-30 18:26:32",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
   }
 }

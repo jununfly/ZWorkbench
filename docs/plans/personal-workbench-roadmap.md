@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `personal-workbench-roadmap.json` | 最后更新: 2026-08-30 16:16:56
+> 数据文件: `personal-workbench-roadmap.json` | 最后更新: 2026-08-30 18:26:32
 
 [~][X+] 1. W6 统一评估矩阵与 ATAM/CBAM 持续验证门槛
 ├── [x][Y+] 1-1. 冻结候选分层与硬门槛
@@ -28,7 +28,7 @@
     ├── [~][Y+] 1-5-3. 生成 ATAM/CBAM 决策包
     └── [ ][Y+] 1-5-4. W6 signoff 并交接 W7 采用姿态决策
 
-### 当前施工：1-4-3. 触发、漂移监测、回归与暂停升级
+### 当前施工：1-5-3. 生成 ATAM/CBAM 决策包
 
-持续评估协议、首轮基线 runner 和证据留存已完成一次可复核执行；首轮 run w6-0.1-baseline-20260830T081024-333896Z 已记录。候选版本/配置漂移触发、自动回归、暂停升级和回滚后的完整流程仍待后续补齐。
+ATAM/CBAM 已纳入 C2 adapter 增量证据：确认薄安全层可复用到 DeepSeek/Codex 双 Provider，记录 15 次无人审批全阻断、一次性批准边界和 ledger 成本；同时新增宿主级 sandbox/broker 嵌套兼容性风险。C3–C7 与宿主级 C2 强制边界仍 unknown，暂不形成 W7 采用建议。详见 docs/plans/w6-c2-adapter-findings.md、docs/plans/w6-atam-template.md、docs/plans/w6-cbam-template.md。
 <!-- ROADMAP_SECTION_END -->

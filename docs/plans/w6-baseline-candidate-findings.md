@@ -96,10 +96,35 @@ C1 允许的修改仅为 `src/tinycalc/normalize.py` 和 `tests/test_normalize.p
 
 可测的 C1 候选执行耗时合计约 5.920 秒（DeepSeek，10 次）和 11.827 秒（Codex，10 次）；这只能作为局部运行时基线，不能代表总体成本。安装、升级、备份恢复、故障排障、Token、存储、凭证和迁移成本全部未测。
 
-## 7. 结论与交接
+## 7. 基线回归门禁
+
+使用只读 [`check_regression.py`](../../evaluation/runner/check_regression.py) 比较前一轮 `w6-0.1-baseline-20260830T080609-046388Z` 与本轮 `w6-0.1-baseline-20260830T081024-333896Z`：
+
+| 项目 | 结果 |
+|---|---|
+| Fixture 身份变化 | 无；manifest/source hash 与冻结 `W6-0.1` 一致 |
+| 已测试 C1 回归 | 无；DeepSeek/Codex 的 fake-a/fake-b 均保持 5/5、测试 100%、越界修改 0 |
+| 硬失败 | 0 |
+| 未知项 | 33 项（C2–C7，以及 Pi/OpenCode/Goose 的 C1–C7） |
+| 门禁状态 | `pending` |
+| 退出码 | `2` |
+| 是否允许升级 | `false` |
+| 输出 | [`regression-gate.json`](../../evaluation/runs/w6-0.1-baseline-20260830T081024-333896Z/regression-gate.json) |
+
+这证明了“未知不转成通过，关键证据不足时不放行”的持续评估语义；合成篡改样本还验证了禁止命令会触发 `fail` 和 `allow_upgrade=false`。该门禁仍只检查当前已具备的 C1 证据，不能替代 C2–C7 的场景 adapter。
+
+## 8. 结论与交接
 
 1. `W6-0.1` fixture 已创建并通过自身 C1–C7 合同自测。
 2. 首轮候选基线目前只覆盖 C1：DeepSeek Harness 与 Codex Harness 均为 5/5、双 fake Provider、`pass`。
 3. 所有候选总体仍为 `unknown`；C2–C7 不得用 C1 结果填充。
 4. 不基于本轮结果给出 W7 最终采用建议，也不把 DeepSeek/Codex 的 C1 结果解释为产品发布准备度。
-5. 下一轮优先顺序：绑定候选版本 → C2 fail-closed 安全 adapter → C4 中断恢复 → C6 replay contract；随后再补 C3/C5/C7，并用同一批证据更新 ATAM/CBAM。
+5. 基线回归门禁已具备；C2 fail-closed adapter 已在独立运行中完成首轮验证：见 [`w6-c2-adapter-findings.md`](./w6-c2-adapter-findings.md) 与 `w6-0.1-c2-20260830T093457-799592Z`；下一步是 C4 中断恢复 → C6 replay contract，随后再补 C3/C5/C7，并用同一批证据更新 ATAM/CBAM。
+
+## C2 adapter 首轮更新
+
+C2 adapter 的正式结果不回填为旧首轮 baseline，而作为新的证据批次单独保存。DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各 3/3 通过；五类动作各 3 次无人审批均阻断，未授权执行为 0，显式批准只使 loopback sink 产生 1 次副作用，token 重放与 scope mismatch 均阻断。宿主级外层 `sandbox-exec` 因与候选内置 sandbox 嵌套不兼容，保留为待解决边界，不把它伪装成已验证能力。
+
+## C3 定时与幂等增量证据
+
+C3 fixture contract 已独立完成 `15/15` pass-with-composition：外部确定性触发器覆盖首次、同 key 重复、延迟、执行中断后重试和错过触发；每个 case 同一 `idempotency_key` 只产生 1 次 fake-sink delivery、1 条 effect ledger 和 1 条 versioned result。证据见 [`w6-c3-idempotency-findings.md`](./w6-c3-idempotency-findings.md) 与 Run `w6-0.1-c3-20260830T102401-857158Z`。这不改变候选矩阵：本批次没有启动候选或使用候选原生 scheduler，DeepSeek/Codex/Pi/OpenCode/Goose 的 C3 仍为 `unknown`；需要候选专属固定版本 adapter 后再实测。

@@ -105,6 +105,36 @@
 
 C1 的双 Provider 运行均达到：测试通过率 100%、越界修改 0、关键事件完整率 100%、禁止命令 0。该结果不能外推到 G2–G7；特别是 C2–C7 尚没有统一安全、状态、回放和运维证据。
 
+## 6.4 C4 中断恢复首轮证据
+
+证据：[C4 中断、超时、恢复与副作用重试](./w6-c4-recovery-findings.md)，Run ID：`w6-0.1-c4-20260830T101004-470428Z`。
+
+这是 acceptance-only fixture contract，不是候选 Harness 通过结果。状态机覆盖 6 个固定注入点、3 类工具和每格 3 次重复，共 54/54 pass：恢复或安全终止 100%，关键状态丢失 0，不可安全重放副作用重复 0，retry 上界为 1，且每个案例保存 state transition、fault、attempt、tool-result 和 effect ledger。候选 C4 仍保持 `unknown`，因为尚未有候选专属固定版本 adapter。
+
+| C4 观察 | 当前证据 | 决策含义 |
+|---|---|---|
+| durable checkpoint | `ready → provider_succeeded → tool_started → committed → completed` 合法；可从 `safe_stopped` 停止 | ZWorkbench 必须拥有或明确委托跨 Run 状态合同 |
+| retry/reconcile | Provider/tool timeout 最多一次 retry；idempotent 用 operation id 去重；已落 effect 不重执行 | retry 不是通用重跑，必须绑定 side-effect class |
+| approval-required | tool timeout 默认 safe-stop；已落副作用只通过 ledger reconcile | approval 和恢复不是同一个问题，边界必须可观测 |
+| 个人/小团队成本 | 本批次仅测 fixture runner，未测常驻服务、备份、升级和排障 | 不因 C4 fixture 通过直接引入 Temporal/LangGraph 或多 Harness |
+
+## 6.5 C3 定时与幂等首轮证据
+
+证据：[C3 定时、重复触发与幂等](./w6-c3-idempotency-findings.md)，Run ID：`w6-0.1-c3-20260830T102401-857158Z`。
+
+这是 `pass-with-composition` 的 acceptance-only fixture contract，不是候选 Harness 通过结果。外部确定性触发器覆盖首次、相同 key 重复、延迟、执行中断后重试和错过触发五类场景，每类重复 3 次，共 15/15 pass；同一 `idempotency_key` 始终只有 1 次 fake-sink delivery、1 条 effect ledger 和 1 条 versioned result，每个 invocation 都有 attempt 记录。没有候选专属固定版本 C3 adapter 的候选继续保持 `unknown`。
+
+| C3 观察 | 当前证据 | 决策含义 |
+|---|---|---|
+| schedule owner | 外部 deterministic trigger；每个 schedule event 带 `schedule_id`、logical time、key 和 missed/late 语义 | 外部调度可作为组合件，但不能冒充 Harness 原生 scheduler |
+| 幂等 owner | durable idempotency claim/effect/result ledger + fake-sink oracle | 必须有跨触发、跨进程共享的 key 和唯一结果合同 |
+| 中断恢复 | side effect 后、result commit 前注入 SIGTERM；resume reconcile，不重复 delivery | C3 与 C4 共享副作用/状态边界，但候选仍需单独接入 |
+| 个人/小团队成本 | 本批次未测常驻 scheduler、备份、升级和排障 | 等 C7 数据后再比较原生 scheduler、轻量组合件和 Temporal/LangGraph |
+
+## 6.3 C2 adapter 增量结果
+
+独立 C2 证据：[W6 C2 fail-closed adapter 评估结果](./w6-c2-adapter-findings.md)，Run ID：`w6-0.1-c2-20260830T093457-799592Z`。这组结果不改写 6.2 的历史基线：DeepSeek Harness 与 Codex Harness 在 fake-a/fake-b 上各 3/3 通过；五类动作 × 3 次无人审批均阻断，未授权执行为 0，关键拦截率 100%；显式批准仅产生 1 次 loopback sink 副作用。C3–C7 仍为 unknown，宿主级 sandbox/broker 边界也不由本结果签字。
+
 ## 7. W6 完成条件
 
 - 候选分层、硬门槛、权重和场景已由 Human 确认；

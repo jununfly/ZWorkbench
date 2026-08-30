@@ -15,6 +15,7 @@ class Handler(BaseHTTPRequestHandler):
     response_number = 0
     scenario = "plain"
     request_log = None
+    c2_plan = None
 
     def do_GET(self):
         if self.path == "/health":
@@ -52,6 +53,9 @@ class Handler(BaseHTTPRequestHandler):
                 "input_types": [item.get("type") for item in body.get("input", []) if isinstance(item, dict)],
                 "function_call_output_count": sum(1 for item in body.get("input", []) if isinstance(item, dict) and item.get("type") == "function_call_output"),
             }
+            if self.scenario == "c2":
+                plan = self._load_c2_plan()
+                request["scripted_call"] = plan[request["function_call_output_count"]]["action"] if request["function_call_output_count"] < len(plan) else None
             with self.request_log.open("a", encoding="utf-8") as handle:
                 handle.write(json.dumps(request, sort_keys=True) + "\n")
         model = body.get("model", "fake-model")
@@ -152,6 +156,21 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.flush()
 
     def _next_function_call(self, body, sequence):
+        if self.scenario == "c2":
+            plan = self._load_c2_plan()
+            completed = sum(1 for item in body.get("input", []) if item.get("type") == "function_call_output")
+            if completed >= len(plan):
+                return None
+            item = plan[completed]
+            arguments = {"cmd": item["command"], "description": item.get("description", "C2 guarded action")}
+            return {
+                "type": "function_call",
+                "id": f"fake-function-{sequence:03d}",
+                "call_id": f"fake-call-{sequence:03d}",
+                "name": "exec_command",
+                "arguments": json.dumps(arguments, separators=(",", ":")),
+                "status": "completed",
+            }
         if self.scenario != "c1":
             return None
         completed = sum(1 for item in body.get("input", []) if item.get("type") == "function_call_output")
@@ -172,8 +191,38 @@ class Handler(BaseHTTPRequestHandler):
             "status": "completed",
         }
 
+    def _load_c2_plan(self):
+        if not self.c2_plan:
+            return []
+        return json.loads(Path(self.c2_plan).read_text(encoding="utf-8"))
+
     def _chat_choice(self, body):
         """Return the same two-step C1 script over Chat Completions."""
+        if self.scenario == "c2":
+            plan = self._load_c2_plan()
+            messages = body.get("messages", [])
+            completed = sum(1 for item in messages if item.get("role") == "tool")
+            if completed >= len(plan):
+                return {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": "fixture-ok"},
+                    "finish_reason": "stop",
+                }
+            item = plan[completed]
+            arguments = {"command": item["command"], "description": item.get("description", "C2 guarded action")}
+            return {
+                "index": 0,
+                "message": {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [{
+                        "id": f"fake-chat-call-{completed + 1:03d}",
+                        "type": "function",
+                        "function": {"name": "bash", "arguments": json.dumps(arguments, separators=(",", ":"))},
+                    }],
+                },
+                "finish_reason": "tool_calls",
+            }
         if self.scenario != "c1":
             return {
                 "index": 0,
@@ -248,6 +297,7 @@ def main():
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--scenario", default="plain")
     parser.add_argument("--request-log", type=Path)
+    parser.add_argument("--c2-plan", type=Path)
     parser.add_argument("--ready-file", type=Path)
     args = parser.parse_args()
     Handler.provider_id = args.provider_id
@@ -255,6 +305,7 @@ def main():
     Handler.verbose = args.verbose
     Handler.scenario = args.scenario
     Handler.request_log = args.request_log
+    Handler.c2_plan = args.c2_plan
     server = ThreadingHTTPServer((args.host, args.port), Handler)
     if args.ready_file:
         args.ready_file.write_text(json.dumps({"host": args.host, "port": server.server_port}), encoding="utf-8")

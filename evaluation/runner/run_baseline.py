@@ -66,15 +66,15 @@ def digest(path: Path) -> str:
     return hashlib.sha256("\n".join(entries).encode()).hexdigest()
 
 
-def execute(command, cwd=None, timeout=20, env=None):
+def execute(command, cwd=None, timeout=20, env=None, output_limit=4000):
     started = time.monotonic()
     try:
         result = subprocess.run(command, cwd=cwd, env=env, text=True, capture_output=True, timeout=timeout, check=False)
         return {
             "command": command,
             "returncode": result.returncode,
-            "stdout": result.stdout[-4000:],
-            "stderr": result.stderr[-4000:],
+            "stdout": result.stdout[-output_limit:],
+            "stderr": result.stderr[-output_limit:],
             "duration_ms": round((time.monotonic() - started) * 1000),
             "timed_out": False,
         }
@@ -82,8 +82,8 @@ def execute(command, cwd=None, timeout=20, env=None):
         return {
             "command": command,
             "returncode": None,
-            "stdout": (exc.stdout or "")[-4000:] if isinstance(exc.stdout, str) else "",
-            "stderr": (exc.stderr or "")[-4000:] if isinstance(exc.stderr, str) else "",
+            "stdout": (exc.stdout or "")[-output_limit:] if isinstance(exc.stdout, str) else "",
+            "stderr": (exc.stderr or "")[-output_limit:] if isinstance(exc.stderr, str) else "",
             "duration_ms": round((time.monotonic() - started) * 1000),
             "timed_out": True,
         }
@@ -257,14 +257,13 @@ def port_is_available(port):
         return sock.connect_ex(("127.0.0.1", port)) != 0
 
 
-def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434):
+def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434, c2_plan=None):
     if not port_is_available(port):
         return None, {"status": "unknown", "reason": f"loopback port {port} is already occupied"}
     output_path = root / f"{provider_id}.provider.log"
     request_path = root / f"{provider_id}.requests.jsonl"
     output = output_path.open("w", encoding="utf-8")
-    process = subprocess.Popen(
-        [
+    command = [
             sys.executable,
             str(FIXTURE / "fake-provider.py"),
             "--host",
@@ -277,7 +276,11 @@ def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434)
             scenario,
             "--request-log",
             str(request_path),
-        ],
+        ]
+    if c2_plan:
+        command.extend(["--c2-plan", str(c2_plan)])
+    process = subprocess.Popen(
+        command,
         stdout=output,
         stderr=subprocess.STDOUT,
         text=True,
