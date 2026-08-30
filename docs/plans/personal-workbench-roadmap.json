@@ -100,7 +100,7 @@
     "1-4": {
       "id": "1-4",
       "label": "自动化与持续评估协议",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -165,7 +165,7 @@
     "1-5": {
       "id": "1-5",
       "label": "候选实测矩阵与 W7 决策交接包",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -216,12 +216,23 @@
     "1-2-1": {
       "id": "1-2-1",
       "label": "代码任务闭环与可审计性场景",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C1 代码任务闭环与可审计性在 ATAM 中应如何定义，才能支持候选比较而不误判为产品通过？",
+          "answer": "定义一个可审计的质量属性场景：刺激是用户要求在隔离项目修复缺陷、补回归测试、运行测试并解释 diff；环境固定为 W6-0.1 临时工作区、fake Provider、锁定 Prompt/Tool schema、sandbox/policy、fixture/evaluator 和事件 schema；响应是最小范围修改、测试通过、关键输入/工具/diff/test/result 事件可关联，危险动作不执行；度量为每候选/Provider 5 次至少4次完成、成功运行测试通过率100%、越界修改0、关键事件完整率100%。C1 只能证明代码闭环起点，不能推导 G2–G7 或产品可发布。",
+          "note": "证据来自 w6-0.1-baseline-20260830T081024-333896Z：DeepSeek/Codex 的 fake-a/b 均5/5，测试100%，越界修改0，事件完整100%；Pi/OpenCode/Goose 未接入仍unknown。风险是代码能力与最小权限、事件审计之间可能冲突；敏感点是 Prompt/Tool schema、sandbox/approval、Provider wire protocol、事件捕获和版本身份；W7 必须用固定版本 C2–C7 adapter 验证。"
+        },
+        {
+          "q": "C1 ATAM 场景是否可以收口并进入下一个质量属性场景？",
+          "answer": "可以收口为 W6 的 C1 ATAM 场景：刺激、环境、响应、度量、证据和责任边界已结构化；DeepSeek/Codex 在 fake-a/b 上各5/5、测试100%、越界修改0、事件完整100%，但 Pi/OpenCode/Goose 仍unknown，且 C1 不替代 C2–C7。下一节点继续分析无人值守安全与审批拦截。",
+          "note": "专项文档 w6-atam-c1-code-auditability.md 已建立，并回链 ATAM 模板；该节点仍属于 acceptance/evaluation，不产生产品代码或采用结论。"
+        }
+      ],
+      "notes": "C1 ATAM 场景已结构化：刺激/环境/响应/度量、候选观测、责任边界、R/SP/TP/NR 与 W7 入口条件均落盘；DeepSeek/Codex C1 双 fake Provider 各5/5，其他候选仍unknown。证据：docs/plans/w6-atam-c1-code-auditability.md。"
     },
     "1-2-2": {
       "id": "1-2-2",
@@ -316,7 +327,7 @@
     "1-4-3": {
       "id": "1-4-3",
       "label": "触发、漂移监测、回归与暂停升级",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [
@@ -356,7 +367,7 @@
     "1-5-2": {
       "id": "1-5-2",
       "label": "形成候选证据矩阵与未知项账本",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [
@@ -384,22 +395,34 @@
     "1-5-3": {
       "id": "1-5-3",
       "label": "生成 ATAM/CBAM 决策包",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": "ATAM/CBAM 已纳入 C2 adapter 增量证据：确认薄安全层可复用到 DeepSeek/Codex 双 Provider，记录 15 次无人审批全阻断、一次性批准边界和 ledger 成本；同时新增宿主级 sandbox/broker 嵌套兼容性风险。C3–C7 与宿主级 C2 强制边界仍 unknown，暂不形成 W7 采用建议。详见 docs/plans/w6-c2-adapter-findings.md、docs/plans/w6-atam-template.md、docs/plans/w6-cbam-template.md。"
+      "decisions": [
+        {
+          "q": "基于当前 C1–C5 证据，ATAM/CBAM 决策包应形成什么阶段性采用姿态？",
+          "answer": "当前只形成阶段性决策，不做 W7 最终采用：保留一个主 Harness + 必要薄层作为待验证路线假设；将统一 Provider contract/fallback、fail-closed 安全、durable/recovery、幂等和 replay 边界列为 ZWorkbench 必须拥有或明确委托的责任；第二 Harness、LiteLLM、Temporal/LangGraph 和观测后端暂不引入，除非 C6/C7 或候选固定版本 adapter 证明非重复的关键收益超过个人开发者/小团队的集成、常驻、升级、排障与退出成本；C6/C7 未完成前所有候选总体与 W7 signoff 保持 unknown/pending。",
+          "note": "阶段性 package=ATAM risks + CBAM costs/benefits + evidence ledger; acceptance/evaluation only; final adoption requires C6/C7 and fixed-source candidate adapters"
+        }
+      ],
+      "notes": "形成 W6-0.1 阶段性 ATAM/CBAM 决策包：基于 C1–C5 evidence ledger 保留一个主 Harness + 必要薄层作为待验证假设；C6/C7、候选固定版本 adapter 和 W7 signoff 仍 pending/unknown。第二 Harness、LiteLLM、Temporal/LangGraph 与观测后端仅在非重复收益超过个人开发者/小团队集成、常驻、升级、排障和退出成本时引入。详见 docs/plans/w6-atam-cbam-decision-package.md。"
     },
     "1-5-4": {
       "id": "1-5-4",
       "label": "W6 signoff 并交接 W7 采用姿态决策",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "W6 是否可以签署最终采用并直接进入 ZWorkbench 实现？W7 应接收什么采用姿态？",
+          "answer": "不签署最终采用，不进入产品实现；有条件交接 W7。保留一个主 Harness + 必要薄层作为首选验证姿态，薄层仅拥有 fail-closed 安全、跨 Run 状态/幂等/副作用账本、Provider capability/fallback contract、replay mode contract 和评估证据索引等已被 C2–C7 证明需要的边界。第二 Harness、LiteLLM、Temporal/LangGraph、观测后端和从零自建 Agent loop 暂不引入，除非至少一个候选的固定版本 C2–C7 adapter、真人 C7 运维计时、许可证/升级/回滚/退出证据证明其非重复收益超过个人开发者/小团队成本。",
+          "note": "W6 fixture evidence 只证明合同形状：C2–C6 通过，C7 为12/12 machine process pass但人工工时unknown；五个候选关键场景仍unknown，G0/G7未签字。W7 先做候选绑定与小范围验证，不得把本结论解释为产品已选型或可发布。"
+        }
+      ],
+      "notes": "W6 signoff disposition：不签署最终采用、不进入产品实现；条件性交接W7。W7姿态暂定一个主Harness+必要薄层，第二Harness、LiteLLM、Temporal/LangGraph、观测后端与从零自建Agent loop暂不引入。C1候选证据与C2–C7 fixture证据已留档，但五个候选关键C2–C7、C7真人工时及G0/G7仍unknown；下一步绑定DeepSeek或Codex固定版本并补候选adapter、真人C7 runbook、许可证/升级/回滚/退出证据。详见docs/plans/w7-adoption-posture-handoff.md。"
     },
     "1-4-3-1": {
       "id": "1-4-3-1",
@@ -414,12 +437,23 @@
     "1-4-3-2": {
       "id": "1-4-3-2",
       "label": "定义版本漂移触发、自动回归与暂停回滚证据",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4-3",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "版本漂移、自动回归和暂停回滚的最小可复核契约是什么？",
+          "answer": "将其定义为 acceptance/evaluation 闭环：任何 Harness/组合件/Provider/模型/endpoint/Prompt/Tool schema/权限策略/fixture/evaluator/sandbox/replay cassette/依赖/配置变化均生成明确 drift trigger；trigger 必须绑定新 run manifest 并自动执行隔离 C1–C7 回归；硬失败或关键 unknown/composition-required 时 fail-closed，暂停升级/组合扩展并保留 pause decision、失败样本、版本差异、回滚目标与重跑结果；只有固定身份、无硬失败且关键门禁不为 unknown 才允许升级。",
+          "note": "本节点只验证评估工具、策略与隔离 fixture，不实现 ZWorkbench 产品运行器；旧版本与新版本用受控 fixture 模拟，rollback 不触碰真实项目或外部系统；自动回归证据必须能复核 trigger→run→gate→pause/rollback→rerun 链路。"
+        },
+        {
+          "q": "1-4-3-2 首轮控制面验证是否满足完成条件？",
+          "answer": "满足 acceptance/evaluation 完成条件：W6-0.1 隔离 fixture self-test 在每个控制周期通过；13/13 版本、配置、Provider、schema、权限、fixture、evaluator、sandbox、replay、依赖等身份漂移均触发新回归；fixture hash 漂移 fail-closed；硬失败与关键 unknown 分别产生 fail/pending 并暂停升级与组合扩展；回滚到 last-known-good identity 后重新门禁通过。该结果只证明持续评估控制面可复核，不证明候选 adapter 或 ZWorkbench 产品通过。",
+          "note": "首轮 run=w6-0.1-continuous-20260830T124122-090590Z；7/7 assertions、56个JSON证据通过；CLI退出码稳定=0、硬失败=1、unknown/pending=2；候选未调用，外部网络与副作用为0。"
+        }
+      ],
+      "notes": "完成 W6 持续评估控制面首轮：13/13 身份漂移触发新隔离回归；fixture hash 漂移 fail-closed；硬失败/关键 unknown 触发 pause；回滚后独立 rerun 通过。证据：docs/plans/w6-continuous-evaluation-findings.md 与 evaluation/runs/w6-0.1-continuous-20260830T124122-090590Z/。仅为 acceptance/evaluation，不代表候选或产品采用。"
     },
     "1-5-2-1": {
       "id": "1-5-2-1",
@@ -498,27 +532,39 @@
     "1-5-2-5": {
       "id": "1-5-2-5",
       "label": "C6 记录查看与 simulated replay 边界证据",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C6 的 replay 模式、证据字段与副作用边界是什么？",
+          "answer": "仅在隔离的候选无关 fixture 上验证三种明确模式：recorded_view 只读取并展示原始 ledger，不执行；simulated_replay 只消费版本化 replay cassette 和 expected output，不访问 Provider、工具或外部系统；live_replay 默认 fail-closed，必须留下显式 policy/approval 决定，本轮拒绝执行且副作用为 0。每次运行必须记录 run/fixture/environment/provider/model/endpoint、model request/response、tool call/result、policy decision、state transition、diff/test output、replay mode 和副作用计数；必需字段与模式标签 100%，simulated replay 5/5 与预期一致，禁止把日志查看冒充执行回放。",
+          "note": "artifact=isolated C6 replay fixture + runner + cassette/ledger evidence + findings/ATAM/CBAM/continuous-evaluation updates; candidate statuses remain unknown without fixed-source C6 adapters"
+        }
+      ],
+      "notes": "C6 fixture contract pass: 15/15; recorded_view, simulated_replay, live_replay each 5/5; required event fields/types 100%; mode labels 100%; simulated replay matches expected 5/5; live replay fail-closed 5/5; effect guard mutation 0. Final run: evaluation/runs/w6-0.1-c6-20260830T120732-177815Z. Candidate C6 statuses remain unknown without fixed-source adapters."
     },
     "1-5-2-6": {
       "id": "1-5-2-6",
       "label": "C7 个人开发者运维与生命周期成本证据",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C7 如何在不把 fixture 执行时间冒充人工运维时间的前提下验证个人开发者/小团队生命周期成本？",
+          "answer": "采用候选无关的隔离运维演练：分别记录机器可测耗时、人工操作步骤与真实人工计时；以首次安装≤90分钟、常规升级≤30分钟、备份恢复≤30分钟、预制故障定位≤30分钟、无需额外专家、MVP常驻人工维护服务≤3个为硬阈值；无法真实计时的项目保持 unknown。",
+          "note": "C7 只产生 fixture-contract / measured-process evidence，不改写候选原生能力；Provider 与宿主 OS 不计入服务数，且不把脚本执行耗时计入人工运维时间。"
+        }
+      ],
+      "notes": "C7 隔离 fixture 首轮完成：install/upgrade/backup_restore/fault_diagnosis 4类场景各3次，共12/12 machine process pass；参考维护服务2个（上限3）、无需额外专家声明、无网络/真实数据。真人运维计时0/12，故人工时间门保持unknown，候选C7与G0/G7不外推。详见w6-c7-operations-findings.md与Run w6-0.1-c7-20260830T122018-367856Z。"
     }
   },
   "metadata": {
     "created": "2026-08-30 12:34:15",
-    "updated": "2026-08-30 19:27:17",
+    "updated": "2026-08-30 20:46:20",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
   }
 }

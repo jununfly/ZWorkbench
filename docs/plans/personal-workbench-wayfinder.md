@@ -1,6 +1,6 @@
 # 个人工作台：Wayfinder 决策地图
 
-状态：🧭 研究完成，W1/W5 已确认，W6-0.1 fixture/阈值已冻结，首轮基线部分完成  
+状态：🧭 研究完成，W1/W5 已确认，W6-0.1 fixture/阈值已冻结，C1–C7 fixture 证据完成，条件性交接 W7
 载体：local-markdown tracker（本文件是唯一地图与票据载体）  
 创建日期：2026-08-30  
 当前基线：仓库只有 `README.md`，尚无实现、领域词汇、ADR 或既有架构约束。
@@ -33,12 +33,12 @@
 - W2 已完成对象核实：DeepSeek 对应 `deepseek-ai/deepseek-harness`，Pi 对应 `earendil-works/pi`，Codex Harness 暂按 `openai/codex` 的 OSS CLI/app-server 映射；三者能力形状明显不同，尤其是 DeepSeek 仍为 developer preview、Pi 不内建权限/沙箱、Codex 的通用调度仍未证实。
 - W6 已转入 roadmap-driven 跟踪：评估矩阵、ATAM、CBAM、持续评估和 W7 交接节点记录在 [`personal-workbench-roadmap.json`](./personal-workbench-roadmap.json)，其 Markdown 视图为 [`personal-workbench-roadmap.md`](./personal-workbench-roadmap.md)。Wayfinder 仍保存决策地图，roadmap JSON 保存节点/决策历史。
 - W6 已完成 C1–C7 的 `W6-0.1` fixture 与阈值规格：共享隔离项目、假 Provider、负向权限动作、故障注入、recorded/simulated replay 和单人运维演练；关键安全、副作用、事件完整和回放边界采用零容忍/100%门槛，其余阈值作为首轮冻结基线，结果后才可由 ATAM/CBAM 校准。
-- W6-0.1 已获 Human 确认并冻结为首轮基线：C1/C5 样本量与通过标准、安全/回放零容忍、C3/C4 恢复语义、个人/小团队运维门槛、`pass-with-composition` 判定和首轮阈值变更纪律均已确定；首轮已完成部分验证，C2–C7 仍待补证据。
+- W6-0.1 已获 Human 确认并冻结为首轮基线：C1/C5 样本量与通过标准、安全/回放零容忍、C3/C4 恢复语义、个人/小团队运维门槛、`pass-with-composition` 判定和首轮阈值变更纪律均已确定。C1–C7 的候选无关 fixture 证据已形成；候选 C2–C7、C7 真人运维工时和 G0/G7 仍为 unknown，W6 不签最终采用，只条件性交接 W7。
 
 ## Not yet specified
 
-- 首批任务已有首轮 C1 实测和运行时长基线：DeepSeek Harness、Codex Harness 在两个 fake Provider 上均为 5/5；C2–C7 的失败可见性、回放一致性和运维数据仍待实测与 CBAM 校准。
-- “适合个人开发者或小团队”的首轮基线已固化：安装 ≤90 分钟，升级/备份恢复/预制故障排查各 ≤30 分钟，无需额外专家，MVP 常驻人工维护服务 ≤3 个；实际结果与 CBAM 成本校准仍待验证。
+- 首批任务已有首轮 C1 实测和运行时长基线：DeepSeek Harness、Codex Harness 在两个 fake Provider 上均为 5/5；C2–C6 已形成候选无关 fixture 合同证据，C7 机器流程 12/12 pass，但候选 adapter 与真人运维成本仍待验证。
+- “适合个人开发者或小团队”的首轮基线已固化：安装 ≤90 分钟，升级/备份恢复/预制故障排查各 ≤30 分钟，无需额外专家，MVP 常驻人工维护服务 ≤3 个；参考 fixture 维护服务 2 个，真人时间与候选成本仍待验证。
 - 已确定最小权限、项目级沙箱、危险副作用审批和无人值守限制；凭证、网络、文件系统、进程、数据留存/外发和部署的细化策略仍待后续票据。
 - 本地优先、远程执行、云端服务和混合部署的边界；个人数据、源码、运行轨迹和模型请求的留存/外发策略。
 - 任务、计划任务、Agent Run、工具调用、项目、Provider、评测样本、回放记录之间的领域关系和生命周期。
@@ -63,9 +63,9 @@
 
 当前 frontier 是所有未认领、无未完成阻塞项的开放票据：
 
-- [W6 — 统一评估矩阵与试点门槛 [G]](#w6--统一评估矩阵与试点门槛-g)
+- [W7 — 选择采用姿态：现成项目、单一基座、组合拼装、分叉还是自建薄层 [G]](#w7--选择采用姿态现成项目单一基座组合拼装分叉还是自建薄层-g)
 
-W7–W9 已写成清晰的后续问题，但依赖 W6 的验证结果，暂不冒充当前 frontier。
+W8–W9 已写成清晰的后续问题，但依赖 W7 的采用姿态，暂不冒充当前 frontier。
 
 ---
 
@@ -199,7 +199,7 @@ W7–W9 已写成清晰的后续问题，但依赖 W6 的验证结果，暂不�
 
 ## W6 — 统一评估矩阵与试点门槛 [G]
 
-状态：🔒 Codex · HITL · W6-0.1 已确认，首轮 C1 完成，C2–C7 待补证据
+状态：✅ Codex · HITL · W6-0.1 fixture 证据完成；不签最终采用，条件性交接 W7
 
 ### Question
 
@@ -238,6 +238,13 @@ Human 已全部同意推荐阈值。`W6-0.1` 作为首轮冻结基线：C1/C5 �
 
 评估规格：[W6 C1–C7 Fixture 与阈值](./w6-fixtures-and-thresholds.md)；首轮结果：[W6-0.1 首轮候选基线](./w6-baseline-candidate-findings.md)；持续评估：[W6 自动化与持续评估协议](./w6-continuous-evaluation.md)。
 
+W6–W7 交接结论：C2–C6 fixture contract 已通过，C7 fixture 为 12/12 machine
+process pass，但真人运维计时为 `0/12`，五个候选的关键 C2–C7 仍为 `unknown`。
+因此不签署最终采用、不进入 ZWorkbench 产品实现；W7 采用“一个主 Harness + 必要
+薄层”作为待验证姿态，先绑定 DeepSeek Harness 或 Codex Harness 的固定版本，
+补齐候选 adapter、真人 C7 runbook、许可证/升级/回滚/退出证据，再决定采用、
+组合、替换或停止。交接包：[W7 采用姿态交接包](./w7-adoption-posture-handoff.md)。
+
 ---
 
 ## W7 — 选择采用姿态：现成项目、单一基座、组合拼装、分叉还是自建薄层 [G]
@@ -258,7 +265,7 @@ Human 已全部同意推荐阈值。`W6-0.1` 作为首轮冻结基线：C1/C5 �
 
 推荐默认：先选一个主候选做试点，加一层尽可能薄的 ZWorkbench 边界；只有出现可测量的能力缺口时才组合第二个项目。自建仅限跨候选的产品能力或明确不存在的深模块，不从零重写已有 Agent 运行循环。
 
-⛔ blocked by：W2、W3、W4、W5、W6
+⛔ blocked by：至少一个候选固定版本 C2–C7 adapter、真人 C7 计时、许可证/升级/回滚/退出审计
 
 ---
 

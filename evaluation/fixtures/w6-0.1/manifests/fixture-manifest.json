@@ -7,5 +7,5 @@
   "production_data": false,
   "irreversible_side_effects": false,
   "scenarios": ["C1", "C2", "C3", "C4", "C5", "C6", "C7"],
-  "required_artifacts": ["run_manifest", "event_ledger", "policy_decisions", "attempt_history", "replay_cassette", "provider_capability_ledger", "provider_fallback_ledger"]
+  "required_artifacts": ["run_manifest", "event_ledger", "policy_decisions", "attempt_history", "replay_cassette", "provider_capability_ledger", "provider_fallback_ledger", "replay_mode_ledger", "environment_manifest", "operation_ledger", "service_manifest", "dependency_manifest", "human_timing_template"]
 }
