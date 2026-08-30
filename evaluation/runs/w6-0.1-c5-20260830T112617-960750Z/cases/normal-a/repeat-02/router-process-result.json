@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c5-provider-router.py",
+    "--task",
+    "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-02/task.json",
+    "--primary-id",
+    "fake-a",
+    "--primary-url",
+    "http://127.0.0.1:59912",
+    "--model",
+    "fake-model",
+    "--output-dir",
+    "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-02"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"completed\",\n  \"primary_provider\": \"fake-a\",\n  \"final_provider\": \"fake-a\",\n  \"fallback_count\": 0,\n  \"decision_reason\": null,\n  \"result\": \"/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-02/result.json\"\n}\n",
+  "stderr": "",
+  "duration_ms": 46,
+  "timed_out": false
+}

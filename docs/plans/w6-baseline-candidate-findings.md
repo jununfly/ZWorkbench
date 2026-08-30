@@ -119,7 +119,7 @@ C1 允许的修改仅为 `src/tinycalc/normalize.py` 和 `tests/test_normalize.p
 2. 首轮候选基线目前只覆盖 C1：DeepSeek Harness 与 Codex Harness 均为 5/5、双 fake Provider、`pass`。
 3. 所有候选总体仍为 `unknown`；C2–C7 不得用 C1 结果填充。
 4. 不基于本轮结果给出 W7 最终采用建议，也不把 DeepSeek/Codex 的 C1 结果解释为产品发布准备度。
-5. 基线回归门禁已具备；C2–C5 已分别在独立 acceptance run 中形成 fixture 证据，但候选 C2–C5 仍需固定版本 adapter；下一步进入 C6 replay contract，随后补 C7，并用同一批证据更新 ATAM/CBAM。
+5. 基线回归门禁已具备；C2–C7 已分别在独立 acceptance run 中形成 fixture 证据，但候选 C2–C7 仍需固定版本 adapter；C7 的真人运维计时仍待补齐，并用同一批证据更新 ATAM/CBAM。
 
 ## C2 adapter 首轮更新
 
@@ -134,3 +134,22 @@ C3 fixture contract 已独立完成 `15/15` pass-with-composition：外部确定
 C5 fixture contract 已独立完成 `19/19` pass：fake-a/fake-b 正常确定性各 5/5；B 的 `timeout_once`、`stream_interrupt_once`、`structured_output_unsupported` 各重复 3 次，均记录 Provider identity/model/endpoint、能力探测、attempt history、fallback/degradation reason 和最终语义结果。fallback 原因/目标记录率 100%，能力缺失显式处理率 100%，静默语义变化为 0。证据见 [`w6-c5-provider-failover-findings.md`](./w6-c5-provider-failover-findings.md) 与 Run `w6-0.1-c5-20260830T112617-960750Z`。
 
 这不改变候选矩阵：没有候选专属固定版本 C5 adapter，DeepSeek/Codex/Pi/OpenCode/Goose 的 C5 仍为 `unknown`；fixture 通过不能替代候选真实 Provider 配置、stream/schema 适配、成本和运维证据，也不能自动推出应引入 LiteLLM 或第二 Harness。
+
+## C6 记录查看与 simulated replay 边界增量证据
+
+C6 fixture contract 已独立完成 `15/15` pass：`recorded_view`、`simulated_replay`、`live_replay` 三种模式各重复 5 次。recorded view 只读 ledger，simulated replay 只读 cassette 且与 expected semantic result `5/5` 一致，live replay 在无显式批准时 `5/5` fail-closed 拒绝；必需事件字段/模式标签均为 100%，effect guard 变化为 0。证据见 [`w6-c6-replay-findings.md`](./w6-c6-replay-findings.md) 与 Run `w6-0.1-c6-20260830T120732-177815Z`。
+
+这不改变候选矩阵：没有候选专属固定版本 C6 adapter，DeepSeek/Codex/Pi/OpenCode/Goose 的 C6 仍为 `unknown`；fixture 通过不能替代候选真实事件 schema、环境重建、replay API、审批/网络边界、脱敏和存储运维证据。下一步是绑定至少一个主候选的 C2–C7 adapter，并补 C7 真人运维计时。
+
+## C7 个人开发者/小团队运维与生命周期成本增量证据
+
+C7 fixture contract 已独立完成 `12/12` machine process pass：install、upgrade、
+backup_restore、fault_diagnosis 各重复 3 次。每个案例保存 operation ledger、
+隔离 workspace、依赖/服务 manifest、人工步骤和 machine wall-clock time；参考
+MVP 维护服务数为 2，Provider 与宿主 OS 不计入。
+
+证据见 [`w6-c7-operations-findings.md`](./w6-c7-operations-findings.md) 与 Run
+`w6-0.1-c7-20260830T122018-367856Z`。本轮没有真人 stopwatch 输入，人工时间为
+`0/12` measured、`unknown`；不能把约 0.001–0.003 秒 fixture subprocess 时间
+解释为安装/升级/恢复/排障人工时间。五个候选的 C7 仍为 `unknown`，G0/G7 不能
+因此签字。

@@ -1,0 +1,1143 @@
+{
+  "schema": "zworkbench-w6-c5/v1",
+  "run_id": "w6-0.1-c5-20260830T112617-960750Z",
+  "started_at": "2026-08-30T11:26:17.960750+00:00",
+  "finished_at": "2026-08-30T11:26:23.010174+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette",
+        "provider_capability_ledger",
+        "provider_fallback_ledger"
+      ]
+    },
+    "manifest_sha256": "182ba60e68bf79a8f328be79f77f33562db2c0bd8302c16ec44a14b8a8fac2d0",
+    "source_sha256": "525d6c320865d6085df57a3f619f2ef3f6f5f461a2fc7c6246817ca78dd3704c",
+    "router": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c5-provider-router.py",
+    "router_sha256": "32057c460e527286be5a0068c29601fa7ff245d8a27b7024d3315de296b04fb6",
+    "provider_configs": {
+      "fake-a": {
+        "provider_id": "fake-a",
+        "protocol": "openai-compatible-chat-completions",
+        "deterministic": true,
+        "supports": [
+          "tool_calls",
+          "streaming",
+          "structured_output"
+        ],
+        "faults": []
+      },
+      "fake-b": {
+        "provider_id": "fake-b",
+        "protocol": "openai-compatible-chat-completions",
+        "deterministic": true,
+        "supports": [
+          "tool_calls",
+          "streaming"
+        ],
+        "faults": [
+          "timeout_once",
+          "stream_interrupt_once",
+          "structured_output_unsupported"
+        ]
+      }
+    }
+  },
+  "runner": {
+    "version": "w6-c5-runner/v1",
+    "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_c5.py",
+    "sha256": "3bdfe2c2986cd1af54cf928f177487f0386efda2a22f02f6862a0f9d06bc2463"
+  },
+  "threshold": {
+    "normal_repeats_per_provider": 5,
+    "fault_repeats_per_fault": 3,
+    "faults": [
+      "timeout_once",
+      "stream_interrupt_once",
+      "structured_output_unsupported"
+    ],
+    "normal_case_count": 10,
+    "fault_case_count": 9,
+    "total_cases": 19,
+    "fallback_reason_and_target_recording": "100%",
+    "capability_missing_explicit_degradation_or_safe_failure": "100%",
+    "silent_semantic_changes": 0
+  },
+  "fixture_contract": {
+    "status": "pass",
+    "cases_passed": 19,
+    "cases_total": 19,
+    "checks": {
+      "all_cases_pass": true,
+      "normal_deterministic_5_of_5_per_provider": true,
+      "each_fault_repeated_three_times": true,
+      "fallback_reason_and_target_100_percent": true,
+      "capability_missing_explicit_100_percent": true,
+      "silent_semantic_changes_zero": true,
+      "loopback_only_and_no_real_provider": true
+    },
+    "metrics": {
+      "normal_cases_passed": 10,
+      "fault_cases_passed": 9,
+      "fallback_reason_missing_count": 0,
+      "capability_missing_not_explicit_count": 0,
+      "silent_semantic_change_count": 0
+    },
+    "case_results": [
+      {
+        "case_id": "repeat-01",
+        "case_type": "normal-a",
+        "repeat": 1,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-a",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 0
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-01"
+      },
+      {
+        "case_id": "repeat-02",
+        "case_type": "normal-a",
+        "repeat": 2,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-a",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 0
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-02"
+      },
+      {
+        "case_id": "repeat-03",
+        "case_type": "normal-a",
+        "repeat": 3,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-a",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 0
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-03"
+      },
+      {
+        "case_id": "repeat-04",
+        "case_type": "normal-a",
+        "repeat": 4,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-a",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 0
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-04"
+      },
+      {
+        "case_id": "repeat-05",
+        "case_type": "normal-a",
+        "repeat": 5,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-a",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 0
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-a/repeat-05"
+      },
+      {
+        "case_id": "repeat-01",
+        "case_type": "normal-b",
+        "repeat": 1,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-b",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b"
+          ],
+          "capability_providers": [
+            "fake-b"
+          ],
+          "final_provider": "fake-b",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 0,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-b/repeat-01"
+      },
+      {
+        "case_id": "repeat-02",
+        "case_type": "normal-b",
+        "repeat": 2,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-b",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b"
+          ],
+          "capability_providers": [
+            "fake-b"
+          ],
+          "final_provider": "fake-b",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 0,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-b/repeat-02"
+      },
+      {
+        "case_id": "repeat-03",
+        "case_type": "normal-b",
+        "repeat": 3,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-b",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b"
+          ],
+          "capability_providers": [
+            "fake-b"
+          ],
+          "final_provider": "fake-b",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 0,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-b/repeat-03"
+      },
+      {
+        "case_id": "repeat-04",
+        "case_type": "normal-b",
+        "repeat": 4,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-b",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b"
+          ],
+          "capability_providers": [
+            "fake-b"
+          ],
+          "final_provider": "fake-b",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 0,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-b/repeat-04"
+      },
+      {
+        "case_id": "repeat-05",
+        "case_type": "normal-b",
+        "repeat": 5,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-b",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b"
+          ],
+          "capability_providers": [
+            "fake-b"
+          ],
+          "final_provider": "fake-b",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 0,
+          "fallback_reason": null,
+          "request_log_counts": {
+            "fake-a": 0,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/normal-b/repeat-05"
+      },
+      {
+        "case_id": "repeat-01",
+        "case_type": "timeout-once",
+        "repeat": 1,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "timeout",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-01"
+      },
+      {
+        "case_id": "repeat-02",
+        "case_type": "timeout-once",
+        "repeat": 2,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "timeout",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-02"
+      },
+      {
+        "case_id": "repeat-03",
+        "case_type": "timeout-once",
+        "repeat": 3,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "timeout",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-03"
+      },
+      {
+        "case_id": "repeat-01",
+        "case_type": "stream-interrupt-once",
+        "repeat": 1,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "stream_interrupt",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/stream-interrupt-once/repeat-01"
+      },
+      {
+        "case_id": "repeat-02",
+        "case_type": "stream-interrupt-once",
+        "repeat": 2,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "stream_interrupt",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/stream-interrupt-once/repeat-02"
+      },
+      {
+        "case_id": "repeat-03",
+        "case_type": "stream-interrupt-once",
+        "repeat": 3,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-b",
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "stream_interrupt",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 2
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/stream-interrupt-once/repeat-03"
+      },
+      {
+        "case_id": "repeat-01",
+        "case_type": "structured-output-unsupported",
+        "repeat": 1,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "capability_missing:structured_output",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 1
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/structured-output-unsupported/repeat-01"
+      },
+      {
+        "case_id": "repeat-02",
+        "case_type": "structured-output-unsupported",
+        "repeat": 2,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "capability_missing:structured_output",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 1
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/structured-output-unsupported/repeat-02"
+      },
+      {
+        "case_id": "repeat-03",
+        "case_type": "structured-output-unsupported",
+        "repeat": 3,
+        "status": "pass",
+        "expected": {
+          "primary_provider": "fake-b",
+          "final_provider": "fake-a",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1
+        },
+        "observed": {
+          "process_returncode": 0,
+          "status": "completed",
+          "attempt_providers": [
+            "fake-a"
+          ],
+          "capability_providers": [
+            "fake-a",
+            "fake-b"
+          ],
+          "final_provider": "fake-a",
+          "final_semantic_result": {
+            "answer": "fixture-ok",
+            "task": "provider-failover-v1",
+            "schema_version": "v1"
+          },
+          "fallback_count": 1,
+          "fallback_reason": "capability_missing:structured_output",
+          "request_log_counts": {
+            "fake-a": 2,
+            "fake-b": 1
+          }
+        },
+        "checks": {
+          "router_process_passed": true,
+          "completed": true,
+          "provider_identity_and_final_target": true,
+          "semantic_result_matches_expected": true,
+          "silent_semantic_change_zero": true,
+          "provider_model_endpoint_recorded": true,
+          "loopback_only": true,
+          "capability_detection_recorded": true,
+          "fallback_reason_and_target_recorded": true,
+          "injected_fault_observed": true,
+          "failure_reason_explained": true,
+          "attempt_order": true,
+          "provider_processes_stopped": true
+        },
+        "evidence_dir": "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/structured-output-unsupported/repeat-03"
+      }
+    ]
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C5 adapter; fixture contract is not candidate evidence"
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C5 adapter; fixture contract is not candidate evidence"
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C5 adapter; fixture contract is not candidate evidence"
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C5 adapter; fixture contract is not candidate evidence"
+    },
+    "Goose": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C5 adapter; fixture contract is not candidate evidence"
+    }
+  },
+  "interpretation": {
+    "fixture_contract_is_not_candidate_pass": true,
+    "candidate_c5_requires_fixed_source_adapter": true,
+    "missing_candidate_evidence_remains_unknown": true,
+    "no_real_provider_or_external_side_effect": true,
+    "failover_policy": "fallback to fake-a after explicit timeout/stream/capability reason; no silent provider switch",
+    "structured_output_policy": "detect capability before request; fallback or safe-fail with explicit reason",
+    "same_provider_retry_policy": "disabled in this fixture; switch-provider fallback is the bounded recovery"
+  }
+}

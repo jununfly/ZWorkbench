@@ -1,0 +1,269 @@
+{
+  "schema": "zworkbench-w6-continuous-evaluation/v1",
+  "run_id": "w6-0.1-continuous-20260830T124122-090590Z",
+  "runner_version": "w6-continuous-evaluator/v1",
+  "classification": "acceptance/evaluation",
+  "source": "synthetic-control-fixture-only",
+  "fixture": {
+    "version": "W6-0.1",
+    "fixture_id": "w6-0.1",
+    "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+  },
+  "contract": {
+    "drift_dimensions": [
+      "harness",
+      "scheduler",
+      "provider_model",
+      "provider_endpoint",
+      "prompt",
+      "tool_schema",
+      "permission_policy",
+      "fixture_source",
+      "evaluator",
+      "sandbox",
+      "replay_cassette",
+      "dependencies",
+      "config"
+    ],
+    "hard_failure_action": "pause-upgrade-and-composition",
+    "unknown_action": "pause-upgrade-and-composition",
+    "rollback_action": "rollback-to-last-known-good-identity-and-rerun",
+    "candidate_invoked": false,
+    "external_network": false
+  },
+  "stable_cycle": {
+    "status": "pass",
+    "drift_triggered": false,
+    "upgrade_decision": "allow"
+  },
+  "drift_matrix": [
+    {
+      "dimension": "harness",
+      "path": "harness",
+      "replacement": "control-harness-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: harness"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "scheduler",
+      "path": "components.scheduler",
+      "replacement": "external-trigger-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: components.scheduler"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "provider_model",
+      "path": "provider.model",
+      "replacement": "fake-model-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: provider.model"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "provider_endpoint",
+      "path": "provider.endpoint",
+      "replacement": "http://127.0.0.1:11435",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: provider.endpoint"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "prompt",
+      "path": "prompt_sha256",
+      "replacement": "prompt-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: prompt_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "tool_schema",
+      "path": "tool_schema_sha256",
+      "replacement": "tool-schema-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: tool_schema_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "permission_policy",
+      "path": "permission_policy_sha256",
+      "replacement": "policy-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: permission_policy_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "fixture_source",
+      "path": "fixture.source_sha256",
+      "replacement": "fixture-source-sha256-v2",
+      "status": "fail",
+      "expected_status": "fail",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "fixture identity changed",
+        "evaluation identity changed: fixture.source_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "pause",
+      "expectation_met": true
+    },
+    {
+      "dimension": "evaluator",
+      "path": "evaluator_version",
+      "replacement": "w6-continuous-evaluator-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: evaluator_version"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "sandbox",
+      "path": "sandbox.mode",
+      "replacement": "fixture-local-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: sandbox.mode"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "replay_cassette",
+      "path": "replay_cassette_sha256",
+      "replacement": "cassette-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: replay_cassette_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "dependencies",
+      "path": "dependencies_sha256",
+      "replacement": "dependencies-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: dependencies_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    },
+    {
+      "dimension": "config",
+      "path": "config_sha256",
+      "replacement": "config-sha256-v2",
+      "status": "pass",
+      "expected_status": "pass",
+      "drift_triggered": true,
+      "drift_reasons": [
+        "evaluation identity changed: config_sha256"
+      ],
+      "regression_executed": true,
+      "upgrade_decision": "allow",
+      "expectation_met": true
+    }
+  ],
+  "failure_cycle": {
+    "status": "fail",
+    "pause": true
+  },
+  "unknown_cycle": {
+    "status": "pending",
+    "pause": true
+  },
+  "rollback_cycle": {
+    "status": "pass",
+    "drift_triggered": true,
+    "rerun": true
+  },
+  "assertions": [
+    {
+      "name": "stable cycle allows upgrade",
+      "passed": true
+    },
+    {
+      "name": "every identity dimension triggers drift",
+      "passed": true
+    },
+    {
+      "name": "fixture drift is fail-closed",
+      "passed": true
+    },
+    {
+      "name": "hard failure pauses",
+      "passed": true
+    },
+    {
+      "name": "unknown pauses",
+      "passed": true
+    },
+    {
+      "name": "rollback rerun is independently gated",
+      "passed": true
+    },
+    {
+      "name": "no candidate or external side effect",
+      "passed": true
+    }
+  ],
+  "status": "pass"
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "zworkbench-w6-c7-operations/v1",
+  "run_id": "w6-c7-upgrade-repeat-01",
+  "scenario": "upgrade",
+  "status": "completed",
+  "machine_elapsed_seconds": 0.001482,
+  "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+  "human_timed": false,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "human_timing_source": "not-provided",
+  "human_steps": [
+    "确认当前版本与备份目录可用",
+    "保存升级前快照并写入新版本",
+    "执行 schema/健康检查并确认版本切换"
+  ],
+  "human_step_count": 3,
+  "precondition": {
+    "prepared": true,
+    "source_version": "0.1"
+  },
+  "checks": {
+    "source_version_was_initial": true,
+    "current_version_is_upgraded": true,
+    "upgrade_snapshot_present": true
+  },
+  "machine_side_effect_scope": "case-local reversible files only",
+  "network_calls": 0,
+  "real_credentials": false,
+  "production_data": false,
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/upgrade/repeat-01/workspace"
+}

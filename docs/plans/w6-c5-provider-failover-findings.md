@@ -119,4 +119,4 @@ cases/<case-type>/repeat-<nn>/
 
 ## 7. 下一步
 
-按路线图进入 C6 记录查看与 simulated replay 边界证据；随后再以固定版本候选 adapter 补做候选 C3–C6。候选状态在出现真实 adapter、完整版本绑定和可复核失败/通过样本前继续保持 `unknown`。
+C6 fixture contract 已独立完成；按路线图下一步进入 C7 个人开发者/小团队运维与生命周期成本证据。随后再以固定版本候选 adapter 补做候选 C3–C6。候选状态在出现真实 adapter、完整版本绑定和可复核失败/通过样本前继续保持 `unknown`。

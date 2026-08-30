@@ -1,0 +1,17 @@
+{
+  "schema": "zworkbench-w6-pause-decision/v1",
+  "cycle": "drift-fixture_source",
+  "action": "pause-upgrade-and-composition",
+  "reason": "regression gate is not pass",
+  "gate_status": "fail",
+  "drift_reasons": [
+    "fixture identity changed",
+    "evaluation identity changed: fixture.source_sha256"
+  ],
+  "hard_failures": [
+    "current run fixture hash does not match the frozen baseline identity"
+  ],
+  "unknowns": [],
+  "rollback_required": true,
+  "rollback_target": "control-harness-v1"
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "zworkbench-w6-c6-mode-result/v1",
+  "replay_version": "w6-c6-replay/v1",
+  "replay_mode": "live_replay",
+  "source_run_id": "w6-c6-live_replay-repeat-02",
+  "source": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-02/recording/replay-cassette.json",
+  "source_sha256": "13372fa340ecd77bd6fd257cfc173845cc37d938a7454c8c75293927f5725aa8",
+  "execution_performed": false,
+  "provider_requests": 0,
+  "tool_invocations": 0,
+  "external_calls": 0,
+  "side_effect_count": 0,
+  "guard_before": {
+    "provider_requests": 0,
+    "tool_invocations": 0,
+    "external_side_effects": 0,
+    "guard_schema": "w6-c6-effect-guard/v1"
+  },
+  "guard_after": {
+    "provider_requests": 0,
+    "tool_invocations": 0,
+    "external_side_effects": 0,
+    "guard_schema": "w6-c6-effect-guard/v1"
+  },
+  "status": "denied",
+  "policy_decision": {
+    "replay_mode": "live_replay",
+    "approval_required": true,
+    "approval_granted": false,
+    "decision": "deny",
+    "reason": "live_replay_requires_explicit_approval"
+  },
+  "safe_denial": true
+}

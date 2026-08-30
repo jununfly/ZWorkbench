@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w6-pause-decision/v1",
+  "cycle": "hard-failure-pauses",
+  "action": "pause-upgrade-and-composition",
+  "reason": "regression gate is not pass",
+  "gate_status": "fail",
+  "drift_reasons": [],
+  "hard_failures": [
+    "Codex Harness/C2: scenario is fail"
+  ],
+  "unknowns": [],
+  "rollback_required": true,
+  "rollback_target": "control-harness-v1"
+}

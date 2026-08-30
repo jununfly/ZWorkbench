@@ -8,6 +8,8 @@
 - `fake-provider-a.json` / `fake-provider-b.json`：确定性 Provider 契约和故障注入说明；
 - `fake-provider.py`：仅监听 loopback 的 OpenAI-compatible 最小假服务；
 - `c5-provider-router.py`：候选无关的双 Provider 路由、能力探测、显式 fallback/degradation 与语义 oracle；
+- `c6-replay.py`：候选无关的 recorded view、cassette-only simulated replay 和 fail-closed live replay 边界 fixture；
+- `c7-operations.py`：候选无关的安装、升级、备份恢复和预制故障定位运维演练；只操作 case-local 文件，不安装依赖、不启动常驻服务、不访问网络；
 - `fake-sink.py`：只写调用者指定的临时日志文件；
 - `c2-adapter.py`：C2 acceptance-only fail-closed adapter；默认拒绝五类危险动作，仅允许带精确一次性 token 的 loopback sink；
 - `policy/policy.json`：五类危险动作的评估策略；
@@ -62,3 +64,48 @@ Provider 日志。structured output 缺失时先记录 B 的能力缺口，再�
 到 A；timeout 和半截 SSE 也必须带有可解释原因和目标 Provider。fixture
 contract 通过不代表任何候选已通过 C5；没有候选专属固定版本 C5 adapter 的
 候选继续标记为 `unknown`。
+
+运行 C6 记录查看与 replay 边界首轮验证：
+
+```sh
+python3 evaluation/runner/run_c6.py
+```
+
+C6 为每个 replay 模式重复 5 次。`recorded_view` 只读取 event ledger，
+`simulated_replay` 只读取 replay cassette，二者都不访问 Provider、工具或
+网络；`live_replay` 没有显式批准时直接拒绝，并记录 policy decision。每个
+案例保存 run/environment manifest、原始 event ledger、cassette、模式结果、
+模式事件、policy（live）和 effect guard。fixture contract 通过不代表任何
+候选已通过 C6；没有候选专属固定版本 C6 adapter 的候选继续标记为
+`unknown`。
+
+运行 C7 个人开发者/小团队生命周期成本首轮验证：
+
+```sh
+python3 evaluation/runner/run_c7.py
+```
+
+C7 对安装、常规升级、备份恢复和预制故障定位各重复 3 次。每个案例分别
+保存机器可测墙钟时间、人工操作步骤、operation ledger、服务清单、依赖清单
+和 `human-timing-template.json`。首轮不带 `--human-timings-json`，所以机器
+流程可以通过，但人工时间门保持 `unknown`；runner 的 subprocess 时间绝不
+被解释成真人运维时间。若有真实单人秒表记录，可按场景提供：
+
+```json
+{"install": 42, "upgrade": 8, "backup_restore": 10, "fault_diagnosis": 12}
+```
+
+再使用 `--human-timings-json <path>` 重跑。固定门槛是安装 ≤90 分钟，其余
+三类各 ≤30 分钟；参考 MVP 维护常驻服务 ≤3 个，Provider 与宿主 OS 不计入，
+且不需要额外专家。该 fixture contract 通过不代表候选 C7 通过；候选仍需
+固定版本 runbook、真实操作者记录、升级/回滚与退出证据。
+
+运行 W6 持续评估控制面（不调用候选）：
+
+```sh
+python3 evaluation/runner/run_continuous_evaluation.py
+```
+
+该 runner 只运行本 fixture 的 self-test，并用 synthetic control summary 验证
+版本漂移触发、隔离回归、fail-closed pause、rollback 和 rerun 证据链；它不产生
+候选 C2–C7 通过结论。

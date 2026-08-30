@@ -1,0 +1,6 @@
+{
+  "schema": "fixture-workbench-config/v1",
+  "fixture_version": "W6-0.1",
+  "run_id": "w6-c7-backup_restore-repeat-03",
+  "provider": "fake-provider-not-started"
+}

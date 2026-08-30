@@ -24,6 +24,20 @@ CANDIDATES = (
     "Goose",
 )
 GATE_VERSION = "w6-regression-gate/v1"
+IDENTITY_KEYS = (
+    "harness",
+    "components",
+    "provider",
+    "prompt_sha256",
+    "tool_schema_sha256",
+    "permission_policy_sha256",
+    "fixture",
+    "evaluator_version",
+    "sandbox",
+    "replay_cassette_sha256",
+    "dependencies_sha256",
+    "config_sha256",
+)
 
 
 def load_summary(path: Path):
@@ -53,8 +67,50 @@ def candidate_identity(summary, name):
     }
 
 
+def evaluation_identity(summary):
+    identity = summary.get("evaluation_identity")
+    return identity if isinstance(identity, dict) else None
+
+
+def identity_differences(old, new, prefix=""):
+    """Return stable paths whose versioned evaluation identity changed."""
+    differences = []
+    keys = sorted(set(old) | set(new))
+    for key in keys:
+        path = f"{prefix}.{key}" if prefix else key
+        if key not in old:
+            differences.append(f"{path} added")
+            continue
+        if key not in new:
+            differences.append(f"{path} removed")
+            continue
+        before = old[key]
+        after = new[key]
+        if isinstance(before, dict) and isinstance(after, dict):
+            differences.extend(identity_differences(before, after, path))
+        elif before != after:
+            differences.append(path)
+    return differences
+
+
+def check_evaluation_identity(summary, label):
+    """Validate the optional expanded identity when a run provides it.
+
+    Historical W6 summaries predate this field and remain readable. New
+    continuous-evaluation summaries opt in and must provide every dimension.
+    """
+    identity = evaluation_identity(summary)
+    if identity is None:
+        return []
+    missing = [key for key in IDENTITY_KEYS if key not in identity]
+    if missing:
+        return [f"{label}: evaluation identity missing {', '.join(missing)}"]
+    return []
+
+
 def check_summary_identity(summary, label):
     hard_failures = []
+    hard_failures.extend(check_evaluation_identity(summary, label))
     fixture = fixture_identity(summary)
     if fixture["version"] != FIXTURE_VERSION:
         hard_failures.append(f"{label}: fixture version is not {FIXTURE_VERSION}")
@@ -156,6 +212,19 @@ def compare_runs(baseline, current):
         if fixture_identity(current)["version"] == FIXTURE_VERSION:
             hard_failures.append("current run fixture hash does not match the frozen baseline identity")
 
+    old_evaluation_identity = evaluation_identity(baseline)
+    new_evaluation_identity = evaluation_identity(current)
+    if old_evaluation_identity is not None and new_evaluation_identity is None:
+        hard_failures.append("current run lost the expanded evaluation identity")
+        identity_changes.append("evaluation identity removed")
+    elif old_evaluation_identity is None and new_evaluation_identity is not None:
+        identity_changes.append("evaluation identity added")
+    elif old_evaluation_identity is not None and new_evaluation_identity is not None:
+        identity_changes.extend(
+            f"evaluation identity changed: {path}"
+            for path in identity_differences(old_evaluation_identity, new_evaluation_identity)
+        )
+
     for candidate in CANDIDATES:
         old = candidate_identity(baseline, candidate)
         new = candidate_identity(current, candidate)
@@ -205,12 +274,15 @@ def make_gate_result(baseline_path, current_path, baseline, current):
         "fixture_version": FIXTURE_VERSION,
         "fixture_identity": fixture_identity(current),
         "identity_changes": identity_changes,
+        "drift_triggered": bool(identity_changes),
+        "drift_reasons": identity_changes,
         "candidate_results": candidate_results,
         "hard_failures": sorted(set(hard_failures)),
         "unknowns": sorted(set(unknowns)),
         "status": gate_status,
         "allow_upgrade": gate_status == "pass",
-        "interpretation": "unknown/composition-required is fail-closed pending; it is not converted to fail or pass",
+        "upgrade_decision": "allow" if gate_status == "pass" else "pause",
+        "interpretation": "unknown/composition-required is fail-closed pending; it is not converted to fail or pass; any identity change triggers a fresh isolated run",
     }
 
 

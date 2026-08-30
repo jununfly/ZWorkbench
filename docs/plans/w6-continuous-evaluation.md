@@ -38,7 +38,7 @@
 | Provider 可移植性 | C5 双 Provider 任务通过比例及显式降级率 | 正常确定性用例 5/5；降级原因记录 100% | 静默语义变化 |
 | 端到端延迟 | p50/p95 | 先记录基线；再由 CBAM 确认场景预算 | 超预算 |
 | Token/基础设施成本 | 每个 scenario/run | 先记录基线；不得越过 CBAM 上限 | 持续超预算 |
-| 运维负担 | C7 安装/升级/恢复/排障人工时间 | 安装 ≤90m；其余各 ≤30m；常驻服务 ≤3 | 需要专家介入或无法回滚 |
+| 运维负担 | C7 安装/升级/恢复/排障人工时间；服务清单 | 安装 ≤90m；其余各 ≤30m；常驻服务 ≤3 | 需要专家介入、无法回滚，或把机器时间误作人工时间 |
 
 具体场景、fixture 和样本数见 [W6 C1–C7 Fixture 与阈值规格](./w6-fixtures-and-thresholds.md)。未知值不自动记为失败，但关键门禁在未知时保持“不通过/待验证”；冻结阈值版本为 `W6-0.1`，首轮执行期间不得临时改阈值，首轮结束后才可依据 ATAM/CBAM 提出新版本。
 
@@ -63,7 +63,7 @@ python3 evaluation/runner/check_regression.py \
   --output evaluation/runs/<current>/regression-gate.json
 ```
 
-门禁只读取两个 summary，不执行候选、不修改 fixture；退出码 `0` 表示已知指标无回归且没有 unknown，`1` 表示硬失败/回归，`2` 表示 unknown 或 `composition-required` 导致暂不放行。候选版本或 fixture 身份变化会被记录为触发信号；冻结的 `W6-0.1` fixture hash 变化则硬失败。旧 C1 baseline 曾因 C2–C7 unknown 而不允许升级；C2 adapter 通过后，C3–C7 与宿主级 C2 边界仍保持 fail-closed pending。
+门禁只读取两个 summary，不执行候选、不修改 fixture；退出码 `0` 表示已知指标无回归且没有 unknown，`1` 表示硬失败/回归，`2` 表示 unknown 或 `composition-required` 导致暂不放行。候选版本或 fixture 身份变化会被记录为触发信号；冻结的 `W6-0.1` fixture hash 变化则硬失败。旧 C1 baseline 曾因 C2–C7 unknown 而不允许升级；C2 adapter 通过后，C3–C7 与宿主级 C2 边界仍保持 fail-closed pending。C7 fixture 首轮的 machine process 已通过，但真人工时仍 unknown，不能解除 G0/G7 pending。
 
 ## C2 adapter 证据接入
 
@@ -111,6 +111,99 @@ python3 evaluation/runner/run_c5.py
 - 真实 Provider、真实凭证、外部网络和不可逆副作用不进入本地可复现基线。
 
 上述结果只证明 fixture contract，不改变候选状态：没有候选专属固定版本 C5 adapter 的候选继续为 `unknown`。将来候选 adapter、Provider/model/endpoint、能力声明、schema、stream parser 或路由策略发生变化时，必须重跑 C5，并与 C3/C4 的状态、幂等和副作用 ledger 交叉检查。
+
+## C6 记录查看与 replay 边界证据接入
+
+C6 使用独立的 [`run_c6.py`](../../evaluation/runner/run_c6.py) 与候选无关的 [`c6-replay.py`](../../evaluation/fixtures/w6-0.1/c6-replay.py)。运行：
+
+```bash
+python3 evaluation/runner/run_c6.py
+```
+
+首轮 `w6-0.1-c6-20260830T120732-177815Z` 对 `recorded_view`、
+`simulated_replay`、`live_replay` 各重复 5 次，共 15/15 fixture contract
+pass。每个案例生成原始 event ledger、replay cassette、expected output、
+environment manifest 和 effect guard；模式执行后再次读取 guard，确保没有
+Provider、工具、网络或外部副作用。
+
+持续评估必须分别检查：
+
+- recorded view 只读 ledger，不执行任何原始 Provider/tool action；
+- simulated replay 只读取 cassette，5/5 与 expected semantic result 一致；
+- live replay 默认拒绝，approval-required、approval_granted=false、deny
+  和拒绝 reason 均有记录；
+- 每个源事件含 event_id/run_id/type/logical_time/source，必需 11 类事件完整；
+- replay mode 标签 100% 正确，execution_performed=false，effect guard 变化为 0；
+- 不把 session/trace/log view 称为执行回放；真实候选接入仍需固定版本 adapter。
+
+上述结果只证明 fixture contract，不改变候选状态：没有候选专属固定版本 C6
+adapter 的候选继续为 `unknown`。当候选事件 schema、环境快照、回放 API、
+权限策略、Provider/tool cassette 或观测后端发生变化时，必须重跑 C6，并与
+C2/C3/C4/C5 的 policy、幂等、恢复、fallback 和副作用 ledger 交叉检查。
+
+## C7 个人开发者/小团队运维与生命周期成本证据接入
+
+C7 使用独立的 [`run_c7.py`](../../evaluation/runner/run_c7.py) 与候选无关的
+[`c7-operations.py`](../../evaluation/fixtures/w6-0.1/c7-operations.py)。运行：
+
+```bash
+python3 evaluation/runner/run_c7.py
+```
+
+首轮 `w6-0.1-c7-20260830T122018-367856Z` 覆盖 install、upgrade、
+backup_restore、fault_diagnosis 四类操作，各重复 3 次，共 `12/12` machine
+process pass。每个 case 保存 operation ledger、依赖/服务清单、人工步骤、
+process result 和机器墙钟时间；参考 MVP 维护服务计数为 2，Provider 与宿主
+OS 不计入。
+
+C7 的时间门必须以真人单一操作者的 stopwatch 记录为准：本轮未提供
+`--human-timings-json`，因此 `human_timing_status=unknown`、`0/12` case 有
+真人计时，fixture status 为 `pass-with-unknown-human-timing`。机器
+`machine_elapsed_seconds` 只表示隔离脚本执行墙钟时间，不能用于填充 90/30/30/30
+分钟门。后续有真实计时后按场景填入模板并重跑；任何未计时的关键候选 C7 继续
+保持 `unknown`。
+
+持续门禁必须分别检查：
+
+- 4 类操作的 process/ledger/隔离结果 100% 完整；
+- 安装 ≤90 分钟、升级/备份恢复/预制故障定位各 ≤30 分钟，人工计时缺失保持 unknown；
+- 无需额外专家，且 counted maintained services ≤3；Provider 与宿主 OS 必须有明确 excluded 记录；
+- 升级失败、恢复、回滚和退出路径是否保留证据；不能把参考 fixture 的服务清单或专家声明外推为候选能力。
+
+候选或组合件发生版本、依赖、配置、服务拓扑、备份格式、runbook 或许可证变化时，
+必须重跑 C7；失败或 unknown 时冻结扩大组合，并更新 ATAM/CBAM。
+
+## 5.1 版本漂移触发与自动回归控制面
+
+持续评估的输入必须带有可比较的 `evaluation_identity`。对已采用该字段的运行，以下
+13 个维度是触发器：Harness、scheduler、Provider/model、Provider endpoint、Prompt、
+Tool schema、权限策略、fixture source、evaluator、sandbox、replay cassette、依赖和
+配置。任一维度变化都必须生成 `drift_triggered=true` 与稳定的字段路径，而不是只在
+日志中留下一个模糊的“版本变化”。历史上没有该字段的 W6 summary 可以读取，但不能
+充当新持续评估控制面的完整身份。
+
+门禁决策固定为：
+
+| 条件 | 门禁状态 | 控制面动作 |
+|---|---|---|
+| 身份未变，已知指标无回归，无 hard failure/unknown | `pass` | 允许升级 |
+| 身份变化，且新隔离回归满足同一门槛 | `pass` | 记录 drift，允许升级 |
+| 关键安全/副作用/状态/事件门失败 | `fail` | 暂停升级和组合扩展，冻结证据 |
+| 关键能力 `unknown` 或 `composition-required` | `pending` | 暂停升级和组合扩展，不得以调阈值放行 |
+
+`evaluation/runner/check_regression.py` 是只读门禁：输入两个保存的 summary，输出
+`drift_reasons`、`upgrade_decision` 和 `allow_upgrade`；它不执行候选、不修改输入。
+一个漂移本身不是失败，但在新 run 完成前不能把旧 run 当作新版本证据。
+
+控制面闭环 runner 为 [`evaluation/runner/run_continuous_evaluation.py`](../../evaluation/runner/run_continuous_evaluation.py)：
+
+```sh
+python3 evaluation/runner/run_continuous_evaluation.py
+```
+
+它只在 case-local 临时目录运行 W6 fixture self-test，并对 synthetic control summary
+验证 `trigger → isolated regression → gate → pause/rollback → rerun` 链路；不代表任一
+候选 Harness 已通过 C1–C7。首轮证据见 [`w6-continuous-evaluation-findings.md`](./w6-continuous-evaluation-findings.md)。
 
 ## 5. 暂停、回滚与重新决策
 

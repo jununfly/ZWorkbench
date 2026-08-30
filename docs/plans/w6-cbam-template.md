@@ -2,6 +2,8 @@
 
 CBAM 用来回答：一个候选或新增组合件带来的场景收益和风险降低，是否值得它增加的集成、运维、迁移和锁定成本。
 
+当前阶段性汇总见：[W6-0.1 ATAM/CBAM 阶段性决策包](./w6-atam-cbam-decision-package.md)。本模板保留选项成本账和 C1–C7 增量证据；C7 fixture 已完成，但候选固定版本 adapter 与真人运维计时完成前只允许条件性交接 W7，不代表最终采用。
+
 ## 1. 选项定义
 
 | 选项 | 角色 | 新增能力 | 复用能力 | 与现有方案重叠 | 退出/替换方式 |
@@ -96,7 +98,9 @@ CBAM 用来回答：一个候选或新增组合件带来的场景收益和风险
 | C1 候选样本 | 20 个 | 2 候选 × 2 fake Provider × 5 次 |
 | 真实 Provider/Token 成本 | 未测 | loopback fake Provider，不得外推 |
 | 常驻服务数量 | 未测 | 本轮只启动临时 fake Provider，不是 C7 演练 |
-| 安装/升级/备份/恢复/排障时间 | 未测 | C7 unknown |
+| 安装/升级/备份/恢复/排障时间 | C7 fixture 机器流程 12/12 pass；真人计时 0/12 | subprocess 时间不作为人工时间；候选工时仍 unknown |
+| 参考 MVP 维护服务数 | 最大 2（scheduler、evidence-ledger） | Provider 与宿主 OS 排除；候选常驻服务仍需实测 |
+| 参考 runbook 专家介入 | `false` | 仅是 fixture 声明，不替代候选单人演练 |
 
 ### 6.3 增量组合门槛
 
@@ -167,3 +171,30 @@ CBAM 用来回答：一个候选或新增组合件带来的场景收益和风险
 | 组合判断 | 支持“一个主 Harness + 薄 Provider contract/adapter”作为待验证路线；不证明第二 Harness 或 LiteLLM 的增量收益 |
 | LiteLLM 引入条件 | 候选实测证明网关能降低总 Provider 适配与排障成本，并保留可解释的 capability/fallback ledger；其常驻服务、许可证和故障面在 C7 内可接受 |
 | 不引入/退出条件 | 只提供统一 HTTP 表面却隐藏 schema/工具语义，或增加一个无法解释的 fallback 单点；个人/小团队运维超过既定 C7 门槛 |
+
+### 6.9 C6 replay contract 增量证据
+
+证据：[`w6-c6-replay-findings.md`](./w6-c6-replay-findings.md)，Run ID：`w6-0.1-c6-20260830T120732-177815Z`。本节只记录 acceptance/evaluation 的可观察收益和成本信号，不完成 W7 采用决策。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 15 个隔离案例验证了 recorded view、cassette-only simulated replay 和默认拒绝 live replay 的边界；模式标签/必需事件字段 100%，simulated 5/5，effect guard 变化 0 |
+| 一次性成本 | event schema、environment manifest、cassette、mode policy、execution counter、effect guard 和候选 replay adapter；候选接入仍需映射真实 session/trace/API |
+| 持续成本 | 事件/录音存储、敏感信息脱敏、保留期限、查询索引、schema 兼容和退出导出；本批次未测外部观测后端运维 |
+| 组合判断 | 支持“一个主 Harness + 薄 replay contract/证据索引”作为待验证路线；不证明必须引入 Langfuse/Phoenix/Inspect AI/OTel |
+| 观测/评测后端引入条件 | C6 候选实测证明查询、dataset/eval 或关联收益超过自有 ledger 成本；不改变 live replay 的 fail-closed policy |
+| 不引入/退出条件 | 只能提供 trace/view、无法保证 cassette-only 或模式边界，或引入过高存储/隐私/部署/排障成本 |
+
+### 6.10 C7 运维与生命周期成本增量证据
+
+证据：[`w6-c7-operations-findings.md`](./w6-c7-operations-findings.md)，Run ID：`w6-0.1-c7-20260830T122018-367856Z`。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 4 类生命周期操作各重复 3 次，共 12/12 machine process pass；固定了 operation ledger、人工步骤、服务/依赖清单和时间测量边界 |
+| 一次性成本 | 增加 C7 fixture/runner、逐 case 文件 oracle、服务计数规则和人工计时模板；候选仍需固定版本 runbook adapter |
+| 持续成本 | 候选安装、升级、备份兼容、回滚、排障、凭证、存储和退出成本仍未测；本轮没有真实 daemon 或外部后端运行 |
+| 人工时间信号 | `0/12` 真人计时；安装 ≤90、升级/恢复/排障 ≤30 的硬门暂为 `unknown`，不是 pass |
+| 组合判断 | 参考 MVP 服务数为 2/3，说明可把常驻服务纳入 CBAM 账；不能据此证明 Temporal/LangGraph、LiteLLM、观测后端或第二 Harness 值得引入 |
+| 引入条件 | 至少一个候选的真实 C7 工时、服务数、专家介入、回滚和退出证据在阈值内，并且组合件带来 C2–C6 的非重复关键收益 |
+| 不引入/退出条件 | 任一关键工时超门且无足够收益覆盖，或新增服务复制状态/权限/事件并增加排障责任 |

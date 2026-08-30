@@ -1,0 +1,13 @@
+{
+  "schema": "zworkbench-w6-c5-case-manifest/v1",
+  "case_id": "normal-b-repeat-04",
+  "case_type": "normal-b",
+  "repeat": 4,
+  "primary_provider": "fake-b",
+  "fallback_provider": "fake-a",
+  "fault": null,
+  "fault_scope": "none",
+  "fixture_version": "W6-0.1",
+  "real_credentials": false,
+  "network": "loopback-only"
+}

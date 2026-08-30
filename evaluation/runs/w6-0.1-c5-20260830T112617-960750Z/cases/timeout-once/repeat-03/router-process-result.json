@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c5-provider-router.py",
+    "--task",
+    "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-03/task.json",
+    "--primary-id",
+    "fake-b",
+    "--primary-url",
+    "http://127.0.0.1:60054",
+    "--model",
+    "fake-model",
+    "--output-dir",
+    "/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-03",
+    "--fallback-id",
+    "fake-a",
+    "--fallback-url",
+    "http://127.0.0.1:60051"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"completed\",\n  \"primary_provider\": \"fake-b\",\n  \"final_provider\": \"fake-a\",\n  \"fallback_count\": 1,\n  \"decision_reason\": \"timeout\",\n  \"result\": \"/tmp/zwb-c5-formal-final.0f0AQz/run/cases/timeout-once/repeat-03/result.json\"\n}\n",
+  "stderr": "",
+  "duration_ms": 664,
+  "timed_out": false
+}

@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c6-replay.py",
+    "--mode",
+    "live_replay",
+    "--effect-guard",
+    "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-01/effect-guard.json",
+    "--output-dir",
+    "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-01/mode",
+    "--cassette",
+    "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-01/recording/replay-cassette.json"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"mode\": \"live_replay\",\n  \"status\": \"denied\",\n  \"execution_performed\": false,\n  \"side_effect_count\": 0,\n  \"result\": \"/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-01/mode/mode-result.json\"\n}\n",
+  "stderr": "",
+  "duration_ms": 22,
+  "timed_out": false
+}

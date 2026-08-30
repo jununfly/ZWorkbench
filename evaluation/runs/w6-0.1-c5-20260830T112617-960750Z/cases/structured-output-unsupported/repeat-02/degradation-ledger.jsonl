@@ -1,0 +1,1 @@
+{"action": "fallback", "from_provider": "fake-b", "observed_at": "2026-08-30T11:26:22.836392+00:00", "reason": "capability_missing:structured_output", "required_capability": "structured_output", "to_provider": "fake-a", "type": "provider.degradation"}

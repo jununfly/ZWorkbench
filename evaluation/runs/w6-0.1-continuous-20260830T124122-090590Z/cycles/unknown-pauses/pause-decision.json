@@ -1,0 +1,14 @@
+{
+  "schema": "zworkbench-w6-pause-decision/v1",
+  "cycle": "unknown-pauses",
+  "action": "pause-upgrade-and-composition",
+  "reason": "regression gate is not pass",
+  "gate_status": "pending",
+  "drift_reasons": [],
+  "hard_failures": [],
+  "unknowns": [
+    "Codex Harness/C7: unknown"
+  ],
+  "rollback_required": true,
+  "rollback_target": "control-harness-v1"
+}

@@ -1,0 +1,121 @@
+{
+  "schema": "zworkbench-w6-c5-case/v1",
+  "router_version": "w6-c5-provider-router/v1",
+  "status": "completed",
+  "task": {
+    "schema": "zworkbench-w6-c5-task/v1",
+    "task_id": "provider-failover-v1",
+    "prompt": "Return the deterministic W6 C5 fixture answer.",
+    "requires_structured_output": true,
+    "expected_semantic_result": {
+      "answer": "fixture-ok",
+      "task": "provider-failover-v1",
+      "schema_version": "v1"
+    }
+  },
+  "primary_provider": {
+    "provider_id": "fake-b",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:60131"
+  },
+  "fallback_provider": {
+    "provider_id": "fake-a",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:60125"
+  },
+  "capability_detection": [
+    {
+      "provider_id": "fake-b",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:60131",
+      "status": "success",
+      "capabilities": [
+        "streaming",
+        "tool_calls"
+      ]
+    },
+    {
+      "provider_id": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:60125",
+      "status": "success",
+      "capabilities": [
+        "streaming",
+        "structured_output",
+        "tool_calls"
+      ]
+    }
+  ],
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "phase": "provider_request",
+      "status": "success",
+      "started_at": "2026-08-30T11:26:23.002881+00:00",
+      "provider_id": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:60125",
+      "structured_output_requested": true,
+      "finished_at": "2026-08-30T11:26:23.003404+00:00",
+      "duration_ms": 1,
+      "semantic_result": {
+        "answer": "fixture-ok",
+        "task": "provider-failover-v1",
+        "schema_version": "v1"
+      },
+      "semantic_signature": "fb180919ff92971092308989d4eeda0f599260fa2e2f11bda69410d6466416eb",
+      "http_status": 200,
+      "response_metadata": {
+        "protocol": "chat-completions",
+        "stream_complete": true,
+        "finish_reason": "stop",
+        "content": "{\"answer\":\"fixture-ok\",\"task\":\"provider-failover-v1\",\"schema_version\":\"v1\"}"
+      }
+    }
+  ],
+  "fallback_ledger": [
+    {
+      "type": "provider.fallback",
+      "observed_at": "2026-08-30T11:26:23.002717+00:00",
+      "from_provider": "fake-b",
+      "to_provider": "fake-a",
+      "reason": "capability_missing:structured_output",
+      "retry_policy": "switch-provider-no-same-provider-retry",
+      "required_capability": "structured_output"
+    }
+  ],
+  "degradation_ledger": [
+    {
+      "type": "provider.degradation",
+      "observed_at": "2026-08-30T11:26:23.002004+00:00",
+      "from_provider": "fake-b",
+      "to_provider": "fake-a",
+      "reason": "capability_missing:structured_output",
+      "required_capability": "structured_output",
+      "action": "fallback"
+    }
+  ],
+  "final": {
+    "provider": "fake-a",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:60125",
+    "semantic_result": {
+      "answer": "fixture-ok",
+      "task": "provider-failover-v1",
+      "schema_version": "v1"
+    },
+    "semantic_signature": "fb180919ff92971092308989d4eeda0f599260fa2e2f11bda69410d6466416eb",
+    "expected_semantic_result": {
+      "answer": "fixture-ok",
+      "task": "provider-failover-v1",
+      "schema_version": "v1"
+    },
+    "silent_semantic_change": false
+  },
+  "decision": {
+    "outcome": "fallback",
+    "reason": "capability_missing:structured_output",
+    "same_provider_retry": false
+  },
+  "local_only": true
+}

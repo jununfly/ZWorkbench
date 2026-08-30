@@ -1,0 +1,37 @@
+{
+  "schema": "zworkbench-w6-c6-run/v1",
+  "run_id": "w6-c6-live_replay-repeat-01",
+  "fixture_version": "W6-0.1",
+  "fixture_manifest_sha256": "4c9d69f0faf2726b64adc949c164a4f2d76e9361c0ded8bcea27e73ca97355bd",
+  "provider": {
+    "provider_id": "fake-a",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:11434",
+    "protocol": "openai-compatible-chat-completions"
+  },
+  "environment": {
+    "schema": "zworkbench-w6-c6-environment/v1",
+    "fixture_version": "W6-0.1",
+    "network": "loopback-only",
+    "real_credentials": false,
+    "production_data": false,
+    "python": "3.9.6",
+    "platform": "darwin",
+    "timezone": "UTC"
+  },
+  "event_ledger_sha256": "5c3c30ffb112e5b72fc35747438876e3db149957951aeb50cf0c651f207f4611",
+  "replay_cassette_sha256": "5e1fa9d663bc2de7347451c8f031c317652347244f3ee0272135276760c5cfc2",
+  "required_event_types": [
+    "run.started",
+    "environment.snapshot",
+    "provider.request",
+    "provider.response",
+    "tool.call",
+    "policy.decision",
+    "tool.result",
+    "state.transition",
+    "diff.created",
+    "test.output",
+    "run.completed"
+  ]
+}

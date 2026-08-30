@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c7-operations.py",
+    "--scenario",
+    "install",
+    "--workspace",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/install/repeat-01/workspace",
+    "--output-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/install/repeat-01/operation",
+    "--run-id",
+    "w6-c7-install-repeat-01"
+  ],
+  "returncode": 0,
+  "stdout": "{\"human_timing_status\":\"unknown\",\"machine_elapsed_seconds\":0.001068,\"scenario\":\"install\",\"status\":\"completed\"}\n",
+  "stderr": "",
+  "duration_ms": 27,
+  "timed_out": false
+}

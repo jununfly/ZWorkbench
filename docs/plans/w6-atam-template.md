@@ -2,6 +2,8 @@
 
 ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感点和权衡，而不是给项目做一个模糊总评分。
 
+当前阶段性汇总见：[W6-0.1 ATAM/CBAM 阶段性决策包](./w6-atam-cbam-decision-package.md)。本模板保留逐场景证据和增量更新；C7 fixture 完成但候选固定版本/真人运维计时未完成，W6 仅条件性交接 W7，不代表最终采用。
+
 ## 1. 评审元数据
 
 | 字段 | 内容 |
@@ -33,7 +35,7 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 
 | ID | 场景简述 | 主要质量属性 | 典型架构风险 |
 |---|---|---|---|
-| C1 | 隔离项目中完成理解—修改—测试—解释 diff | 代码闭环、可审计性 | 工具/项目上下文不足导致成功率与安全性冲突 |
+| C1 | 隔离项目中完成理解—修改—测试—解释 diff | 代码闭环、可审计性 | 工具/项目上下文不足导致成功率与安全性冲突；详见 [C1 ATAM 专项证据](./w6-atam-c1-code-auditability.md) |
 | C2 | 触发写越界、网络、凭证、Git push、部署并验证审批 | 安全、权限、可操作性 | Harness 权限模型与外部 sandbox 重复或不一致 |
 | C3 | 重复触发可回滚且幂等的定时任务 | 自动化、幂等、恢复 | scheduler、Run 状态和 Harness session 产生重复事实 |
 | C4 | 在模型流、工具执行、持久化边界注入中断/超时 | 恢复、状态一致性 | retry 可能重复外部副作用，replay 语义不一致 |
@@ -105,7 +107,7 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | C4 | 工具/Provider/进程边界故障 | 100% 恢复或安全终止、状态不丢失 | 所有候选 unknown | 可靠性与外部副作用边界是高风险 |
 | C5 | fake-a/b 与 timeout/能力缺失 | 语义一致、降级原因显式 | 所有候选 unknown；C1 仅为基本双 Provider 请求 | 统一 Provider 表面可能掩盖能力差异 |
 | C6 | recorded view、simulated replay、live replay 保护 | 事件/模式完整；simulated 5/5；live 副作用 0 | 所有候选 unknown；C1 原始事件已保存 | 记录能力不能冒充执行回放 |
-| C7 | 单人安装、升级、备份恢复、故障定位 | 90/30/30/30 分钟门槛 | 所有候选 unknown | 个人/小团队运维负担尚未量化 |
+| C7 | 单人安装、升级、备份恢复、故障定位 | 90/30/30/30 分钟门槛；机器时间与人工时间分离 | 参考 fixture 12/12 machine pass；真人计时 0/12，候选仍 unknown | 运维合同可复核，但 G0 仍需候选 runbook 与真实操作者数据 |
 
 ### 6.3 风险、敏感点与权衡点初始记录
 
@@ -117,6 +119,9 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | R-04 | Risk | Codex 研究 commit 与本机二进制未绑定 | 绑定 commit 或降低证据级别 |
 | SP-01 | Sensitivity point | 工具 schema、sandbox、审批策略、事件采集入口会改变结果 | 锁定配置和 schema hash |
 | TP-01 | Trade-off point | 多 Harness 可能增加覆盖，也会复制状态、权限、事件和升级责任 | 等 C2–C7 证明增量收益后用 CBAM 决策 |
+| R-05 | Risk | fixture 机器流程通过可能被误读为个人/小团队人工运维门通过 | C7 `pass-with-unknown-human-timing`；真人 stopwatch、候选服务数和升级/退出演练仍是 G0/G7 前置 |
+| SP-04 | Sensitivity point | subprocess 墙钟时间、人工操作步骤和真人计时不是同一个指标 | C7 每 case 记录 `machine_elapsed_seconds`、`human_steps`、`human_timed` 和 `human_elapsed_minutes` |
+| TP-03 | Trade-off point | 常驻 scheduler/网关/观测服务的功能收益与生命周期维护成本 | C7 参考服务数 2/3；候选真实 C7 成本完成前不扩大组合 |
 | NR-01 | Non-risk（本次范围） | 运行没有生产或真实外部副作用 | 仅对本次隔离 fixture 成立，不外推为产品安全 |
 
 ### 6.4 首轮 ATAM 输出
@@ -128,7 +133,7 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 - 可由配置解决：loopback endpoint、临时工作区、无真实凭证、C1 的允许修改范围和记录字段。
 - 必须由 ZWorkbench 自有模块解决：跨 Run 状态/幂等、统一副作用账本、replay mode contract、候选无关的证据索引和小团队运维闭环（是否自建仍待 W7）。
 - 需要持续评估：C1 成功率、越界修改、未授权动作拦截率、恢复率、事件完整率、回放一致性、Provider 静默退化、人工介入率和 C7 运维时间。
-- 尚未证实的 unknowns：C3–C7、C2 宿主级强制 broker；Pi/OpenCode/Goose 的可执行版本与安全 adapter；Codex 研究 commit 与二进制的绑定。
+- 尚未证实的 unknowns：候选 C3–C7、C2 宿主级强制 broker；C7 真人运维时间与候选服务数；Pi/OpenCode/Goose 的可执行版本与安全 adapter；Codex 研究 commit 与二进制的绑定。
 
 ### 6.5 C2 adapter 增量证据
 
@@ -178,4 +183,30 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | 新敏感点 | capability endpoint 的声明、stream 完成标记、structured schema 和 fallback target 是 Provider 迁移的观测入口；任一缺失都可能把降级伪装成成功 |
 | 新的不可接受边界 | 不允许无 ledger 的 silent provider/model switch；不允许把兼容 HTTP API 当成工具/结构化输出语义兼容；真实 Provider 与候选事件模型仍未签字 |
 | Provider 路由责任 | 本轮由候选无关薄 router 生成 capability/fallback/degradation ledger；不据此决定由 ZWorkbench、Harness 还是 LiteLLM 在产品中拥有该责任 |
-| 下一验证 | 进入 C6 recorded view/simulated replay 边界；随后为候选建立固定版本 C5 adapter，并将 C5 结果与 C3/C4 状态、幂等和副作用合同串联 |
+| 下一验证 | C6 fixture contract 已完成；随后为候选建立固定版本 C5/C6 adapter，并将 Provider 与 replay 结果和 C3/C4 状态、幂等及副作用合同串联 |
+
+### 6.9 C6 记录查看与 simulated replay 边界增量证据
+
+证据：[`w6-c6-replay-findings.md`](./w6-c6-replay-findings.md)，Run ID：`w6-0.1-c6-20260830T120732-177815Z`。本节仍是 fixture contract 的临时增量，不是最终架构评审或候选采用结论。
+
+| 项目 | 更新 |
+|---|---|
+| C6 结果 | `recorded_view`、`simulated_replay`、`live_replay` 各 5/5；总计 15/15 pass；simulated 与 expected 一致，live 全部拒绝 |
+| 风险收窄 | 每个源 ledger 的 11 类必需事件字段完整率 100%；模式标签 100%；三种模式均未执行 Provider/tool，effect guard 变化 0 |
+| 新敏感点 | replay mode、cassette/environment hash、policy decision 和 execution counter 是防止“看记录”被误报成“执行回放”的关键入口 |
+| 新的不可接受边界 | 不允许没有模式标签的 replay，不允许 simulated 隐式访问 Provider/tool/network，不允许 live replay 绕过显式 approval；候选真实 API 仍未签字 |
+| 回放责任 | 本轮由候选无关 fixture 强制区分 view/simulated/live；不据此决定由 ZWorkbench、Harness 还是观测后端在产品中拥有执行责任 |
+| 下一验证 | C7 fixture contract 已完成；为至少一个候选建立固定版本 C6/C7 adapter，执行真实单人 runbook 与 stopwatch，并把 replay 与 C2–C5 ledger 关联 |
+
+### 6.10 C7 个人开发者/小团队运维与生命周期成本增量证据
+
+证据：[`w6-c7-operations-findings.md`](./w6-c7-operations-findings.md)，Run ID：`w6-0.1-c7-20260830T122018-367856Z`。
+
+| 项目 | 更新 |
+|---|---|
+| C7 结果 | install、upgrade、backup_restore、fault_diagnosis 各 3/3，合计 12/12 machine process pass；operation ledger、依赖/服务清单和隔离 oracle 完整 |
+| 人工时间 | `0/12` 有真人 stopwatch；四类人工时间均为 `unknown`，没有把约 0.001–0.003 秒 subprocess 时间当人工耗时 |
+| 服务边界 | 参考 MVP 计入 2 个需人工维护服务（scheduler、evidence-ledger），Provider 与宿主 OS 明确排除；最大 2 ≤ 3 |
+| 风险收窄 | C7 评估资产能捕捉安装、升级、恢复和排障流程；不能签候选 G0/G7，也不能证明组合件维护成本可接受 |
+| 不可接受误读 | 不得将 fixture process pass 写成候选运维 pass；不得将 reference service manifest 写成候选原生服务清单 |
+| 下一验证 | 选择一个主候选，绑定固定版本/配置/依赖，进行单人安装、升级、备份恢复、故障定位和回滚；补交真人时间与专家介入记录 |

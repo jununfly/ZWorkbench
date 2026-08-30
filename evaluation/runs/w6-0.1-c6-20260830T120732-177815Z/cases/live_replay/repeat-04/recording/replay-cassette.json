@@ -1,0 +1,48 @@
+{
+  "schema": "zworkbench-w6-c6-cassette/v1",
+  "cassette_id": "cassette-live_replay-repeat-04",
+  "source_run_id": "w6-c6-live_replay-repeat-04",
+  "provider": {
+    "provider_id": "fake-a",
+    "model": "fake-model",
+    "endpoint": "http://127.0.0.1:11434",
+    "protocol": "openai-compatible-chat-completions"
+  },
+  "interactions": [
+    {
+      "request": {
+        "model": "fake-model",
+        "prompt": "Return fixture answer."
+      },
+      "response": {
+        "answer": "fixture-ok"
+      }
+    }
+  ],
+  "tool_results": [
+    {
+      "tool_name": "read_fixture",
+      "result": {
+        "status": "ok",
+        "bytes": 128
+      }
+    }
+  ],
+  "expected_semantic_result": {
+    "answer": "fixture-ok",
+    "task": "replay-contract-v1"
+  },
+  "required_event_types": [
+    "run.started",
+    "environment.snapshot",
+    "provider.request",
+    "provider.response",
+    "tool.call",
+    "policy.decision",
+    "tool.result",
+    "state.transition",
+    "diff.created",
+    "test.output",
+    "run.completed"
+  ]
+}

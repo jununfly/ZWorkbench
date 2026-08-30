@@ -1,0 +1,137 @@
+{
+  "schema": "zworkbench-w6-regression-gate/v1",
+  "baseline_summary": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-continuous-20260830T124122-090590Z/cycles/drift-evaluator/baseline-summary.json",
+  "current_summary": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-continuous-20260830T124122-090590Z/cycles/drift-evaluator/current-summary.json",
+  "fixture_version": "W6-0.1",
+  "fixture_identity": {
+    "version": "W6-0.1",
+    "fixture_id": "w6-0.1",
+    "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+  },
+  "identity_changes": [
+    "evaluation identity changed: evaluator_version"
+  ],
+  "drift_triggered": true,
+  "drift_reasons": [
+    "evaluation identity changed: evaluator_version"
+  ],
+  "candidate_results": {
+    "DeepSeek Harness": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "Pi Agent Harness": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "Codex Harness": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "OpenCode": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "Goose": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    }
+  },
+  "hard_failures": [],
+  "unknowns": [],
+  "status": "pass",
+  "allow_upgrade": true,
+  "upgrade_decision": "allow",
+  "interpretation": "unknown/composition-required is fail-closed pending; it is not converted to fail or pass; any identity change triggers a fresh isolated run",
+  "cycle": "drift-evaluator",
+  "expected_status": "pass",
+  "expectation_met": true,
+  "regression_executed": true,
+  "candidate_invoked": false
+}

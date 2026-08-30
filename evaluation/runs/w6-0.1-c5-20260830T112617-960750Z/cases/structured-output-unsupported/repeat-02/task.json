@@ -1,0 +1,11 @@
+{
+  "schema": "zworkbench-w6-c5-task/v1",
+  "task_id": "provider-failover-v1",
+  "prompt": "Return the deterministic W6 C5 fixture answer.",
+  "requires_structured_output": true,
+  "expected_semantic_result": {
+    "answer": "fixture-ok",
+    "task": "provider-failover-v1",
+    "schema_version": "v1"
+  }
+}

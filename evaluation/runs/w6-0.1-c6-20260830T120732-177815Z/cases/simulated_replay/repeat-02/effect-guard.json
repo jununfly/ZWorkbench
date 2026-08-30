@@ -1,0 +1,6 @@
+{
+  "provider_requests": 0,
+  "tool_invocations": 0,
+  "external_side_effects": 0,
+  "guard_schema": "w6-c6-effect-guard/v1"
+}

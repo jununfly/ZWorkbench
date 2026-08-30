@@ -1,0 +1,620 @@
+{
+  "schema": "zworkbench-w6-c7/v1",
+  "run_id": "w6-0.1-c7-20260830T122018-367856Z",
+  "started_at": "2026-08-30T12:20:18.367856+00:00",
+  "finished_at": "2026-08-30T12:20:18.751900+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette",
+        "provider_capability_ledger",
+        "provider_fallback_ledger",
+        "replay_mode_ledger",
+        "environment_manifest",
+        "operation_ledger",
+        "service_manifest",
+        "dependency_manifest",
+        "human_timing_template"
+      ]
+    },
+    "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d",
+    "operations_fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c7-operations.py",
+    "operations_fixture_sha256": "b09efa2b3115e3ef577d8911b1461995552cd6b708005aa3da4a1c55847f426d"
+  },
+  "runner": {
+    "version": "w6-c7-runner/v1",
+    "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_c7.py",
+    "sha256": "ed50eea9a7c7f780f56e9f134b374a41d87327eeec9d13f3aba655c7a9d4c5de"
+  },
+  "threshold": {
+    "human_minutes": {
+      "install": 90,
+      "upgrade": 30,
+      "backup_restore": 30,
+      "fault_diagnosis": 30
+    },
+    "maintained_services_max": 3,
+    "extra_expert_required": false,
+    "human_timing_required_for_signoff": true,
+    "machine_elapsed_is_not_human_time": true,
+    "required_event_types": [
+      "operation.started",
+      "environment.checked",
+      "precondition.prepared",
+      "operation.step",
+      "verification.completed",
+      "operation.completed"
+    ],
+    "repeats_per_scenario": 3,
+    "total_cases": 12
+  },
+  "fixture_contract": {
+    "status": "pass-with-unknown-human-timing",
+    "machine_process_status": "pass",
+    "human_timing_status": "unknown",
+    "cases_passed": 12,
+    "cases_total": 12,
+    "checks": {
+      "all_operations_pass": true,
+      "all_required_events_complete": true,
+      "all_cases_isolated": true,
+      "no_network_or_real_data": true,
+      "maintained_services_at_most_three": true,
+      "no_extra_expert_in_reference_runbook": true,
+      "human_time_gate": "unknown"
+    },
+    "metrics": {
+      "cases_passed": 12,
+      "cases_total": 12,
+      "machine_process_pass_rate": 1.0,
+      "machine_elapsed": {
+        "count": 12,
+        "min_seconds": 0.001055,
+        "max_seconds": 0.002945,
+        "mean_seconds": 0.001649,
+        "p50_seconds": 0.001552
+      },
+      "human_timed_cases": 0,
+      "human_timing_unknown_cases": 12,
+      "human_timing_failures": 0,
+      "maintained_service_count_max": 2,
+      "extra_expert_required_cases": 0
+    },
+    "case_results": [
+      {
+        "scenario": "install",
+        "repeat": 1,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 90,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001068,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/install/repeat-01"
+      },
+      {
+        "scenario": "install",
+        "repeat": 2,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 90,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001596,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/install/repeat-02"
+      },
+      {
+        "scenario": "install",
+        "repeat": 3,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 90,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001055,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/install/repeat-03"
+      },
+      {
+        "scenario": "upgrade",
+        "repeat": 1,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001482,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/upgrade/repeat-01"
+      },
+      {
+        "scenario": "upgrade",
+        "repeat": 2,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001523,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/upgrade/repeat-02"
+      },
+      {
+        "scenario": "upgrade",
+        "repeat": 3,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001573,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/upgrade/repeat-03"
+      },
+      {
+        "scenario": "backup_restore",
+        "repeat": 1,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.00191,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 8
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/backup_restore/repeat-01"
+      },
+      {
+        "scenario": "backup_restore",
+        "repeat": 2,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001772,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 8
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/backup_restore/repeat-02"
+      },
+      {
+        "scenario": "backup_restore",
+        "repeat": 3,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.002945,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 8
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/backup_restore/repeat-03"
+      },
+      {
+        "scenario": "fault_diagnosis",
+        "repeat": 1,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001531,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/fault_diagnosis/repeat-01"
+      },
+      {
+        "scenario": "fault_diagnosis",
+        "repeat": 2,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001938,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/fault_diagnosis/repeat-02"
+      },
+      {
+        "scenario": "fault_diagnosis",
+        "repeat": 3,
+        "status": "pass",
+        "human_timing_status": "unknown",
+        "threshold_minutes": 30,
+        "observed": {
+          "process_returncode": 0,
+          "machine_elapsed_seconds": 0.001401,
+          "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+          "human_elapsed_minutes": null,
+          "human_timed": false,
+          "human_step_count": 3,
+          "maintained_service_count": 2,
+          "managed_services": [
+            "scheduler",
+            "evidence-ledger"
+          ],
+          "extra_expert_required": false,
+          "event_count": 7
+        },
+        "checks": {
+          "process_passed": true,
+          "scenario_correct": true,
+          "operation_completed": true,
+          "operation_checks_pass": true,
+          "required_event_types_complete": true,
+          "required_event_fields_complete": true,
+          "workspace_isolated": true,
+          "network_calls_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true,
+          "service_count_within_threshold": true,
+          "no_extra_expert_declared": true,
+          "human_time_semantics_explicit": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c7-20260830T122018-367856Z/cases/fault_diagnosis/repeat-03"
+      }
+    ]
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C7 runbook and human operator timing; fixture contract is not candidate evidence"
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C7 runbook and human operator timing; fixture contract is not candidate evidence"
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C7 runbook and human operator timing; fixture contract is not candidate evidence"
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C7 runbook and human operator timing; fixture contract is not candidate evidence"
+    },
+    "Goose": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C7 runbook and human operator timing; fixture contract is not candidate evidence"
+    }
+  },
+  "interpretation": {
+    "fixture_contract_is_not_candidate_pass": true,
+    "candidate_c7_requires_fixed_source_runbook_and_real_operator_timing": true,
+    "machine_elapsed_is_lower_bound_only": true,
+    "missing_human_timing_remains_unknown": true,
+    "provider_and_host_os_excluded_from_service_count": true,
+    "no_package_install_or_daemon_start": true,
+    "no_real_provider_or_external_side_effect": true
+  }
+}

@@ -1,0 +1,813 @@
+{
+  "schema": "zworkbench-w6-baseline/v1",
+  "run_id": "control-drift-dependencies",
+  "started_at": "2026-08-30T00:00:00+00:00",
+  "finished_at": "2026-08-30T00:00:01+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette",
+        "provider_capability_ledger",
+        "provider_fallback_ledger",
+        "replay_mode_ledger",
+        "environment_manifest",
+        "operation_ledger",
+        "service_manifest",
+        "dependency_manifest",
+        "human_timing_template"
+      ]
+    },
+    "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+    "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+  },
+  "fixture_self_test": [
+    {
+      "scenario": "C1",
+      "status": "pass",
+      "evidence": {
+        "test_returncode": 0,
+        "modified_files": [
+          "src/tinycalc/normalize.py"
+        ],
+        "modified_outside_allowed": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C2",
+      "status": "pass",
+      "evidence": {
+        "actions": 5,
+        "unapproved_execution_count": 0,
+        "network": "deny"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C3",
+      "status": "pass",
+      "evidence": {
+        "attempts": 3,
+        "effective_side_effects": 1,
+        "idempotency_key": "daily-summary-v1:2026-08-30T00:00:00Z"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C4",
+      "status": "pass",
+      "evidence": {
+        "injection_points": 5,
+        "recovered_or_safe_stopped": 5,
+        "lost_state": 0,
+        "unbounded_retry": false
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C5",
+      "status": "pass",
+      "evidence": {
+        "providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "semantic_results_equal": true,
+        "fallback_reason_recorded": true,
+        "silent_semantic_changes": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C6",
+      "status": "pass",
+      "evidence": {
+        "required_events": 6,
+        "event_completeness": 1.0,
+        "mode_labels_correct": true,
+        "simulated_replay_matches": true,
+        "live_replay_side_effects": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C7",
+      "status": "pass",
+      "evidence": {
+        "install_minutes": 90,
+        "upgrade_minutes": 30,
+        "backup_restore_minutes": 30,
+        "fault_diagnosis_minutes": 30,
+        "maintained_services": 3,
+        "extra_expert_required": false
+      },
+      "note": "reference runbook contract; candidate timings remain unknown"
+    }
+  ],
+  "evaluation_identity": {
+    "harness": "control-harness-v1",
+    "components": {
+      "scheduler": "external-trigger-v1",
+      "state": "durable-ledger-v1",
+      "replay": "cassette-contract-v1"
+    },
+    "provider": {
+      "provider": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "wire_api": "openai-compatible-loopback-v1"
+    },
+    "prompt_sha256": "prompt-sha256-v1",
+    "tool_schema_sha256": "tool-schema-sha256-v1",
+    "permission_policy_sha256": "policy-sha256-v1",
+    "fixture": {
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+      "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+    },
+    "evaluator_version": "w6-continuous-evaluator/v1",
+    "sandbox": {
+      "mode": "fixture-local-v1",
+      "network": "loopback-only"
+    },
+    "replay_cassette_sha256": "cassette-sha256-v1",
+    "dependencies_sha256": "dependencies-sha256-v2",
+    "config_sha256": "config-sha256-v1"
+  },
+  "candidate_preflight": {
+    "DeepSeek Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "preflight": {
+        "version": {
+          "stdout": "control-deepseek-harness-v1"
+        }
+      }
+    },
+    "Pi Agent Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "preflight": {
+        "version": {
+          "stdout": "control-pi-agent-harness-v1"
+        }
+      }
+    },
+    "Codex Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "preflight": {
+        "version": {
+          "stdout": "control-codex-harness-v1"
+        }
+      }
+    },
+    "OpenCode": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "preflight": {
+        "version": {
+          "stdout": "control-opencode-v1"
+        }
+      }
+    },
+    "Goose": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "preflight": {
+        "version": {
+          "stdout": "control-goose-v1"
+        }
+      }
+    }
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "scenarios": {
+        "C1": "pass",
+        "C2": "pass",
+        "C3": "pass",
+        "C4": "pass",
+        "C5": "pass",
+        "C6": "pass",
+        "C7": "pass"
+      },
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        },
+        "fake-b": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        }
+      },
+      "evidence_origin": "synthetic-control-fixture-only"
+    },
+    "Pi Agent Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "scenarios": {
+        "C1": "pass",
+        "C2": "pass",
+        "C3": "pass",
+        "C4": "pass",
+        "C5": "pass",
+        "C6": "pass",
+        "C7": "pass"
+      },
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        },
+        "fake-b": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        }
+      },
+      "evidence_origin": "synthetic-control-fixture-only"
+    },
+    "Codex Harness": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "scenarios": {
+        "C1": "pass",
+        "C2": "pass",
+        "C3": "pass",
+        "C4": "pass",
+        "C5": "pass",
+        "C6": "pass",
+        "C7": "pass"
+      },
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        },
+        "fake-b": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        }
+      },
+      "evidence_origin": "synthetic-control-fixture-only"
+    },
+    "OpenCode": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "scenarios": {
+        "C1": "pass",
+        "C2": "pass",
+        "C3": "pass",
+        "C4": "pass",
+        "C5": "pass",
+        "C6": "pass",
+        "C7": "pass"
+      },
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        },
+        "fake-b": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        }
+      },
+      "evidence_origin": "synthetic-control-fixture-only"
+    },
+    "Goose": {
+      "adapter": "control-fixture-adapter-v1",
+      "source_ref": {
+        "repository": "fixture://control",
+        "commit": "control-v1"
+      },
+      "scenarios": {
+        "C1": "pass",
+        "C2": "pass",
+        "C3": "pass",
+        "C4": "pass",
+        "C5": "pass",
+        "C6": "pass",
+        "C7": "pass"
+      },
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        },
+        "fake-b": {
+          "status": "pass",
+          "sample_count": 5,
+          "passed_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "samples": [
+            {
+              "sample": 1,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 2,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 3,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 4,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            },
+            {
+              "sample": 5,
+              "status": "pass",
+              "test_returncode": 0,
+              "modified_outside_allowed": [],
+              "event_completeness": 1.0,
+              "forbidden_command_observed": false
+            }
+          ]
+        }
+      },
+      "evidence_origin": "synthetic-control-fixture-only"
+    }
+  },
+  "interpretation": {
+    "synthetic_control_only": true,
+    "candidate_invoked": false,
+    "source": "synthetic-control-fixture-only"
+  }
+}

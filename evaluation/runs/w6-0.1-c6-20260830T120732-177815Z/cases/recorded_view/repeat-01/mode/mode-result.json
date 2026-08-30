@@ -1,0 +1,45 @@
+{
+  "schema": "zworkbench-w6-c6-mode-result/v1",
+  "replay_version": "w6-c6-replay/v1",
+  "replay_mode": "recorded_view",
+  "source_run_id": "w6-c6-recorded_view-repeat-01",
+  "source": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-01/recording/event-ledger.jsonl",
+  "source_sha256": "31213cdf174d087b0563fd2a58ff37679dc93ba4686e406f4e14ba1e6475c0e1",
+  "execution_performed": false,
+  "provider_requests": 0,
+  "tool_invocations": 0,
+  "external_calls": 0,
+  "side_effect_count": 0,
+  "guard_before": {
+    "provider_requests": 0,
+    "tool_invocations": 0,
+    "external_side_effects": 0,
+    "guard_schema": "w6-c6-effect-guard/v1"
+  },
+  "guard_after": {
+    "provider_requests": 0,
+    "tool_invocations": 0,
+    "external_side_effects": 0,
+    "guard_schema": "w6-c6-effect-guard/v1"
+  },
+  "status": "viewed",
+  "view_event_count": 11,
+  "view_event_types": [
+    "diff.created",
+    "environment.snapshot",
+    "policy.decision",
+    "provider.request",
+    "provider.response",
+    "run.completed",
+    "run.started",
+    "state.transition",
+    "test.output",
+    "tool.call",
+    "tool.result"
+  ],
+  "semantic_result": {
+    "answer": "fixture-ok",
+    "task": "replay-contract-v1"
+  },
+  "view_only": true
+}

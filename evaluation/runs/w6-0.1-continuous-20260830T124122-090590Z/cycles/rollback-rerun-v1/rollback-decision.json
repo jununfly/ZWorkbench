@@ -1,0 +1,71 @@
+{
+  "schema": "zworkbench-w6-rollback-decision/v1",
+  "action": "rollback-and-rerun",
+  "from_identity": {
+    "harness": "control-harness-v2",
+    "components": {
+      "scheduler": "external-trigger-v1",
+      "state": "durable-ledger-v1",
+      "replay": "cassette-contract-v1"
+    },
+    "provider": {
+      "provider": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "wire_api": "openai-compatible-loopback-v1"
+    },
+    "prompt_sha256": "prompt-sha256-v1",
+    "tool_schema_sha256": "tool-schema-sha256-v1",
+    "permission_policy_sha256": "policy-sha256-v1",
+    "fixture": {
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+      "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+    },
+    "evaluator_version": "w6-continuous-evaluator/v1",
+    "sandbox": {
+      "mode": "fixture-local-v1",
+      "network": "loopback-only"
+    },
+    "replay_cassette_sha256": "cassette-sha256-v1",
+    "dependencies_sha256": "dependencies-sha256-v1",
+    "config_sha256": "config-sha256-v1"
+  },
+  "to_identity": {
+    "harness": "control-harness-v1",
+    "components": {
+      "scheduler": "external-trigger-v1",
+      "state": "durable-ledger-v1",
+      "replay": "cassette-contract-v1"
+    },
+    "provider": {
+      "provider": "fake-a",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "wire_api": "openai-compatible-loopback-v1"
+    },
+    "prompt_sha256": "prompt-sha256-v1",
+    "tool_schema_sha256": "tool-schema-sha256-v1",
+    "permission_policy_sha256": "policy-sha256-v1",
+    "fixture": {
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "manifest_sha256": "5149f9a7d336f7b11ce895cc239fa9764043da4c0793255c651d1af14a5dd6af",
+      "source_sha256": "6e823bdada87e52496a16e8f264a3bd8f0760a44e5731dcfc5a81c797858855d"
+    },
+    "evaluator_version": "w6-continuous-evaluator/v1",
+    "sandbox": {
+      "mode": "fixture-local-v1",
+      "network": "loopback-only"
+    },
+    "replay_cassette_sha256": "cassette-sha256-v1",
+    "dependencies_sha256": "dependencies-sha256-v1",
+    "config_sha256": "config-sha256-v1"
+  },
+  "target": "control-harness-v1",
+  "reason": "hard-failure-pauses gate before retrying the upgraded identity",
+  "source_of_target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-continuous-20260830T124122-090590Z/cycles/stable-no-drift/baseline-summary.json",
+  "new_gate": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-continuous-20260830T124122-090590Z/cycles/rollback-rerun-v1/regression-gate.json",
+  "candidate_invoked": false
+}

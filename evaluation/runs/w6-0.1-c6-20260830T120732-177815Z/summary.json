@@ -1,0 +1,625 @@
+{
+  "schema": "zworkbench-w6-c6/v1",
+  "run_id": "w6-0.1-c6-20260830T120732-177815Z",
+  "started_at": "2026-08-30T12:07:32.177815+00:00",
+  "finished_at": "2026-08-30T12:07:32.526772+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette",
+        "provider_capability_ledger",
+        "provider_fallback_ledger",
+        "replay_mode_ledger",
+        "environment_manifest"
+      ]
+    },
+    "manifest_sha256": "4c9d69f0faf2726b64adc949c164a4f2d76e9361c0ded8bcea27e73ca97355bd",
+    "source_sha256": "8e3cbe1041b124caf27300a3fa9ab457e6dacd84b4b4d001b3c97b07a59c910e",
+    "replay_fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c6-replay.py",
+    "replay_fixture_sha256": "080039efcb6cba27d1183c0099868f30f228d9383e175208b00869878e350cd2"
+  },
+  "runner": {
+    "version": "w6-c6-runner/v1",
+    "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_c6.py",
+    "sha256": "9bc17a4758b1248ecb22216cbc1813a3c370322fb8dff908454a5f11345021b3"
+  },
+  "threshold": {
+    "modes": [
+      "recorded_view",
+      "simulated_replay",
+      "live_replay"
+    ],
+    "repeats_per_mode": 5,
+    "total_cases": 15,
+    "required_event_types": [
+      "run.started",
+      "environment.snapshot",
+      "provider.request",
+      "provider.response",
+      "tool.call",
+      "policy.decision",
+      "tool.result",
+      "state.transition",
+      "diff.created",
+      "test.output",
+      "run.completed"
+    ],
+    "required_event_fields": [
+      "event_id",
+      "run_id",
+      "type",
+      "logical_time",
+      "source"
+    ],
+    "required_event_field_completeness": "100%",
+    "mode_label_correctness": "100%",
+    "simulated_replay_expected_match": "5/5",
+    "live_replay_side_effects": 0
+  },
+  "fixture_contract": {
+    "status": "pass",
+    "cases_passed": 15,
+    "cases_total": 15,
+    "checks": {
+      "all_modes_pass": true,
+      "recorded_view_5_of_5_no_execution": true,
+      "simulated_replay_5_of_5_matches_expected": true,
+      "live_replay_5_of_5_fail_closed": true,
+      "required_event_fields_100_percent": true,
+      "mode_labels_100_percent": true,
+      "live_and_simulated_side_effects_zero": true
+    },
+    "metrics": {
+      "recorded_view_passed": 5,
+      "simulated_replay_passed": 5,
+      "live_replay_denied": 5,
+      "required_event_field_failures": 0,
+      "mode_label_failures": 0,
+      "effect_guard_mutations": 0
+    },
+    "case_results": [
+      {
+        "mode": "recorded_view",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "viewed",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-01/mode"
+      },
+      {
+        "mode": "recorded_view",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "viewed",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-02/mode"
+      },
+      {
+        "mode": "recorded_view",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "viewed",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-03/mode"
+      },
+      {
+        "mode": "recorded_view",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "viewed",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-04/mode"
+      },
+      {
+        "mode": "recorded_view",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "viewed",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/recorded_view/repeat-05/mode"
+      },
+      {
+        "mode": "simulated_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "simulated",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/simulated_replay/repeat-01/mode"
+      },
+      {
+        "mode": "simulated_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "simulated",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/simulated_replay/repeat-02/mode"
+      },
+      {
+        "mode": "simulated_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "simulated",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/simulated_replay/repeat-03/mode"
+      },
+      {
+        "mode": "simulated_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "simulated",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/simulated_replay/repeat-04/mode"
+      },
+      {
+        "mode": "simulated_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "simulated",
+          "semantic_result": {
+            "answer": "fixture-ok",
+            "task": "replay-contract-v1"
+          },
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": null
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/simulated_replay/repeat-05/mode"
+      },
+      {
+        "mode": "live_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "denied",
+          "semantic_result": null,
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": {
+            "replay_mode": "live_replay",
+            "approval_required": true,
+            "approval_granted": false,
+            "decision": "deny",
+            "reason": "live_replay_requires_explicit_approval"
+          }
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-01/mode"
+      },
+      {
+        "mode": "live_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "denied",
+          "semantic_result": null,
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": {
+            "replay_mode": "live_replay",
+            "approval_required": true,
+            "approval_granted": false,
+            "decision": "deny",
+            "reason": "live_replay_requires_explicit_approval"
+          }
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-02/mode"
+      },
+      {
+        "mode": "live_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "denied",
+          "semantic_result": null,
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": {
+            "replay_mode": "live_replay",
+            "approval_required": true,
+            "approval_granted": false,
+            "decision": "deny",
+            "reason": "live_replay_requires_explicit_approval"
+          }
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-03/mode"
+      },
+      {
+        "mode": "live_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "denied",
+          "semantic_result": null,
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": {
+            "replay_mode": "live_replay",
+            "approval_required": true,
+            "approval_granted": false,
+            "decision": "deny",
+            "reason": "live_replay_requires_explicit_approval"
+          }
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-04/mode"
+      },
+      {
+        "mode": "live_replay",
+        "status": "pass",
+        "observed": {
+          "process_returncode": 0,
+          "result_status": "denied",
+          "semantic_result": null,
+          "event_count": 11,
+          "mode_event_count": 1,
+          "execution_performed": false,
+          "provider_requests": 0,
+          "tool_invocations": 0,
+          "side_effect_count": 0,
+          "policy_decision": {
+            "replay_mode": "live_replay",
+            "approval_required": true,
+            "approval_granted": false,
+            "decision": "deny",
+            "reason": "live_replay_requires_explicit_approval"
+          }
+        },
+        "checks": {
+          "process_passed": true,
+          "mode_label_correct": true,
+          "required_event_fields_complete": true,
+          "required_event_types_complete": true,
+          "no_execution": true,
+          "effect_guard_unchanged": true,
+          "semantic_or_safe_denial": true,
+          "policy_boundary": true
+        },
+        "evidence_dir": "/tmp/zwb-c6-formal.ojwnrk/run/cases/live_replay/repeat-05/mode"
+      }
+    ]
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C6 adapter; fixture contract is not candidate evidence"
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C6 adapter; fixture contract is not candidate evidence"
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C6 adapter; fixture contract is not candidate evidence"
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C6 adapter; fixture contract is not candidate evidence"
+    },
+    "Goose": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C6 adapter; fixture contract is not candidate evidence"
+    }
+  },
+  "interpretation": {
+    "fixture_contract_is_not_candidate_pass": true,
+    "candidate_c6_requires_fixed_source_adapter": true,
+    "missing_candidate_evidence_remains_unknown": true,
+    "recorded_view_policy": "read-only projection; never re-execute",
+    "simulated_replay_policy": "cassette-only; no Provider/tool/network access",
+    "live_replay_policy": "default deny without explicit approval; this run never grants approval",
+    "no_real_provider_or_external_side_effect": true
+  }
+}

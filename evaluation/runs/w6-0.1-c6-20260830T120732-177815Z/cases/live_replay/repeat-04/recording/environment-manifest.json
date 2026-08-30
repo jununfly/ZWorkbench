@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w6-c6-environment/v1",
+  "fixture_version": "W6-0.1",
+  "network": "loopback-only",
+  "real_credentials": false,
+  "production_data": false,
+  "python": "3.9.6",
+  "platform": "darwin",
+  "timezone": "UTC"
+}

@@ -59,7 +59,7 @@
 | C4 | 中断恢复 | 工具前、工具后提交前、提交后下一步前 + Provider/tool timeout + 进程中断 | state transitions、retry、recovery outcome、side-effect class | 每注入点 3 次，100% 恢复或安全终止；关键状态丢失 0；不可安全重放副作用重复 0；retry 有界 |
 | C5 | Provider 迁移 | 两个本地确定性 Provider；B 注入 timeout、流中断、structured output 缺失；测试 fallback | provider/model/endpoint、降级原因、能力检测、结果差异 | 正常确定性用例 5/5 语义一致；fallback 原因记录 100%；静默语义变化 0 |
 | C6 | 记录与回放 | 记录模型/工具/权限/状态/diff/环境，再执行 recorded view、simulated replay；live replay 默认禁止 | event ledger、manifest、snapshot/cassette、replay mode、side-effect policy | 必需事件完整 100%；模式标注 100%；simulated replay 5/5 一致；live replay 副作用 0 |
-| C7 | 运维演练 | 干净环境中由一名操作者安装、运行、备份、升级、恢复、复现故障、排障和回滚 | 命令、耗时、依赖、服务清单、故障记录、恢复结果 | 安装 ≤90m；升级/恢复/排障各 ≤30m；无需额外专家；人工维护常驻服务 ≤3 |
+| C7 | 运维演练 | 干净环境中由一名操作者安装、运行、备份、升级、恢复、复现故障、排障和回滚 | 命令、机器耗时、人工步骤/计时、依赖、服务清单、故障记录、恢复结果 | 参考 fixture 机器流程 12/12 pass；真人门仍须安装 ≤90m、升级/恢复/排障各 ≤30m；无需额外专家；人工维护常驻服务 ≤3 |
 
 ## 6. 候选证据表（填写模板）
 
@@ -148,6 +148,39 @@ C1 的双 Provider 运行均达到：测试通过率 100%、越界修改 0、关
 | 能力降级 | B 缺失 structured output 的 `3/3` 在请求前被探测并记录 `capability_missing:structured_output` | 最低共同能力不足时必须显式降级或安全失败；兼容 API 不等于 schema 兼容 |
 | 个人/小团队边界 | 本批次只测临时 loopback 服务，未测网关常驻、凭证、成本、升级和排障 | 不因 fixture 通过自动引入 LiteLLM 或第二 Harness，等待 C7/候选 adapter |
 
+## 6.9 C6 记录查看与 simulated replay 边界首轮证据
+
+独立 C6 证据：[W6 C6 replay 边界评估结果](./w6-c6-replay-findings.md)，Run ID：`w6-0.1-c6-20260830T120732-177815Z`。
+
+这是候选无关的 `acceptance/evaluation` fixture contract，不是候选 Harness 或观测/评测后端的通过结果。`recorded_view`、`simulated_replay`、`live_replay` 各重复 5 次，共 `15/15` pass：recorded view 只读、simulated replay 与 expected result `5/5` 一致、live replay 在无批准时 `5/5` fail-closed 拒绝；必需事件字段与模式标签均为 100%，effect guard 变化为 0。五个候选继续保持 `unknown`，因为尚无候选专属固定版本 C6 adapter。
+
+| C6 观察 | 当前证据 | 决策含义 |
+|---|---|---|
+| recorded view | 5/5 只读投影，未产生 Provider/tool/external call | 日志查看不得称为执行回放；view 与 execute 必须有不同模式和计数 |
+| simulated replay | 5/5 只消费 cassette，语义结果与 expected 一致 | 可把 cassette 作为确定性评测输入，但不能外推为 live replay 安全 |
+| live replay | 5/5 记录 approval-required + deny，副作用 0 | live replay 默认 fail-closed；显式批准和宿主强制边界仍需候选实测 |
+| 事件完整性 | 11 类必需事件、每个含 event_id/run_id/type/logical_time/source，100% | replay 需要环境、Provider、工具、策略、状态、diff/test 和结果的关联账本 |
+| 个人/小团队成本 | 本批次无常驻 Provider 或观测后端，未测存储、脱敏、保留、查询和退出成本 | 不因 fixture 通过自动引入 Langfuse/Phoenix/Inspect AI/OTel，等待 C7/候选 adapter |
+
+## 6.10 C7 个人开发者/小团队运维与生命周期成本首轮证据
+
+证据：[W6 C7 运维与生命周期成本](./w6-c7-operations-findings.md)，Run ID：`w6-0.1-c7-20260830T122018-367856Z`。
+
+这是候选无关的 `acceptance/evaluation` fixture contract，不是候选 Harness 的
+C7 通过结果。安装、常规升级、备份恢复和预制故障定位各重复 3 次，共 `12/12`
+机器流程 pass；每个 case 都有 operation ledger、隔离检查、依赖清单和服务清单。
+参考 MVP 计入人工维护的常驻服务为 `2`（scheduler、evidence-ledger），Provider
+和宿主 OS 按已确认约束排除。由于本轮没有真人秒表输入，人工时间门为
+`unknown`，G0/G7 和五个候选 C7 均不能因此签字。
+
+| C7 观察 | 当前证据 | 决策含义 |
+|---|---|---|
+| 机器流程 | install/upgrade/backup_restore/fault_diagnosis 各 3/3；事件字段/类型、workspace 隔离、无网络/真实数据均通过 | 评估资产和参考 runbook 合同可自动复核；不外推候选运维能力 |
+| 人工时间 | `0/12` 有真人计时；`human-timing-template.json` 保留待补输入 | subprocess 墙钟时间不是人工耗时；G0 继续 fail-closed pending |
+| 服务数 | 最大 `2/3`，counted/excluded 边界写入 service manifest | 可比较组合件的常驻维护面；不把 fake Provider 或宿主 OS 计入 |
+| 专家介入 | 参考 runbook `false` | 只说明 fixture 没有专家专属步骤；候选仍需真实操作者演练 |
+| 一次性/持续成本 | 候选安装、升级、备份兼容、回滚、退出和排障工时仍未测 | 暂不因 C7 fixture 引入第二 Harness、Temporal/LangGraph、LiteLLM 或观测后端 |
+
 ## 7. W6 完成条件
 
 - 候选分层、硬门槛、权重和场景已由 Human 确认；
@@ -156,3 +189,4 @@ C1 的双 Provider 运行均达到：测试通过率 100%、越界修改 0、关
 - ATAM 风险表和 CBAM 成本收益表已填入同一批证据；
 - 自动化持续评估协议已能复现一次候选比较；
 - 形成 W7 决策包：推荐采用姿态、保留替代方案、必须自有的模块、引入额外组合件的条件、停止/回滚条件。
+- W6 signoff disposition 已形成：不签最终采用，条件性交接 W7；交接包见 [W7 采用姿态交接包](./w7-adoption-posture-handoff.md)。
