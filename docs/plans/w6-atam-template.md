@@ -36,12 +36,12 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | ID | 场景简述 | 主要质量属性 | 典型架构风险 |
 |---|---|---|---|
 | C1 | 隔离项目中完成理解—修改—测试—解释 diff | 代码闭环、可审计性 | 工具/项目上下文不足导致成功率与安全性冲突；详见 [C1 ATAM 专项证据](./w6-atam-c1-code-auditability.md) |
-| C2 | 触发写越界、网络、凭证、Git push、部署并验证审批 | 安全、权限、可操作性 | Harness 权限模型与外部 sandbox 重复或不一致 |
+| C2 | 触发写越界、网络、凭证、Git push、部署并验证审批 | 安全、权限、可操作性 | Harness 权限模型与外部 sandbox 重复或不一致；详见 [C2 ATAM 专项证据](./w6-atam-c2-safety-approval.md) |
 | C3 | 重复触发可回滚且幂等的定时任务 | 自动化、幂等、恢复 | scheduler、Run 状态和 Harness session 产生重复事实 |
 | C4 | 在模型流、工具执行、持久化边界注入中断/超时 | 恢复、状态一致性 | retry 可能重复外部副作用，replay 语义不一致 |
-| C5 | 两个 Provider 执行同一任务并制造限流/能力缺失 | 可移植性、成本、可解释降级 | 统一接口掩盖工具调用/结构化输出语义差异 |
-| C6 | 记录运行并执行 recorded view、simulated replay，禁止 live side effect | 可观测性、回放、隐私 | trace/session replay 被误认为执行回放；快照不完整 |
-| C7 | 单一操作者完成安装、升级、备份、恢复和故障定位 | 可操作性、生命周期成本 | 组件数量与实际收益不相称，关键知识集中在专家/维护者 |
+| C5 | 两个 Provider 执行同一任务并制造限流/能力缺失 | 可移植性、成本、可解释降级 | 统一接口掩盖工具调用/结构化输出语义差异；详见 [C5 多 Provider 可迁移性 ATAM 专项证据](./w6-atam-c5-provider-portability.md) |
+| C6 | 记录运行并执行 recorded view、simulated replay，禁止 live side effect | 可观测性、回放、隐私 | trace/session replay 被误认为执行回放；快照不完整；详见 [C6 事件记录与回放 ATAM 专项证据](./w6-atam-c6-replay-evaluation.md) |
+| C7 | 单一操作者完成安装、升级、备份、恢复和故障定位 | 可操作性、生命周期成本 | 组件数量与实际收益不相称，关键知识集中在专家/维护者；详见 [C7 单人运维与生命周期 ATAM 专项证据](./w6-atam-c7-operations-lifecycle.md) |
 
 ## 3. 架构事实与边界
 
@@ -105,9 +105,9 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | C2 | 负向动作与无人审批 | 5 类动作 × 3 次；未授权执行 0、拦截 100% | 旧基线 unknown；当前 adapter contract 已通过 | G2 仍不能仅凭 adapter contract 签字，宿主级绕过与产品边界仍需验证 |
 | C3 | 重复 schedule 触发与中断重试 | 同 key 有效副作用 1、attempt 全记录 | 所有候选 unknown | scheduler/幂等 owner 未确定 |
 | C4 | 工具/Provider/进程边界故障 | 100% 恢复或安全终止、状态不丢失 | 所有候选 unknown | 可靠性与外部副作用边界是高风险 |
-| C5 | fake-a/b 与 timeout/能力缺失 | 语义一致、降级原因显式 | 所有候选 unknown；C1 仅为基本双 Provider 请求 | 统一 Provider 表面可能掩盖能力差异 |
-| C6 | recorded view、simulated replay、live replay 保护 | 事件/模式完整；simulated 5/5；live 副作用 0 | 所有候选 unknown；C1 原始事件已保存 | 记录能力不能冒充执行回放 |
-| C7 | 单人安装、升级、备份恢复、故障定位 | 90/30/30/30 分钟门槛；机器时间与人工时间分离 | 参考 fixture 12/12 machine pass；真人计时 0/12，候选仍 unknown | 运维合同可复核，但 G0 仍需候选 runbook 与真实操作者数据 |
+| C5 | fake-a/b 与 timeout/能力缺失 | 语义一致、降级原因显式 | 所有候选 unknown；C1 仅为基本双 Provider 请求；fixture contract 19/19 pass | 统一 Provider 表面可能掩盖能力差异；详见 [C5 多 Provider 可迁移性 ATAM 专项证据](./w6-atam-c5-provider-portability.md) |
+| C6 | recorded view、simulated replay、live replay 保护 | 事件/模式完整；simulated 5/5；live 副作用 0 | 所有候选 unknown；fixture contract 15/15 pass；C1 原始事件已保存 | 记录能力不能冒充执行回放；详见 [C6 事件记录与回放 ATAM 专项证据](./w6-atam-c6-replay-evaluation.md) |
+| C7 | 单人安装、升级、备份恢复、故障定位 | 90/30/30/30 分钟门槛；机器时间与人工时间分离 | 参考 fixture 12/12 machine pass；真人计时 0/12；`pass-with-unknown-human-timing`；候选仍 unknown | 运维合同可复核，但 G0 仍需候选 runbook 与真实操作者数据；详见 [C7 单人运维与生命周期 ATAM 专项证据](./w6-atam-c7-operations-lifecycle.md) |
 
 ### 6.3 风险、敏感点与权衡点初始记录
 
@@ -136,6 +136,8 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 - 尚未证实的 unknowns：候选 C3–C7、C2 宿主级强制 broker；C7 真人运维时间与候选服务数；Pi/OpenCode/Goose 的可执行版本与安全 adapter；Codex 研究 commit 与二进制的绑定。
 
 ### 6.5 C2 adapter 增量证据
+
+ATAM 专项场景：[C2 无人值守自动化与审批拦截](./w6-atam-c2-safety-approval.md)。
 
 证据：[`w6-c2-adapter-findings.md`](./w6-c2-adapter-findings.md)，Run ID：`w6-0.1-c2-20260830T093457-799592Z`。
 
