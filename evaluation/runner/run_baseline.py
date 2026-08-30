@@ -257,11 +257,12 @@ def port_is_available(port):
         return sock.connect_ex(("127.0.0.1", port)) != 0
 
 
-def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434, c2_plan=None):
-    if not port_is_available(port):
+def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434, c2_plan=None, fault=None):
+    if port != 0 and not port_is_available(port):
         return None, {"status": "unknown", "reason": f"loopback port {port} is already occupied"}
     output_path = root / f"{provider_id}.provider.log"
     request_path = root / f"{provider_id}.requests.jsonl"
+    ready_path = root / f"{provider_id}.ready.json"
     output = output_path.open("w", encoding="utf-8")
     command = [
             sys.executable,
@@ -276,9 +277,13 @@ def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434,
             scenario,
             "--request-log",
             str(request_path),
+            "--ready-file",
+            str(ready_path),
         ]
     if c2_plan:
         command.extend(["--c2-plan", str(c2_plan)])
+    if fault:
+        command.extend(["--fault", fault])
     process = subprocess.Popen(
         command,
         stdout=output,
@@ -287,11 +292,17 @@ def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434,
     )
     deadline = time.monotonic() + 8
     ready = False
+    actual_port = port
     while time.monotonic() < deadline:
         if process.poll() is not None:
             break
+        if port == 0 and ready_path.exists():
+            try:
+                actual_port = json.loads(ready_path.read_text(encoding="utf-8"))["port"]
+            except (OSError, KeyError, json.JSONDecodeError):
+                actual_port = 0
         try:
-            with urlopen(f"http://127.0.0.1:{port}/health", timeout=0.3) as response:
+            with urlopen(f"http://127.0.0.1:{actual_port}/health", timeout=0.3) as response:
                 ready = response.status == 200
         except Exception:
             time.sleep(0.05)
@@ -306,7 +317,15 @@ def start_fake_provider(root: Path, provider_id: str, scenario: str, port=11434,
             process.wait(timeout=3)
         output.close()
         return None, {"status": "unknown", "reason": "fake Provider failed readiness check", "provider_log": str(output_path)}
-    return {"process": process, "output": output, "output_path": output_path, "request_path": request_path}, None
+    return {
+        "process": process,
+        "output": output,
+        "output_path": output_path,
+        "request_path": request_path,
+        "ready_path": ready_path,
+        "port": actual_port,
+        "base_url": f"http://127.0.0.1:{actual_port}",
+    }, None
 
 
 def stop_fake_provider(server):

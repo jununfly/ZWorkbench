@@ -166,3 +166,16 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | 中断边界 | side effect 后 result commit 前实际 SIGTERM，resume 通过 key/sink ledger reconcile；不重复 delivery |
 | 新的不可接受边界 | 候选 scheduler、跨 Run 状态、真实外部 exactly-once、时区/错过触发语义仍 unknown；C3 fixture pass 不能签候选 G3 |
 | 下一验证 | 进入 C5 双 Provider 故障切换与显式降级；后续再为候选补 C3 adapter，并用 C7 评估 scheduler 组合的个人/小团队成本 |
+
+### 6.8 C5 双 Provider 故障切换与显式降级增量证据
+
+证据：[`w6-c5-provider-failover-findings.md`](./w6-c5-provider-failover-findings.md)，Run ID：`w6-0.1-c5-20260830T112617-960750Z`。本节仍是 fixture contract 的临时增量，不是最终架构评审或候选采用结论。
+
+| 项目 | 更新 |
+|---|---|
+| C5 结果 | fake-a/fake-b 正常确定性各 5/5；B 的 timeout、半截 SSE、structured output 缺失各 3/3；总计 19/19 pass |
+| 风险收窄 | 每个案例均记录 provider/model/endpoint、capability detection、attempt history 和最终 semantic result；9/9 fallback 原因与目标完整；静默语义变化 0 |
+| 新敏感点 | capability endpoint 的声明、stream 完成标记、structured schema 和 fallback target 是 Provider 迁移的观测入口；任一缺失都可能把降级伪装成成功 |
+| 新的不可接受边界 | 不允许无 ledger 的 silent provider/model switch；不允许把兼容 HTTP API 当成工具/结构化输出语义兼容；真实 Provider 与候选事件模型仍未签字 |
+| Provider 路由责任 | 本轮由候选无关薄 router 生成 capability/fallback/degradation ledger；不据此决定由 ZWorkbench、Harness 还是 LiteLLM 在产品中拥有该责任 |
+| 下一验证 | 进入 C6 recorded view/simulated replay 边界；随后为候选建立固定版本 C5 adapter，并将 C5 结果与 C3/C4 状态、幂等和副作用合同串联 |

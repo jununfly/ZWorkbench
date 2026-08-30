@@ -482,12 +482,18 @@
     "1-5-2-4": {
       "id": "1-5-2-4",
       "label": "C5 双 Provider 故障切换与显式降级证据",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C5 本轮的验收边界、fixture 组成与通过阈值是什么？",
+          "answer": "仅在隔离的候选无关 fixture 上验证双 Provider 故障切换与显式降级，不实现 ZWorkbench 产品 Provider 层，也不将 fixture 通过外推为候选能力；fake-provider-a/b 对同一任务需确定性且语义一致，B 注入 timeout_once、stream_interrupt_once、structured_output_unsupported，记录 provider/model/endpoint、能力检测、fallback 目标、降级或重试原因、attempt history 与最终语义结果；正常用例 5/5 一致，故障场景每类至少 3 次，fallback 原因和目标记录率 100%，能力缺失必须显式降级或安全失败 100%，静默语义变化为 0，禁止真实 Provider 污染本地基线。",
+          "note": "artifact=isolated C5 fixture + provider router/runner + run evidence + findings/ATAM/CBAM/continuous-evaluation updates; candidate statuses remain unknown without fixed-version candidate adapters"
+        }
+      ],
+      "notes": "C5 fixture contract pass: 19/19; normal fake-a/fake-b 5/5 each; timeout_once, stream_interrupt_once, structured_output_unsupported each 3/3; fallback reason/target 100%; capability-missing explicit handling 100%; silent semantic changes 0. Final run: evaluation/runs/w6-0.1-c5-20260830T112617-960750Z. Candidate C5 statuses remain unknown without fixed-source adapters."
     },
     "1-5-2-5": {
       "id": "1-5-2-5",
@@ -512,7 +518,7 @@
   },
   "metadata": {
     "created": "2026-08-30 12:34:15",
-    "updated": "2026-08-30 18:26:32",
+    "updated": "2026-08-30 19:27:17",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
   }
 }

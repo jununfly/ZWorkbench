@@ -91,6 +91,27 @@ python3 evaluation/runner/run_c3.py
 
 首轮 `w6-0.1-c3-20260830T102401-857158Z` 使用外部确定性 trigger 覆盖首次、相同 key 重复、延迟、执行中断后重试和错过触发，每类重复 3 次，共 15/15 fixture contract pass-with-composition。持续评估必须分别检查：同一 key 的有效副作用计数、fake-sink delivery、effect/result ledger、每次 attempt、schedule missed/late 语义、重复触发 dedup 事件和中断后 reconcile。没有候选专属 scheduler/idempotency adapter 时，候选保持 `unknown`；外部 trigger 的通过不能改写为 Harness 原生 scheduler 通过。
 
+## C5 双 Provider 故障切换与显式降级证据接入
+
+C5 使用独立的 [`run_c5.py`](../../evaluation/runner/run_c5.py) 与候选无关的 [`c5-provider-router.py`](../../evaluation/fixtures/w6-0.1/c5-provider-router.py)。运行：
+
+```bash
+python3 evaluation/runner/run_c5.py
+```
+
+首轮 `w6-0.1-c5-20260830T112617-960750Z` 覆盖 fake-a/fake-b 正常确定性各 5 次，以及 B 的 `timeout_once`、`stream_interrupt_once`、`structured_output_unsupported` 各 3 次，共 19/19 fixture contract pass。每个案例单独启动两个 loopback Provider，保存 capability detection、provider request/response/error、attempt history、fallback/degradation ledger 和最终 semantic result。
+
+持续评估必须分别检查：
+
+- 正常 A/B 的 semantic result 与 expected 结果各 5/5 一致；
+- timeout 和半截 SSE 的失败原因可解释，且 fallback target 明确为 A；
+- structured output 能力缺失在请求前被检测，并显式 fallback 或 safe-fail；
+- 每个 attempt 的 provider/model/endpoint 完整，不能静默换 Provider 或模型；
+- fallback 原因/目标记录率 100%，静默语义变化为 0，所有 endpoint 仍为 loopback；
+- 真实 Provider、真实凭证、外部网络和不可逆副作用不进入本地可复现基线。
+
+上述结果只证明 fixture contract，不改变候选状态：没有候选专属固定版本 C5 adapter 的候选继续为 `unknown`。将来候选 adapter、Provider/model/endpoint、能力声明、schema、stream parser 或路由策略发生变化时，必须重跑 C5，并与 C3/C4 的状态、幂等和副作用 ledger 交叉检查。
+
 ## 5. 暂停、回滚与重新决策
 
 出现以下任一情况，暂停相关升级或组合扩展：

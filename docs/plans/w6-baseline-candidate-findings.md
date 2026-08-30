@@ -119,7 +119,7 @@ C1 允许的修改仅为 `src/tinycalc/normalize.py` 和 `tests/test_normalize.p
 2. 首轮候选基线目前只覆盖 C1：DeepSeek Harness 与 Codex Harness 均为 5/5、双 fake Provider、`pass`。
 3. 所有候选总体仍为 `unknown`；C2–C7 不得用 C1 结果填充。
 4. 不基于本轮结果给出 W7 最终采用建议，也不把 DeepSeek/Codex 的 C1 结果解释为产品发布准备度。
-5. 基线回归门禁已具备；C2 fail-closed adapter 已在独立运行中完成首轮验证：见 [`w6-c2-adapter-findings.md`](./w6-c2-adapter-findings.md) 与 `w6-0.1-c2-20260830T093457-799592Z`；下一步是 C4 中断恢复 → C6 replay contract，随后再补 C3/C5/C7，并用同一批证据更新 ATAM/CBAM。
+5. 基线回归门禁已具备；C2–C5 已分别在独立 acceptance run 中形成 fixture 证据，但候选 C2–C5 仍需固定版本 adapter；下一步进入 C6 replay contract，随后补 C7，并用同一批证据更新 ATAM/CBAM。
 
 ## C2 adapter 首轮更新
 
@@ -128,3 +128,9 @@ C2 adapter 的正式结果不回填为旧首轮 baseline，而作为新的证据
 ## C3 定时与幂等增量证据
 
 C3 fixture contract 已独立完成 `15/15` pass-with-composition：外部确定性触发器覆盖首次、同 key 重复、延迟、执行中断后重试和错过触发；每个 case 同一 `idempotency_key` 只产生 1 次 fake-sink delivery、1 条 effect ledger 和 1 条 versioned result。证据见 [`w6-c3-idempotency-findings.md`](./w6-c3-idempotency-findings.md) 与 Run `w6-0.1-c3-20260830T102401-857158Z`。这不改变候选矩阵：本批次没有启动候选或使用候选原生 scheduler，DeepSeek/Codex/Pi/OpenCode/Goose 的 C3 仍为 `unknown`；需要候选专属固定版本 adapter 后再实测。
+
+## C5 双 Provider 故障切换与显式降级增量证据
+
+C5 fixture contract 已独立完成 `19/19` pass：fake-a/fake-b 正常确定性各 5/5；B 的 `timeout_once`、`stream_interrupt_once`、`structured_output_unsupported` 各重复 3 次，均记录 Provider identity/model/endpoint、能力探测、attempt history、fallback/degradation reason 和最终语义结果。fallback 原因/目标记录率 100%，能力缺失显式处理率 100%，静默语义变化为 0。证据见 [`w6-c5-provider-failover-findings.md`](./w6-c5-provider-failover-findings.md) 与 Run `w6-0.1-c5-20260830T112617-960750Z`。
+
+这不改变候选矩阵：没有候选专属固定版本 C5 adapter，DeepSeek/Codex/Pi/OpenCode/Goose 的 C5 仍为 `unknown`；fixture 通过不能替代候选真实 Provider 配置、stream/schema 适配、成本和运维证据，也不能自动推出应引入 LiteLLM 或第二 Harness。

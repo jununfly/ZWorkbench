@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -30,40 +31,51 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/v1/models":
             self._send(200, {"object": "list", "data": [{"id": "fake-model", "object": "model", "owned_by": self.provider_id}]})
             return
+        if self.path == "/v1/capabilities":
+            self._record_control_request(self.path)
+            self._send(200, {
+                "provider_id": self.provider_id,
+                "model": "fake-model",
+                "capabilities": self._capabilities(),
+            })
+            return
         self._send(404, {"error": "not_found"})
 
     def do_POST(self):
         if self.path not in {"/v1/chat/completions", "/v1/responses", "/api/chat"}:
             self._send(404, {"error": "not_found"})
             return
-        if self.fault in {"timeout_once", "stream_interrupt_once"} and not self.fault_used:
-            self.__class__.fault_used = True
-            self._send(503, {"error": {"type": self.fault, "provider": self.provider_id}})
-            return
         size = int(self.headers.get("content-length", "0"))
         body = json.loads(self.rfile.read(size) or b"{}")
         if self.verbose:
             print(json.dumps({"path": self.path, "body": body}, sort_keys=True), flush=True)
-        if self.request_log:
-            request = {
-                "provider_id": self.provider_id,
-                "path": self.path,
-                "model": body.get("model"),
-                "stream": body.get("stream"),
-                "input_types": [item.get("type") for item in body.get("input", []) if isinstance(item, dict)],
-                "function_call_output_count": sum(1 for item in body.get("input", []) if isinstance(item, dict) and item.get("type") == "function_call_output"),
-            }
-            if self.scenario == "c2":
-                plan = self._load_c2_plan()
-                request["scripted_call"] = plan[request["function_call_output_count"]]["action"] if request["function_call_output_count"] < len(plan) else None
-            with self.request_log.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(request, sort_keys=True) + "\n")
+        fault_injected = self.fault and not self.fault_used
+        self._record_request(body, fault_injected=fault_injected)
+        if fault_injected and self.fault == "timeout_once":
+            self.__class__.fault_used = True
+            # The router has a deliberately short read timeout.  Sleeping here
+            # makes this a transport timeout rather than a merely scripted 503.
+            time.sleep(2.0)
+            self._send(503, {"error": {"type": self.fault, "provider": self.provider_id}})
+            return
+        stream_interrupted = fault_injected and self.fault == "stream_interrupt_once"
+        if stream_interrupted:
+            self.__class__.fault_used = True
+        if body.get("response_format") and "structured_output" not in self._capabilities():
+            self._send(400, {
+                "error": {
+                    "type": "structured_output_unsupported",
+                    "provider": self.provider_id,
+                    "capability": "structured_output",
+                }
+            })
+            return
         model = body.get("model", "fake-model")
         if self.path == "/api/chat":
             self._send(200, {
                 "model": model,
                 "created_at": "2026-08-30T00:00:00Z",
-                "message": {"role": "assistant", "content": "fixture-ok"},
+                "message": {"role": "assistant", "content": self._response_content(body)},
                 "done": True,
                 "done_reason": "stop",
             })
@@ -114,7 +126,7 @@ class Handler(BaseHTTPRequestHandler):
                         {"type": "response.output_item.done", "output_index": 0, "item": response["output"][0]},
                     ])
                 events.append({"type": "response.completed", "response": response})
-                self._send_sse(events)
+                self._send_sse(events, interrupted=stream_interrupted)
             else:
                 self._send(200, response)
             return
@@ -126,7 +138,7 @@ class Handler(BaseHTTPRequestHandler):
             "usage": {"prompt_tokens": 10, "completion_tokens": 2, "total_tokens": 12},
         }
         if body.get("stream", True):
-            self._send_chat_sse(body, response)
+            self._send_chat_sse(body, response, interrupted=stream_interrupted)
             return
         self._send(200, response)
 
@@ -136,24 +148,33 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send(self, status, payload):
         encoded = json.dumps(payload).encode("utf-8")
-        self.send_response(status)
-        self.send_header("content-type", "application/json")
-        self.send_header("content-length", str(len(encoded)))
-        self.end_headers()
-        self.wfile.write(encoded)
-
-    def _send_sse(self, events):
-        self.send_response(200)
-        self.send_header("content-type", "text/event-stream")
-        self.send_header("cache-control", "no-cache")
-        self.send_header("connection", "keep-alive")
-        self.end_headers()
-        for event in events:
-            encoded = ("event: %s\ndata: %s\n\n" % (event["type"], json.dumps(event, separators=(",", ":")))).encode("utf-8")
+        try:
+            self.send_response(status)
+            self.send_header("content-type", "application/json")
+            self.send_header("content-length", str(len(encoded)))
+            self.end_headers()
             self.wfile.write(encoded)
+        except (BrokenPipeError, ConnectionResetError):
+            self.close_connection = True
+
+    def _send_sse(self, events, interrupted=False):
+        try:
+            self.send_response(200)
+            self.send_header("content-type", "text/event-stream")
+            self.send_header("cache-control", "no-cache")
+            self.send_header("connection", "keep-alive")
+            self.end_headers()
+            for index, event in enumerate(events):
+                encoded = ("event: %s\ndata: %s\n\n" % (event["type"], json.dumps(event, separators=(",", ":")))).encode("utf-8")
+                self.wfile.write(encoded)
+                self.wfile.flush()
+                if interrupted and index == 0:
+                    self.close_connection = True
+                    return
+            self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
-        self.wfile.write(b"data: [DONE]\n\n")
-        self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            self.close_connection = True
 
     def _next_function_call(self, body, sequence):
         if self.scenario == "c2":
@@ -196,6 +217,56 @@ class Handler(BaseHTTPRequestHandler):
             return []
         return json.loads(Path(self.c2_plan).read_text(encoding="utf-8"))
 
+    def _capabilities(self):
+        capabilities = ["tool_calls", "streaming"]
+        if self.provider_id == "fake-a":
+            capabilities.append("structured_output")
+        if self.fault == "structured_output_unsupported":
+            capabilities = [item for item in capabilities if item != "structured_output"]
+        return capabilities
+
+    def _response_content(self, body):
+        if body.get("response_format"):
+            return json.dumps({
+                "answer": "fixture-ok",
+                "task": "provider-failover-v1",
+                "schema_version": "v1",
+            }, separators=(",", ":"))
+        return "fixture-ok"
+
+    def _record_control_request(self, path):
+        if not self.request_log:
+            return
+        with self.request_log.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({
+                "provider_id": self.provider_id,
+                "path": path,
+                "kind": "capability_probe",
+                "model": "fake-model",
+                "capabilities": self._capabilities(),
+            }, sort_keys=True) + "\n")
+
+    def _record_request(self, body, fault_injected=False):
+        if not self.request_log:
+            return
+        request = {
+            "provider_id": self.provider_id,
+            "path": self.path,
+            "model": body.get("model"),
+            "stream": body.get("stream"),
+            "response_format": body.get("response_format"),
+            "structured_output_requested": bool(body.get("response_format")),
+            "fault_configured": self.fault,
+            "fault_injected": bool(fault_injected),
+            "input_types": [item.get("type") for item in body.get("input", []) if isinstance(item, dict)],
+            "function_call_output_count": sum(1 for item in body.get("input", []) if isinstance(item, dict) and item.get("type") == "function_call_output"),
+        }
+        if self.scenario == "c2":
+            plan = self._load_c2_plan()
+            request["scripted_call"] = plan[request["function_call_output_count"]]["action"] if request["function_call_output_count"] < len(plan) else None
+        with self.request_log.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(request, sort_keys=True) + "\n")
+
     def _chat_choice(self, body):
         """Return the same two-step C1 script over Chat Completions."""
         if self.scenario == "c2":
@@ -226,7 +297,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.scenario != "c1":
             return {
                 "index": 0,
-                "message": {"role": "assistant", "content": "fixture-ok"},
+                "message": {"role": "assistant", "content": self._response_content(body)},
                 "finish_reason": "stop",
             }
         messages = body.get("messages", [])
@@ -258,7 +329,7 @@ class Handler(BaseHTTPRequestHandler):
             "finish_reason": "tool_calls",
         }
 
-    def _send_chat_sse(self, body, response):
+    def _send_chat_sse(self, body, response, interrupted=False):
         choice = response["choices"][0]
         response_id = response["id"]
         model = response["model"]
@@ -272,20 +343,26 @@ class Handler(BaseHTTPRequestHandler):
             ])
         else:
             events.extend([
-                {"choices": [{"index": 0, "delta": {"role": "assistant", "content": "fixture-ok"}, "finish_reason": None}]},
+                {"choices": [{"index": 0, "delta": {"role": "assistant", "content": self._response_content(body)}, "finish_reason": None}]},
                 {"choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}], "usage": response["usage"]},
             ])
-        self.send_response(200)
-        self.send_header("content-type", "text/event-stream")
-        self.send_header("cache-control", "no-cache")
-        self.send_header("connection", "keep-alive")
-        self.end_headers()
-        for event in events:
-            encoded = ("data: %s\n\n" % json.dumps(event, separators=(",", ":"))).encode("utf-8")
-            self.wfile.write(encoded)
+        try:
+            self.send_response(200)
+            self.send_header("content-type", "text/event-stream")
+            self.send_header("cache-control", "no-cache")
+            self.send_header("connection", "keep-alive")
+            self.end_headers()
+            for index, event in enumerate(events):
+                encoded = ("data: %s\n\n" % json.dumps(event, separators=(",", ":"))).encode("utf-8")
+                self.wfile.write(encoded)
+                self.wfile.flush()
+                if interrupted and index == 0:
+                    self.close_connection = True
+                    return
+            self.wfile.write(b"data: [DONE]\n\n")
             self.wfile.flush()
-        self.wfile.write(b"data: [DONE]\n\n")
-        self.wfile.flush()
+        except (BrokenPipeError, ConnectionResetError):
+            self.close_connection = True
 
 
 def main():
@@ -302,6 +379,8 @@ def main():
     args = parser.parse_args()
     Handler.provider_id = args.provider_id
     Handler.fault = args.fault
+    Handler.fault_used = False
+    Handler.response_number = 0
     Handler.verbose = args.verbose
     Handler.scenario = args.scenario
     Handler.request_log = args.request_log
