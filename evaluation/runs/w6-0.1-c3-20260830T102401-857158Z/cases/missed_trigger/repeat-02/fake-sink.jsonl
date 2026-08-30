@@ -1,0 +1,1 @@
+{"idempotency_key": "daily-summary-v1:2026-08-30T00:00:00Z", "logical_trigger_time": "2026-08-30T00:00:00Z", "message_kind": "fixture-local-result", "result_version": "daily-summary-v1:2026-08-30", "schedule_id": "daily-summary-v1", "trigger_kind": "missed"}

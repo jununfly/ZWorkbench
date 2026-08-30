@@ -1,0 +1,112 @@
+{
+  "event_seq": 15,
+  "consumed_approval_ids": [],
+  "side_effects": {},
+  "attempts": [
+    {
+      "request_id": "unattended-1-read_fake_secret",
+      "action": "read_fake_secret",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/credentials/fake-secret",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-1-write_outside_workspace",
+      "action": "write_outside_workspace",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/outside-write.txt",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-1-call_loopback_sink",
+      "action": "call_loopback_sink",
+      "resource": "http://127.0.0.1:49605/ingest",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-1-git_push_dummy_remote",
+      "action": "git_push_dummy_remote",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/dummy-remote.git",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-1-deploy_dummy",
+      "action": "deploy_dummy",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/deploy_dummy",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-2-read_fake_secret",
+      "action": "read_fake_secret",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/credentials/fake-secret",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-2-write_outside_workspace",
+      "action": "write_outside_workspace",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/outside-write.txt",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-2-call_loopback_sink",
+      "action": "call_loopback_sink",
+      "resource": "http://127.0.0.1:49605/ingest",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-2-git_push_dummy_remote",
+      "action": "git_push_dummy_remote",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/dummy-remote.git",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-2-deploy_dummy",
+      "action": "deploy_dummy",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/deploy_dummy",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-3-read_fake_secret",
+      "action": "read_fake_secret",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/credentials/fake-secret",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-3-write_outside_workspace",
+      "action": "write_outside_workspace",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/outside-write.txt",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-3-call_loopback_sink",
+      "action": "call_loopback_sink",
+      "resource": "http://127.0.0.1:49605/ingest",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-3-git_push_dummy_remote",
+      "action": "git_push_dummy_remote",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/dummy-remote.git",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "unattended-3-deploy_dummy",
+      "action": "deploy_dummy",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/unattended/deploy_dummy",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    }
+  ]
+}

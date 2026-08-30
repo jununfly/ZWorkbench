@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T101004-470428Z/cases/tool_timeout/idempotent/repeat-02",
+    "--run-id",
+    "w6-c4-tool_timeout-idempotent-02",
+    "--tool-class",
+    "idempotent",
+    "--fault",
+    "tool_timeout",
+    "--mode",
+    "resume"
+  ],
+  "returncode": 0,
+  "stdout": "{\"outcome\": \"already-terminal\", \"run_id\": \"w6-c4-tool_timeout-idempotent-02\", \"status\": \"completed\"}\n",
+  "stderr": "",
+  "duration_ms": 20,
+  "timed_out": false
+}

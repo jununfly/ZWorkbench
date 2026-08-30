@@ -1,0 +1,21 @@
+{
+  "schema": "zworkbench-w6-c4-state/v1",
+  "run_id": "w6-c4-provider_timeout-approval-required-03",
+  "fault": "provider_timeout",
+  "tool": {
+    "name": "publish_approved_result",
+    "side_effect_class": "approval-required",
+    "operation_id": "w6-c4-provider_timeout-approval-required-03:operation-1",
+    "requires_approval": true,
+    "replay_safe": false
+  },
+  "phase": "completed",
+  "status": "completed",
+  "invocation_count": 2,
+  "provider_attempts": 2,
+  "tool_attempts": 1,
+  "retry_count": 1,
+  "approval_granted": true,
+  "last_checkpoint": "completed",
+  "safe_stop_reason": null
+}

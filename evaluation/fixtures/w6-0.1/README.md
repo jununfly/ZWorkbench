@@ -8,6 +8,7 @@
 - `fake-provider-a.json` / `fake-provider-b.json`：确定性 Provider 契约和故障注入说明；
 - `fake-provider.py`：仅监听 loopback 的 OpenAI-compatible 最小假服务；
 - `fake-sink.py`：只写调用者指定的临时日志文件；
+- `c2-adapter.py`：C2 acceptance-only fail-closed adapter；默认拒绝五类危险动作，仅允许带精确一次性 token 的 loopback sink；
 - `policy/policy.json`：五类危险动作的评估策略；
 - `manifests/fixture-manifest.json`：fixture 版本与 hash 入口。
 
@@ -21,3 +22,26 @@ python3 evaluation/runner/run_baseline.py --self-test
 
 候选 preflight 只执行 `--version`/`--help`，不启动 Agent、不请求模型、不访问网络；完整 C1–C7 只有在候选有明确的本地 fake Provider 和安全 adapter 后才会被标记为实测。
 
+运行 C2 adapter 契约与已接入候选：
+
+```sh
+python3 evaluation/runner/run_c2.py --repeats 3 --deepseek-entry /path/to/deepseek/apps/cli/lib/bin.js
+```
+
+C2 runner 会在临时目录生成假凭证、dummy Git remote、loopback sink 和 deploy stub，输出 policy、approval、tool-result、event ledger 与 side-effect snapshot。候选执行使用自身的 workspace sandbox；`--outer-sandbox` 仅用于 macOS `sandbox-exec` 嵌套兼容性探测，不是默认候选路径。
+
+运行 C4 隔离状态机首轮验证：
+
+```sh
+python3 evaluation/runner/run_c4.py
+```
+
+C4 runner 在每个案例目录保存 durable `state`、状态转移、故障注入、attempt、tool-result 和 effect ledger。它覆盖工具执行前/后提交前/提交后下一步前、Provider timeout、tool timeout 和真实进程 `SIGTERM`；每个注入点覆盖 `read-only`、`idempotent`、`approval-required` 三类工具并重复 3 次。fixture contract 通过不代表任何候选已通过 C4；没有候选专属 C4 adapter 的候选继续标记为 `unknown`。
+
+运行 C3 定时触发与幂等首轮验证：
+
+```sh
+python3 evaluation/runner/run_c3.py
+```
+
+C3 使用外部确定性触发器驱动 `daily-summary-v1`，覆盖首次触发、相同 key 重复、延迟触发、执行中断后重试和错过触发；每种场景重复 3 次。触发、attempt、结果和副作用都写入 case ledger，loopback fake-sink 只应收到同一 `idempotency_key` 的一个版本化结果。该结果是 `pass-with-composition` 的 fixture 合同；候选没有固定版本 C3 adapter 时仍为 `unknown`。

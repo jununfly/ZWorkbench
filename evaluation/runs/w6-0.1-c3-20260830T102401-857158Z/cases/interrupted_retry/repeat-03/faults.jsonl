@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:24:03.618503+00:00","attempt_id":"w6-c3-interrupted_retry-03:attempt-001","fault":"process_interrupt","point":"after_sink_before_result_commit","run_id":"w6-c3-interrupted_retry-03","schema":"zworkbench-w6-c3-idempotency/v1","seq":4,"type":"fault.injected"}

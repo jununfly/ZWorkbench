@@ -116,3 +116,41 @@ CBAM 用来回答：一个候选或新增组合件带来的场景收益和风险
 - 不值得引入或应推迟的组件：在 C3–C7 数据出现前，不为功能数量引入第二 Harness、Temporal/LangGraph、LiteLLM 或观测后端。
 - 持续监测：C1 成功率、人工介入、C2 拦截、C4 恢复、C5 fallback、C6 回放一致性、C7 运维时间、Token/存储/服务数和升级工时。
 - W7 姿态：暂不决策；完成 C2–C7 并将 ATAM 风险与 CBAM 成本放在同一证据批次后再定。
+
+### 6.5 C2 adapter 增量证据
+
+证据：[`w6-c2-adapter-findings.md`](./w6-c2-adapter-findings.md)，Run ID：`w6-0.1-c2-20260830T093457-799592Z`。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 用一个候选无关 adapter 同时覆盖 DeepSeek/Codex 的五类负向动作；15 次无人审批全阻断；一次性批准边界可验证 |
+| 一次性成本 | action/tool schema 适配、side-effect oracle、ledger 持久化和候选执行配置锁定 |
+| 持续成本 | approval token 生命周期、ledger schema、候选版本漂移，以及宿主 sandbox 兼容性 |
+| 组合判断 | 支持“一个主 Harness + 薄安全层”作为待验证路线；不构成引入第二 Harness 的收益证明 |
+| 未解决成本 | 若要求宿主级强制 broker，需要新增进程边界和 C2/C4 重测成本 |
+
+### 6.6 C4 durable/recovery 增量证据
+
+证据：[`w6-c4-recovery-findings.md`](./w6-c4-recovery-findings.md)，Run ID：`w6-0.1-c4-20260830T101004-470428Z`。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 用统一 durable state、attempt、fault、result 和 effect ledger 覆盖 6 个故障点；54/54 通过，能区分 resume、bounded retry 与 safe-stop |
+| 一次性成本 | fixture 状态机、故障注入与逐例 oracle；候选接入仍需把其真实事件/工具边界映射到同一合同 |
+| 持续成本 | ledger 存储、schema 兼容、operation id/幂等协议、故障样本保留和人工接管；本批次未测真实服务运维时间 |
+| 组合判断 | 支持“一个主 Harness + 必要薄 durable/recovery 层”作为待验证路线；不证明应立即引入 Temporal/LangGraph |
+| 引入条件 | 候选原生恢复无法满足 C4，且组合件在 C3/C4 的可靠性收益超过个人/小团队部署与排障成本 |
+| 不引入/退出条件 | 仅增加状态/事件/权限重复账，或 C7 运维超过 W6 阈值且没有关键门槛收益 |
+
+### 6.7 C3 scheduler/idempotency 增量证据
+
+证据：[`w6-c3-idempotency-findings.md`](./w6-c3-idempotency-findings.md)，Run ID：`w6-0.1-c3-20260830T102401-857158Z`。
+
+| 维度 | 当前判断 |
+|---|---|
+| 增量收益 | 外部确定性 trigger、跨进程 key、attempt/schedule/result/effect ledger 和 sink oracle 在 15/15 case 验证了单结果幂等合同 |
+| 一次性成本 | 触发器与 idempotency adapter、状态 schema、重复/错过/延迟场景 oracle；候选接入仍需映射 scheduler/session API |
+| 持续成本 | scheduler 常驻/唤醒、状态备份、时区与错过触发处理、ledger 保留和排障；本批次没有 C7 时间数据 |
+| 组合判断 | 对个人开发者/小团队，外部轻量 trigger + 薄幂等层是可验证的 `pass-with-composition` 候选，不等于立即引入复杂编排器 |
+| 引入条件 | 候选原生 scheduler 无法提供可审计 schedule/attempt/key/effect 语义，且外部组合的 C7 成本在阈值内 |
+| 不引入/退出条件 | 产生重复状态/权限/事件事实，或错过触发、备份、升级和排障成本超过原生能力收益 |

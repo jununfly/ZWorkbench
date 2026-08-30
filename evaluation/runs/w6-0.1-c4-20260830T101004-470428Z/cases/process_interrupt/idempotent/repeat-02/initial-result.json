@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c4-state-machine.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c4-20260830T101004-470428Z/cases/process_interrupt/idempotent/repeat-02",
+    "--run-id",
+    "w6-c4-process_interrupt-idempotent-02",
+    "--tool-class",
+    "idempotent",
+    "--fault",
+    "process_interrupt",
+    "--mode",
+    "initial"
+  ],
+  "returncode": -15,
+  "stdout": "",
+  "stderr": "",
+  "duration_ms": 19,
+  "timed_out": false
+}

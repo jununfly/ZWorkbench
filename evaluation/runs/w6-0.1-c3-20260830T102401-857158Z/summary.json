@@ -1,0 +1,809 @@
+{
+  "schema": "zworkbench-w6-c3/v1",
+  "run_id": "w6-0.1-c3-20260830T102401-857158Z",
+  "started_at": "2026-08-30T10:24:01.857158+00:00",
+  "finished_at": "2026-08-30T10:24:04.043551+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette"
+      ]
+    },
+    "manifest_sha256": "e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6",
+    "source_sha256": "b428a4f6a8bb4a6217cbf80aef6afef6cda04d1eb22ad6b0661c9650825545ae",
+    "state_machine": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c3-idempotency.py",
+    "state_machine_sha256": "7bf500005f2100cc80e0eb96c24a5889a5a7d76d474a278e39e5072d35971139"
+  },
+  "threshold": {
+    "scenario_types": [
+      "first_trigger",
+      "same_key_duplicate",
+      "delayed_trigger",
+      "interrupted_retry",
+      "missed_trigger"
+    ],
+    "repeats_per_scenario": 3,
+    "total_cases": 15,
+    "same_key_effective_side_effects": 1,
+    "duplicate_or_retry_extra_effects": 0,
+    "attempt_record_completeness": 1.0,
+    "scheduler": "external deterministic trigger; native candidate scheduler not measured"
+  },
+  "fixture_contract": {
+    "status": "pass-with-composition",
+    "cases_passed": 15,
+    "cases_total": 15,
+    "checks": {
+      "all_cases_pass": true,
+      "each_scenario_repeated_three_times": true,
+      "one_effect_per_key": true,
+      "all_attempts_recorded": true,
+      "interrupted_case_reconciled": true,
+      "missed_trigger_recorded": true
+    },
+    "case_results": [
+      {
+        "scenario": "first_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/first_trigger/repeat-01",
+        "case_id": "first_trigger-repeat-01"
+      },
+      {
+        "scenario": "first_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/first_trigger/repeat-02",
+        "case_id": "first_trigger-repeat-02"
+      },
+      {
+        "scenario": "first_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/first_trigger/repeat-03",
+        "case_id": "first_trigger-repeat-03"
+      },
+      {
+        "scenario": "same_key_duplicate",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/same_key_duplicate/repeat-01",
+        "case_id": "same_key_duplicate-repeat-01"
+      },
+      {
+        "scenario": "same_key_duplicate",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/same_key_duplicate/repeat-02",
+        "case_id": "same_key_duplicate-repeat-02"
+      },
+      {
+        "scenario": "same_key_duplicate",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/same_key_duplicate/repeat-03",
+        "case_id": "same_key_duplicate-repeat-03"
+      },
+      {
+        "scenario": "delayed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/delayed_trigger/repeat-01",
+        "case_id": "delayed_trigger-repeat-01"
+      },
+      {
+        "scenario": "delayed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/delayed_trigger/repeat-02",
+        "case_id": "delayed_trigger-repeat-02"
+      },
+      {
+        "scenario": "delayed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 2,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 2,
+          "returncodes": [
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 2,
+          "attempt_terminal": 2,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/delayed_trigger/repeat-03",
+        "case_id": "delayed_trigger-repeat-03"
+      },
+      {
+        "scenario": "interrupted_retry",
+        "status": "pass",
+        "expected": {
+          "invocations": 3,
+          "initial_returncode": -15,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 1
+        },
+        "observed": {
+          "invocations": 3,
+          "returncodes": [
+            -15,
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 3,
+          "attempt_terminal": 3,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 1,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 1
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/interrupted_retry/repeat-01",
+        "case_id": "interrupted_retry-repeat-01"
+      },
+      {
+        "scenario": "interrupted_retry",
+        "status": "pass",
+        "expected": {
+          "invocations": 3,
+          "initial_returncode": -15,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 1
+        },
+        "observed": {
+          "invocations": 3,
+          "returncodes": [
+            -15,
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 3,
+          "attempt_terminal": 3,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 1,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 1
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/interrupted_retry/repeat-02",
+        "case_id": "interrupted_retry-repeat-02"
+      },
+      {
+        "scenario": "interrupted_retry",
+        "status": "pass",
+        "expected": {
+          "invocations": 3,
+          "initial_returncode": -15,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 1
+        },
+        "observed": {
+          "invocations": 3,
+          "returncodes": [
+            -15,
+            0,
+            0
+          ],
+          "schedule_records": 2,
+          "attempt_started": 3,
+          "attempt_terminal": 3,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 1,
+          "reconcile_events": 1,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 1
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/interrupted_retry/repeat-03",
+        "case_id": "interrupted_retry-repeat-03"
+      },
+      {
+        "scenario": "missed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/missed_trigger/repeat-01",
+        "case_id": "missed_trigger-repeat-01"
+      },
+      {
+        "scenario": "missed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/missed_trigger/repeat-02",
+        "case_id": "missed_trigger-repeat-02"
+      },
+      {
+        "scenario": "missed_trigger",
+        "status": "pass",
+        "expected": {
+          "invocations": 1,
+          "initial_returncode": 0,
+          "effective_side_effects": 1,
+          "result_records": 1,
+          "fault_records": 0
+        },
+        "observed": {
+          "invocations": 1,
+          "returncodes": [
+            0
+          ],
+          "schedule_records": 1,
+          "attempt_started": 1,
+          "attempt_terminal": 1,
+          "idempotency_keys": [
+            "daily-summary-v1:2026-08-30T00:00:00Z"
+          ],
+          "duplicate_events": 0,
+          "reconcile_events": 0,
+          "sink_deliveries": 1,
+          "effect_records": 1,
+          "result_records": 1,
+          "final_status": "completed",
+          "final_effect_status": "applied",
+          "fault_records": 0
+        },
+        "checks": {
+          "trigger_returncodes": true,
+          "attempt_history_complete": true,
+          "duplicate_trigger_deduplicated": true,
+          "one_sink_delivery": true,
+          "one_effect_and_one_result": true,
+          "durable_state_completed": true,
+          "one_idempotency_key": true,
+          "fault_recording": true,
+          "missed_trigger_semantics": true,
+          "interrupted_run_reconciled": true
+        },
+        "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/missed_trigger/repeat-03",
+        "case_id": "missed_trigger-repeat-03"
+      }
+    ]
+  },
+  "candidate_baseline": {
+    "DeepSeek Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/deepseek-ai/deepseek-harness",
+        "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C3 adapter; measured scheduler is an external composition fixture"
+    },
+    "Pi Agent Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/earendil-works/pi",
+        "commit": "853a80d26c90a14c1886f0ebb8ffaae133ca2185"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C3 adapter; measured scheduler is an external composition fixture"
+    },
+    "Codex Harness": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/openai/codex",
+        "commit": "63d213884daea50e4f74efc192cdc44f549b67d5"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C3 adapter; measured scheduler is an external composition fixture"
+    },
+    "OpenCode": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/anomalyco/opencode",
+        "commit": "dc4449df0d52199704ea4989a5a993ebbc605612"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C3 adapter; measured scheduler is an external composition fixture"
+    },
+    "Goose": {
+      "status": "unknown",
+      "source_ref": {
+        "repository": "https://github.com/block/goose",
+        "commit": "8ae4e4ba02836529790f47109b8785e8b42843a7"
+      },
+      "tested_scenarios": [],
+      "reason": "no candidate-specific fixed-source C3 adapter; measured scheduler is an external composition fixture"
+    }
+  },
+  "interpretation": {
+    "external_scheduler_is_composition": true,
+    "fixture_contract_is_not_candidate_pass": true,
+    "candidate_c3_requires_fixed_source_adapter": true,
+    "missing_candidate_evidence_remains_unknown": true,
+    "no_real_provider_or_external_message": true
+  }
+}

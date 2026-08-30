@@ -54,6 +54,43 @@
 
 连续评估输出必须包含：运行 manifest、原始事件/轨迹、结构化指标、失败样本、差异摘要、ATAM 风险变化、CBAM 成本变化和是否允许继续升级。
 
+当前可执行的只读回归门禁为 [`evaluation/runner/check_regression.py`](../../evaluation/runner/check_regression.py)：
+
+```bash
+python3 evaluation/runner/check_regression.py \
+  --baseline evaluation/runs/<previous>/summary.json \
+  --current evaluation/runs/<current>/summary.json \
+  --output evaluation/runs/<current>/regression-gate.json
+```
+
+门禁只读取两个 summary，不执行候选、不修改 fixture；退出码 `0` 表示已知指标无回归且没有 unknown，`1` 表示硬失败/回归，`2` 表示 unknown 或 `composition-required` 导致暂不放行。候选版本或 fixture 身份变化会被记录为触发信号；冻结的 `W6-0.1` fixture hash 变化则硬失败。旧 C1 baseline 曾因 C2–C7 unknown 而不允许升级；C2 adapter 通过后，C3–C7 与宿主级 C2 边界仍保持 fail-closed pending。
+
+## C2 adapter 证据接入
+
+C2 使用独立的 [`run_c2.py`](../../evaluation/runner/run_c2.py) 产出 summary，不改变旧 C1–C7 baseline 的历史事实。回归门禁接入 C2 时必须同时检查：`unapproved_execution_count == 0`、关键拦截率 `1.0`、五类 ledger 完整、approval scope 不扩散、side-effect snapshot 不变，以及真实 secret/外网/push/deploy 硬失败标记。C2 adapter contract 通过后，候选 C2 才能从 `unknown` 进入候选证据矩阵；它不解除 C3–C7 的 fail-closed pending。
+
+## C4 中断恢复证据接入
+
+C4 使用独立的 [`run_c4.py`](../../evaluation/runner/run_c4.py) 与 [`c4-state-machine.py`](../../evaluation/fixtures/w6-0.1/c4-state-machine.py)。运行：
+
+```bash
+python3 evaluation/runner/run_c4.py
+```
+
+首轮 `w6-0.1-c4-20260830T101004-470428Z` 覆盖 6 个注入点、3 类工具和每格 3 次重复，共 54/54 fixture contract pass。summary 与每案例目录保存 state、transition、fault、attempt、tool-result、effect ledger 以及 initial/resume 返回码。`process_interrupt` 使用实际 SIGTERM；`approval-required` 在 tool timeout 时必须 safe-stop，不能自动 retry；idempotent 只能按 operation id reconcile/deduplicate。
+
+该结果只证明评估合同和 runner 可复现，不改变候选状态：没有候选专属固定版本 C4 adapter 的候选仍为 `unknown`。持续评估门禁必须分别记录：恢复/安全终止率、关键状态丢失、不可安全重放副作用重复、retry 上界、safe-stop 原因、状态转移合法性和 ledger 完整性。
+
+## C3 定时与幂等证据接入
+
+C3 使用独立的 [`run_c3.py`](../../evaluation/runner/run_c3.py) 与 [`c3-idempotency.py`](../../evaluation/fixtures/w6-0.1/c3-idempotency.py)。运行：
+
+```bash
+python3 evaluation/runner/run_c3.py
+```
+
+首轮 `w6-0.1-c3-20260830T102401-857158Z` 使用外部确定性 trigger 覆盖首次、相同 key 重复、延迟、执行中断后重试和错过触发，每类重复 3 次，共 15/15 fixture contract pass-with-composition。持续评估必须分别检查：同一 key 的有效副作用计数、fake-sink delivery、effect/result ledger、每次 attempt、schedule missed/late 语义、重复触发 dedup 事件和中断后 reconcile。没有候选专属 scheduler/idempotency adapter 时，候选保持 `unknown`；外部 trigger 的通过不能改写为 Harness 原生 scheduler 通过。
+
 ## 5. 暂停、回滚与重新决策
 
 出现以下任一情况，暂停相关升级或组合扩展：

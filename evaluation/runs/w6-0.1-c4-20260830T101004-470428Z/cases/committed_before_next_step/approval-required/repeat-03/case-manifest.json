@@ -1,0 +1,9 @@
+{
+  "schema": "zworkbench-w6-c4-case/v1",
+  "run_id": "w6-c4-committed_before_next_step-approval-required-03",
+  "fault": "committed_before_next_step",
+  "tool_class": "approval-required",
+  "repeat": 3,
+  "fixture_version": "W6-0.1",
+  "approval_granted": true
+}

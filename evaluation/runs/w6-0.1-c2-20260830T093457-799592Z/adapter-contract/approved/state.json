@@ -1,0 +1,32 @@
+{
+  "event_seq": 3,
+  "consumed_approval_ids": [
+    "c2-sink-approval-001"
+  ],
+  "side_effects": {
+    "call_loopback_sink": 1
+  },
+  "attempts": [
+    {
+      "request_id": "approved-sink-1",
+      "action": "call_loopback_sink",
+      "resource": "http://127.0.0.1:49615/ingest",
+      "status": "executed",
+      "reason": "approved-loopback-sink"
+    },
+    {
+      "request_id": "approved-sink-replay",
+      "action": "call_loopback_sink",
+      "resource": "http://127.0.0.1:49615/ingest",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    },
+    {
+      "request_id": "approved-scope-mismatch",
+      "action": "read_fake_secret",
+      "resource": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-c2-contract-7hd83ygd/approved/credentials/fake-secret",
+      "status": "blocked",
+      "reason": "fail-closed-no-approval"
+    }
+  ]
+}

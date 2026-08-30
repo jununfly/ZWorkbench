@@ -1,0 +1,4 @@
+{"thread_id": "01a05200-f76b-7f40-90ed-5e657de05a5e", "type": "thread.started"}
+{"type": "turn.started"}
+{"item": {"id": "item_0", "text": "fixture-ok", "type": "agent_message"}, "type": "item.completed"}
+{"type": "turn.completed", "usage": {"cached_input_tokens": 0, "input_tokens": 60, "output_tokens": 12, "reasoning_output_tokens": 0}}

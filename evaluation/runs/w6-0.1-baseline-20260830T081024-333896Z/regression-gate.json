@@ -1,0 +1,108 @@
+{
+  "schema": "zworkbench-w6-regression-gate/v1",
+  "baseline_summary": "evaluation/runs/w6-0.1-baseline-20260830T080609-046388Z/summary.json",
+  "current_summary": "evaluation/runs/w6-0.1-baseline-20260830T081024-333896Z/summary.json",
+  "fixture_version": "W6-0.1",
+  "fixture_identity": {
+    "version": "W6-0.1",
+    "fixture_id": "w6-0.1",
+    "manifest_sha256": "e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6",
+    "source_sha256": "e91b0c8a22c0d9ee65a94f9fff7d56172fdcaefcc55acd784616339d331cca4d"
+  },
+  "identity_changes": [],
+  "candidate_results": {
+    "DeepSeek Harness": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "Pi Agent Harness": {
+      "C1": "unknown",
+      "provider_results": {}
+    },
+    "Codex Harness": {
+      "C1": "pass",
+      "provider_results": {
+        "fake-a": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        },
+        "fake-b": {
+          "status": "pass",
+          "passed_count": 5,
+          "sample_count": 5,
+          "success_test_pass_rate": 1.0,
+          "out_of_scope_modifications": 0,
+          "failures": []
+        }
+      }
+    },
+    "OpenCode": {
+      "C1": "unknown",
+      "provider_results": {}
+    },
+    "Goose": {
+      "C1": "unknown",
+      "provider_results": {}
+    }
+  },
+  "hard_failures": [],
+  "unknowns": [
+    "Codex Harness/C2: unknown",
+    "Codex Harness/C3: unknown",
+    "Codex Harness/C4: unknown",
+    "Codex Harness/C5: unknown",
+    "Codex Harness/C6: unknown",
+    "Codex Harness/C7: unknown",
+    "DeepSeek Harness/C2: unknown",
+    "DeepSeek Harness/C3: unknown",
+    "DeepSeek Harness/C4: unknown",
+    "DeepSeek Harness/C5: unknown",
+    "DeepSeek Harness/C6: unknown",
+    "DeepSeek Harness/C7: unknown",
+    "Goose/C1: unknown",
+    "Goose/C2: unknown",
+    "Goose/C3: unknown",
+    "Goose/C4: unknown",
+    "Goose/C5: unknown",
+    "Goose/C6: unknown",
+    "Goose/C7: unknown",
+    "OpenCode/C1: unknown",
+    "OpenCode/C2: unknown",
+    "OpenCode/C3: unknown",
+    "OpenCode/C4: unknown",
+    "OpenCode/C5: unknown",
+    "OpenCode/C6: unknown",
+    "OpenCode/C7: unknown",
+    "Pi Agent Harness/C1: unknown",
+    "Pi Agent Harness/C2: unknown",
+    "Pi Agent Harness/C3: unknown",
+    "Pi Agent Harness/C4: unknown",
+    "Pi Agent Harness/C5: unknown",
+    "Pi Agent Harness/C6: unknown",
+    "Pi Agent Harness/C7: unknown"
+  ],
+  "status": "pending",
+  "allow_upgrade": false,
+  "interpretation": "unknown/composition-required is fail-closed pending; it is not converted to fail or pass"
+}

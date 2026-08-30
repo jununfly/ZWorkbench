@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:10:05.066064+00:00","operation_id":"w6-c4-after_tool_before_commit-idempotent-03:operation-1","payload":"fixture-local-only","physical_effect_count":1,"replay_safe":true,"run_id":"w6-c4-after_tool_before_commit-idempotent-03","schema":"zworkbench-w6-c4-state/v1","side_effect_class":"idempotent"}

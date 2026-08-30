@@ -1,0 +1,1 @@
+{"at":"2026-08-30T10:10:05.730059+00:00","fault":"provider_timeout","point":"provider_timeout","reason":"fake Provider timeout before a response","run_id":"w6-c4-provider_timeout-idempotent-01","schema":"zworkbench-w6-c4-state/v1","seq":3,"type":"fault.injected"}

@@ -1,0 +1,25 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w6-0.1/c3-idempotency.py",
+    "--run-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/interrupted_retry/repeat-01",
+    "--run-id",
+    "w6-c3-interrupted_retry-01",
+    "--sink-url",
+    "http://127.0.0.1:50114/ingest",
+    "--sink-output",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c3-20260830T102401-857158Z/cases/interrupted_retry/repeat-01/fake-sink.jsonl",
+    "--mode",
+    "trigger",
+    "--trigger-kind",
+    "interrupted",
+    "--fault",
+    "process_interrupt"
+  ],
+  "returncode": -15,
+  "stdout": "",
+  "stderr": "",
+  "duration_ms": 53,
+  "timed_out": false
+}

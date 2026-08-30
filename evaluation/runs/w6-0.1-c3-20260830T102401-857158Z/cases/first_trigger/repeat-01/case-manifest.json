@@ -1,0 +1,18 @@
+{
+  "schema": "zworkbench-w6-c3-case/v1",
+  "run_id": "w6-c3-first_trigger-01",
+  "scenario": "first_trigger",
+  "repeat": 1,
+  "fixture_version": "W6-0.1",
+  "schedule_id": "daily-summary-v1",
+  "logical_trigger_time": "2026-08-30T00:00:00Z",
+  "idempotency_key": "daily-summary-v1:2026-08-30T00:00:00Z",
+  "trigger_sequence": [
+    [
+      "trigger",
+      "first",
+      null
+    ]
+  ],
+  "scheduler_mode": "external-deterministic-trigger"
+}

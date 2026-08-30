@@ -100,7 +100,7 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 | ID | 刺激 → 环境 | 响应与度量 | 初始结果 | ATAM 解读 |
 |---|---|---|---|---|
 | C1 | 两个候选在临时 `code-project` 中完成缺陷修复；fake-a/b loopback Provider | 5 次/Provider；测试通过、允许 diff、事件完整 | DeepSeek/Codex 均 5/5 pass | 证明代码闭环 adapter 可行；不证明权限、恢复、回放或运维 |
-| C2 | 负向动作与无人审批 | 5 类动作 × 3 次；未授权执行 0、拦截 100% | 所有候选 unknown | G2 仍未签字，不能由 C1 的“无禁止命令”替代 |
+| C2 | 负向动作与无人审批 | 5 类动作 × 3 次；未授权执行 0、拦截 100% | 旧基线 unknown；当前 adapter contract 已通过 | G2 仍不能仅凭 adapter contract 签字，宿主级绕过与产品边界仍需验证 |
 | C3 | 重复 schedule 触发与中断重试 | 同 key 有效副作用 1、attempt 全记录 | 所有候选 unknown | scheduler/幂等 owner 未确定 |
 | C4 | 工具/Provider/进程边界故障 | 100% 恢复或安全终止、状态不丢失 | 所有候选 unknown | 可靠性与外部副作用边界是高风险 |
 | C5 | fake-a/b 与 timeout/能力缺失 | 语义一致、降级原因显式 | 所有候选 unknown；C1 仅为基本双 Provider 请求 | 统一 Provider 表面可能掩盖能力差异 |
@@ -111,7 +111,7 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 
 | ID | 类型 | 初始判断 | 证据/下一步 |
 |---|---|---|---|
-| R-01 | Risk | C2 unknown；C1 无禁止命令不等于 fail-closed 权限 | 为每个候选补 C2 adapter |
+| R-01 | Risk | 旧基线 C2 unknown；C1 无禁止命令不等于 fail-closed 权限 | adapter contract 已补齐；继续验证宿主级强制边界 |
 | R-02 | Risk | C3/C4 unknown；重试与恢复可能重复副作用或丢状态 | 建立状态账本、副作用 oracle 和故障注入 |
 | R-03 | Risk | C6 unknown；session/trace 存在不等于 replay contract 存在 | 分别执行 recorded/simulated/live replay |
 | R-04 | Risk | Codex 研究 commit 与本机二进制未绑定 | 绑定 commit 或降低证据级别 |
@@ -121,11 +121,48 @@ ATAM 用来回答：候选架构在关键质量属性上有什么风险、敏感
 
 ### 6.4 首轮 ATAM 输出
 
-- 不可接受风险：在没有 C2 安全边界、C4 恢复和 C6 replay 证据前，不允许把任何候选标为 W6 通过。
+- 不可接受风险：在没有 C2 安全边界、C4 恢复和 C6 replay 证据前，不允许把任何候选标为 W6 通过；当前 C2 的宿主级绕过边界仍未签字。
 - 可接受但需监测：C1 adapter 的局部成功率和耗时，仅作为候选执行基线。
 - 关键敏感点：候选固定版本、Provider wire protocol、tool schema、sandbox/approval 配置、事件捕获与 session 路径。
 - 必须在 W7 显式处理的权衡：一个主 Harness 加薄层，还是多个 Harness/外围组合件；当前证据不足以选择。
 - 可由配置解决：loopback endpoint、临时工作区、无真实凭证、C1 的允许修改范围和记录字段。
 - 必须由 ZWorkbench 自有模块解决：跨 Run 状态/幂等、统一副作用账本、replay mode contract、候选无关的证据索引和小团队运维闭环（是否自建仍待 W7）。
 - 需要持续评估：C1 成功率、越界修改、未授权动作拦截率、恢复率、事件完整率、回放一致性、Provider 静默退化、人工介入率和 C7 运维时间。
-- 尚未证实的 unknowns：C2–C7 全部；Pi/OpenCode/Goose 的可执行版本与安全 adapter；Codex 研究 commit 与二进制的绑定。
+- 尚未证实的 unknowns：C3–C7、C2 宿主级强制 broker；Pi/OpenCode/Goose 的可执行版本与安全 adapter；Codex 研究 commit 与二进制的绑定。
+
+### 6.5 C2 adapter 增量证据
+
+证据：[`w6-c2-adapter-findings.md`](./w6-c2-adapter-findings.md)，Run ID：`w6-0.1-c2-20260830T093457-799592Z`。
+
+| 项目 | 更新 |
+|---|---|
+| C2 结果 | adapter contract pass；无人审批 15/15 blocked；关键拦截率 100%；DeepSeek/Codex 双 fake Provider 各 3/3 pass |
+| 风险收窄 | policy/approval/tool-result/event ledger 与一次性 approval scope 已有可复核证据 |
+| 新敏感点 | 外层 `sandbox-exec` 与候选内置 sandbox 嵌套会抑制候选 tool execution；宿主级强制边界仍 unknown |
+| 不可接受风险 | 仍不允许把 C2 adapter contract 解释为任意 shell 绕过防护，也不允许替代 C4/C6 证据 |
+| 下一验证 | tool proxy/broker 或无嵌套的宿主隔离方案；再进入 C4 中断/重试测试 |
+
+### 6.6 C4 中断恢复增量证据
+
+证据：[`w6-c4-recovery-findings.md`](./w6-c4-recovery-findings.md)，Run ID：`w6-0.1-c4-20260830T101004-470428Z`。
+
+| 项目 | 更新 |
+|---|---|
+| C4 结果 | 隔离 durable-run fixture 覆盖 6 个注入点 × 3 类工具 × 3 次，共 54/54 pass；100% 恢复或安全终止 |
+| 风险收窄 | state transition、attempt history、fault ledger、tool-result ledger、effect ledger 和 bounded retry 均可复核；关键状态丢失 0，不可安全重放副作用重复 0 |
+| 工具分类敏感点 | read-only 可 retry；idempotent 以 operation id 去重；approval-required 在 tool timeout 时 safe-stop，其他已落 effect 通过 ledger reconcile |
+| 新的不可接受边界 | 尚未证明候选运行时、宿主 sandbox/broker 或真实外部系统能提供同等 durable/reconcile 语义；不能将 fixture pass 记为候选 C4 pass |
+| 下一验证 | 为候选建立固定版本 C4 adapter；随后进入 C5 双 Provider 故障切换/显式降级，并保留 C4 unknown 直到候选实测 |
+
+### 6.7 C3 定时与幂等增量证据
+
+证据：[`w6-c3-idempotency-findings.md`](./w6-c3-idempotency-findings.md)，Run ID：`w6-0.1-c3-20260830T102401-857158Z`。
+
+| 项目 | 更新 |
+|---|---|
+| C3 结果 | 外部确定性触发器 + durable idempotency ledger + loopback fake-sink 覆盖 5 类场景、每类 3 次，共 15/15 pass；fixture 状态为 `pass-with-composition` |
+| 风险收窄 | 同一 schedule/key 只有 1 次有效 sink delivery、1 条 effect ledger、1 条 versioned result；每个 trigger/resume invocation 都有 attempt 记录 |
+| 调度敏感点 | 首次、重复、延迟、错过触发分别保留 schedule 语义；没有把外部触发器能力算作 Harness 原生能力 |
+| 中断边界 | side effect 后 result commit 前实际 SIGTERM，resume 通过 key/sink ledger reconcile；不重复 delivery |
+| 新的不可接受边界 | 候选 scheduler、跨 Run 状态、真实外部 exactly-once、时区/错过触发语义仍 unknown；C3 fixture pass 不能签候选 G3 |
+| 下一验证 | 进入 C5 双 Provider 故障切换与显式降级；后续再为候选补 C3 adapter，并用 C7 评估 scheduler 组合的个人/小团队成本 |
