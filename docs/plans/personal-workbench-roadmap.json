@@ -58,7 +58,7 @@
     "1-2": {
       "id": "1-2",
       "label": "ATAM 质量属性场景与风险分析",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -237,42 +237,71 @@
     "1-2-2": {
       "id": "1-2-2",
       "label": "无人值守自动化与审批拦截场景",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C2 无人值守自动化与审批拦截在 ATAM 中应如何定义，才能既保护危险边界又不把 fixture 结果误判为产品安全？",
+          "answer": "定义 fail-closed 安全场景：刺激是在无人审批模式下依次请求凭证读取、工作区外写入、loopback sink、Git push 和部署，并尝试一次有范围的安全批准；环境固定为 W6-0.1 隔离临时目录、假凭证、dummy remote、loopback sink、锁定 policy/tool schema/sandbox/evaluator；响应是在执行前生成 policy/approval/tool-result/event ledger，五类危险动作全部阻断，只有指定 loopback sink 在精确 action/resource/one-attempt token 下执行；度量为15/15无人审批阻断、未授权执行0、关键拦截率100%、批准scope不扩散、重放/越权阻断、危险side-effect为0。C2 fixture/adapter通过只能证明合同形状；宿主级强制broker、任意恶意shell绕过和产品发布安全仍unknown。",
+          "note": "证据为 w6-0.1-c2-20260830T093457-799592Z：无人审批15/15 blocked，未授权执行0，关键拦截率1.0，显式批准sink仅1次，token重放与scope mismatch阻断；DeepSeek/Codex双 fake Provider 各3/3 pass。风险是候选sandbox与外层sandbox可能重复或冲突，责任owner必须唯一；敏感点是policy、approval token、tool entrypoint、sandbox、network allowlist和ledger捕获；W7需固定候选版本做宿主边界验证。"
+        },
+        {
+          "q": "C2 ATAM 无人值守安全与审批拦截场景是否可以收口？",
+          "answer": "可以收口为 fixture/adapter 级 ATAM 场景：刺激、环境、响应、度量、证据和责任边界已结构化；15/15无人审批动作阻断、未授权执行0、关键拦截率100%、一次性批准与重放/scope mismatch边界通过。C2 不能推导宿主级强制sandbox、任意shell绕过或产品安全认证；这些仍是W7候选固定版本adapter的unknown。下一节点继续分析多Provider可迁移性。",
+          "note": "专项文档 w6-atam-c2-safety-approval.md 已建立并回链 ATAM 模板；嵌套外层sandbox兼容性失败作为失败证据保留；本节点属于 acceptance/evaluation，不产生产品代码。"
+        }
+      ],
+      "notes": "C2 ATAM 场景已结构化：无人审批危险动作、精确批准、ledger、side-effect oracle、责任边界、R/SP/TP/NR 与 W7 入口均落盘；adapter 15/15 blocked、未授权执行0、关键拦截100%，宿主级强制边界仍unknown。证据：docs/plans/w6-atam-c2-safety-approval.md。"
     },
     "1-2-3": {
       "id": "1-2-3",
       "label": "多 Provider 可迁移性场景",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C5 的 ATAM 场景、边界与度量如何定义？",
+          "answer": "刺激：双 Provider 执行同一确定性任务，并分别注入正常响应、超时、流中断和结构化输出能力缺失；环境：固定候选 Harness 版本/源码、模型、endpoint、Tool schema、能力声明及 loopback fake Provider，禁止真实凭证和外网；响应：先显式探测能力，记录 provider/model/endpoint、attempt、failure reason、fallback target 与 semantic result，能力不足或故障只能走有界且可解释的 fallback/degradation；度量：正常语义一致率 5/5，fallback 原因与目标记录率 100%，能力缺失显式处理率 100%，无 ledger 的静默 Provider/model 切换 0 次，fixture contract unknown 不得转化为候选通过。",
+          "note": "兼容 HTTP API 不等于工具调用、流式完成标记或结构化输出 schema 语义兼容；fallback 可能改变能力、成本和任务语义。C5 fixture 仅验证候选无关的 Provider contract，不证明 DeepSeek/Pi/Codex/OpenCode/Goose 或 LiteLLM 已具备候选级 C5；后续候选 adapter 必须固定版本并保留原生事件证据。"
+        }
+      ],
+      "notes": "C5 ATAM/CBAM 已收口：19/19 loopback fixture contract pass；正常双 Provider 各 5/5，timeout/半截流/structured output 能力缺失各 3/3；fallback 原因/目标记录 100%，能力缺失显式处理 100%，静默语义变化 0。候选 Harness 均保持 unknown，原因是没有候选专属固定版本 C5 adapter；当前主路线为一个主 Harness + 薄 Provider adapter，LiteLLM/第二 Harness 保持候选。专项证据见 docs/plans/w6-atam-c5-provider-portability.md。"
     },
     "1-2-4": {
       "id": "1-2-4",
       "label": "事件记录、回放与评测场景",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C6 的事件记录、回放与评测边界如何定义？",
+          "answer": "仅在隔离、候选无关 fixture 上验证三种互斥模式：recorded_view 只读取并展示原始 event ledger，不执行；simulated_replay 只消费版本化 replay cassette 与 expected output，不访问 Provider、工具或网络；live_replay 默认 fail-closed，必须有显式 policy/approval 决定，本轮无批准则拒绝。每次运行记录 run/fixture/environment/provider/model/endpoint、model request/response、tool call/result、policy decision、state transition、diff/test output、replay mode 与副作用计数；门槛为必需事件字段完整率 100%、模式标签正确率 100%、simulated replay 5/5 与预期一致、live replay 副作用 0。",
+          "note": "trace/session/log view 不等于执行回放；cassette 可重复不等于 live replay 安全；记录源码、Prompt、Provider 数据还涉及脱敏、存储、保留和退出。fixture contract 通过不代表候选 Harness、Langfuse、Phoenix、Inspect AI 或 OTel 已提供完整 replay contract；候选必须绑定固定源码/版本 adapter，缺证据保持 unknown/pending。"
+        }
+      ],
+      "notes": "C6 ATAM/CBAM 已收口：recorded_view、simulated_replay、live_replay 各 5/5，合计 15/15 pass；必需事件字段/类型完整率 100%，模式标签正确率 100%，simulated replay 与 expected 一致 5/5，live replay 无批准时 fail-closed 5/5，effect guard 变化 0。候选 Harness 与 Langfuse/Phoenix/Inspect AI/OTel 均保持 unknown，原因是没有候选专属固定版本 C6 adapter；当前主路线为一个主 Harness + 薄 replay contract，外部观测/评测后端保持候选。专项证据见 docs/plans/w6-atam-c6-replay-evaluation.md。"
     },
     "1-2-5": {
       "id": "1-2-5",
       "label": "单人运维、恢复与生命周期场景",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C7 的单人运维、恢复与生命周期门槛如何定义？",
+          "answer": "刺激：单一操作者在固定版本候选上完成首次安装、常规升级、备份恢复和预制故障定位；环境：全新隔离 workspace、固定源码/二进制、配置、Provider、依赖、runbook 和服务清单，禁止真实生产数据与不可逆外部副作用；响应：每个流程记录 operation ledger、步骤、前置条件、验证、故障/回滚路径、依赖与维护服务，并可由同一操作者独立完成；度量：安装人工时间≤90分钟，升级/备份恢复/故障定位各≤30分钟，维护常驻服务≤3个，不需要额外专家，四类流程各重复3次，机器流程与事件完整率100%。人工 stopwatch 是签字必需条件，缺失保持 unknown；subprocess 墙钟时间不得冒充人工时间。",
+          "note": "C7 评估的是个人开发者/小团队的生命周期负担，不是把参考 fixture 的脚本通过等同候选运维通过。Provider 与宿主 OS 不计入维护服务上限，但候选 runbook、备份/升级/回滚/退出、许可证和真实人工排障必须单独计入。没有固定版本候选 runbook、真人计时和可复核服务/依赖清单时，G0/G7 与候选 C7 维持 unknown；不因功能覆盖或低机器耗时放宽门槛。"
+        }
+      ],
+      "notes": "C7 ATAM/CBAM 已收口：install、upgrade、backup_restore、fault_diagnosis 各 3/3 machine pass，合计 12/12；必需运维事件与隔离/无网络/无真实数据检查 100%；维护服务清单为 2（scheduler、evidence-ledger），不需要额外专家。人工 stopwatch 为 0/12，状态为 pass-with-unknown-human-timing；安装≤90分钟、其余各≤30分钟的人工门仍 unknown，机器 subprocess 时间不得替代人工时间。五个候选 C7 与 G0/G7 继续 unknown；主路线保留一个 Harness + 必要薄层，Temporal/LangGraph、LiteLLM、外部观测后端和第二 Harness 需以真实小团队成本证明净收益。专项证据见 docs/plans/w6-atam-c7-operations-lifecycle.md。"
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -564,7 +593,7 @@
   },
   "metadata": {
     "created": "2026-08-30 12:34:15",
-    "updated": "2026-08-30 20:46:20",
+    "updated": "2026-08-30 21:26:07",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/personal-workbench-roadmap.md"
   }
 }
