@@ -1,0 +1,178 @@
+{
+  "title": "W7 候选固定版本验证与采用姿态决策",
+  "description": "acceptance/evaluation 阶段：在不实现 ZWorkbench 产品的前提下，为至少一个候选建立固定版本 C2–C7 adapter、真人 C7 运维证据、许可证/升级/回滚/退出审计，并以 ATAM/CBAM 形成采用、组合、替换或停止姿态。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "W7 候选固定版本验证与采用姿态决策",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6"
+      ],
+      "decisions": [
+        {
+          "q": "W7 是否进入产品实现，候选验证应如何排序？",
+          "answer": "不进入产品实现；先以 Codex Harness（openai/codex）作为优先验证顺序，以 DeepSeek Harness（deepseek-ai/deepseek-harness）作为对照候选。该顺序不是最终采用；优先验证 C2 安全边界可归因、C5/C6 事件与接口可绑定、个人/小团队成本可复核的候选，若源码—二进制绑定或真实入口失败则停止并切换对照候选。",
+          "note": "ATAM：先处理安全、状态和回放的高风险未知；CBAM：先选择预期适配面较小且可复用已有 C1 入口的验证路径，避免同时维护多个 Harness。W6 fixture pass 不转化为候选通过。"
+        }
+      ],
+      "notes": "W6 已完成并独立封存；W7 只验证候选与采用边界，不修改 ZWorkbench 产品代码。"
+    },
+    "1-1": {
+      "id": "1-1",
+      "label": "冻结 Codex 优先候选与 DeepSeek 对照候选的源码运行身份",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "W7-1 的完成条件是什么？",
+          "answer": "形成可复核 candidate manifest：canonical repository、source commit 或 release、实际 binary/package digest、运行入口、Prompt/Tool schema、Provider/model/endpoint、sandbox/approval policy、依赖锁定、fixture/evaluator/cassette 版本、环境身份和 rollback target；用该 manifest 重跑 C1 smoke，并对身份字段缺失、非确定安装、未知入口或供应链漂移 fail-closed。",
+          "note": "本节点完成只证明验证包可重现，不证明 Codex 或 DeepSeek 已通过 C2–C7，也不授权实现。Codex 先行；DeepSeek 保留同一 manifest schema 的对照入口。"
+        },
+        {
+          "q": "W7-1 是否满足进入 Codex C2 的条件？",
+          "answer": "满足优先候选路径的进入条件：Codex 的 rust-v0.139.0 release/tag、resolved commit、实际 package/binary digest、CLI/app-server 入口和当前 W6-0.1 fixture/C1 smoke 已绑定；DeepSeek 的源码身份继续登记为对照，但本机没有可复用的当前入口，因此保持 pending，不阻塞 Codex C2，也不构成 DeepSeek 通过。",
+          "note": "Codex source-to-binary build provenance 仍 unknown；C1 smoke run=w6-0.1-baseline-20260830T144245-541564Z，fixture self-test 7/7，fake-a/fake-b C1 各5/5。证据见 docs/plans/w7-candidate-binding.md 与 w7-codex-candidate-manifest.json。"
+        }
+      ],
+      "notes": "Codex priority path identity-pinned-release-level；DeepSeek comparator identity registered but current runnable artifact pending. W7-1 does not imply C2–C7 or final adoption."
+    },
+    "1-2": {
+      "id": "1-2",
+      "label": "为优先候选建立真实 C2 fail-closed 安全 adapter",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Codex C2 候选 adapter 的最小真实入口和安全解释边界是什么？",
+          "answer": "使用固定 Codex CLI release 的 codex exec --json 入口，在临时项目、fake Provider、workspace-write、approval_policy=never 下执行五类 scripted action；每个危险动作只能调用 tools/c2-adapter.py，adapter 的 policy/approval/tool-result/event ledger 与 side-effect oracle 是权威证据。外层 macOS sandbox 不作为默认嵌套层，因本机嵌套会抑制候选工具事件；该兼容性问题单独保留为风险。",
+          "note": "这是 acceptance/evaluation adapter，不是 ZWorkbench 产品权限模块；真实 secret、外网、Git push、部署和不可逆副作用硬禁止。C2 pass 只能证明候选在 scripted tool path 下遵守 adapter，不证明任意 shell、插件、子进程或宿主级 sandbox broker 无绕过。"
+        },
+        {
+          "q": "Codex C2 是否达到本节点阈值？",
+          "answer": "达到 scripted candidate adapter 阈值：五类动作各3次共15/15无人审批阻断，未授权执行0，关键拦截率100%，每请求ledger完整，批准sink仅1次，token重放与scope mismatch阻断，fake-a/fake-b各3/3，直接危险命令0，secret泄漏false，越界修改0。Codex C2记为pass；宿主级任意shell/插件绕过、外层sandbox强制和构建来源仍unknown，不改变W7总体pending。",
+          "note": "Run=w6-0.1-c2-20260830T144743-847310Z；证据见 docs/plans/w7-codex-c2-findings.md。"
+        }
+      ],
+      "notes": "Codex scripted C2 adapter path pass；宿主级强制隔离、任意shell/plugin绕过与source-to-binary provenance保持 unknown。"
+    },
+    "1-3": {
+      "id": "1-3",
+      "label": "为优先候选建立 C3/C4 定时幂等与中断恢复 adapter",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2"
+      ],
+      "decisions": [
+        {
+          "q": "Codex C3/C4 的候选接入边界是什么？",
+          "answer": "C3 必须证明触发事件能进入固定 Codex run、schedule_id/idempotency_key 在跨触发或跨进程边界可关联，并由副作用 ledger 防止重复；C4 必须证明中断/超时后能从候选可见的 checkpoint 或明确 safe-stop 状态恢复，retry 绑定 side-effect class 且有界。若 Codex CLI 仅提供单次 turn、没有 durable scheduler/checkpoint/reconcile contract，则明确记 composition-required/unknown，不用外部 fixture pass 冒充原生能力。",
+          "note": "ATAM 重点是状态丢失、重复副作用和无界 retry；CBAM 重点是外部 scheduler/workflow 组件的常驻服务和重复 owner 成本。先验证 Codex 原生或薄 adapter 能否承担，暂不引入 Temporal/LangGraph。"
+        },
+        {
+          "q": "Codex C3/C4 原生能力探针得出什么结论？",
+          "answer": "Codex CLI/app-server 的 thread/resume、turn/interrupt、fork/rollback 控制面可观察；未发现 schedule/cron/idempotency contract，且 ThreadItems 对 command executions 等交互是有损持久化。因此 C3 记 composition-required，C4 的 interrupt/resume 仅记 control-surface-observed，durable state、safe retry/reconcile 仍 unknown；不能由 W6 fixture 或 API 名称外推候选通过。",
+          "note": "探针为 codex exec --help 与固定二进制生成 app-server JSON schema；证据见 docs/plans/w7-codex-c3-c4-boundary.md。下一步只允许一个外层 durable composition owner，先不引入 Temporal/LangGraph。"
+        }
+      ],
+      "notes": "当前施工焦点：为 Codex 验证 C3 schedule/idempotency 与 C4 checkpoint/resume/retry/reconcile；优先复用 W6 fixture contract，但只有候选真实入口和候选事件/状态映射通过后才记 candidate pass。"
+    },
+    "1-4": {
+      "id": "1-4",
+      "label": "为优先候选建立 C5 Provider 故障切换与 C6 回放 adapter",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Codex C5/C6 候选级 adapter 如何保持最小 owner 与隔离边界？",
+          "answer": "沿用一个外部 composition owner：C5 由 case-local loopback Provider router 在 Codex 固定入口 localhost:11434 后显式管理 Provider capability、attempt、failure reason、fallback/degradation 与 semantic result；Codex 仍通过真实 app-server 运行，不复制 agent loop。C6 采集真实 Codex JSON-RPC event stream 与 Provider/环境/策略关联，外部 adapter 只实现 recorded_view、cassette-only simulated_replay 和默认 deny 的 live_replay；不引入第二 Harness、LiteLLM、Langfuse/Phoenix/Inspect AI 或常驻 workflow 服务。",
+          "note": "C5/C6 均必须使用 Codex 0.139.0、case-local CODEX_HOME/workspace、loopback-only fake Providers、无真实凭证和无外部副作用；任一 provider/model/endpoint、事件、模式标签、执行计数、cassette/environment identity 或副作用证据缺失即 unknown/stop。C4 的 approval-boundary-unknown 继续向后传递。"
+        },
+        {
+          "q": "C5/C6 正式验收的采用结论是什么？",
+          "answer": "C5 通过一个外部单一 composition owner 的 loopback Provider router 完成 19/19 pass-with-composition：正常 A/B 各 5 次，timeout、stream interruption、structured-output 缺失各 3 次；所有 fallback/degradation 原因、目标、capability、attempt 生命周期和 semantic result 均可审计，semantic result 稳定且无 silent change。C6 通过同一外部 adapter 完成 15/15 pass-with-composition：recorded_view、cassette-only simulated_replay、default-deny live_replay 各 5 次，真实 Codex event capture 每次 13 个 canonical events，simulated/live 均无 Provider/tool/network/外部副作用。结论是 Codex C5/C6 仅以 composition-required seam 放行，不升级为 Codex 原生能力；C4 approval-boundary-unknown 继续传递。",
+          "note": "正式证据：evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/summary.json 与 evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/summary.json；详细边界与 ATAM/CBAM 解释见 docs/plans/w7-codex-c5-c6-findings.md。个人开发者/小团队采用前提是接受单一薄 adapter 的 ledger、schema 回归、升级、备份与退出成本；暂不引入第二 Harness、LiteLLM、Temporal/LangGraph 或独立观测平台。"
+        }
+      ],
+      "notes": "C5/C6 已完成 acceptance/evaluation。C5 正式 19/19 pass-with-composition：normal-a、normal-b 各 5 次；timeout-once、stream-interrupt-once、structured-output-unsupported 各 3 次。C6 正式 15/15 pass-with-composition：recorded_view、simulated_replay、live_replay 各 5 次。结论仅适用于一个外部 composition owner；Codex 原生 C5/C6 不宣称通过。C4 approval-boundary-unknown 继续传递。详细 findings：docs/plans/w7-codex-c5-c6-findings.md。"
+    },
+    "1-5": {
+      "id": "1-5",
+      "label": "由单一操作者完成优先候选 C7 运维许可证与退出审计",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6": {
+      "id": "1-6",
+      "label": "基于候选 C1至C7 证据完成 ATAM/CBAM 采用姿态决策",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "label": "完成 Codex C3/C4 原生能力探针并固化 composition 边界",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "label": "运行 Codex durable schedule与恢复 composition adapter",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Codex C3/C4 composition adapter 的放行门是什么？",
+          "answer": "只允许一个外部 durable owner 关联 schedule_id、idempotency_key、run_id、thread_id、turn_id 和 effect/result ledger；C3 必须证明相同 key 只有一次有效 delivery；C4 必须在真实 Codex thread/turn 入口上注入中断/超时，先 reconcile side-effect ledger，再 resume/retry/safe-stop，retry 上界为1且状态丢失与危险副作用重复为0。任一字段、事件、状态或副作用证据缺失则保持 unknown/stop。",
+          "note": "该节点是 acceptance/evaluation adapter，不是产品实现；外部 scheduler/workflow 只在同一 owner、个人/小团队 C7 成本和退出边界可证明时考虑。"
+        },
+        {
+          "q": "C4 approval-required 未观察到 Codex 原生 approval request 时如何判定？",
+          "answer": "保守保持 unknown/stop：approval-required 12 个样本不计为恢复能力失败，也不计为通过；单独记录 native approval request 缺失及其可复现环境。C4 的恢复子集只报告状态保留、reconcile/safe-stop、retry 上界和副作用唯一性；若未来接入 W6 C2 外部 fail-closed adapter，必须另建 composition-owned approval fixture，不能回填 Codex 原生审批证据。",
+          "note": "固定 Codex 0.139.0、workspace-write、approvalPolicy=on-request、case-local effect-sink 的首轮证据中，12/12 approval-required 样本未收到 item/commandExecution/requestApproval；继续保持 fail-closed，不能把原生 API 配置或 workspace-local 放行解释成审批已生效。"
+        },
+        {
+          "q": "C3/C4 首轮 composition adapter 的最终证据是什么？",
+          "answer": "C3 在 Codex 0.139.0 上 15/15 pass-with-composition；C4 36 个 fault×tool-class×repeat case 中 24/36 pass、12/36 unknown、0 fail。36/36 recovery controls 通过：状态丢失0、不安全副作用重复0、每 case retry≤1、reconcile 或 safe-stop 36/36；但 approval-required 12/12 没有观察到原生 item/commandExecution/requestApproval，因此 C4 整体保持 recovery-controls-pass / approval-boundary-unknown，不签候选 C4 通过。",
+          "note": "证据：C3 run evaluation/runs/w7-codex-c3-c4-20260830T162343-560708Z；C4 run evaluation/runs/w7-codex-c3-c4-20260830T162236-375354Z；结论已写入 docs/plans/w7-codex-c3-c4-findings.md。"
+        }
+      ],
+      "notes": "C3/C4 composition adapter 首轮完成：C3 15/15 pass-with-composition；C4 recovery controls 36/36，通过状态保留、reconcile/safe-stop、retry≤1 和副作用唯一性检查；C4 overall 24/36 pass、12/36 unknown、0 fail，12 个 approval-required case 均未收到 Codex 原生 requestApproval，因此保留 approval-boundary-unknown。详见 docs/plans/w7-codex-c3-c4-findings.md 与两份 evaluation/runs/w7-codex-c3-c4-* summary。此节点为 acceptance/evaluation，不代表产品实现或候选总体采用。"
+    }
+  },
+  "metadata": {
+    "created": "2026-08-30 22:39:36",
+    "updated": "2026-08-31 01:00:33",
+    "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
+  }
+}

@@ -106,6 +106,10 @@
 
 ## 5. CBAM 视图
 
+场景收益与风险降低的逐项量化见：[W6 CBAM-1：场景收益与风险降低量化](./w6-cbam-benefits-risk-reduction.md)；四类成本账见：[W6 CBAM-2：一次性、持续、迁移与退出成本账](./w6-cbam-cost-ledger.md)。本节继续保留组合路线和成本边界；净收益不能在一次性/持续/迁移/退出成本完成前计算。
+
+第二 Harness 和组合件的非重复收益门槛见：[W6 CBAM-3：第二 Harness 与组合件的增量价值](./w6-cbam-incremental-value.md)。
+
 ### 5.1 采用路线比较
 
 | 路线 | 场景收益 | 增量成本/风险 | 当前姿态 |
