@@ -1,0 +1,180 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "collection-blocked",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "W4: feasibility boundary for observability, replay, and evaluation infrastructure in a personal workbench",
+    "criteria": [
+      {
+        "id": "identity",
+        "question": "What is this repository's role and scope for agent observability, recording, replay, or evaluation?",
+        "critical": true,
+        "keywords": [
+          "observability",
+          "tracing",
+          "replay",
+          "evaluation",
+          "agent"
+        ]
+      },
+      {
+        "id": "recording-model",
+        "question": "What runtime records are represented: traces, spans, tool calls, model calls, inputs, outputs, metadata, sessions, or datasets; and what is explicitly outside the recording model?",
+        "critical": true,
+        "keywords": [
+          "trace",
+          "span",
+          "tool",
+          "generation",
+          "event",
+          "session",
+          "input",
+          "output"
+        ]
+      },
+      {
+        "id": "replay-evaluation",
+        "question": "What replay, experiment, dataset, scoring, or evaluation capabilities exist, and what determinism or approximation assumptions do they make?",
+        "critical": true,
+        "keywords": [
+          "replay",
+          "dataset",
+          "experiment",
+          "evaluation",
+          "score",
+          "deterministic"
+        ]
+      },
+      {
+        "id": "privacy-cost-performance",
+        "question": "What first-party controls exist for redaction, masking, sampling, retention, cost, payload size, and latency overhead?",
+        "critical": true,
+        "keywords": [
+          "redact",
+          "mask",
+          "privacy",
+          "sampling",
+          "retention",
+          "cost",
+          "latency"
+        ]
+      },
+      {
+        "id": "interoperability",
+        "question": "What common event model, provider or harness interoperability, OpenTelemetry support, and semantic conventions are defined or implemented?",
+        "critical": true,
+        "keywords": [
+          "OpenTelemetry",
+          "semantic conventions",
+          "provider",
+          "instrumentation",
+          "interop"
+        ]
+      },
+      {
+        "id": "deployment-license",
+        "question": "What deployment modes and licenses are stated for the repository and its relevant components?",
+        "critical": true,
+        "keywords": [
+          "self-host",
+          "license",
+          "Apache",
+          "MIT",
+          "deployment",
+          "Docker"
+        ]
+      },
+      {
+        "id": "workbench-ownership",
+        "question": "Which capabilities are provided by the repository and which remain application or workbench responsibilities?",
+        "critical": true,
+        "keywords": [
+          "SDK",
+          "API",
+          "storage",
+          "export",
+          "evaluation",
+          "application"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "langfuse",
+        "name": "langfuse"
+      },
+      {
+        "owner": "Arize-ai",
+        "name": "phoenix"
+      },
+      {
+        "owner": "AgentOps-AI",
+        "name": "agentops"
+      },
+      {
+        "owner": "open-telemetry",
+        "name": "opentelemetry-specification"
+      },
+      {
+        "owner": "traceloop",
+        "name": "openllmetry"
+      },
+      {
+        "owner": "braintrustdata",
+        "name": "braintrust-sdk"
+      }
+    ],
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 180,
+      "maxBytes": 6000000,
+      "deadlineMs": 180000
+    }
+  },
+  "briefFingerprint": "1f6864fecdfe938ec0537163231aee931fa84925fda1a92bd9af8b1d5502d74d",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "anonymous",
+      "tokenConfigured": false
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 60,
+      "remaining": 54,
+      "resetAt": "2026-08-30T03:29:40Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "not-produced",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  },
+  "error": {
+    "code": "GITHUB_RATE_LIMITED",
+    "message": "GitHub API rate limit blocked collect; no fresh sealed ledger was produced",
+    "operation": "collect",
+    "phase": "compiler",
+    "retryable": true,
+    "details": {
+      "compilerMessage": "GitHub API rate limit exhausted; retry after 2026-08-30T03:09:07.000Z",
+      "returncode": 1,
+      "compilerErrorPayload": {
+        "protocol": "zj-research-cli/v1",
+        "error": "GitHub API rate limit exhausted; retry after 2026-08-30T03:09:07.000Z"
+      }
+    },
+    "recovery": [
+      "wait until the GitHub reset time",
+      "configure a valid GITHUB_TOKEN",
+      "rerun fresh collection"
+    ]
+  }
+}

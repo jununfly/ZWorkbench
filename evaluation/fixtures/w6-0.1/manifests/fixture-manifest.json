@@ -1,0 +1,11 @@
+{
+  "schema": "zworkbench-w6-fixture/v1",
+  "version": "W6-0.1",
+  "fixture_id": "w6-0.1",
+  "network": "loopback-only",
+  "real_credentials": false,
+  "production_data": false,
+  "irreversible_side_effects": false,
+  "scenarios": ["C1", "C2", "C3", "C4", "C5", "C6", "C7"],
+  "required_artifacts": ["run_manifest", "event_ledger", "policy_decisions", "attempt_history", "replay_cassette"]
+}

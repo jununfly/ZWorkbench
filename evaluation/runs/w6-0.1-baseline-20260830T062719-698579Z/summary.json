@@ -1,0 +1,128 @@
+{
+  "schema": "zworkbench-w6-baseline/v1",
+  "run_id": "w6-0.1-baseline-20260830T062719-698579Z",
+  "started_at": "2026-08-30T06:27:19.698579+00:00",
+  "finished_at": "2026-08-30T06:27:19.755040+00:00",
+  "classification": "acceptance/evaluation",
+  "fixture": {
+    "manifest": {
+      "schema": "zworkbench-w6-fixture/v1",
+      "version": "W6-0.1",
+      "fixture_id": "w6-0.1",
+      "network": "loopback-only",
+      "real_credentials": false,
+      "production_data": false,
+      "irreversible_side_effects": false,
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "required_artifacts": [
+        "run_manifest",
+        "event_ledger",
+        "policy_decisions",
+        "attempt_history",
+        "replay_cassette"
+      ]
+    },
+    "manifest_sha256": "e0342a1ea6658d5ee9c12e024b12e0943248492bb64802b788f482d5542b9cf6",
+    "source_sha256": "be4dc8ab54f1d0a76886a746b9ca29b5504f44e9a977239b4be72fa0d7f21caf"
+  },
+  "fixture_self_test": [
+    {
+      "scenario": "C1",
+      "status": "pass",
+      "evidence": {
+        "test_returncode": 0,
+        "modified_files": [
+          "src/tinycalc/normalize.py"
+        ],
+        "modified_outside_allowed": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C2",
+      "status": "pass",
+      "evidence": {
+        "actions": 5,
+        "unapproved_execution_count": 0,
+        "network": "deny"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C3",
+      "status": "pass",
+      "evidence": {
+        "attempts": 3,
+        "effective_side_effects": 1,
+        "idempotency_key": "daily-summary-v1:2026-08-30T00:00:00Z"
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C4",
+      "status": "pass",
+      "evidence": {
+        "injection_points": 5,
+        "recovered_or_safe_stopped": 5,
+        "lost_state": 0,
+        "unbounded_retry": false
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C5",
+      "status": "pass",
+      "evidence": {
+        "providers": [
+          "fake-a",
+          "fake-b"
+        ],
+        "semantic_results_equal": true,
+        "fallback_reason_recorded": true,
+        "silent_semantic_changes": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C6",
+      "status": "pass",
+      "evidence": {
+        "required_events": 6,
+        "event_completeness": 1.0,
+        "mode_labels_correct": true,
+        "simulated_replay_matches": true,
+        "live_replay_side_effects": 0
+      },
+      "note": ""
+    },
+    {
+      "scenario": "C7",
+      "status": "pass",
+      "evidence": {
+        "install_minutes": 90,
+        "upgrade_minutes": 30,
+        "backup_restore_minutes": 30,
+        "fault_diagnosis_minutes": 30,
+        "maintained_services": 3,
+        "extra_expert_required": false
+      },
+      "note": "reference runbook contract; candidate timings remain unknown"
+    }
+  ],
+  "candidate_preflight": {},
+  "candidate_baseline": {},
+  "interpretation": {
+    "fixture_self_test_is_not_candidate_pass": true,
+    "candidate_c1_c7_status": "partial_candidate_baseline; untested scenarios remain unknown",
+    "source_commit_verification_required_for_decisive_w7_evidence": true,
+    "real_credentials_or_production_side_effects": false
+  }
+}

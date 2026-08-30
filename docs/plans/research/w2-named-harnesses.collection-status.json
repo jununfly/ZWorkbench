@@ -1,0 +1,261 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "collection-blocked",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "W2: identity and capability evidence for the user-named DeepSeek Harness, Pi Agent Harness, and Codex Harness",
+    "criteria": [
+      {
+        "id": "identity_scope",
+        "question": "What is the project's exact official identity, repository, owner/maintainer, stated purpose, primary users, and system boundary; does it uniquely map to the user name or is the mapping ambiguous?",
+        "critical": true,
+        "keywords": [
+          "README",
+          "official",
+          "identity",
+          "purpose",
+          "maintainer",
+          "harness",
+          "agent"
+        ]
+      },
+      {
+        "id": "execution_loop",
+        "question": "What runtime loop, turn/step model, context construction, streaming, tool dispatch, stop conditions, and continuation semantics are implemented or documented?",
+        "critical": true,
+        "keywords": [
+          "agent loop",
+          "turn",
+          "step",
+          "context",
+          "stream",
+          "tool call",
+          "continue"
+        ]
+      },
+      {
+        "id": "tools_workspace_state",
+        "question": "What tools, filesystem/workspace/project isolation, process execution, context/state persistence, sessions, and environment controls are implemented?",
+        "critical": true,
+        "keywords": [
+          "tools",
+          "workspace",
+          "project",
+          "filesystem",
+          "shell",
+          "session",
+          "state",
+          "context"
+        ]
+      },
+      {
+        "id": "code_loop",
+        "question": "What first-party evidence exists for code editing, tests, command execution, Git operations, review, patching, commit, and human approval/intervention?",
+        "critical": true,
+        "keywords": [
+          "edit",
+          "code",
+          "test",
+          "shell",
+          "Git",
+          "commit",
+          "review",
+          "approval"
+        ]
+      },
+      {
+        "id": "extension_api",
+        "question": "What MCP, API, plugin, extension, skill, hook, or protocol surfaces exist, and what boundaries or lifecycle constraints do they have?",
+        "critical": true,
+        "keywords": [
+          "MCP",
+          "API",
+          "plugin",
+          "extension",
+          "skill",
+          "hook",
+          "protocol"
+        ]
+      },
+      {
+        "id": "provider_abstraction",
+        "question": "What Provider/model abstraction is actually implemented, including supported protocols, authentication/configuration, model features, fallback, and provider-specific limits?",
+        "critical": true,
+        "keywords": [
+          "provider",
+          "model",
+          "OpenAI",
+          "Anthropic",
+          "API key",
+          "fallback",
+          "streaming"
+        ]
+      },
+      {
+        "id": "automation_scheduling",
+        "question": "Does the project provide built-in automation, scheduling, cron, triggers, background runs, pause/resume, or only composable APIs/CLI that an outer scheduler could invoke?",
+        "critical": true,
+        "keywords": [
+          "automation",
+          "schedule",
+          "cron",
+          "trigger",
+          "background",
+          "pause",
+          "resume"
+        ]
+      },
+      {
+        "id": "traces_replay_evaluation",
+        "question": "What structured events, logs, traces, run history, replay, export, debugging, benchmarks, datasets, scoring, or evaluation support is implemented; distinguish observation from deterministic replay?",
+        "critical": true,
+        "keywords": [
+          "trace",
+          "event",
+          "log",
+          "history",
+          "replay",
+          "debug",
+          "benchmark",
+          "evaluation"
+        ]
+      },
+      {
+        "id": "sandbox_security",
+        "question": "What sandbox/isolation, filesystem/network/credential controls, approvals, policy enforcement, security guidance, and trust assumptions are implemented?",
+        "critical": true,
+        "keywords": [
+          "sandbox",
+          "security",
+          "permission",
+          "network",
+          "credential",
+          "approval",
+          "policy"
+        ]
+      },
+      {
+        "id": "failure_concurrency",
+        "question": "What state model, checkpointing, retry, failure recovery, cancellation, concurrency, parallelism, multi-agent, and durable execution semantics are implemented or documented?",
+        "critical": true,
+        "keywords": [
+          "retry",
+          "recover",
+          "checkpoint",
+          "cancel",
+          "concurrency",
+          "parallel",
+          "durable",
+          "multi-agent"
+        ]
+      },
+      {
+        "id": "license_governance",
+        "question": "What license applies to the repository and relevant components, and what first-party governance/security/ownership constraints are stated?",
+        "critical": true,
+        "keywords": [
+          "LICENSE",
+          "license",
+          "Apache",
+          "MIT",
+          "security",
+          "governance",
+          "contributing"
+        ]
+      },
+      {
+        "id": "maintenance_release_anchor",
+        "question": "What is the latest verifiable commit, release/tag, commit date, and maintenance signal at collection time; keep GitHub popularity separate from capability evidence and pin GitHub facts to the sealed ledger?",
+        "critical": true,
+        "keywords": [
+          "commit",
+          "release",
+          "tag",
+          "changelog",
+          "maintenance",
+          "stars",
+          "activity"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "deepseek-ai",
+        "name": "deepseek-harness"
+      },
+      {
+        "owner": "earendil-works",
+        "name": "pi"
+      },
+      {
+        "owner": "openai",
+        "name": "codex"
+      }
+    ],
+    "discovery": {
+      "query": "DeepSeek Harness Pi Agent Harness Codex Harness official agent coding harness",
+      "limit": 20,
+      "topicKeywords": [
+        "agent",
+        "coding",
+        "harness",
+        "MCP",
+        "provider",
+        "sandbox",
+        "evaluation"
+      ]
+    },
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 90,
+      "maxBytes": 4500000,
+      "deadlineMs": 240000
+    }
+  },
+  "briefFingerprint": "48e8d4a014167e83684d11cdb189c0646282be31b18191db4f26d362497ef647",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "anonymous",
+      "tokenConfigured": false
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 60,
+      "remaining": 48,
+      "resetAt": "2026-08-30T03:32:03Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "not-produced",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  },
+  "error": {
+    "code": "GITHUB_RATE_LIMITED",
+    "message": "GitHub API rate limit blocked collect; no fresh sealed ledger was produced",
+    "operation": "collect",
+    "phase": "compiler",
+    "retryable": true,
+    "details": {
+      "compilerMessage": "GitHub API rate limit exhausted; retry after 2026-08-30T03:09:07.000Z",
+      "returncode": 1,
+      "compilerErrorPayload": {
+        "protocol": "zj-research-cli/v1",
+        "error": "GitHub API rate limit exhausted; retry after 2026-08-30T03:09:07.000Z"
+      }
+    },
+    "recovery": [
+      "wait until the GitHub reset time",
+      "configure a valid GITHUB_TOKEN",
+      "rerun fresh collection"
+    ]
+  }
+}

@@ -1,0 +1,9 @@
+Reading additional input from stdin...
+2026-08-30T08:10:32.102681Z  WARN codex_models_manager::model_info: Unknown model fake-model is used. This will use fallback model metadata.
+2026-08-30T08:10:32.102837Z  WARN codex_protocol::openai_models: Model personality requested but model_messages is missing, falling back to base instructions. model=fake-model personality=pragmatic
+2026-08-30T08:10:32.183661Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back
+2026-08-30T08:10:32.213959Z  WARN codex_rollout::list: state db discrepancy during find_thread_path_by_id_str_in_subdir: falling_back
+2026-08-30T08:10:32.225964Z  WARN codex_models_manager::model_info: Unknown model fake-model is used. This will use fallback model metadata.
+2026-08-30T08:10:32.313401Z  WARN codex_protocol::openai_models: Model personality requested but model_messages is missing, falling back to base instructions. model=fake-model personality=pragmatic
+2026-08-30T08:10:32.382726Z  WARN codex_protocol::openai_models: Model personality requested but model_messages is missing, falling back to base instructions. model=fake-model personality=pragmatic
+2026-08-30T08:10:32.387685Z  WARN codex_protocol::openai_models: Model personality requested but model_messages is missing, falling back to base instructions. model=fake-model personality=pragmatic

@@ -1,0 +1,229 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "collection-blocked",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "W3: open-source alternatives and composable components for a single-user personal developer workbench",
+    "criteria": [
+      {
+        "id": "identity_scope",
+        "question": "What is the project's official identity, stated purpose, primary users, and system boundary?",
+        "critical": true,
+        "keywords": [
+          "README",
+          "purpose",
+          "agent",
+          "developer",
+          "workflow"
+        ]
+      },
+      {
+        "id": "execution_harness",
+        "question": "Does the project implement an agent execution loop or durable task runtime, with tools, workspace/project integration, state, approvals, isolation, or recovery?",
+        "critical": true,
+        "keywords": [
+          "agent loop",
+          "tools",
+          "workspace",
+          "sandbox",
+          "approval",
+          "state",
+          "retry",
+          "durable"
+        ]
+      },
+      {
+        "id": "code_task_coverage",
+        "question": "Does primary documentation or source show code-development support such as repository context, file editing, shell/test execution, issue solving, Git, or developer workflow?",
+        "critical": true,
+        "keywords": [
+          "repository",
+          "edit",
+          "shell",
+          "test",
+          "Git",
+          "issue",
+          "coding"
+        ]
+      },
+      {
+        "id": "automation_orchestration",
+        "question": "Does the project provide workflows, scheduling, triggers, durable execution, concurrency, pause/resume, or failure/retry semantics relevant to automated personal tasks?",
+        "critical": true,
+        "keywords": [
+          "workflow",
+          "schedule",
+          "trigger",
+          "cron",
+          "durable execution",
+          "concurrency",
+          "retry",
+          "pause"
+        ]
+      },
+      {
+        "id": "provider_composability",
+        "question": "What model/provider abstraction, gateway/proxy, plugin/MCP/API surface, or embedding/composition contract is documented or implemented, and what are its boundaries?",
+        "critical": true,
+        "keywords": [
+          "provider",
+          "model",
+          "OpenAI",
+          "MCP",
+          "plugin",
+          "API",
+          "proxy",
+          "fallback"
+        ]
+      },
+      {
+        "id": "observability_evaluation",
+        "question": "What first-party evidence exists for structured events, traces, logs, replay, debugging, evaluation, datasets, or metrics, and what is explicitly absent or unknown?",
+        "critical": true,
+        "keywords": [
+          "trace",
+          "event",
+          "log",
+          "replay",
+          "debug",
+          "evaluation",
+          "dataset",
+          "metrics"
+        ]
+      },
+      {
+        "id": "governance_ownership",
+        "question": "What license, maintainership, release/commit activity, governance, security, and ownership or migration risks are evidenced by first-party repository files and release records?",
+        "critical": true,
+        "keywords": [
+          "LICENSE",
+          "license",
+          "maintainer",
+          "release",
+          "security",
+          "governance",
+          "contributing"
+        ]
+      },
+      {
+        "id": "fit_role",
+        "question": "Based only on the preceding evidence, which role is supported: primary execution base, specialist code executor, composable subsystem, or likely mismatch; record uncertainty rather than infer missing capabilities.",
+        "critical": true,
+        "keywords": [
+          "architecture",
+          "framework",
+          "library",
+          "server",
+          "CLI",
+          "integrate",
+          "component"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "OpenHands",
+        "name": "OpenHands"
+      },
+      {
+        "owner": "SWE-agent",
+        "name": "SWE-agent"
+      },
+      {
+        "owner": "anomalyco",
+        "name": "opencode"
+      },
+      {
+        "owner": "aaif-goose",
+        "name": "goose"
+      },
+      {
+        "owner": "langchain-ai",
+        "name": "langgraph"
+      },
+      {
+        "owner": "temporalio",
+        "name": "temporal"
+      },
+      {
+        "owner": "BerriAI",
+        "name": "litellm"
+      },
+      {
+        "owner": "langfuse",
+        "name": "langfuse"
+      },
+      {
+        "owner": "Arize-ai",
+        "name": "phoenix"
+      },
+      {
+        "owner": "UKGovernmentBEIS",
+        "name": "inspect_ai"
+      },
+      {
+        "owner": "open-telemetry",
+        "name": "semantic-conventions"
+      },
+      {
+        "owner": "Aider-AI",
+        "name": "aider"
+      },
+      {
+        "owner": "PrefectHQ",
+        "name": "prefect"
+      }
+    ],
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 52,
+      "maxBytes": 5000000,
+      "deadlineMs": 240000
+    }
+  },
+  "briefFingerprint": "6bdc6a3e2aa06093df36151f6c7ffa8710463ffb2065dbc1ccc98fb87a8dfe56",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "authenticated",
+      "tokenConfigured": true
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 5000,
+      "remaining": 5000,
+      "resetAt": "2026-08-30T04:00:43Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "not-produced",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  },
+  "error": {
+    "code": "COMPILER_ERROR",
+    "message": "research compiler failed during collect: GitHub tree returned unsupported entry type: commit",
+    "operation": "collect",
+    "phase": "compiler",
+    "retryable": false,
+    "details": {
+      "compilerMessage": "GitHub tree returned unsupported entry type: commit",
+      "returncode": 1,
+      "compilerErrorPayload": {
+        "protocol": "zj-research-cli/v1",
+        "error": "GitHub tree returned unsupported entry type: commit"
+      }
+    },
+    "recovery": [
+      "inspect the compiler diagnostic",
+      "do not treat the failed run as a sealed ledger"
+    ]
+  }
+}

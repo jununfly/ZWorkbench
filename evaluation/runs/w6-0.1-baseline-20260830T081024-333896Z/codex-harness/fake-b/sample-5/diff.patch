@@ -1,0 +1,18 @@
+--- a/src/tinycalc/normalize.py
++++ b/src/tinycalc/normalize.py
+@@ -1,3 +1,3 @@
+ def normalize_label(value: str) -> str:
+     """Normalize a human label for a stable local identifier."""
+-    return "_".join(value.strip().split())
++    return "-".join(value.strip().split())
+--- a/tests/test_normalize.py
++++ b/tests/test_normalize.py
+@@ -11,5 +11,8 @@
+         self.assertEqual(normalize_label("ZWorkbench C1"), "ZWorkbench-C1")
+ 
+ 
++    def test_empty_label_is_stable(self):
++        self.assertEqual(normalize_label(""), "")
++
+ if __name__ == "__main__":
+     unittest.main()
