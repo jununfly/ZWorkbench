@@ -131,7 +131,19 @@
     "independent_reproducible_rebuild": "unknown",
     "license_notice_commercial_review": "inventory-only; per-package clearance and commercial review unknown",
     "candidate_c2_to_c7": "unknown; owner-backed machine controls and cross-version compatibility pass, human/legal/remote gates remain open",
-    "human_c7_timing": "partial-evidence-reported; install, upgrade/rollback, isolated owner-backed backup/restore, and predefined fault diagnosis timing reported; fresh-install binding remains incomplete"
+    "human_c7_timing": "fixture-level-pass; single-operator install, upgrade/rollback, isolated owner-backed backup/restore, and predefined fault diagnosis timings are reported and below threshold; overall C7 remains unknown/stop"
+  },
+  "human_install_evidence": {
+    "status": "pass-at-install-timing-and-identity-level",
+    "seconds": 17.01,
+    "threshold_minutes": 90,
+    "temporary_c7_prefix": true,
+    "single_operator": true,
+    "target_version": "codex-cli 0.139.0",
+    "evidence_artifact": "evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz",
+    "evidence_sha256": "6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5",
+    "artifact_digests_match_manifest": true,
+    "interpretation": "The operator stopwatch is bound to the same raw log that records install output, version, app-server help, npm tree, and wrapper/package/platform/vendor digests. This closes the fresh-install evidence binding only; it does not sign off the full C7 lifecycle, legal, remote-exit, or independent-rebuild gates."
   },
   "rollback_target": {
     "identity": "codex-cli 0.138.0",

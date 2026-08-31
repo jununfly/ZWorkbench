@@ -394,14 +394,19 @@
           "q": "故障诊断人工证据的 canonical SHA-256 是什么？",
           "answer": "以实际文件重新计算的 SHA-256 为 7966f44994bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341；此前记录中的 7966f449bd94… 为录入笔误，已在 w7-codex-c7-human-timings.json 修正。2 分 51.31 秒和 fixture-level pass 判定不变。",
           "note": "Canonical file: evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/human-diagnosis.md；以 shasum -a 256 重新核对。"
+        },
+        {
+          "q": "本次完整安装人工计时是否已与同一次 raw log 绑定？",
+          "answer": "已绑定：单一操作者在临时 C7 npm prefix 中完成 Codex 0.139.0 全新安装、版本验证、app-server --help、npm tree 和四个 artifact digest 核对；人工 stopwatch 为 17.01 秒（0.2835 分钟），同一次 raw log 出现 === C7_INSTALL_T_END_SAVED === 结束标记，日志 SHA-256 为 6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5，四个 digest 与候选 manifest 一致。该结果关闭 fresh-install 人工日志绑定门，并不改变 C7/G7 overall unknown/stop。",
+          "note": "ATAM：将安装可操作性与候选完整生命周期、法律/NOTICE、远端退出和独立重建分开计量，不跨门推断。CBAM：仍保持一个 Codex runtime + 一个薄 SQLite composition owner，不新增常驻服务。"
         }
       ],
-      "notes": "本轮已收齐一次隔离 fixture-level C7 人工时间证据：backup/restore 12.38 秒（0.2063 分钟）且 20/20 checks=true；预制 fault diagnosis 2 分 51.31 秒（2.85517 分钟），人工诊断文本已保存并与 fault_id/run_id 对齐，unknown 未被升级为 pass。fault diagnosis 文档证据 canonical SHA-256 为 7966f44994bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341。此前 Human upgrade/rollback 仍为 0.138.0→0.139.0→0.138.0、14.35 秒，临时 C7 prefix、单人。机器跨版本 owner probe 与 npm release-level provenance 结论保持不变。C7/G7 仍 unknown/stop：fresh-install 人工计时与 raw log 绑定、完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任和 Codex native approval 仍未签核。ATAM 继续按敏感点拆分证据；CBAM 继续约束为一个 Codex runtime + 一个薄 SQLite composition owner，不引入常驻审计服务。"
+      "notes": "本轮已收齐四类隔离 fixture-level C7 人工时间证据：fresh install 17.01 秒、upgrade/rollback 14.35 秒、backup/restore 12.38 秒、预制 fault diagnosis 2 分 51.31 秒，均低于冻结阈值；fresh install 人工 stopwatch 已与同一次 raw log 绑定，日志 SHA-256 为 6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5，四个 artifact digest 与候选 manifest 一致。C7/G7 仍 unknown/stop：完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任和 Codex native approval 继续阻断。ATAM 继续按独立敏感点拆分证据；CBAM 继续约束为一个 Codex runtime + 一个薄 SQLite composition owner，不引入常驻审计服务。"
     }
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 19:47:35",
+    "updated": "2026-08-31 20:08:37",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }

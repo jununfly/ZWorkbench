@@ -12,16 +12,22 @@
   },
   "timings": {
     "install": {
-      "seconds": 13.64,
-      "minutes": 0.2273333333,
+      "seconds": 17.01,
+      "minutes": 0.2835,
       "threshold_minutes": 90,
       "time_threshold": "pass",
       "temporary_c7_prefix": true,
       "fresh_install_confirmed": true,
+      "operator_stopwatch_reported": true,
+      "operator_start_marker_utc": "2026-08-31T12:03:10Z",
+      "operator_end_marker": "=== C7_INSTALL_T_END_SAVED ===",
       "machine_elapsed_seconds": 2.314,
       "machine_evidence_artifact": "evaluation/evidence/w7-codex-c7/fresh-install.log",
       "machine_evidence_sha256": "01d7c817e51e76a9081acf6e48fcd5efae408782790ba60703b396b9433cf3b5",
-      "evidence_status": "operator timing reported; isolated fresh-install identity/version/help/raw log also archived, but the machine log is not the operator stopwatch"
+      "evidence_artifact": "evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz",
+      "evidence_sha256": "6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5",
+      "artifact_digests_verified": true,
+      "evidence_status": "single operator reported 17.01 seconds; the same raw log contains the isolated fresh install, version, app-server help, npm tree, four artifact digests, and the saved end marker; machine elapsed time remains separate"
     },
     "upgrade": {
       "seconds": 14.35,
