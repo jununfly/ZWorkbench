@@ -1,0 +1,7 @@
+{
+  "schema": "zworkbench-w7-c7-diagnosis/v1",
+  "fault_id": "w7-c7-build-provenance-unknown",
+  "run_id": "w7-c7-fault_diagnosis-repeat-02",
+  "category": "candidate_provenance_unknown",
+  "recommended_action": "retain release-level identity; do not claim reproducible source build; repeat audit on upgrade"
+}

@@ -1,0 +1,34 @@
+{
+  "schema": "zworkbench-w7-c7-service-manifest/v1",
+  "managed_services": [
+    {
+      "name": "codex-cli-0.139.0",
+      "kind": "local-runtime",
+      "counted": true,
+      "maintenance_required": true
+    },
+    {
+      "name": "single-composition-adapter",
+      "kind": "external-thin-owner",
+      "counted": true,
+      "maintenance_required": true
+    }
+  ],
+  "excluded_services": [
+    {
+      "name": "host-os",
+      "reason": "excluded_by_C7_threshold"
+    },
+    {
+      "name": "node-runtime",
+      "reason": "runtime_dependency_not_daemon"
+    },
+    {
+      "name": "fake-provider-and-router",
+      "reason": "case-local_test-only_fixture"
+    }
+  ],
+  "maintained_service_count": 2,
+  "provider_and_host_os_counted": false,
+  "basis": "conservative candidate plus one required composition owner; test-only services excluded explicitly"
+}

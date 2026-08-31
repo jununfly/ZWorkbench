@@ -1,0 +1,52 @@
+{
+  "schema": "zworkbench-w7-c7-human-timings/v1",
+  "classification": "acceptance/evaluation",
+  "status": "partial-evidence-reported",
+  "candidate": "Codex Harness",
+  "candidate_target_version": "0.139.0",
+  "operator": {
+    "single_operator": true,
+    "helper_count": 0,
+    "timezone": "Asia/Shanghai",
+    "reported_at": "2026-08-31"
+  },
+  "timings": {
+    "install": {
+      "seconds": 13.64,
+      "minutes": 0.2273333333,
+      "threshold_minutes": 90,
+      "time_threshold": "pass",
+      "temporary_c7_prefix": true,
+      "fresh_install_confirmed": null,
+      "evidence_status": "reported; version/help/log evidence still to attach"
+    },
+    "upgrade": {
+      "seconds": 14.35,
+      "minutes": 0.2391666667,
+      "threshold_minutes": 30,
+      "time_threshold": "pass",
+      "old_version": "0.138.0",
+      "upgraded_version": "0.139.0",
+      "rolled_back_version": "0.138.0",
+      "temporary_c7_prefix": true,
+      "versions_verified_in_operator_transcript": true,
+      "app_server_help_verified_in_operator_transcript": true,
+      "evidence_status": "raw log archived and SHA-256 verified; stopwatch remains operator-reported"
+    },
+    "backup_restore": {
+      "seconds": null,
+      "minutes": null,
+      "threshold_minutes": 30,
+      "time_threshold": "unknown",
+      "evidence_status": "human-confirmed unknown: no real composition owner state exists"
+    },
+    "fault_diagnosis": {
+      "seconds": null,
+      "minutes": null,
+      "threshold_minutes": 30,
+      "time_threshold": "unknown",
+      "evidence_status": "not reported"
+    }
+  },
+  "interpretation": "Reported timing values are below thresholds. They do not by themselves close C7; fresh-install status, command outputs, backup/restore, fault diagnosis, license/NOTICE/commercial review, and source-to-binary provenance remain open."
+}

@@ -1,0 +1,10 @@
+{
+  "fault_id": "w7-c7-build-provenance-unknown",
+  "run_id": "w7-c7-fault_diagnosis-repeat-01",
+  "category": "candidate_provenance_unknown",
+  "severity": "warning",
+  "evidence": {
+    "source_to_binary_verified": false,
+    "binary_build_provenance": "unknown"
+  }
+}

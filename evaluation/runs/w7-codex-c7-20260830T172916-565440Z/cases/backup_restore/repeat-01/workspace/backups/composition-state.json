@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-w7-c7-composition-state/v1",
+  "run_id": "w7-c7-backup_restore-repeat-01",
+  "c2_c6_identity": {
+    "codex_version": "0.139.0",
+    "provider_router": "loopback-only",
+    "replay_schema": "zworkbench-w7-codex-c56/v1"
+  },
+  "status": "healthy"
+}

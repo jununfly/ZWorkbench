@@ -1,0 +1,8 @@
+{
+  "candidate": "Codex Harness",
+  "release": "rust-v0.139.0",
+  "install_command": "npm install -g @openai/codex@0.139.0",
+  "network_install_executed": false,
+  "global_install_executed": false,
+  "reason": "C7 fixture cannot mutate the operator's global installation; only preflight identity was exercised."
+}

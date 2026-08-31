@@ -1,0 +1,6 @@
+{
+  "token_id": "token:w7-c4-approval-process_interrupt-approval-required-03",
+  "action": "write-case-approval",
+  "resource": "case-effect-target",
+  "max_attempts": 1
+}

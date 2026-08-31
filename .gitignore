@@ -4,3 +4,6 @@ __pycache__/
 # Codex app-server runtime state is local evidence-generation residue, not a
 # portable evaluation artifact.
 evaluation/runs/**/codex-home/
+
+# Local composition owner state is runtime data, not source or evaluation evidence.
+.zworkbench/

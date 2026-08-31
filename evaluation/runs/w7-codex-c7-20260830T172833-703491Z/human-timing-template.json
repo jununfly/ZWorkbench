@@ -1,0 +1,26 @@
+{
+  "install": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 90,
+    "note": "Use a real single-operator stopwatch; never substitute machine_elapsed_seconds."
+  },
+  "upgrade": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Use a real single-operator stopwatch; never substitute machine_elapsed_seconds."
+  },
+  "backup_restore": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Use a real single-operator stopwatch; never substitute machine_elapsed_seconds."
+  },
+  "fault_diagnosis": {
+    "minutes": null,
+    "status": "unknown",
+    "threshold_minutes": 30,
+    "note": "Use a real single-operator stopwatch; never substitute machine_elapsed_seconds."
+  }
+}

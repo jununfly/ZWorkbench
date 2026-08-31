@@ -1,0 +1,4 @@
+{
+  "identity": "rust-v0.139.0 / a7dff904308535e965aee87680c1fc5ef1d19eec",
+  "rollback_evidence": "Not exercised; W7-1 only freezes the target identity."
+}

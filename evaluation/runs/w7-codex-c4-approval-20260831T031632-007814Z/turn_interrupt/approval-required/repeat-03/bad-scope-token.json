@@ -1,0 +1,6 @@
+{
+  "token_id": "bad-token:w7-c4-approval-turn_interrupt-approval-required-03",
+  "action": "write-case-idempotent",
+  "resource": "case-effect-target",
+  "max_attempts": 1
+}

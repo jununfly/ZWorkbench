@@ -1,0 +1,24 @@
+{
+  "command": [
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c7/c7-audit.py",
+    "--scenario",
+    "identity",
+    "--workspace",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172833-703491Z/cases/identity/repeat-03/workspace",
+    "--output-dir",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172833-703491Z/cases/identity/repeat-03/operation",
+    "--run-id",
+    "w7-c7-identity-repeat-03",
+    "--codex",
+    "/opt/homebrew/bin/codex",
+    "--candidate-manifest",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/w7-codex-candidate-manifest.json",
+    "--primary-sources",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w7-codex-c7-primary-sources.md"
+  ],
+  "returncode": 0,
+  "timed_out": false,
+  "stdout": "{\"human_timing_status\":\"unknown\",\"machine_elapsed_seconds\":0.244368,\"scenario\":\"identity\",\"status\":\"completed\"}\n",
+  "stderr": ""
+}

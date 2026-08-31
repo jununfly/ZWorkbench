@@ -1,0 +1,42 @@
+{
+  "schema": "zworkbench-w7-codex-c7/v1",
+  "run_id": "w7-c7-exit-repeat-02",
+  "scenario": "exit",
+  "status": "completed",
+  "machine_elapsed_seconds": 0.235656,
+  "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+  "human_timed": false,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "human_timing_source": "not-provided",
+  "human_steps": [
+    "导出 metadata/ledger",
+    "独立读取导出物",
+    "删除并确认无残留"
+  ],
+  "human_step_count": 3,
+  "operation_details": {
+    "operation_kind": "case-local-export-reimport-delete",
+    "external_data_deleted": false,
+    "user_data_deleted": false
+  },
+  "checks": {
+    "release_pin_present": true,
+    "version_check_pass": true,
+    "app_server_help_pass": true,
+    "artifact_digests_match": true,
+    "package_version_matches": true,
+    "license_declared_and_matches": true,
+    "export_manifest_created": true,
+    "independent_reimport_valid": true,
+    "export_deleted": true,
+    "import_deleted": true,
+    "exit_residue_zero": true
+  },
+  "machine_side_effect_scope": "case-local reversible files only",
+  "network_calls": 0,
+  "real_credentials": false,
+  "production_data": false,
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/exit/repeat-02/workspace",
+  "codex_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/exit/repeat-02/workspace/codex-home"
+}

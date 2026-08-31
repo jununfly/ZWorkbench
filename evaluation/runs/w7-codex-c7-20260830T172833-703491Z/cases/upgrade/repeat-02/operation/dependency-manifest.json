@@ -1,0 +1,12 @@
+{
+  "schema": "zworkbench-w7-c7-dependency-manifest/v1",
+  "required_runtime": [
+    "node >=16",
+    "@openai/codex 0.139.0"
+  ],
+  "package_manager_metadata": "pnpm@10.33.0",
+  "additional_packages": [],
+  "operator_expert_required": false,
+  "host_os_and_provider": "not counted as maintained services",
+  "network_required_for_audit": false
+}

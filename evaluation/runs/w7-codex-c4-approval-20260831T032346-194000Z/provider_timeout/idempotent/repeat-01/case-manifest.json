@@ -1,0 +1,12 @@
+{
+  "schema": "zworkbench-w7-codex-c4-approval/v1",
+  "run_id": "w7-c4-approval-provider_timeout-idempotent-01",
+  "schedule_id": "codex-c4-approval-v1",
+  "idempotency_key": "codex-c4-approval-v1:w7-c4-approval-provider_timeout-idempotent-01",
+  "fault": "provider_timeout",
+  "tool_class": "idempotent",
+  "candidate": "Codex Harness",
+  "candidate_version": "codex-cli 0.139.0",
+  "fixture": "w7-codex-c4-approval",
+  "approval_owner": "case-local-composition-gate"
+}

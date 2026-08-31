@@ -1,0 +1,893 @@
+{
+  "schema": "zworkbench-w7-codex-c7/v1",
+  "run_id": "w7-codex-c7-20260830T172916-565440Z",
+  "started_at": "2026-08-30T17:29:16.565440+00:00",
+  "finished_at": "2026-08-30T17:29:22.094254+00:00",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "Codex Harness",
+    "version": "codex-cli 0.139.0",
+    "manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/w7-codex-candidate-manifest.json",
+    "entrypoint": "/opt/homebrew/bin/codex"
+  },
+  "runner": {
+    "version": "w7-codex-c7-audit-runner/v1",
+    "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_codex_c7.py",
+    "sha256": "f2c3f596c72e2ecc467130433f7f6f616ccc835422444b55c4d1bccfb78fac4e"
+  },
+  "fixture": {
+    "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c7/c7-audit.py",
+    "sha256": "50b93a7992521f3a78c8312e9355220f9073d5953ff3693ec4e2d93d19c0aaa4"
+  },
+  "threshold": {
+    "human_minutes": {
+      "install": 90,
+      "upgrade": 30,
+      "backup_restore": 30,
+      "fault_diagnosis": 30
+    },
+    "maintained_services_max": 3,
+    "extra_expert_required": false,
+    "human_timing_required_for_signoff": true,
+    "machine_elapsed_is_not_human_time": true,
+    "repeats_per_scenario": 3,
+    "scenarios": [
+      "identity",
+      "install",
+      "upgrade",
+      "backup_restore",
+      "fault_diagnosis",
+      "exit"
+    ],
+    "total_cases": 18
+  },
+  "status": "unknown/stop",
+  "machine_contract": {
+    "status": "pass",
+    "cases_passed": 18,
+    "cases_total": 18
+  },
+  "human_timing": {
+    "status": "unknown",
+    "measured_scenarios": [],
+    "unknown_case_count": 12
+  },
+  "candidate_action_boundary": {
+    "install_exercised": false,
+    "upgrade_and_rollback_exercised": false,
+    "reason": "Global installation and real upgrade are deliberately not mutated by this isolated audit."
+  },
+  "license_and_exit": {
+    "primary_sources": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w7-codex-c7-primary-sources.md",
+    "primary_sources_present": true,
+    "commercial_boundary": "unknown",
+    "redistribution_notice_review": "unknown",
+    "exit_export_delete_cases": 3
+  },
+  "c2_c6_evidence_identity": {
+    "c2": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w6-0.1-c2-20260830T144743-847310Z/summary.json",
+      "exists": true,
+      "sha256": "4838bfbbafd546bfa722194cd9738f5eb174cbc81bce3ceea4148b6f56916fe2",
+      "run_id": "w6-0.1-c2-20260830T144743-847310Z",
+      "mode": null,
+      "status": null
+    },
+    "c3": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T162343-560708Z/summary.json",
+      "exists": true,
+      "sha256": "5fc1be17d367c0d5eadeb496b83f524e38607e0fd7c37d8cf049e2b1552cc0d4",
+      "run_id": "w7-codex-c3-c4-20260830T162343-560708Z",
+      "mode": "c3",
+      "status": "pass-with-composition"
+    },
+    "c4": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c3-c4-20260830T162236-375354Z/summary.json",
+      "exists": true,
+      "sha256": "ef6c35ffc3da018c09d984dbda2569a936ad1b26642a59f282b4688ce77bbe22",
+      "run_id": "w7-codex-c3-c4-20260830T162236-375354Z",
+      "mode": "c4",
+      "status": "unknown/stop"
+    },
+    "c5": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165759-141575Z/summary.json",
+      "exists": true,
+      "sha256": "94bfddf1715ca970da3a8d43f562be3e46da12015d3b79d2830199faa6ca8cf4",
+      "run_id": "w7-codex-c5-c6-20260830T165759-141575Z",
+      "mode": "c5",
+      "status": "pass-with-composition"
+    },
+    "c6": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c5-c6-20260830T165822-636804Z/summary.json",
+      "exists": true,
+      "sha256": "5cab217a276fccaf3f2eee4579dde51872bf30ba5037ab87c6f8ebc1aa365e25",
+      "run_id": "w7-codex-c5-c6-20260830T165822-636804Z",
+      "mode": "c6",
+      "status": "pass-with-composition"
+    }
+  },
+  "checks": {
+    "all_machine_cases_pass": true,
+    "all_required_events_complete": true,
+    "all_cases_isolated": true,
+    "no_network_or_real_data": true,
+    "maintained_services_at_most_three": true,
+    "license_source_recorded": true,
+    "human_time_gate": "unknown",
+    "candidate_install_not_overclaimed": true,
+    "candidate_upgrade_not_overclaimed": true,
+    "exit_cases_machine_pass": true,
+    "missing_evidence_stops": true
+  },
+  "cases": [
+    {
+      "scenario": "identity",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.251993,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 7,
+        "operation_kind": "read-only-candidate-identity",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/identity/repeat-01"
+    },
+    {
+      "scenario": "identity",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.231287,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 7,
+        "operation_kind": "read-only-candidate-identity",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/identity/repeat-02"
+    },
+    {
+      "scenario": "identity",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.24191,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 7,
+        "operation_kind": "read-only-candidate-identity",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/identity/repeat-03"
+    },
+    {
+      "scenario": "install",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 90,
+      "observed": {
+        "machine_elapsed_seconds": 0.245629,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 8,
+        "operation_kind": "install-preflight",
+        "candidate_action_status": {
+          "candidate_install_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/install/repeat-01"
+    },
+    {
+      "scenario": "install",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 90,
+      "observed": {
+        "machine_elapsed_seconds": 0.383564,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 8,
+        "operation_kind": "install-preflight",
+        "candidate_action_status": {
+          "candidate_install_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/install/repeat-02"
+    },
+    {
+      "scenario": "install",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 90,
+      "observed": {
+        "machine_elapsed_seconds": 0.36882,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 8,
+        "operation_kind": "install-preflight",
+        "candidate_action_status": {
+          "candidate_install_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/install/repeat-03"
+    },
+    {
+      "scenario": "upgrade",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.367783,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "upgrade-rollback-dry-run",
+        "candidate_action_status": {
+          "candidate_upgrade_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/upgrade/repeat-01"
+    },
+    {
+      "scenario": "upgrade",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.324639,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "upgrade-rollback-dry-run",
+        "candidate_action_status": {
+          "candidate_upgrade_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/upgrade/repeat-02"
+    },
+    {
+      "scenario": "upgrade",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.328619,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "upgrade-rollback-dry-run",
+        "candidate_action_status": {
+          "candidate_upgrade_status": "not_exercised"
+        },
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/upgrade/repeat-03"
+    },
+    {
+      "scenario": "backup_restore",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.251952,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-composition-backup-restore",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/backup_restore/repeat-01"
+    },
+    {
+      "scenario": "backup_restore",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.258549,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-composition-backup-restore",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/backup_restore/repeat-02"
+    },
+    {
+      "scenario": "backup_restore",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.234265,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-composition-backup-restore",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/backup_restore/repeat-03"
+    },
+    {
+      "scenario": "fault_diagnosis",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.245147,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "predefined-fault-diagnosis",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01"
+    },
+    {
+      "scenario": "fault_diagnosis",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.240707,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "predefined-fault-diagnosis",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-02"
+    },
+    {
+      "scenario": "fault_diagnosis",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "observed": {
+        "machine_elapsed_seconds": 0.233351,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 9,
+        "operation_kind": "predefined-fault-diagnosis",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": false,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-03"
+    },
+    {
+      "scenario": "exit",
+      "repeat": 1,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.236696,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-export-reimport-delete",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/exit/repeat-01"
+    },
+    {
+      "scenario": "exit",
+      "repeat": 2,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.235656,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-export-reimport-delete",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/exit/repeat-02"
+    },
+    {
+      "scenario": "exit",
+      "repeat": 3,
+      "status": "pass",
+      "human_timing_status": "not-applicable",
+      "threshold_minutes": null,
+      "observed": {
+        "machine_elapsed_seconds": 0.248431,
+        "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+        "human_elapsed_minutes": null,
+        "human_timed": false,
+        "human_step_count": 3,
+        "maintained_service_count": 2,
+        "managed_services": [
+          "codex-cli-0.139.0",
+          "single-composition-adapter"
+        ],
+        "event_count": 10,
+        "operation_kind": "case-local-export-reimport-delete",
+        "candidate_action_status": {},
+        "license": "Apache-2.0"
+      },
+      "checks": {
+        "process_passed": true,
+        "scenario_correct": true,
+        "operation_completed": true,
+        "operation_checks_pass": true,
+        "required_event_types_complete": true,
+        "required_event_fields_complete": true,
+        "workspace_isolated": true,
+        "network_calls_zero": true,
+        "real_credentials_false": true,
+        "production_data_false": true,
+        "service_count_within_threshold": true,
+        "no_extra_expert_declared": true,
+        "license_declared_and_source_recorded": true,
+        "human_timing_within_threshold": true,
+        "candidate_install_exercised": false,
+        "candidate_upgrade_and_rollback_exercised": false
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/exit/repeat-03"
+    }
+  ],
+  "interpretation": "Machine C7 audit evidence does not substitute for a real single-operator stopwatch, real candidate installation/upgrade/rollback, or legal review. Unknown remains unknown."
+}

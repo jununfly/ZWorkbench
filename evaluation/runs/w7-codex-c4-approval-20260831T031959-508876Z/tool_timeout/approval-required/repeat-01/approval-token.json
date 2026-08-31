@@ -1,0 +1,6 @@
+{
+  "token_id": "token:w7-c4-approval-tool_timeout-approval-required-01",
+  "action": "write-case-approval",
+  "resource": "case-effect-target",
+  "max_attempts": 1
+}

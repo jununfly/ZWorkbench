@@ -1,0 +1,41 @@
+{
+  "schema": "zworkbench-w7-codex-c7/v1",
+  "run_id": "w7-c7-backup_restore-repeat-02",
+  "scenario": "backup_restore",
+  "status": "completed",
+  "machine_elapsed_seconds": 0.258549,
+  "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+  "human_timed": false,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "human_timing_source": "not-provided",
+  "human_steps": [
+    "备份 composition ledger",
+    "模拟损坏",
+    "恢复并核对 C2-C6 identity"
+  ],
+  "human_step_count": 3,
+  "operation_details": {
+    "operation_kind": "case-local-composition-backup-restore",
+    "candidate_data_touched": false,
+    "external_data_touched": false
+  },
+  "checks": {
+    "release_pin_present": true,
+    "version_check_pass": true,
+    "app_server_help_pass": true,
+    "artifact_digests_match": true,
+    "package_version_matches": true,
+    "license_declared_and_matches": true,
+    "backup_present": true,
+    "restored_digest_matches": true,
+    "restored_state_healthy": true,
+    "c2_c6_identity_present": true
+  },
+  "machine_side_effect_scope": "case-local reversible files only",
+  "network_calls": 0,
+  "real_credentials": false,
+  "production_data": false,
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/backup_restore/repeat-02/workspace",
+  "codex_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/backup_restore/repeat-02/workspace/codex-home"
+}

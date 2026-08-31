@@ -1,0 +1,42 @@
+{
+  "schema": "zworkbench-w7-codex-c7/v1",
+  "run_id": "w7-c7-upgrade-repeat-02",
+  "scenario": "upgrade",
+  "status": "completed",
+  "machine_elapsed_seconds": 0.32709,
+  "machine_elapsed_source": "fixture subprocess monotonic wall clock; not human operation time",
+  "human_timed": false,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "human_timing_source": "not-provided",
+  "human_steps": [
+    "备份当前 identity/config",
+    "执行升级",
+    "验证兼容并保留回滚"
+  ],
+  "human_step_count": 3,
+  "operation_details": {
+    "operation_kind": "upgrade-rollback-dry-run",
+    "upgrade_executed": false,
+    "rollback_exercised": false,
+    "candidate_upgrade_status": "not_exercised"
+  },
+  "checks": {
+    "release_pin_present": true,
+    "version_check_pass": true,
+    "app_server_help_pass": true,
+    "artifact_digests_match": true,
+    "package_version_matches": true,
+    "license_declared_and_matches": true,
+    "upgrade_dry_run": true,
+    "upgrade_not_executed": true,
+    "rollback_target_present": true,
+    "rollback_not_exercised": true
+  },
+  "machine_side_effect_scope": "case-local reversible files only",
+  "network_calls": 0,
+  "real_credentials": false,
+  "production_data": false,
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260831T032735-294299Z/cases/upgrade/repeat-02/workspace",
+  "codex_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-20260831T032735-294299Z/cases/upgrade/repeat-02/workspace/codex-home"
+}

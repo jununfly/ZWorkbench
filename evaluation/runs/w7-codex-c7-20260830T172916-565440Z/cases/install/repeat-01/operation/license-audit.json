@@ -1,0 +1,15 @@
+{
+  "schema": "zworkbench-w7-c7-license-audit/v1",
+  "declared_license": "Apache-2.0",
+  "platform_declared_license": "Apache-2.0",
+  "expected_license": "Apache-2.0",
+  "package_license_matches": true,
+  "platform_license_matches": true,
+  "source_primary_findings_path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w7-codex-c7-primary-sources.md",
+  "source_primary_findings_present": true,
+  "commercial_boundary": "unknown",
+  "redistribution_notice_review": "unknown",
+  "binary_provenance": "unknown",
+  "source_to_binary_verified": false,
+  "interpretation": "Package metadata identifies Apache-2.0; commercial, notice, and source-to-binary questions remain explicit audit items."
+}
