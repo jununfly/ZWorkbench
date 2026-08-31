@@ -1,0 +1,43 @@
+{
+  "schema": "zworkbench-w8-local-read-only-fixture/v1",
+  "fixture_id": "w8-local-read-only",
+  "version": "1",
+  "description": "Deterministic, case-local fixtures for the first W8 vertical slice.",
+  "product_path": "local_read_only_run",
+  "harness": {
+    "name": "Codex",
+    "version": "0.139.0",
+    "role": "fixture seam only"
+  },
+  "scenarios": [
+    {
+      "name": "success",
+      "adapter": "FixtureSuccessAdapter",
+      "expected_orchestration_status": "completed",
+      "expected_owner_run_status": "completed",
+      "expected_result": "fixture-ok"
+    },
+    {
+      "name": "unknown_boundary",
+      "adapter": "FixtureUnknownBoundaryAdapter",
+      "expected_orchestration_status": "expected_fail_closed",
+      "expected_owner_run_status": "safe_stopped",
+      "expected_result": null,
+      "unknown_request": "future/server-request.v1"
+    }
+  ],
+  "invariants": {
+    "network_requests": 0,
+    "real_credentials": 0,
+    "external_side_effects": 0,
+    "provider_endpoint": "http://127.0.0.1:11434",
+    "case_root_isolation": true,
+    "codex_process_invocations": 0,
+    "live_replay": false
+  },
+  "non_claims": [
+    "A fixture pass is not Codex native approval evidence.",
+    "A fixture pass is not production Provider evidence.",
+    "A fixture pass does not prove host-level network isolation."
+  ]
+}
