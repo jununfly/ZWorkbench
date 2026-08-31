@@ -68,5 +68,5 @@
       "machine_evidence_artifact": "evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/operation/operation-result.json"
     }
   },
-  "interpretation": "Reported timing values are below thresholds for install, upgrade/rollback, the isolated owner-backed backup/restore exercise, and the predefined fault diagnosis exercise. The backup/restore and fault diagnosis human timing items are closed at fixture level; machine elapsed time does not replace the operator stopwatch. Fresh-install timing is not bound to the archived raw log, and license/NOTICE/commercial review, remote exit responsibility, and independent reproducible rebuild remain open."
+  "interpretation": "Reported timing values are below thresholds for install, upgrade/rollback, the isolated owner-backed backup/restore exercise, and the predefined fault diagnosis exercise. The four human timing items are closed at fixture level, and fresh-install timing is bound to the archived raw log; machine elapsed time does not replace the operator stopwatch. License/NOTICE/commercial clearance, remote exit responsibility, and independent reproducible rebuild remain open."
 }

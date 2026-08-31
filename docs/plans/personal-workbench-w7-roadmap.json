@@ -399,6 +399,11 @@
           "q": "本次完整安装人工计时是否已与同一次 raw log 绑定？",
           "answer": "已绑定：单一操作者在临时 C7 npm prefix 中完成 Codex 0.139.0 全新安装、版本验证、app-server --help、npm tree 和四个 artifact digest 核对；人工 stopwatch 为 17.01 秒（0.2835 分钟），同一次 raw log 出现 === C7_INSTALL_T_END_SAVED === 结束标记，日志 SHA-256 为 6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5，四个 digest 与候选 manifest 一致。该结果关闭 fresh-install 人工日志绑定门，并不改变 C7/G7 overall unknown/stop。",
           "note": "ATAM：将安装可操作性与候选完整生命周期、法律/NOTICE、远端退出和独立重建分开计量，不跨门推断。CBAM：仍保持一个 Codex runtime + 一个薄 SQLite composition owner，不新增常驻服务。"
+        },
+        {
+          "q": "NOTICE/商业边界处理后，C7 的签核状态和允许范围是什么？",
+          "answer": "已将 NOTICE/商业边界从完全未知收窄为 bounded-evidence / signoff-open：固定版本 Codex 的 LICENSE、vendor/transitive 依赖盘点、OpenAI 服务协议/个人服务条款/使用政策/品牌指南一手来源及工程边界地图均已记录。个人开发者或小团队可在各自机器上自行安装固定版本做受控内部试用，前提是 ZWorkbench 不捆绑或再分发 Codex artifact、不共享或转售账户/API key、不用个人 ChatGPT 服务账户驱动共享或对外 SaaS、不使用 logo 或暗示背书；OpenAI API 产品集成仍需按账户、数据、地区、服务协议和产品责任单独确认。完整逐包 SPDX/版权/NOTICE/例外 clearance、再分发材料、商业/API/账户/数据模式、商标/归属审查和远端退出责任未签核，因此 complete_notice_signoff 与 commercial_api_trademark_signoff 继续为 false，C7/G7 继续 unknown/stop。",
+          "note": "ATAM 将条款事实、组件 NOTICE、商业模式和退出责任拆为独立敏感点；CBAM 维持一个 Codex runtime + 一个 SQLite composition owner，不为合规审计引入第二 Harness、常驻 gateway 或观测服务。边界地图见 docs/plans/research/w7-codex-c7-notice-commercial-boundary.md。"
         }
       ],
       "notes": "本轮已收齐四类隔离 fixture-level C7 人工时间证据：fresh install 17.01 秒、upgrade/rollback 14.35 秒、backup/restore 12.38 秒、预制 fault diagnosis 2 分 51.31 秒，均低于冻结阈值；fresh install 人工 stopwatch 已与同一次 raw log 绑定，日志 SHA-256 为 6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5，四个 artifact digest 与候选 manifest 一致。C7/G7 仍 unknown/stop：完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任和 Codex native approval 继续阻断。ATAM 继续按独立敏感点拆分证据；CBAM 继续约束为一个 Codex runtime + 一个薄 SQLite composition owner，不引入常驻审计服务。"
@@ -406,7 +411,7 @@
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 20:08:37",
+    "updated": "2026-08-31 20:44:07",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }

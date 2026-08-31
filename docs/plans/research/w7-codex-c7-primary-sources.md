@@ -40,8 +40,9 @@ Apache-2.0”。另外，本机 package 树的 root 和 Darwin arm64 platform pa
 - 商业使用、商标、服务端/API 使用条款以及组织内部合规要求；
 - 本机二进制是否由固定 commit 以可复现方式构建。
 
-因此 C7 的 `commercial_boundary` 和 `redistribution_notice_review` 保持
-`unknown`，需要在采用前由适当的许可证/合规审查补齐。
+因此 C7 的 `commercial_boundary` 和 `redistribution_notice_review` 已有一手来源和
+工程边界地图，但仍保持 `signoff-open`；需要在采用前由适当的许可证/合规审查补齐，
+不能把边界地图解释为再分发或商业授权。
 
 ### 2.1 npm registry artifact 与发布 provenance
 

@@ -1,6 +1,6 @@
 # W7 Codex C7 许可证与发布 provenance 审计
 
-状态：`release-artifact-pass / legal-and-independent-rebuild-open`  ·
+状态：`release-artifact-pass / notice-commercial-boundary-mapped / legal-and-independent-rebuild-open`  ·
 审计日期：`2026-08-31`（Asia/Shanghai）  · 候选：Codex `0.139.0`
 
 本文只记录可复核的发布包和本机安装观察，不构成法律意见，也不替代组织的许可证
@@ -17,12 +17,13 @@
 | 独立 attestation 验签 | `pass-via-npm-cli` | 隔离临时项目运行 `npm audit signatures`，root/platform 两个包的 registry signatures 与 attestations 均验证通过；证据：[`npm-audit-signatures.txt`](../../../evaluation/evidence/w7-codex-c7/npm-audit-signatures.txt) |
 | 独立 reproducible rebuild | `unknown` | 未从源码独立构建并比对二进制 |
 | LICENSE 声明 | `pass-as-declared` | Codex 源码 LICENSE、root package 和 platform package metadata 均为 Apache-2.0 |
-| 完整 NOTICE / 嵌入组件归属 | `inventory-only / unknown` | 已建立 vendor/transitive 依赖 ledger；发布包没有 LICENSE/NOTICE 文件，逐包归属和再分发文本仍未完成 |
-| 商业 / API / 商标边界 | `unknown` | Apache-2.0 不覆盖服务条款、API 使用、商标和组织内部合规边界 |
+| 完整 NOTICE / 嵌入组件归属 | `bounded-inventory / clearance-open` | 已建立 vendor/transitive 依赖 ledger，并记录发布包缺少随包 LICENSE/NOTICE 的观察；逐包归属、例外和再分发材料仍未完成 |
+| 商业 / API / 商标边界 | `bounded-by-primary-terms / signoff-open` | 已记录服务协议、个人服务条款、使用政策和品牌指南的适用边界；账户、数据、产品模式、再分发和商标用法仍需责任人签核 |
 
 因此，路线图中的 provenance 阻断从“没有发布证明”收窄为“npm release artifact
-有 provenance 且 npm CLI 验签通过，但独立重建和法律/再分发审查仍开放”。C7/G7 总体仍不能
-签核。
+有 provenance 且 npm CLI 验签通过，但独立重建、逐包 NOTICE clearance 和商业/服务边界
+签核仍开放”。NOTICE/商业边界本轮已从“完全未知”收窄为“有一手条款和停止边界的工程
+地图”，不构成法律意见或再分发授权；C7/G7 总体仍不能签核。
 
 ## 2. 固定身份与 tarball digest
 
@@ -102,6 +103,28 @@ zsh 的版本/路径/摘要和一手许可证来源，并固定了 release commi
 版权声明、NOTICE 再分发义务、商标限制、OpenAI 服务/API 条款和组织商业使用边界。
 此项不应由 agent 以“root package 是 Apache-2.0”代签。
 
+### 4.1 NOTICE/商业边界的工程决策（未签核）
+
+本轮已将可继续的内部试用路径与必须停止的扩展路径分开记录，详见
+[`w7-codex-c7-notice-commercial-boundary.md`](./w7-codex-c7-notice-commercial-boundary.md)
+、[`w7-codex-c7-primary-sources.md`](./w7-codex-c7-primary-sources.md) 和独立核查
+[`w7-codex-c7-notice-commercial-primary-sources.md`](./w7-codex-c7-notice-commercial-primary-sources.md)：
+
+- 可继续的最小路径：个人或小团队成员在各自机器上自行安装、运行固定版本 Codex；
+  ZWorkbench 不把 Codex 二进制、platform package 或 vendor 内容放入自己的发布物；
+  凭证、私有代码和敏感数据不写入 evidence/backup。
+- 必须停止的路径：在 ZWorkbench 安装包/npm/容器中捆绑或再分发 Codex；使用个人
+  ChatGPT 服务账户驱动对外 SaaS；共享或转售账户/API key；使用 OpenAI logo 或暗示
+  官方认可；以及把未审查的模型输出直接放行到危险副作用。
+- 条件路径：使用 OpenAI API 为自己的产品提供功能，必须先确认适用的开发者/企业
+  协议、数据/地区/账户责任、使用政策和产品条款；它不能用 Codex 的 Apache 声明或
+  ChatGPT 个人条款替代。
+
+这些是当前 acceptance/evaluation 的工程停止边界，不是对任何具体商业模式的法律
+结论。逐包 NOTICE、商标/归属和 Provider/账户/数据模式没有责任人签名、日期和证据
+引用前，`complete_notice_signoff` 与 `commercial_api_trademark_signoff` 继续为
+`false`。
+
 ## 5. 后续关闭条件
 
 在 C7/G7 重新评估前，仍需完成：
@@ -110,8 +133,8 @@ zsh 的版本/路径/摘要和一手许可证来源，并固定了 release commi
    npm CLI 的 registry signature/provenance verification 已通过；
 2. 若要求“可复现构建”，从固定 commit 按 release workflow 重建并比较目标平台
    artifact；否则把目标明确降级为 `release-artifact provenance`；
-3. 由合规责任人完成 vendor/transitive dependency 的逐包许可证、版权和 NOTICE clearance；当前 inventory 已生成但不能作为签核；
-4. 完成商业、API、商标和再分发边界签核；
+3. 由合规责任人完成 vendor/transitive dependency 的逐包许可证、版权和 NOTICE clearance；当前 inventory 和边界地图已生成但不能作为签核；
+4. 依照边界地图逐项确认内部试用、再分发、API/SaaS、账户/API key、商标/归属等模式，并完成商业、API、商标和再分发边界签核；
 5. 将真实账户、Provider 数据、远端 backup/retention 和删除责任加入退出清单。
 
 本审计不会改变 C4 native approval `unknown`，也不会替代 C7 真实单人 backup/restore

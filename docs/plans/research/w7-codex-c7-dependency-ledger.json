@@ -1,7 +1,7 @@
 {
   "schema": "zworkbench-w7-c7-dependency-ledger/v1",
   "classification": "acceptance/evaluation",
-  "status": "inventory-only/signoff-open",
+  "status": "bounded-inventory/signoff-open",
   "audited_at": "2026-08-31",
   "candidate": {
     "name": "Codex Harness",
@@ -43,7 +43,7 @@
       "license_observed": "Apache-2.0",
       "license_basis": "package.json metadata and fixed Codex source LICENSE",
       "notice_status": "not-present-in-installed-package",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "bounded-by-primary-terms; distribution-mode-signoff-open",
       "status": "declared-only"
     },
     {
@@ -54,7 +54,7 @@
       "license_observed": "Apache-2.0",
       "license_basis": "platform package.json metadata",
       "notice_status": "not-present-in-installed-package",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "bounded-by-primary-terms; distribution-mode-signoff-open",
       "status": "declared-only"
     },
     {
@@ -68,7 +68,7 @@
       "license_observed": "Apache-2.0 at workspace/source declaration",
       "license_basis": "fixed Codex source workspace package declaration; binary dependency notices not extracted",
       "notice_status": "unknown",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "redistribution-clearance-open; service-terms-not-applicable-to-binary",
       "status": "source-declaration-only"
     },
     {
@@ -83,7 +83,7 @@
       "license_source": "https://raw.githubusercontent.com/BurntSushi/ripgrep/15.1.0/COPYING",
       "license_source_sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
       "notice_status": "source-license-located; binary redistribution material not verified",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "redistribution-clearance-open",
       "status": "review-required"
     },
     {
@@ -96,7 +96,7 @@
       "license_source": "https://raw.githubusercontent.com/PCRE2Project/pcre2/pcre2-10.45/LICENCE.md",
       "license_source_sha256": "9cf7ac6976099a1d856826d3ef1b093bd6b84489dc6100628ac79e740cf9885a",
       "notice_status": "source-license-located; exact binary linkage and redistribution material not verified",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "redistribution-clearance-open",
       "status": "review-required"
     },
     {
@@ -110,7 +110,7 @@
       "license_source": "https://raw.githubusercontent.com/zsh-users/zsh/zsh-5.9/LICENCE",
       "license_source_sha256": "d06fdf3ef9b1ec69d6b9e170b0a9516fbad3523261ff1668bde3bfea6e0ef5f5",
       "notice_status": "source-license-located; exact binary build contents not verified",
-      "commercial_status": "not-reviewed",
+      "commercial_status": "redistribution-clearance-open",
       "status": "review-required"
     }
   ],
@@ -131,7 +131,15 @@
     "installed_package_license_files_found": false,
     "complete_notice_signoff": false,
     "commercial_api_trademark_signoff": false,
+    "notice_boundary_evidence": "captured-in-primary-sources-and-decision-map",
+    "redistribution_status": "stop-pending-per-package-clearance",
+    "controlled_internal_use_status": "allowed-under-fixed-version-and-no-redistribution",
+    "commercial_boundary_status": "bounded-by-primary-terms; mode-specific-signoff-open",
+    "boundary_evidence": [
+      "docs/plans/research/w7-codex-c7-primary-sources.md",
+      "docs/plans/research/w7-codex-c7-notice-commercial-boundary.md"
+    ],
     "independent_reproducible_rebuild": false,
-    "interpretation": "This ledger identifies observed direct and vendored components and pins the source lock inventory. It is not a complete SPDX or NOTICE clearance and cannot authorize redistribution or commercial use."
+    "interpretation": "This ledger identifies observed direct and vendored components, pins the source lock inventory, and records a primary-terms boundary map. It is not a complete SPDX or NOTICE clearance, legal opinion, or authorization for redistribution or commercial use."
   }
 }

@@ -1,6 +1,6 @@
 # W7 Codex C7 vendor / transitive dependency ledger
 
-状态：`inventory-only / signoff-open` · 审计日期：`2026-08-31` · 候选：Codex `0.139.0` Darwin arm64
+状态：`bounded-inventory / signoff-open` · 审计日期：`2026-08-31` · 候选：Codex `0.139.0` Darwin arm64
 
 这份 ledger 只固化机器观察到的组件、版本、路径、摘要和一手许可证来源；它不是
 完整 SPDX 清单、NOTICE 文件或法律意见。机器能确认的“声明存在”与责任人要签核的
@@ -22,8 +22,8 @@
 
 | 对象 | 观察 | 许可证来源/状态 | NOTICE/商业边界 |
 |---|---|---|---|
-| `@openai/codex@0.139.0` | root package，无 runtime dependencies；6 个 optional platform dependencies | package metadata 与 Codex source `LICENSE` 为 Apache-2.0；`declared-only` | 安装包无 NOTICE；服务条款、API、商标和商业使用未审 |
-| `@openai/codex@0.139.0-darwin-arm64` | platform package，无 package dependencies，包含 `vendor` | package metadata 为 Apache-2.0；`declared-only` | 安装包无 NOTICE；vendor 归属未由 metadata 完成 |
+| `@openai/codex@0.139.0` | root package，无 runtime dependencies；6 个 optional platform dependencies | package metadata 与 Codex source `LICENSE` 为 Apache-2.0；`declared-only` | 安装包无 NOTICE；已形成服务条款、API、商标和商业使用边界地图，模式签核未完成 |
+| `@openai/codex@0.139.0-darwin-arm64` | platform package，无 package dependencies，包含 `vendor` | package metadata 为 Apache-2.0；`declared-only` | 安装包无 NOTICE；vendor 归属未由 metadata 完成；再分发 clearance 未完成 |
 | Codex vendor binary | `0.139.0` / `aarch64-apple-darwin`；SHA-256 `c6ede9ef…83915` | 源码 workspace 声明 Apache-2.0；二进制内 transitive 归属未抽出 | `unknown`，不能只凭 root license 放行 |
 | ripgrep | `15.1.0`，revision `af60c2de9d`；SHA-256 `4fdf1d83…f3e94` | 上游 `COPYING`：`MIT OR Unlicense`；来源文件 SHA-256 `01c266bc…2390f` | 已找到源许可证，二进制再分发材料仍需审 |
 | PCRE2 | `10.45`，由 `rg --version` 报告可用 | 上游 `LICENCE.md`：`BSD-3-Clause WITH PCRE2-exception`；来源文件 SHA-256 `9cf7ac69…885a` | exact linkage 和随二进制提供的归属材料未核 |
@@ -64,5 +64,9 @@ Cargo lock 的存在误读成 NOTICE 清单。当前 `license_resolution` 和
 - 独立 source-to-binary reproducible rebuild；
 - 真实账户、Provider、远端 backup/retention 的删除责任。
 
-因此，本 ledger 只把 C7 的依赖未知从“完全未盘点”收窄为“组件边界已盘点、完整
-逐项 clearance 未完成”，C7/G7 继续 `unknown/stop`。
+因此，本 ledger 只把 C7 的依赖未知从“完全未盘点”收窄为“组件边界已盘点、边界地图
+已形成、完整逐项 clearance 未完成”，C7/G7 继续 `unknown/stop`。边界地图见
+[`w7-codex-c7-notice-commercial-boundary.md`](./w7-codex-c7-notice-commercial-boundary.md)，
+一手条款与固定版本来源见 [`w7-codex-c7-primary-sources.md`](./w7-codex-c7-primary-sources.md)，
+独立核查见
+[`w7-codex-c7-notice-commercial-primary-sources.md`](./w7-codex-c7-notice-commercial-primary-sources.md)。
