@@ -45,6 +45,7 @@ C7 其余人工、法律、发布供应链和远端退出门仍保持独立判�
 - 许可证/provenance 审计：[`w7-codex-c7-license-provenance-audit.md`](./research/w7-codex-c7-license-provenance-audit.md)
 - Human upgrade/rollback 原始日志：[`upgrade-rollback.log`](../../evaluation/evidence/w7-codex-c7/upgrade-rollback.log)
 - Human/agent fresh-install 原始日志：[`fresh-install.log`](../../evaluation/evidence/w7-codex-c7/fresh-install.log)
+- Human fresh-install stopwatch-bound 原始日志：[`fresh-install-human-bound.Vta7cz`](../../evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz)
 - npm signatures/attestation 验证：[`npm-audit-signatures.txt`](../../evaluation/evidence/w7-codex-c7/npm-audit-signatures.txt)
 - owner 跨版本兼容性 runner：[`run_codex_owner_upgrade_compat.py`](../../evaluation/runner/run_codex_owner_upgrade_compat.py)
 - vendor/transitive 依赖 ledger：[`w7-codex-c7-dependency-ledger.md`](./research/w7-codex-c7-dependency-ledger.md)
@@ -66,16 +67,16 @@ oracle，错误得到 `12/18`；随后已改为显式的 `*_not_executed` 安全
 | 维度 | 判定 | 解释 |
 |---|---|---|
 | machine contract | **`18/18 pass`** | 入口、artifact digest、事件完整性、隔离、零网络/真实数据、服务清单和 case-local oracle |
-| human timing | `partial-evidence` | 已有单人临时 prefix 的 install `13.64s`、upgrade/rollback `14.35s`、backup/restore `12.38s` 和预制故障定位 `2.85517min` 报告；install stopwatch/raw 绑定仍不完整 |
-| candidate install | `partial/unknown` | 有临时 prefix 安装耗时报告；fresh-install 状态、版本/help 输出和原始 install log 已固化，但尚未绑定同一人工 stopwatch |
+| human timing | `fixture-level-pass` | 单一操作者的 install `17.01s`、upgrade/rollback `14.35s`、backup/restore `12.38s` 和预制故障定位 `2.85517min` 均低于阈值；install stopwatch 已与同一次 raw log 绑定 |
+| candidate install | `pass-at-install-timing-and-identity-level` | 临时 prefix 全新安装 `0.139.0`；同一次 raw log 固化安装输出、版本、help、npm tree 和四个 artifact digest，SHA-256 已记录；完整 C7 仍 unknown/stop |
 | candidate upgrade/rollback | `partial-exercised` | 临时 C7 prefix 中真实完成 `0.138.0 → 0.139.0 → 0.138.0`，版本与 app-server help 已存档；另有同一 owner 的跨版本 machine probe 通过；真实发布环境/人工 gate 仍未签核 |
 | license declared | `Apache-2.0` | 固定源码 LICENSE 和本机 package metadata 声明一致 |
 | commercial/notice review | `unknown` | 不能由单一 LICENSE 文件覆盖所有依赖、NOTICE、商标和商业边界 |
 | source-to-binary provenance | `pass-at-release-level` | root/platform npm SLSA attestation 绑定 `rust-v0.139.0` / `a7dff904…`；官方 tarball 与本机安装内容核对通过；npm CLI attestation 验证通过；独立重建仍开放 |
 | C7 / G7 signoff | **`unknown/stop`** | 关键 unknown 未达到冻结的放行阈值 |
 
-`unknown/stop` 是保守停止条件，不是测试失败；它表示机器审计已经可复核，但候选
-生命周期签核所需的关键真实证据尚未产生。
+`unknown/stop` 是保守停止条件，不是测试失败；它表示机器审计和部分人工生命周期
+证据已经可复核，但候选生命周期、法律和退出签核所需的关键证据仍未全部产生。
 
 本轮新增的 owner-backed 定向重跑 summary：[`summary.json`](../../evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/summary.json)。
 它只重跑 `backup_restore` 与 `exit`，结果为 `6/6 machine pass`，并要求每个 case
@@ -103,12 +104,15 @@ transport 和 `generate-json-schema`，但命令仍标记为 experimental。该 
 
 ### 3.2 install
 
-fixture 只记录固定 release 的安装 runbook 与前置身份，不执行
-`npm install -g @openai/codex@0.139.0`。因此 machine preflight 可以通过，但不能
-回答个人开发者第一次真实安装所需时间、权限、网络、凭证、PATH、平台包下载和失败
-恢复。现在已归档一次临时 prefix fresh-install 原始日志（`0.139.0`、`app-server --help`
-通过、机器安装 `2.314s`，日志 SHA-256 `01d7c817e51e76a9081acf6e48fcd5efae408782790ba60703b396b9433cf3b5`），
-但该机器测量不替代操作者 stopwatch；安装人工门仍为 `partial/unknown`。
+fixture 原本只记录固定 release 的安装 runbook；本次 Human 在临时 C7 prefix
+真实执行了 `npm install -g @openai/codex@0.139.0`，并由单一操作者计时
+`17.01 秒`。同一次 raw log 固化 `0.139.0`、`app-server --help`、npm tree、四个
+artifact digest 和结束标记，日志 SHA-256 为
+`6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5`；四个 digest
+与候选 manifest 一致。此前机器 fresh-install `2.314s` 日志仍作为独立机器证据保留，
+不替代人工 stopwatch。该项关闭 fresh-install 的人工日志绑定，但不回答真实生产
+凭证、远程责任或失败恢复边界，也不证明 app-server 原生调度、approval、Provider
+routing 或 replay 能力。
 
 ### 3.3 upgrade
 
@@ -165,7 +169,7 @@ C7 的定位是生命周期审计，不是把 C2-C6 的 composition 结果重新
 
 | 敏感点/风险 | 场景化证据 | 责任边界 | 残余风险/决策 |
 |---|---|---|---|
-| `R-C7-01` 安装无法由个人完成 | 临时 prefix 安装 `13.64s` 由单人报告；fresh-install 原始 log 已固化，机器安装 `2.314s` | 候选发布包 + 操作者 | 时间项暂通过但整体仍 partial；人工记录与机器 fresh install 尚未形成同一 stopwatch 证据 |
+| `R-C7-01` 安装无法由个人完成 | 临时 prefix 全新安装 `17.01s` 由单人报告；同一次 raw log 固化版本/help/npm tree/四个 artifact digest，日志 SHA-256 `6db2fe3a…` | 候选发布包 + 操作者 | fresh-install 人工时间与 raw log 已绑定；完整 C7 仍受 NOTICE/商业边界、真实退出责任等阻断 |
 | `R-C7-02` 升级破坏状态或无法回滚 | 临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，耗时 `14.35s`，版本/help log 已固化；同一 owner probe `15/15` machine pass | 候选 package + composition owner | 本机 schema/config/ledger/失败恢复项收窄为 pass；真实 migration 与人工 gate 仍开放 |
 | `R-C7-03` ledger 损坏后无法恢复 | 3 次 case-local restore digest/health oracle；另有单人隔离 owner-backed restore `12.38s`、20/20 checks pass | composition owner | 人工时间项通过；生产 retention、加密、跨版本迁移未测 |
 | `R-C7-04` 故障定位超过小团队能力 | fault/run 关联、bounded diagnosis 和受控 adapter failure persistence 通过；单一操作者完成诊断并保存结论 `2.85517min` | 候选诊断面 + composition owner | 预制 fixture 的人工时间项通过；生产故障的范围和真实远端责任未测 |
@@ -209,7 +213,7 @@ composition owner、可删除 ledger、case-local 可回放和显式未知，而
   它只覆盖 case-local SQLite owner，不覆盖候选原生数据、远端账户、组织 retention
   或生产灾难恢复。
 - 只有以下证据齐全后才可签 C7：四类真实单人 stopwatch（当前 install、upgrade/rollback、
-  backup/restore、预制故障定位均已有报告）、完整 candidate install、
+  backup/restore、预制故障定位均已有报告且 install raw log 已绑定）、完整 candidate install、
   upgrade/rollback 的 schema/config/ledger 证据、许可证/NOTICE/商业边界审查，以及对
   release provenance 的信任边界/独立重建结论。
 - `1-6` 继续负责基于 C1-C7 的 ATAM/CBAM 采用姿态；应携带 C4 native approval unknown、

@@ -65,7 +65,7 @@ composition approval owner 不可用。停止时保留当前日志和状态，�
 
 | gate | 实际耗时 | 时间判定 | 操作环境 | 当前证据状态 |
 |---|---:|---|---|---|
-| install | `13.64 秒`（`0.2273 分钟`） | 时间项通过（≤90 分钟） | 临时 C7 prefix；是否全新安装待确认 | 版本/help/日志待关联 |
+| install | `17.01 秒`（`0.2835 分钟`） | 时间项通过（≤90 分钟） | 临时 C7 prefix；全新安装；单人 | 同一次 raw log 已绑定版本、help、npm tree、四个 artifact digest；SHA-256 `6db2fe3a…` |
 | upgrade + rollback | `14.35 秒`（`0.2392 分钟`） | 时间项通过（≤30 分钟） | `0.138.0 → 0.139.0 → 0.138.0`，临时 C7 prefix，单人 | 原始 log 已归档并完成 SHA-256 校验 |
 | backup / restore | `12.38 秒`（`0.2063 分钟`） | 时间项通过（≤30 分钟） | 隔离 owner-backed case，单人，loopback-only Provider | `status: pass`，20/20 checks；[evidence](../../evaluation/runs/w7-codex-c7-human-20260831T180332/README.md) |
 
@@ -86,11 +86,16 @@ composition approval owner 不可用。停止时保留当前日志和状态，�
    [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)。
 7. 保存日志并停止 stopwatch。
 
-安装 gate 只回答“单人能否完成固定 release 的真实安装”。本机另有一次隔离 fresh
-install：`0.139.0`、version/help 通过、机器 wall clock `2.314s`，原始日志 SHA-256
-为 `01d7c817e51e76a9081acf6e48fcd5efae408782790ba60703b396b9433cf3b5`。该机器时间
-不能代替人工 stopwatch。它不证明 app-server 原生调度、approval、Provider routing
-或 replay 能力。
+安装 gate 只回答“单人能否完成固定 release 的真实安装”。本次在临时 C7 prefix
+完成全新安装，人工 stopwatch 为 `17.01 秒`（`0.2835 分钟`），同一次 raw log
+包含 `codex-cli 0.139.0`、完整 `app-server --help`、npm tree、wrapper/npm
+package/platform package/vendor binary 四个 digest，以及
+`=== C7_INSTALL_T_END_SAVED ===` 结束标记。日志为
+[`fresh-install-human-bound.Vta7cz`](../../evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz)，
+SHA-256 为 `6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5`；四个
+digest 与候选 manifest 一致。此前机器 fresh-install `2.314s` 的独立日志仍保留，
+机器时间不替代人工 stopwatch。该项关闭 fresh-install 的人工日志绑定，但不证明
+app-server 原生调度、approval、Provider routing 或 replay 能力。
 
 ## 5. Gate B：真实升级与回滚（人工执行）
 
@@ -200,8 +205,8 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 | C4 composition path | `pass-with-composition`（证据：`w7-codex-c4-approval-20260831T032346-194000Z`） |
 | C4 native approval | `unknown/not-required-for-composition` |
 | C7 machine contract | `18/18 pass`（最新 run 见 `w7-codex-c7-20260831T032735-294299Z`） |
-| C7 human timing | `partial-evidence`：install `13.64 秒`、upgrade/rollback `14.35 秒`、隔离 owner-backed backup/restore `12.38 秒`、预制故障定位 `2 分 51.31 秒`均已报告并低于阈值；fresh-install raw log 已归档但人工计时尚未与其绑定 |
-| C7 real install | `partial/unknown`：临时 prefix 安装耗时 `13.64 秒` 已报告；fresh-install `0.139.0` raw log 和机器 `2.314s` 已固化，但未绑定同一人工 stopwatch |
+| C7 human timing | `fixture-level-pass`：install `17.01 秒`、upgrade/rollback `14.35 秒`、隔离 owner-backed backup/restore `12.38 秒`、预制故障定位 `2 分 51.31 秒`均由单一操作者报告并低于阈值；install 人工 stopwatch 已与同一次 raw log 绑定 |
+| C7 real install | `pass-at-install-timing-and-identity-level`：临时 prefix 全新安装 `0.139.0`，人工耗时 `17.01 秒`，版本/help/npm tree/四个 digest 与 raw log 已关联；完整 C7 仍受其他阻断 |
 | C7 real upgrade/rollback | `partial-exercised`：临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，`14.35 秒`；版本/help 原始日志和同一 owner 跨版本 machine probe 已固化；生产 migration 未验证 |
 | C7 license/NOTICE/commercial | `inventory-only / unknown`：vendor/transitive ledger 已生成，逐包 clearance 和商业/API/商标审查未签核 |
 | C7 source-to-binary provenance | `pass-at-release-level`（npm SLSA + npm CLI 验签 + 本机 npm bytes binding）；独立重建 `unknown` |
@@ -214,6 +219,7 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 - [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)
 - [`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)
 - [`fresh-install.log`](../../evaluation/evidence/w7-codex-c7/fresh-install.log)
+- [`fresh-install-human-bound.Vta7cz`](../../evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz)
 - [`w7-codex-c7-dependency-ledger.md`](./research/w7-codex-c7-dependency-ledger.md)
 - [`upgrade compatibility summary`](../../evaluation/runs/w7-codex-owner-upgrade-20260831T095350-497892Z/summary.json)
 - [`run_codex_owner_upgrade_compat.py`](../../evaluation/runner/run_codex_owner_upgrade_compat.py)
