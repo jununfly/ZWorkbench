@@ -16,11 +16,11 @@ ZWorkbench 已实现一个真实的本地 composition owner：
 effect-attempt、result、replay metadata 和 event durable ledger，并提供 fail-closed claim、
 uncertain reconcile、bounded retry、safe-stop、export、backup 和 restore。
 
-这关闭了“没有 owner 实现”的产品缺口，但尚未关闭 C7 Gate C：当前 owner 还没有
-接入 Codex app-server 的真实工作台任务流，不能把 owner 的隔离单元测试当成真实
-composition state。`evaluation/fixtures`、Codex `CODEX_HOME` 和机器审计目录仍
-不计入 C7 真实 state；下一节点 `1-8-5` 完成一次受控真实 Codex→owner flow 后，才可
-重新做 backup/restore、故障定位和退出责任审计。
+这关闭了“没有 owner 实现”的产品缺口。`src/zworkbench/codex_adapter.py` 已接入真实
+Codex app-server 工作台任务流；但 `evaluation/fixtures`、Codex `CODEX_HOME` 和机器
+审计目录仍不是 composition truth，只有 adapter 实际写入的 case-local SQLite owner
+state 才进入下面的新回归证据。新的真实 owner backup/restore 与 exit 机器控制已重跑；
+C7 其余人工、法律、发布供应链和远端退出门仍保持独立判断。
 
 ## 1. 审计范围和硬边界
 
@@ -42,10 +42,13 @@ composition state。`evaluation/fixtures`、Codex `CODEX_HOME` 和机器审计�
 - Fixture：[`c7-audit.py`](../../evaluation/fixtures/w7-codex-c7/c7-audit.py)
 - 候选 manifest：[`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)
 - 一手来源：[`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)
+- 许可证/provenance 审计：[`w7-codex-c7-license-provenance-audit.md`](./research/w7-codex-c7-license-provenance-audit.md)
+- Human upgrade/rollback 原始日志：[`upgrade-rollback.log`](../../evaluation/evidence/w7-codex-c7/upgrade-rollback.log)
+- npm signatures/attestation 验证：[`npm-audit-signatures.txt`](../../evaluation/evidence/w7-codex-c7/npm-audit-signatures.txt)
 
 ## 2. 最新机器审计结果
 
-最新正式运行 summary：[`summary.json`](../../evaluation/runs/w7-codex-c7-20260831T032735-294299Z/summary.json)
+历史全量候选审计 summary：[`summary.json`](../../evaluation/runs/w7-codex-c7-20260831T032735-294299Z/summary.json)
 
 本次重跑的目的，是让 C7 的 C2-C6 identity ledger 绑定已完成的 C4 组合式 approval
 验证；机器场景与阈值不变。此前修正后的 C7 运行
@@ -60,16 +63,22 @@ oracle，错误得到 `12/18`；随后已改为显式的 `*_not_executed` 安全
 | 维度 | 判定 | 解释 |
 |---|---|---|
 | machine contract | **`18/18 pass`** | 入口、artifact digest、事件完整性、隔离、零网络/真实数据、服务清单和 case-local oracle |
-| human timing | `unknown` | 未提供真实单一操作者 stopwatch |
-| candidate install | `not_exercised` | 只生成安装 runbook，不改全局安装 |
-| candidate upgrade/rollback | `not_exercised` | 只记录 snapshot/rollback plan，不执行真实升级/回滚 |
+| human timing | `partial-evidence` | 已有单人临时 prefix 的 install `13.64s` 报告和 upgrade/rollback `14.35s` 原始日志；backup/restore、故障定位及 install 原始日志仍缺 |
+| candidate install | `partial/unknown` | 有临时 prefix 安装耗时报告，但全新安装状态、版本/help 输出和原始 install log 未固化 |
+| candidate upgrade/rollback | `partial-exercised` | 临时 C7 prefix 中真实完成 `0.138.0 → 0.139.0 → 0.138.0`，版本与 app-server help 已存档；未验证 composition ledger/schema 迁移兼容 |
 | license declared | `Apache-2.0` | 固定源码 LICENSE 和本机 package metadata 声明一致 |
 | commercial/notice review | `unknown` | 不能由单一 LICENSE 文件覆盖所有依赖、NOTICE、商标和商业边界 |
-| source-to-binary provenance | `unknown` | 源码 package `0.0.0-dev` 与本机 package `0.139.0` 的发布/构建链未被 attestation 证明 |
+| source-to-binary provenance | `pass-at-release-level` | root/platform npm SLSA attestation 绑定 `rust-v0.139.0` / `a7dff904…`；官方 tarball 与本机安装内容核对通过；npm CLI attestation 验证通过；独立重建仍开放 |
 | C7 / G7 signoff | **`unknown/stop`** | 关键 unknown 未达到冻结的放行阈值 |
 
 `unknown/stop` 是保守停止条件，不是测试失败；它表示机器审计已经可复核，但候选
 生命周期签核所需的关键真实证据尚未产生。
+
+本轮新增的 owner-backed 定向重跑 summary：[`summary.json`](../../evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/summary.json)。
+它只重跑 `backup_restore` 与 `exit`，结果为 `6/6 machine pass`，并要求每个 case
+先由真实 Codex app-server adapter 产生 SQLite owner state；详细结果见第 8 节。它
+关闭的是此前“没有真实 composition state”对这两个机器控制的阻断，不改写上面的
+全量候选生命周期、法律和发布供应链结论。
 
 ## 3. 六类 fixture 证据
 
@@ -90,9 +99,12 @@ fixture 只记录固定 release 的安装 runbook 与前置身份，不执行
 ### 3.3 upgrade
 
 fixture 在隔离 workspace 保存候选 identity snapshot 和 rollback target，生成 dry-run
-upgrade plan，不切换真实版本、不修改全局 package、不做真实回滚。因此不能回答升级
-后的 config/schema/tool compatibility、downgrade 可行性、数据迁移或失败恢复。升级
-和回滚的人工门、候选 action gate 均保持 `unknown`。
+upgrade plan，不修改全局 package。另有 Human 在临时 C7 prefix 中真实完成
+`0.138.0 → 0.139.0 → 0.138.0`，总耗时 `14.35 秒`，并保存版本与
+`app-server --help` 原始日志（见 [`upgrade-rollback.log`](../../evaluation/evidence/w7-codex-c7/upgrade-rollback.log)）。
+这关闭了“完全没有候选版本切换证据”，但仍不能回答 composition config/schema/tool
+compatibility、durable state migration、失败恢复或非临时安装环境；该 gate 保持
+partial/unknown。
 
 ### 3.4 backup_restore
 
@@ -104,9 +116,10 @@ ledger 可使用可逆文件完成最小 backup/restore contract，未触碰候�
 ### 3.5 fault_diagnosis
 
 fixture 生成固定 `candidate_provenance_unknown` 故障，使用同一 `fault_id`/`run_id`
-产出 bounded diagnosis，并明确建议“不宣称 reproducible source build，在升级时重跑
-审计”。这证明未知会被诊断并保留，不会静默升级为 pass；不证明所有生产故障都能在
-30 分钟内定位。
+产出 bounded diagnosis，并明确建议“不宣称 independent reproducible rebuild，在升级时
+重跑审计”。本轮 registry 证据已关闭 release-artifact 层的 provenance unknown，但
+独立重建与其他安装渠道等价性仍需保持边界。这证明未知会被诊断并保留，不会静默升级为 pass；不证明
+所有生产故障都能在 30 分钟内定位。
 
 ### 3.6 exit
 
@@ -133,18 +146,19 @@ C7 的定位是生命周期审计，不是把 C2-C6 的 composition 结果重新
 
 | 敏感点/风险 | 场景化证据 | 责任边界 | 残余风险/决策 |
 |---|---|---|---|
-| `R-C7-01` 安装无法由个人完成 | runbook 和入口可复核；真实安装未执行 | 候选发布包 + 操作者 | 不放行；必须做一次真实单人安装并记录 ≤90 分钟 |
-| `R-C7-02` 升级破坏状态或无法回滚 | case-local snapshot/rollback plan | 候选 package + composition owner | 不放行；需要真实升级/回滚和旧 identity 恢复证据 |
+| `R-C7-01` 安装无法由个人完成 | 临时 prefix 安装 `13.64s` 由单人报告；原始 install log 和全新状态未固化 | 候选发布包 + 操作者 | 时间项暂通过但整体仍 partial；补齐 fresh-install identity/log |
+| `R-C7-02` 升级破坏状态或无法回滚 | 临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，耗时 `14.35s`，版本/help log 已固化 | 候选 package + composition owner | 时间与版本回滚项暂通过；仍需 schema/config/ledger identity 与失败恢复证据 |
 | `R-C7-03` ledger 损坏后无法恢复 | 3 次 case-local restore digest/health oracle | composition owner | 仅收窄 fixture 风险；生产 retention、加密、跨版本迁移未测 |
 | `R-C7-04` 故障定位超过小团队能力 | fault/run 关联和 bounded diagnosis 通过 | 候选诊断面 + composition owner | 机器通过不替代人工 ≤30 分钟；需真实 stopwatch |
 | `R-C7-05` 服务拼盘超出维护能力 | 计入 2 个，低于上限 3 | 候选运行时 + 一个薄 adapter | 当前可保留；新增服务须重新走 C7 |
 | `R-C7-06` 许可证/NOTICE/商业边界遗漏 | Apache-2.0 一手来源已记录 | 项目维护者 + 合规审查 | `commercial_boundary` 和 notice review 仍 unknown |
-| `R-C7-07` 发布二进制无法追溯到源码 | tag/commit 和本机 digest 固定；commit API 为 unsigned；source package `0.0.0-dev` vs installed `0.139.0` | 发布供应链 | provenance unknown；不能宣称 reproducible build |
+| `R-C7-07` 发布二进制无法追溯到源码 | root/platform npm SLSA attestation、npm CLI 验证、tag/commit、registry tarball integrity 和本机 bytes 均已绑定；commit API 仍为 unsigned | 发布供应链 | release-artifact provenance 已 pass；独立重建及其他安装渠道仍 unknown |
 | `R-C7-08` 退出留下真实残留 | case-local 导出/导入/删除达到零残留 | composition owner + 外部账户/数据 owner | 仅机器 fixture 通过；真实账户、远程资源、备份 retention 未审计 |
 
-ATAM 结论：本轮把 C7 的主要风险从“没有生命周期证据”收窄为“机器 contract 已有
-证据，但真实操作者、发布 provenance、法律边界和生产退出责任仍未关闭”。停止条件
-应保持可见，不通过补充解释或机器时间来绕过。
+ATAM 结论：本轮把 C7 的主要风险从“没有生命周期证据、没有发布 provenance”收窄为
+“机器 contract 和 npm release-artifact provenance 已有证据，但真实操作者、独立构建
+边界、法律边界和生产退出责任仍未关闭”。停止条件应保持可见，不通过补充解释或机器
+时间来绕过。
 
 ## 6. CBAM 分析（个人开发者/小团队约束）
 
@@ -169,10 +183,44 @@ composition owner、可删除 ledger、case-local 可回放和显式未知，而
 
 - `1-5` 的审计工作可以完成并在路线图中标记 `completed`。
 - C7 结论必须保持 `unknown/stop`，不能写成 C7 通过或 G7 通过。
-- Human 已确认：真实 composition state 不存在，`backup/restore` 固定保持 `unknown`；
-  现有 fixture、机器审计 state 和 Codex `CODEX_HOME` 不得用于回填该 Gate。
-- 只有以下证据齐全后才可签 C7：四类真实单人 stopwatch（安装 ≤90 分钟，其余各
-  ≤30 分钟）、真实 candidate install、upgrade/rollback、许可证/NOTICE/商业边界
-  审查，以及可复核的发布 artifact provenance。
+- 在 `1-8-5` 之前，Human 已确认真实 composition state 不存在；该历史结论不再用于
+  新的 owner-backed machine control。现有 fixture、Codex `CODEX_HOME` 和审计目录仍
+  不得冒充 owner state。
+- `1-8-5` 的真实 owner 隔离回归已关闭 C7 backup/restore 与 exit 的“无真实 state”阻断；
+  它只覆盖 case-local SQLite owner，不覆盖候选原生数据、远端账户、组织 retention
+  或生产灾难恢复。
+- 只有以下证据齐全后才可签 C7：四类真实单人 stopwatch（当前仅 install 与
+  upgrade/rollback 有 partial 记录，其余各 ≤30 分钟门仍未填）、完整 candidate install、
+  upgrade/rollback 的 schema/config/ledger 证据、许可证/NOTICE/商业边界审查，以及对
+  release provenance 的信任边界/独立重建结论。
 - `1-6` 继续负责基于 C1-C7 的 ATAM/CBAM 采用姿态；应携带 C4 native approval unknown、
-  C7 unknown/stop 和 source-to-binary provenance unknown。
+  C7 unknown/stop 和 source-to-binary 的 release-artifact pass / independent rebuild
+  unknown 分层结论。
+
+## 8. 接入真实 owner 后的 C7 backup/restore 与退出回归（2026-08-31）
+
+正式 runner：[`run_codex_owner_c7.py`](../../evaluation/runner/run_codex_owner_c7.py)
+
+正式证据：[`summary.json`](../../evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/summary.json)
+
+本轮固定 Codex `0.139.0`，每个 case 使用独立 `CODEX_HOME`、task workspace、SQLite
+owner 和 loopback-only fake Provider；真实流程先经 adapter 完成
+`initialize`、`thread/start`、`turn/start`、`turn/completed`，再执行 C7 操作。每个 owner
+snapshot 均包含 completed run、真实 `thread_id`/`turn_id`、Provider identity、
+`recorded_view` replay metadata 和 `adapter.initialized/thread/turn` 结果；不把 Codex
+内部 SQLite 或 rollout 文件当 composition state。
+
+| 场景 | 重复 | 机器结果 | 关键证据 |
+|---|---:|---|---|
+| `backup_restore` | 3 | `3/3 pass` | SQLite `composition.sqlite3`、`state.json`、manifest、integrity check；恢复到独立 DB 后 state digest 与完整 snapshot 一致 |
+| `exit` | 3 | `3/3 pass` | `export_state` + 独立 backup restore；删除 case workspace、owner DB 和 `CODEX_HOME` 后零残留 |
+
+汇总为 `6/6 machine pass`。维护对象按 2 个计数（Codex app-server + SQLite owner），
+fake Provider 仅为 case-local test process；无真实凭证、无生产数据、无外部网络，且不
+声称删除远端 Provider、账户、组织备份或 retention 数据。
+
+因此，之前“无真实 composition state”对 C7 backup/restore 和 exit 机器控制的阻断已
+关闭；本轮也把 source-to-binary 从完全 unknown 收窄为 npm release-artifact provenance
+pass-at-release-level。C7 总体仍是 `unknown/stop`，因为本轮没有改变人工 stopwatch、
+真实候选安装/升级/回滚、NOTICE/商业边界、独立重建、远端资源退出和 Codex 原生
+approval 的完整签核状态。

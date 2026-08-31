@@ -1,6 +1,6 @@
 # W7 Codex C7 单人生命周期签核 Runbook
 
-状态：`prepared / not yet executed` · 适用候选：Codex Harness `codex-cli 0.139.0`
+状态：`partial evidence / candidate-signoff-unknown-stop` · 适用候选：Codex Harness `codex-cli 0.139.0`
 
 这是一份 C7 人工证据模板，不是自动安装脚本。任何会改变全局 npm、全局
 `CODEX_HOME`、真实凭证、真实 Provider、生产项目或外部数据的步骤，都必须由
@@ -156,9 +156,13 @@ diagnosis，不是必须修复所有故障。
 - 对固定源码 LICENSE、package/platform metadata、所有依赖 NOTICE、商标、API/
   商业使用边界和发布 artifact provenance 分别签核。
 
-当前已知：固定源码和 package metadata 声明 `Apache-2.0`，但完整 NOTICE/商业边界
-以及 source-to-binary provenance 仍是 `unknown`。法律或供应链签核不能由本 runbook
-自行代替。
+当前已知：固定源码和 package metadata 声明 `Apache-2.0`；root/platform npm 包的
+SLSA provenance 已将 release artifact 绑定到 `rust-v0.139.0` / `a7dff904…`，且本机
+npm 安装内容与 registry tarball 核对通过；隔离 npm CLI `audit signatures` 也验证了
+root/platform 两个包的 registry signatures 与 attestations。这只关闭 release-artifact
+层，不等同于独立 reproducible rebuild、完整 NOTICE/商业边界或其他安装渠道的签核。
+法律或供应链签核不能由本 runbook 自行代替。详细证据见
+[`w7-codex-c7-license-provenance-audit.md`](./research/w7-codex-c7-license-provenance-audit.md)。
 
 ## 9. C4/C7 联合停止条件与签核
 
@@ -179,11 +183,11 @@ diagnosis，不是必须修复所有故障。
 | C4 composition path | `pass-with-composition`（证据：`w7-codex-c4-approval-20260831T032346-194000Z`） |
 | C4 native approval | `unknown/not-required-for-composition` |
 | C7 machine contract | `18/18 pass`（最新 run 见 `w7-codex-c7-20260831T032735-294299Z`） |
-| C7 human timing | `unknown`，待填 stopwatch ledger |
-| C7 real install | `not_exercised` |
-| C7 real upgrade/rollback | `not_exercised` |
+| C7 human timing | `partial-evidence`：install `13.64 秒`与 upgrade/rollback `14.35 秒`已报告；backup/restore、故障定位和 install 原始 log 未填 |
+| C7 real install | `partial/unknown`：临时 prefix 安装耗时 `13.64 秒` 已报告，fresh-install identity/raw log 未固化 |
+| C7 real upgrade/rollback | `partial-exercised`：临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，`14.35 秒`；版本/help 原始日志已固化；schema/ledger 迁移未验证 |
 | C7 license/NOTICE/commercial | `unknown` |
-| C7 source-to-binary provenance | `unknown` |
+| C7 source-to-binary provenance | `pass-at-release-level`（npm SLSA + npm CLI 验签 + 本机 npm bytes binding）；独立重建 `unknown` |
 | overall | **`unknown/stop` until all missing gates are signed** |
 
 ## 10. 关联资产

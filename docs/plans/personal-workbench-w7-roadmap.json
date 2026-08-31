@@ -220,7 +220,8 @@
         "1-8-2",
         "1-8-3",
         "1-8-4",
-        "1-8-5"
+        "1-8-5",
+        "1-8-6"
       ],
       "decisions": [
         {
@@ -318,17 +319,64 @@
     "1-8-5": {
       "id": "1-8-5",
       "label": "接入 Codex app-server adapter 并完成真实 owner 隔离回归",
-      "status": "pending",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Codex app-server adapter 的产品 seam 与 C7 真实 state 如何定义？",
+          "answer": "CompositionOwner 是唯一 durable composition truth；CodexAppServerAdapter 只负责固定 0.139.0 app-server 的进程/JSON-RPC 生命周期、thread/turn 入口和 canonical metadata 捕获。每次受控任务先由 owner create/start run，再由 adapter 产生真实 thread/turn，adapter 将 thread_id、turn_id、provider identity、环境 digest、事件 digest 和 turn result 通过 owner result/replay 接口持久化；adapter 不实现 agent loop、不执行副作用、不把 CODEX_HOME 或 thread history 当 owner state。C7 backup_restore 与 exit 只接受此 flow 产生的 SQLite owner state，不能接受独立 JSON fixture。",
+          "note": "个人开发者/小团队约束：无新增常驻服务；case-local CODEX_HOME、loopback fake Provider、sandbox/read-only、无真实凭证/外部副作用；app-server 协议依据固定 0.139.0 本机 help 与现有 runner，官方页面在本环境 403，保持证据限制。"
+        },
+        {
+          "q": "接入 adapter 后 C7 backup/restore 与退出审计结果是什么？",
+          "answer": "产品 CodexAppServerAdapter 已接入 CompositionOwner；固定 Codex 0.139.0、case-local CODEX_HOME/workspace、loopback-only fake Provider 下，真实 owner-backed flow 先完成 initialize、thread/start、turn/start、turn/completed，再执行 C7。backup_restore 3/3、exit 3/3，合计 6/6 machine pass；每 case 均验证 owner SQLite、thread_id/turn_id、Provider identity、recorded_view、SQLite/state.json/manifest integrity、restore digest/snapshot、export/reimport 和 case-local workspace/owner DB/CODEX_HOME 删除。C7 总体保持 unknown/stop。",
+          "note": "“真实 composition state 不存在”已对 C7 backup/restore 与 exit 的机器控制关闭；仍不覆盖人工 stopwatch、真实候选安装/升级/回滚、NOTICE/商业边界、source-to-binary provenance、远端资源退出及 Codex 原生 approval。"
+        }
+      ],
+      "notes": "已完成产品 Codex app-server adapter 与真实 owner-backed C7 定向回归：backup_restore×3、exit×3 共 6/6 machine pass（含损坏目标显式 replace 恢复）。C7/G7 仍 unknown/stop，人工生命周期、法律/NOTICE、source-to-binary provenance、远端退出和 Codex 原生 approval 继续阻断。正式证据：evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/summary.json。"
+    },
+    "1-8-6": {
+      "id": "1-8-6",
+      "label": "关闭 C7 剩余人工生命周期、许可证与真实退出责任",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "1-8-5 完成后，C7 下一节点保留哪些未签核门？",
+          "answer": "继续保留 C7/G7 unknown/stop：真实单一操作者 stopwatch、真实候选安装与升级/回滚、NOTICE/商业边界审查、source-to-binary provenance、真实远端/账户/retention 退出责任，以及 Codex 原生 approval unknown。1-8-5 只关闭真实 owner state 缺失对 backup/restore 与 exit 机器控制的阻断。",
+          "note": "机器 6/6 pass 不足以签核；个人开发者/小团队约束继续要求维护服务≤3、无额外专家，并把新增外部系统的生命周期和退出成本计入 CBAM。"
+        },
+        {
+          "q": "1-8-6 本轮继续的可执行范围与停止边界是什么？",
+          "answer": "先完成 agent 可验证的本机 artifact/license/依赖清单、发布 provenance evidence ledger、人工计时与原始 log 的关联，以及真实 owner-backed C7 evidence 的索引；不把单一 Apache-2.0 声明升级为完整 NOTICE/商业签核，不把本机 release-level digest 升级为 source-to-binary provenance，不代替操作者执行需要真实账户/全局安装/远端退出的动作。若关键一手证据缺失，C7/G7 继续 unknown/stop。",
+          "note": "ATAM 先关闭可低成本验证的身份、依赖、退出责任边界；CBAM 继续约束为个人开发者/小团队的一个主 Harness + 一个薄 owner，不新增常驻服务或第二 Harness。"
+        },
+        {
+          "q": "本轮本机核对是否关闭 source-to-binary provenance？",
+          "answer": "将 source-to-binary 结论从完全 unknown 收窄为 npm artifact provenance pass-at-release-level：父包与 Darwin arm64 平台包均有 npm SLSA provenance，attestation 的 resolved dependency 指向 rust-v0.139.0 与 commit a7dff904308535e965aee87680c1fc5ef1d19eec；registry tarball SHA-512 与 attestation subject 一致，本机安装树与对应 tarball 内容一致。仍不宣称独立 Sigstore 验签、Homebrew/其他安装渠道等价、源码全部依赖许可证/NOTICE 完整或商业边界通过；这些继续 blocking。",
+          "note": "ATAM：把供应链风险拆成 release artifact provenance、installed-bytes binding、license/NOTICE/commercial 三个可独立验证的敏感点；CBAM：只保留现有 npm/Codex runtime + composition owner，不为审计引入新服务。"
+        },
+        {
+          "q": "1-8-6 本轮证据更新后的 C7 结论是什么？",
+          "answer": "source-to-binary 不再是完全 unknown：root 与 Darwin arm64 npm release artifact 的 SLSA provenance、registry tarball integrity、本机 npm 安装 bytes 已绑定到 rust-v0.139.0 / a7dff904…，记为 pass-at-release-level；Human 在临时 C7 prefix 真实完成 0.138.0→0.139.0→0.138.0，14.35 秒，记为 partial-exercised。C7/G7 仍 unknown/stop，因为 install raw evidence、backup/restore stopwatch、fault diagnosis stopwatch、schema/ledger migration compatibility、完整 NOTICE/商业边界、独立验签/重建、远端账户/retention 退出责任尚未签核。",
+          "note": "ATAM：关闭“发布包无来源绑定”和“完全没有版本切换证据”两个较窄未知，同时保留更高风险的责任边界；CBAM：继续维持一个 Codex runtime + 一个 SQLite composition owner，不添加审计服务。"
+        },
+        {
+          "q": "npm provenance 验证后还剩哪一项供应链未知？",
+          "answer": "npm CLI 10.9.8 在仅含 Codex 0.139.0 的隔离安装中报告 root/platform 两个包的 registry signatures 与 attestations 均验证通过，因此独立 attestation verification 记为 pass-via-npm-cli；仍保留 independent reproducible rebuild=unknown、其他安装渠道不等价、完整 vendor/transitive NOTICE 与商业边界未知。",
+          "note": "ATAM：registry signature/provenance verification 与 independent rebuild 分开计量；CBAM：验证使用临时 package，不引入 cosign、服务或新的常驻依赖。"
+        }
+      ],
+      "notes": "本轮完成 agent 可验证的 C7 证据收敛：固化 Human upgrade/rollback 原始日志（0.138.0→0.139.0→0.138.0，14.35 秒，临时 C7 prefix，单人）；root/platform npm SLSA provenance 与官方 registry tarball integrity 绑定到 rust-v0.139.0 / a7dff904…，本机 npm 安装内容核对通过；npm CLI 10.9.8 隔离验证 2/2 registry signatures、2/2 attestations；新增许可证/provenance 审计文档。结论：source-to-binary 为 pass-at-release-level，independent attestation verification pass-via-npm-cli，升级/回滚为 partial-exercised；C7/G7 仍 unknown/stop。剩余门：fresh install 原始证据、backup/restore 与故障定位真实 stopwatch、schema/ledger 迁移兼容、独立 reproducible rebuild、完整 NOTICE/商业边界、远端账户/retention 退出责任。"
     }
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 15:52:14",
+    "updated": "2026-08-31 17:11:36",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }

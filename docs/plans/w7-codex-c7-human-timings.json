@@ -18,7 +18,7 @@
       "time_threshold": "pass",
       "temporary_c7_prefix": true,
       "fresh_install_confirmed": null,
-      "evidence_status": "reported; version/help/log evidence still to attach"
+      "evidence_status": "operator-reported; fresh-install status and raw install log are still absent"
     },
     "upgrade": {
       "seconds": 14.35,
@@ -28,9 +28,12 @@
       "old_version": "0.138.0",
       "upgraded_version": "0.139.0",
       "rolled_back_version": "0.138.0",
+      "execution_scope": "real npm install/upgrade/rollback in temporary C7 prefix; no global CODEX_HOME or production data",
       "temporary_c7_prefix": true,
       "versions_verified_in_operator_transcript": true,
       "app_server_help_verified_in_operator_transcript": true,
+      "evidence_artifact": "evaluation/evidence/w7-codex-c7/upgrade-rollback.log",
+      "evidence_sha256": "892bc389c35f63e77f4f734ccc3a8920e2653f1460050279208c2a169603520e",
       "evidence_status": "raw log archived and SHA-256 verified; stopwatch remains operator-reported"
     },
     "backup_restore": {
@@ -38,7 +41,7 @@
       "minutes": null,
       "threshold_minutes": 30,
       "time_threshold": "unknown",
-      "evidence_status": "human-confirmed unknown: no real composition owner state exists"
+      "evidence_status": "owner-backed machine backup/restore is 3/3 pass; human stopwatch not reported"
     },
     "fault_diagnosis": {
       "seconds": null,
@@ -48,5 +51,5 @@
       "evidence_status": "not reported"
     }
   },
-  "interpretation": "Reported timing values are below thresholds. They do not by themselves close C7; fresh-install status, command outputs, backup/restore, fault diagnosis, license/NOTICE/commercial review, and source-to-binary provenance remain open."
+  "interpretation": "Reported timing values are below thresholds. They do not by themselves close C7; fresh-install status, backup/restore stopwatch, fault diagnosis, license/NOTICE/commercial review, remote exit responsibility, and independent reproducible rebuild remain open."
 }
