@@ -369,14 +369,39 @@
           "q": "npm provenance 验证后还剩哪一项供应链未知？",
           "answer": "npm CLI 10.9.8 在仅含 Codex 0.139.0 的隔离安装中报告 root/platform 两个包的 registry signatures 与 attestations 均验证通过，因此独立 attestation verification 记为 pass-via-npm-cli；仍保留 independent reproducible rebuild=unknown、其他安装渠道不等价、完整 vendor/transitive NOTICE 与商业边界未知。",
           "note": "ATAM：registry signature/provenance verification 与 independent rebuild 分开计量；CBAM：验证使用临时 package，不引入 cosign、服务或新的常驻依赖。"
+        },
+        {
+          "q": "本轮如何处理剩余阻断？",
+          "answer": "仅推进可由隔离环境复核的证据：归档 fresh-install 原始日志并更新为 partial/unknown；在 owner-backed flow 上增加升级/回滚后的 schema、config、ledger identity 与失败恢复探针；生成 vendor/transitive 依赖许可证/NOTICE 事实清单但不代签法律结论。人工 stopwatch、真实账户/远端 retention 退出、商业边界与独立重建继续 unknown/stop。",
+          "note": "ATAM 将发布身份、状态迁移、依赖归属、人工可操作性和退出责任拆成独立敏感点；CBAM 约束为一个 Codex runtime + 一个薄 SQLite owner，不引入常驻审计服务。"
+        },
+        {
+          "q": "本轮机器验证关闭了哪些 C7 未知？",
+          "answer": "关闭并固化：fresh-install 原始日志与版本/help 证据；同一 SQLite composition owner 跨 0.138.0→0.139.0→0.138.0 的 schema/config/ledger identity 保持和失败恢复 machine contract；vendor/transitive 依赖组件边界与 Cargo.lock 数量盘点。C7/G7 仍 unknown/stop：人工 backup/restore 与 fault diagnosis stopwatch、完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任、Codex native approval。",
+          "note": "ATAM：把安装 raw evidence、owner schema/config/ledger、受控失败、vendor 依赖清单分别收窄，不跨 gate 推断；CBAM：保持一个 Codex runtime + 一个薄 SQLite owner，新增 runner 只用于隔离验证，不引入常驻服务。"
+        },
+        {
+          "q": "本次真实 owner-backed backup/restore stopwatch 是否关闭对应人工门？",
+          "answer": "关闭 backup/restore 的人工时间门：单一操作者在隔离、case-local SQLite composition owner 与 loopback-only Provider 上完成 backup、损坏注入、restore 和 verifier；人工耗时 12.38 秒（0.2063 分钟），低于 ≤30 分钟阈值，verifier status=pass，20/20 operation checks=true。该结果记为 fixture-level human timing pass，不宣称生产 ledger 的 retention、加密、跨版本迁移、远端备份或灾难恢复已签核；C7/G7 仍 unknown/stop，fault diagnosis stopwatch、NOTICE/商业边界和真实远端退出责任等门继续保留。",
+          "note": "基于 evaluation/runs/w7-codex-c7-human-20260831T180332 的 operation-result.json 与 README；人工 stopwatch 与 machine_elapsed 分开记录。"
+        },
+        {
+          "q": "本次预制故障定位 stopwatch 是否关闭对应人工门？",
+          "answer": "关闭预制 fault diagnosis 的人工时间门：单一操作者在固定、case-local、无网络/无凭证/无生产数据的 fault fixture 上完成 fault/run 关联读取、故障分类、影响范围与当前未知判断、bounded next action 编写和保存；耗时 2 分 51.31 秒（2.85517 分钟），低于 ≤30 分钟阈值。human-diagnosis.md 字段与 fault_id/run_id 一致，保留 candidate_provenance_unknown，不将 unknown 静默升级为 pass，且无额外专家。该结果为 fixture-level human timing pass，不宣称生产故障定位、完整供应链审计或 C7/G7 总体签核已完成。",
+          "note": "基于 evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/human-diagnosis.md（SHA-256 7966f449bd94bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341）与同 case 的 machine operation-result.json。"
+        },
+        {
+          "q": "故障诊断人工证据的 canonical SHA-256 是什么？",
+          "answer": "以实际文件重新计算的 SHA-256 为 7966f44994bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341；此前记录中的 7966f449bd94… 为录入笔误，已在 w7-codex-c7-human-timings.json 修正。2 分 51.31 秒和 fixture-level pass 判定不变。",
+          "note": "Canonical file: evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/human-diagnosis.md；以 shasum -a 256 重新核对。"
         }
       ],
-      "notes": "本轮完成 agent 可验证的 C7 证据收敛：固化 Human upgrade/rollback 原始日志（0.138.0→0.139.0→0.138.0，14.35 秒，临时 C7 prefix，单人）；root/platform npm SLSA provenance 与官方 registry tarball integrity 绑定到 rust-v0.139.0 / a7dff904…，本机 npm 安装内容核对通过；npm CLI 10.9.8 隔离验证 2/2 registry signatures、2/2 attestations；新增许可证/provenance 审计文档。结论：source-to-binary 为 pass-at-release-level，independent attestation verification pass-via-npm-cli，升级/回滚为 partial-exercised；C7/G7 仍 unknown/stop。剩余门：fresh install 原始证据、backup/restore 与故障定位真实 stopwatch、schema/ledger 迁移兼容、独立 reproducible rebuild、完整 NOTICE/商业边界、远端账户/retention 退出责任。"
+      "notes": "本轮已收齐一次隔离 fixture-level C7 人工时间证据：backup/restore 12.38 秒（0.2063 分钟）且 20/20 checks=true；预制 fault diagnosis 2 分 51.31 秒（2.85517 分钟），人工诊断文本已保存并与 fault_id/run_id 对齐，unknown 未被升级为 pass。fault diagnosis 文档证据 canonical SHA-256 为 7966f44994bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341。此前 Human upgrade/rollback 仍为 0.138.0→0.139.0→0.138.0、14.35 秒，临时 C7 prefix、单人。机器跨版本 owner probe 与 npm release-level provenance 结论保持不变。C7/G7 仍 unknown/stop：fresh-install 人工计时与 raw log 绑定、完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任和 Codex native approval 仍未签核。ATAM 继续按敏感点拆分证据；CBAM 继续约束为一个 Codex runtime + 一个薄 SQLite composition owner，不引入常驻审计服务。"
     }
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 17:11:36",
+    "updated": "2026-08-31 19:47:35",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }

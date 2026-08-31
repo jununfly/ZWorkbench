@@ -17,8 +17,11 @@
       "threshold_minutes": 90,
       "time_threshold": "pass",
       "temporary_c7_prefix": true,
-      "fresh_install_confirmed": null,
-      "evidence_status": "operator-reported; fresh-install status and raw install log are still absent"
+      "fresh_install_confirmed": true,
+      "machine_elapsed_seconds": 2.314,
+      "machine_evidence_artifact": "evaluation/evidence/w7-codex-c7/fresh-install.log",
+      "machine_evidence_sha256": "01d7c817e51e76a9081acf6e48fcd5efae408782790ba60703b396b9433cf3b5",
+      "evidence_status": "operator timing reported; isolated fresh-install identity/version/help/raw log also archived, but the machine log is not the operator stopwatch"
     },
     "upgrade": {
       "seconds": 14.35,
@@ -37,19 +40,27 @@
       "evidence_status": "raw log archived and SHA-256 verified; stopwatch remains operator-reported"
     },
     "backup_restore": {
-      "seconds": null,
-      "minutes": null,
+      "seconds": 12.38,
+      "minutes": 0.2063333333,
       "threshold_minutes": 30,
-      "time_threshold": "unknown",
-      "evidence_status": "owner-backed machine backup/restore is 3/3 pass; human stopwatch not reported"
+      "time_threshold": "pass",
+      "operator_stopwatch_reported": true,
+      "temporary_case_local_owner": true,
+      "evidence_artifact": "evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/operation-result.json",
+      "evidence_sha256": "82da44e18db730b2baac6596ca66d7b5e096e99bfad261cc884e11e1cc5c62c3",
+      "evidence_status": "single operator reported 12.38 seconds; verification output status pass and all 20 operation checks true; machine elapsed is recorded separately"
     },
     "fault_diagnosis": {
-      "seconds": null,
-      "minutes": null,
+      "seconds": 171.31,
+      "minutes": 2.8551666667,
       "threshold_minutes": 30,
-      "time_threshold": "unknown",
-      "evidence_status": "not reported"
+      "time_threshold": "pass",
+      "operator_stopwatch_reported": true,
+      "human_diagnosis_artifact": "evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/human-diagnosis.md",
+      "human_diagnosis_sha256": "7966f44994bd5ea93a2da1bf03fca580d932f3444f568bb60e2492c27d2fe341",
+      "evidence_status": "single operator reported 2 minutes 51.31 seconds; diagnosis fields match the frozen fault/run fixture and unknown is preserved; machine elapsed is recorded separately",
+      "machine_evidence_artifact": "evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/operation/operation-result.json"
     }
   },
-  "interpretation": "Reported timing values are below thresholds. They do not by themselves close C7; fresh-install status, backup/restore stopwatch, fault diagnosis, license/NOTICE/commercial review, remote exit responsibility, and independent reproducible rebuild remain open."
+  "interpretation": "Reported timing values are below thresholds for install, upgrade/rollback, the isolated owner-backed backup/restore exercise, and the predefined fault diagnosis exercise. The backup/restore and fault diagnosis human timing items are closed at fixture level; machine elapsed time does not replace the operator stopwatch. Fresh-install timing is not bound to the archived raw log, and license/NOTICE/commercial review, remote exit responsibility, and independent reproducible rebuild remain open."
 }
