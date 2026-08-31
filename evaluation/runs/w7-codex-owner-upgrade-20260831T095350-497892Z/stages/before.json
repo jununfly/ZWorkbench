@@ -1,0 +1,26 @@
+{
+  "stage": "before",
+  "version": "0.138.0",
+  "run_id": "w7-owner-upgrade-before",
+  "thread_id": "01a0573d-e240-7142-a21d-80fe3baa315d",
+  "turn_id": "01a0573d-e24f-7fb0-8222-fbe8d2ff6078",
+  "text": "fixture-ok",
+  "status": "completed",
+  "event_digest": "9b8ca82bf43a9dffa1e16ada57ce41aec06e11b04106f717b03355b5e65c675e",
+  "environment_digest": "6363ae82925203f96d77e991bce6c4bae98284e2d6abe0a8a720dd3f36cfcccd",
+  "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+  "machine_elapsed_seconds": 0.650657,
+  "checkpoint": {
+    "stage": "before",
+    "run_id": "w7-owner-upgrade-before",
+    "schema": "zworkbench-composition-owner/v1",
+    "schema_version": 1,
+    "state_digest": "ab1f5fb30c8e4ff7ecb773642780b1d6689971ad9f182dcced420a7afc8b4db2",
+    "run_count": 1,
+    "event_count": 8,
+    "run_ids": [
+      "w7-owner-upgrade-before"
+    ],
+    "prior_runs_preserved": true
+  }
+}

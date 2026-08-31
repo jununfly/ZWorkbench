@@ -67,6 +67,7 @@ composition approval owner 不可用。停止时保留当前日志和状态，�
 |---|---:|---|---|---|
 | install | `13.64 秒`（`0.2273 分钟`） | 时间项通过（≤90 分钟） | 临时 C7 prefix；是否全新安装待确认 | 版本/help/日志待关联 |
 | upgrade + rollback | `14.35 秒`（`0.2392 分钟`） | 时间项通过（≤30 分钟） | `0.138.0 → 0.139.0 → 0.138.0`，临时 C7 prefix，单人 | 原始 log 已归档并完成 SHA-256 校验 |
+| backup / restore | `12.38 秒`（`0.2063 分钟`） | 时间项通过（≤30 分钟） | 隔离 owner-backed case，单人，loopback-only Provider | `status: pass`，20/20 checks；[evidence](../../evaluation/runs/w7-codex-c7-human-20260831T180332/README.md) |
 
 机器可读副本：[`w7-codex-c7-human-timings.json`](./w7-codex-c7-human-timings.json)。这些记录只关闭时间阈值，不等于 C7 签核。
 
@@ -85,8 +86,11 @@ composition approval owner 不可用。停止时保留当前日志和状态，�
    [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)。
 7. 保存日志并停止 stopwatch。
 
-安装 gate 只回答“单人能否完成固定 release 的真实安装”。它不证明 app-server
-原生调度、approval、Provider routing 或 replay 能力。
+安装 gate 只回答“单人能否完成固定 release 的真实安装”。本机另有一次隔离 fresh
+install：`0.139.0`、version/help 通过、机器 wall clock `2.314s`，原始日志 SHA-256
+为 `01d7c817e51e76a9081acf6e48fcd5efae408782790ba60703b396b9433cf3b5`。该机器时间
+不能代替人工 stopwatch。它不证明 app-server 原生调度、approval、Provider routing
+或 replay 能力。
 
 ## 5. Gate B：真实升级与回滚（人工执行）
 
@@ -104,14 +108,23 @@ composition approval owner 不可用。停止时保留当前日志和状态，�
 返回码为 0。任何 schema migration、配置改写或 ledger 损坏都使 gate `fail` 或
 `unknown/stop`，不得继续触发危险动作。
 
+补充的隔离 machine probe 已在同一 SQLite owner 上完成上述边界的最小验证：三个版本
+阶段的 owner schema 都是 `zworkbench-composition-owner/v1`，adapter config identity
+保持不变，升级前 run 在回滚后仍保留；中间受控 app-server 启动失败被持久化为
+`failed` 且无 effect，owner reopen 后 digest 一致。证据见第 10 节的
+`upgrade compatibility summary`。这只是 machine contract，不是该 gate 的人工计时签核。
+
 ## 6. Gate C：backup / restore
 
 该 gate 的真实对象是 composition owner 管理的 durable state；Codex 原生
 ThreadItems 不得被当作唯一账本。
 
-当前 Human 已确认：真实 composition state 不存在，因此本 Gate 当前结果固定为
-`unknown`。不要使用 `evaluation/fixtures`、机器审计目录或 Codex `CODEX_HOME`
-替代；只有实际 composition owner 接入真实工作台任务流后，才重新执行本 Gate。
+当前已有真实 composition owner：SQLite 文件由 owner 持有 run、approval、effect、
+result、replay metadata 和 event ledger。接入 Codex adapter 后，owner-backed machine
+backup/restore 已 `3/3 pass`，并且 exit machine control 已 `3/3 pass`；单一操作者随后在
+隔离 owner-backed case 上完成 backup/restore，耗时 `12.38 秒`（`0.2063 分钟`），时间项
+通过。备份保留/加密/远端责任和真实灾难恢复仍未签核，不能把该 fixture 结果写成完整
+C7 signoff。
 
 1. 开始 stopwatch；冻结新触发，记录当前 C2-C6 identity、schema、版本和 service
    manifest。
@@ -141,7 +154,11 @@ ThreadItems 不得被当作唯一账本。
    stopwatch。
 
 故障定位 gate 的通过标准是单一操作者能在 ≤30 分钟内得到可复核的 bounded
-diagnosis，不是必须修复所有故障。
+diagnosis，不是必须修复所有故障。机器 fixture 已验证 fault/run 关联和 bounded
+diagnosis；跨版本 probe 还验证了受控 adapter startup failure 会被 owner 持久化为
+terminal `failed`。本轮单一操作者完成同一隔离 fixture 的读取、判断和保存诊断，耗时
+`2 分 51.31 秒`（`2.85517 分钟`），时间项通过；证据见
+`evaluation/runs/w7-codex-c7-20260830T172916-565440Z/cases/fault_diagnosis/repeat-01/human-diagnosis.md`。
 
 ## 8. 退出与许可证补充审计
 
@@ -171,7 +188,7 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 - Codex native approval request 缺失被误写成 native pass；
 - 组合 approval owner 不唯一、token 可重放、scope 不匹配仍有 effect，或未知请求未 deny；
 - 升级/回滚后 run、effect、result、event 或 replay identity 漂移；
-- 真实安装/升级/restore/diagnosis 未由单一操作者用 stopwatch 完成；
+- 真实安装或故障定位未由单一操作者用 stopwatch 完成；
 - 服务数超过 3、需要额外专家、或维护责任无法归属；
 - NOTICE/商业边界/provenance 任何一项仍无签核；
 - 退出只核对 case-local 文件，却声称真实账户、远端资源或 retention 已清理。
@@ -183,10 +200,10 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 | C4 composition path | `pass-with-composition`（证据：`w7-codex-c4-approval-20260831T032346-194000Z`） |
 | C4 native approval | `unknown/not-required-for-composition` |
 | C7 machine contract | `18/18 pass`（最新 run 见 `w7-codex-c7-20260831T032735-294299Z`） |
-| C7 human timing | `partial-evidence`：install `13.64 秒`与 upgrade/rollback `14.35 秒`已报告；backup/restore、故障定位和 install 原始 log 未填 |
-| C7 real install | `partial/unknown`：临时 prefix 安装耗时 `13.64 秒` 已报告，fresh-install identity/raw log 未固化 |
-| C7 real upgrade/rollback | `partial-exercised`：临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，`14.35 秒`；版本/help 原始日志已固化；schema/ledger 迁移未验证 |
-| C7 license/NOTICE/commercial | `unknown` |
+| C7 human timing | `partial-evidence`：install `13.64 秒`、upgrade/rollback `14.35 秒`、隔离 owner-backed backup/restore `12.38 秒`、预制故障定位 `2 分 51.31 秒`均已报告并低于阈值；fresh-install raw log 已归档但人工计时尚未与其绑定 |
+| C7 real install | `partial/unknown`：临时 prefix 安装耗时 `13.64 秒` 已报告；fresh-install `0.139.0` raw log 和机器 `2.314s` 已固化，但未绑定同一人工 stopwatch |
+| C7 real upgrade/rollback | `partial-exercised`：临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，`14.35 秒`；版本/help 原始日志和同一 owner 跨版本 machine probe 已固化；生产 migration 未验证 |
+| C7 license/NOTICE/commercial | `inventory-only / unknown`：vendor/transitive ledger 已生成，逐包 clearance 和商业/API/商标审查未签核 |
 | C7 source-to-binary provenance | `pass-at-release-level`（npm SLSA + npm CLI 验签 + 本机 npm bytes binding）；独立重建 `unknown` |
 | overall | **`unknown/stop` until all missing gates are signed** |
 
@@ -196,4 +213,8 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 - [`w7-codex-c4-approval-findings.md`](./w7-codex-c4-approval-findings.md)
 - [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)
 - [`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)
+- [`fresh-install.log`](../../evaluation/evidence/w7-codex-c7/fresh-install.log)
+- [`w7-codex-c7-dependency-ledger.md`](./research/w7-codex-c7-dependency-ledger.md)
+- [`upgrade compatibility summary`](../../evaluation/runs/w7-codex-owner-upgrade-20260831T095350-497892Z/summary.json)
+- [`run_codex_owner_upgrade_compat.py`](../../evaluation/runner/run_codex_owner_upgrade_compat.py)
 - [`run_codex_c7.py`](../../evaluation/runner/run_codex_c7.py)

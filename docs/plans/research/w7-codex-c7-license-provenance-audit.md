@@ -17,7 +17,7 @@
 | 独立 attestation 验签 | `pass-via-npm-cli` | 隔离临时项目运行 `npm audit signatures`，root/platform 两个包的 registry signatures 与 attestations 均验证通过；证据：[`npm-audit-signatures.txt`](../../../evaluation/evidence/w7-codex-c7/npm-audit-signatures.txt) |
 | 独立 reproducible rebuild | `unknown` | 未从源码独立构建并比对二进制 |
 | LICENSE 声明 | `pass-as-declared` | Codex 源码 LICENSE、root package 和 platform package metadata 均为 Apache-2.0 |
-| 完整 NOTICE / 嵌入组件归属 | `unknown` | 发布包没有 LICENSE/NOTICE 文件；vendor 中还有 ripgrep、zsh 等组件，尚未完成归属清单 |
+| 完整 NOTICE / 嵌入组件归属 | `inventory-only / unknown` | 已建立 vendor/transitive 依赖 ledger；发布包没有 LICENSE/NOTICE 文件，逐包归属和再分发文本仍未完成 |
 | 商业 / API / 商标边界 | `unknown` | Apache-2.0 不覆盖服务条款、API 使用、商标和组织内部合规边界 |
 
 因此，路线图中的 provenance 阻断从“没有发布证明”收窄为“npm release artifact
@@ -82,6 +82,12 @@ invocation: https://github.com/openai/codex/actions/runs/27229104633/attempts/1
 
 ## 4. 许可证与 NOTICE 盘点
 
+本轮已生成 [`w7-codex-c7-dependency-ledger.md`](./w7-codex-c7-dependency-ledger.md) 及其
+JSON 副本。ledger 记录了 root/platform package、Codex vendor binary、ripgrep、PCRE2、
+zsh 的版本/路径/摘要和一手许可证来源，并固定了 release commit 的 Cargo.lock 总量：
+`1332` entries，其中 workspace `123`、crates.io registry `1197`、git `12`。这把
+“完全没有盘点”收窄为“组件边界已盘点”。
+
 | 对象 | 观察 | 判定 |
 |---|---|---|
 | Codex 源码仓库 | 固定 commit 的 `LICENSE` 为 Apache License 2.0 | 声明通过 |
@@ -90,7 +96,7 @@ invocation: https://github.com/openai/codex/actions/runs/27229104633/attempts/1
 | npm package 文件 | root/platform 安装目录均未发现 `LICENSE*`、`NOTICE*`、`THIRD-PARTY*` | 再分发材料不完整，保持 unknown |
 | vendor `rg` | 本机 `ripgrep 15.1.0`，启用 PCRE2 | 需要单独归属/许可证核对 |
 | vendor zsh | 本机 `zsh 5.9.0.3-test` | 需要单独归属/许可证核对 |
-| Rust/Cargo 依赖树 | 源码 workspace 声明 Apache-2.0，但包含大量 transitive crates | 尚未生成完整 SPDX/NOTICE 清单 |
+| Rust/Cargo 依赖树 | 固定 Cargo.lock 共 `1332` entries，分类和摘要已存 ledger | 尚未完成逐包 SPDX/NOTICE 清单 |
 
 下一步合规签核需要从固定发布包/源码锁定文件生成完整组件清单，并逐项确认许可证、
 版权声明、NOTICE 再分发义务、商标限制、OpenAI 服务/API 条款和组织商业使用边界。
@@ -104,7 +110,7 @@ invocation: https://github.com/openai/codex/actions/runs/27229104633/attempts/1
    npm CLI 的 registry signature/provenance verification 已通过；
 2. 若要求“可复现构建”，从固定 commit 按 release workflow 重建并比较目标平台
    artifact；否则把目标明确降级为 `release-artifact provenance`；
-3. 完成 vendor/ transitive dependency 的许可证与 NOTICE ledger；
+3. 由合规责任人完成 vendor/transitive dependency 的逐包许可证、版权和 NOTICE clearance；当前 inventory 已生成但不能作为签核；
 4. 完成商业、API、商标和再分发边界签核；
 5. 将真实账户、Provider 数据、远端 backup/retention 和删除责任加入退出清单。
 

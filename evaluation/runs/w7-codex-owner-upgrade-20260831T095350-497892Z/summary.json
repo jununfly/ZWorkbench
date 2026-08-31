@@ -1,0 +1,386 @@
+{
+  "schema": "zworkbench-w7-codex-owner-upgrade/v1",
+  "run_id": "w7-codex-owner-upgrade-20260831T095350-497892Z",
+  "started_at": "2026-08-31T09:53:50.497892+00:00",
+  "classification": "acceptance/evaluation",
+  "versions": {
+    "old": "0.138.0",
+    "current": "0.139.0",
+    "rollback": "0.138.0"
+  },
+  "temporary_root": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai",
+  "temporary_prefix": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix",
+  "owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-upgrade-20260831T095350-497892Z/composition.sqlite3",
+  "network": "npm registry only for isolated package install; provider is loopback-only",
+  "real_credentials": false,
+  "production_data": false,
+  "status": "machine-pass / human-unknown",
+  "temporary_install": {
+    "npm_prefix": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix",
+    "deleted_after_run": true,
+    "versions": {
+      "before": {
+        "command": [
+          "npm",
+          "install",
+          "--global",
+          "@openai/codex@0.138.0"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 35.365937,
+        "stdout": "\nadded 2 packages in 35s\n",
+        "stderr": "npm notice\nnpm notice New major version of npm available! 10.9.8 -> 12.0.2\nnpm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2\nnpm notice To update run: npm install -g npm@12.0.2\nnpm notice\n",
+        "stdout_sha256": "eb1b132dc50081055a2da8e57832835848116b15c27086ff76b37d9f98308002",
+        "stderr_sha256": "ea1459f5efae90125f581fb4ad7a08d389754aa1861589940e246843f777cae8",
+        "version": "0.138.0",
+        "prefix": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix",
+        "executable": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+        "package_version": "0.138.0",
+        "platform_package_version": "0.138.0-darwin-arm64",
+        "artifacts": {
+          "wrapper": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+            "sha256": "d3be844c45c4fd89392536e56e1010963f94785592596b50cd0c45bb8a341406"
+          },
+          "root_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/package.json",
+            "sha256": "79377af3a0b647fff8b45899807b00e78fc5cb4548784d10a1801a66b792d861"
+          },
+          "platform_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
+            "sha256": "9de5468bd6a938ef966668e13d97fc7c737ae8e410e178642e99d8eda96b3cbf"
+          },
+          "vendor_binary": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+            "sha256": "708f8e554c28bc4bb4a01270cbaea99a5f683e02ebcb0b77511880d3d3a15c5a"
+          }
+        }
+      },
+      "after_upgrade": {
+        "command": [
+          "npm",
+          "install",
+          "--global",
+          "@openai/codex@0.139.0"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 38.492093,
+        "stdout": "\nchanged 2 packages in 38s\n",
+        "stderr": "",
+        "stdout_sha256": "6b307c483ac6446956b9800f0f717f465f95a460f9a13fe95290c6f007322724",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version": "0.139.0",
+        "prefix": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix",
+        "executable": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+        "package_version": "0.139.0",
+        "platform_package_version": "0.139.0-darwin-arm64",
+        "artifacts": {
+          "wrapper": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+            "sha256": "d3be844c45c4fd89392536e56e1010963f94785592596b50cd0c45bb8a341406"
+          },
+          "root_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/package.json",
+            "sha256": "c6e68915c8c7c2c5169ccb6d326789850a9a540875cbc3b04dc3df4d775e7412"
+          },
+          "platform_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
+            "sha256": "e690d7640a91f7045f621e18aa493e23a9b390e239834988eb6096676d21ca3a"
+          },
+          "vendor_binary": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+            "sha256": "c6ede9ef9b672ef5a99384e507bec5476cbb60934c03f19cbd0355d9fdd83915"
+          }
+        }
+      },
+      "after_rollback": {
+        "command": [
+          "npm",
+          "install",
+          "--global",
+          "@openai/codex@0.138.0"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 1.183866,
+        "stdout": "\nchanged 2 packages in 1s\n",
+        "stderr": "",
+        "stdout_sha256": "3f95bb04881b1b7e50463e7107a6310acc75aee85ff8355b0504fe7c757e9663",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "version": "0.138.0",
+        "prefix": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix",
+        "executable": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+        "package_version": "0.138.0",
+        "platform_package_version": "0.138.0-darwin-arm64",
+        "artifacts": {
+          "wrapper": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+            "sha256": "d3be844c45c4fd89392536e56e1010963f94785592596b50cd0c45bb8a341406"
+          },
+          "root_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/package.json",
+            "sha256": "79377af3a0b647fff8b45899807b00e78fc5cb4548784d10a1801a66b792d861"
+          },
+          "platform_package": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
+            "sha256": "9de5468bd6a938ef966668e13d97fc7c737ae8e410e178642e99d8eda96b3cbf"
+          },
+          "vendor_binary": {
+            "path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+            "sha256": "708f8e554c28bc4bb4a01270cbaea99a5f683e02ebcb0b77511880d3d3a15c5a"
+          }
+        }
+      }
+    }
+  },
+  "observations": {
+    "before": {
+      "version": "0.138.0",
+      "version_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "--version"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 2.191447,
+        "stdout": "codex-cli 0.138.0\n",
+        "stderr": "",
+        "stdout_sha256": "a341b4562835d1248b663854fff1e533cd9302e879c7429d2929de921f8637cc",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "help_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "app-server",
+          "--help"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 0.074177,
+        "stdout": "[experimental] Run the app server or related tooling\n\nUsage: codex app-server [OPTIONS] [COMMAND]\n\nCommands:\n  daemon                Manage the local app-server daemon\n  proxy                 Proxy stdio bytes to the running app-server control socket\n  generate-ts           [experimental] Generate TypeScript bindings for the app server protocol\n  generate-json-schema  [experimental] Generate JSON Schema for the app server protocol\n  help                  Print this message or the help of the given subcommand(s)\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n      --listen <URL>\n          Transport endpoint URL. Supported values: `stdio://` (default), `unix://`, `unix://PATH`,\n          `ws://IP:PORT`, `off`\n          \n          [default: stdio://]\n\n      --stdio\n          Use stdio as the transport (equivalent to `--listen stdio://`)\n\n      --analytics-default-enabled\n          Controls whether analytics are enabled by default.\n          \n          Analytics are disabled by default for app-server. Users have to explicitly opt in via the\n          `analytics` section in the config.toml file.\n          \n          However, for first-party use cases like the VSCode IDE extension, we default analytics to\n          be enabled by default by setting this flag. Users can still opt out by setting this in\n          their config.toml:\n          \n          ```toml [analytics] enabled = false ```\n          \n          See https://developers.openai.com/codex/config-advanced/#metrics for more details.\n\n      --ws-auth <MODE>\n          Websocket auth mode for non-loopback listeners\n          \n          [possible values: capability-token, signed-bearer-token]\n\n      --ws-token-file <PATH>\n          Absolute path to the capability-token file\n\n      --ws-token-sha256 <HEX>\n          Hex-encoded SHA-256 digest of the capability token\n\n      --ws-shared-secret-file <PATH>\n          Absolute path to the shared secret file for signed JWT bearer tokens\n\n      --ws-issuer <ISSUER>\n          Expected issuer for signed JWT bearer tokens\n\n      --ws-audience <AUDIENCE>\n          Expected audience for signed JWT bearer tokens\n\n      --ws-max-clock-skew-seconds <SECONDS>\n          Maximum clock skew when validating signed JWT bearer tokens\n\n  -h, --help\n          Print help (see a summary with '-h')\n",
+        "stderr": "",
+        "stdout_sha256": "ebddcbae81d5d6520609ad5605d069ddaf1d4c02cc97cc99d2585757aa4364ff",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "version_pass": true,
+      "app_server_help_pass": true
+    },
+    "after_upgrade": {
+      "version": "0.139.0",
+      "version_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "--version"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 1.849745,
+        "stdout": "codex-cli 0.139.0\n",
+        "stderr": "",
+        "stdout_sha256": "6aca1808fd3f58e5ab8e929b8d54d75d1d8c4bdc9b2663300df589e37020cc4f",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "help_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "app-server",
+          "--help"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 0.077954,
+        "stdout": "[experimental] Run the app server or related tooling\n\nUsage: codex app-server [OPTIONS] [COMMAND]\n\nCommands:\n  daemon                Manage the local app-server daemon\n  proxy                 Proxy stdio bytes to the running app-server control socket\n  generate-ts           [experimental] Generate TypeScript bindings for the app server protocol\n  generate-json-schema  [experimental] Generate JSON Schema for the app server protocol\n  help                  Print this message or the help of the given subcommand(s)\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n      --listen <URL>\n          Transport endpoint URL. Supported values: `stdio://` (default), `unix://`, `unix://PATH`,\n          `ws://IP:PORT`, `off`\n          \n          [default: stdio://]\n\n      --stdio\n          Use stdio as the transport (equivalent to `--listen stdio://`)\n\n      --analytics-default-enabled\n          Controls whether analytics are enabled by default.\n          \n          Analytics are disabled by default for app-server. Users have to explicitly opt in via the\n          `analytics` section in the config.toml file.\n          \n          However, for first-party use cases like the VSCode IDE extension, we default analytics to\n          be enabled by default by setting this flag. Users can still opt out by setting this in\n          their config.toml:\n          \n          ```toml [analytics] enabled = false ```\n          \n          See https://developers.openai.com/codex/config-advanced/#metrics for more details.\n\n      --ws-auth <MODE>\n          Websocket auth mode for non-loopback listeners\n          \n          [possible values: capability-token, signed-bearer-token]\n\n      --ws-token-file <PATH>\n          Absolute path to the capability-token file\n\n      --ws-token-sha256 <HEX>\n          Hex-encoded SHA-256 digest of the capability token\n\n      --ws-shared-secret-file <PATH>\n          Absolute path to the shared secret file for signed JWT bearer tokens\n\n      --ws-issuer <ISSUER>\n          Expected issuer for signed JWT bearer tokens\n\n      --ws-audience <AUDIENCE>\n          Expected audience for signed JWT bearer tokens\n\n      --ws-max-clock-skew-seconds <SECONDS>\n          Maximum clock skew when validating signed JWT bearer tokens\n\n  -h, --help\n          Print help (see a summary with '-h')\n",
+        "stderr": "",
+        "stdout_sha256": "ebddcbae81d5d6520609ad5605d069ddaf1d4c02cc97cc99d2585757aa4364ff",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "version_pass": true,
+      "app_server_help_pass": true
+    },
+    "after_rollback": {
+      "version": "0.138.0",
+      "version_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "--version"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 1.679453,
+        "stdout": "codex-cli 0.138.0\n",
+        "stderr": "",
+        "stdout_sha256": "a341b4562835d1248b663854fff1e533cd9302e879c7429d2929de921f8637cc",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "help_check": {
+        "command": [
+          "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zworkbench-c7-upgrade-nybtl_ai/npm-prefix/bin/codex",
+          "app-server",
+          "--help"
+        ],
+        "returncode": 0,
+        "elapsed_seconds": 0.078613,
+        "stdout": "[experimental] Run the app server or related tooling\n\nUsage: codex app-server [OPTIONS] [COMMAND]\n\nCommands:\n  daemon                Manage the local app-server daemon\n  proxy                 Proxy stdio bytes to the running app-server control socket\n  generate-ts           [experimental] Generate TypeScript bindings for the app server protocol\n  generate-json-schema  [experimental] Generate JSON Schema for the app server protocol\n  help                  Print this message or the help of the given subcommand(s)\n\nOptions:\n  -c, --config <key=value>\n          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.\n          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed\n          as TOML. If it fails to parse as TOML, the raw string is used as a literal.\n          \n          Examples: - `-c model=\"o3\"` - `-c 'sandbox_permissions=[\"disk-full-read-access\"]'` - `-c\n          shell_environment_policy.inherit=all`\n\n      --enable <FEATURE>\n          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`\n\n      --disable <FEATURE>\n          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`\n\n      --strict-config\n          Error out when config.toml contains fields that are not recognized by this version of\n          Codex\n\n      --listen <URL>\n          Transport endpoint URL. Supported values: `stdio://` (default), `unix://`, `unix://PATH`,\n          `ws://IP:PORT`, `off`\n          \n          [default: stdio://]\n\n      --stdio\n          Use stdio as the transport (equivalent to `--listen stdio://`)\n\n      --analytics-default-enabled\n          Controls whether analytics are enabled by default.\n          \n          Analytics are disabled by default for app-server. Users have to explicitly opt in via the\n          `analytics` section in the config.toml file.\n          \n          However, for first-party use cases like the VSCode IDE extension, we default analytics to\n          be enabled by default by setting this flag. Users can still opt out by setting this in\n          their config.toml:\n          \n          ```toml [analytics] enabled = false ```\n          \n          See https://developers.openai.com/codex/config-advanced/#metrics for more details.\n\n      --ws-auth <MODE>\n          Websocket auth mode for non-loopback listeners\n          \n          [possible values: capability-token, signed-bearer-token]\n\n      --ws-token-file <PATH>\n          Absolute path to the capability-token file\n\n      --ws-token-sha256 <HEX>\n          Hex-encoded SHA-256 digest of the capability token\n\n      --ws-shared-secret-file <PATH>\n          Absolute path to the shared secret file for signed JWT bearer tokens\n\n      --ws-issuer <ISSUER>\n          Expected issuer for signed JWT bearer tokens\n\n      --ws-audience <AUDIENCE>\n          Expected audience for signed JWT bearer tokens\n\n      --ws-max-clock-skew-seconds <SECONDS>\n          Maximum clock skew when validating signed JWT bearer tokens\n\n  -h, --help\n          Print help (see a summary with '-h')\n",
+        "stderr": "",
+        "stdout_sha256": "ebddcbae81d5d6520609ad5605d069ddaf1d4c02cc97cc99d2585757aa4364ff",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "version_pass": true,
+      "app_server_help_pass": true
+    }
+  },
+  "config_identity": {
+    "value": {
+      "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+      "model": "fake-model",
+      "model_provider": "ollama",
+      "sandbox": "read-only",
+      "approval_policy": "never",
+      "config_overrides": [
+        "oss_provider=\"ollama\"",
+        "model_provider=\"ollama\"",
+        "model=\"fake-model\""
+      ],
+      "disabled_features": [
+        "plugins",
+        "apps"
+      ],
+      "provider": {
+        "provider": "w7-owner-upgrade-loopback",
+        "model": "fake-model",
+        "endpoint": "http://127.0.0.1:11434",
+        "transport": "loopback-only"
+      }
+    },
+    "sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45"
+  },
+  "stages": [
+    {
+      "stage": "before",
+      "version": "0.138.0",
+      "run_id": "w7-owner-upgrade-before",
+      "thread_id": "01a0573d-e240-7142-a21d-80fe3baa315d",
+      "turn_id": "01a0573d-e24f-7fb0-8222-fbe8d2ff6078",
+      "text": "fixture-ok",
+      "status": "completed",
+      "event_digest": "9b8ca82bf43a9dffa1e16ada57ce41aec06e11b04106f717b03355b5e65c675e",
+      "environment_digest": "6363ae82925203f96d77e991bce6c4bae98284e2d6abe0a8a720dd3f36cfcccd",
+      "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+      "machine_elapsed_seconds": 0.650657,
+      "checkpoint": {
+        "stage": "before",
+        "run_id": "w7-owner-upgrade-before",
+        "schema": "zworkbench-composition-owner/v1",
+        "schema_version": 1,
+        "state_digest": "ab1f5fb30c8e4ff7ecb773642780b1d6689971ad9f182dcced420a7afc8b4db2",
+        "run_count": 1,
+        "event_count": 8,
+        "run_ids": [
+          "w7-owner-upgrade-before"
+        ],
+        "prior_runs_preserved": true
+      }
+    },
+    {
+      "stage": "after-upgrade",
+      "version": "0.139.0",
+      "run_id": "w7-owner-upgrade-after-upgrade",
+      "thread_id": "01a0573e-8351-7ef2-b75d-31cff5883998",
+      "turn_id": "01a0573e-835f-71c3-9009-fc20f01f51f5",
+      "text": "fixture-ok",
+      "status": "completed",
+      "event_digest": "8986db567812709a451813555ed66c9d0c15a0f0243372774ab0123b8cdc4335",
+      "environment_digest": "94b366107f292bb1f0ea56a99e79e2ebb320efb6ac92e6a3000e10729eeaa521",
+      "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+      "machine_elapsed_seconds": 0.644763,
+      "checkpoint": {
+        "stage": "after-upgrade",
+        "run_id": "w7-owner-upgrade-after-upgrade",
+        "schema": "zworkbench-composition-owner/v1",
+        "schema_version": 1,
+        "state_digest": "a70f0aad9049a884d3201e52566a8685d42b8dfdfefec3ecf8078cde57f0f9f6",
+        "run_count": 2,
+        "event_count": 16,
+        "run_ids": [
+          "w7-owner-upgrade-after-upgrade",
+          "w7-owner-upgrade-before"
+        ],
+        "prior_runs_preserved": true
+      }
+    },
+    {
+      "stage": "after-rollback",
+      "version": "0.138.0",
+      "run_id": "w7-owner-upgrade-after-rollback",
+      "thread_id": "01a0573e-9295-7553-91d1-21a4e97a3305",
+      "turn_id": "01a0573e-92a1-7662-9e0e-c7b1257eb3fa",
+      "text": "fixture-ok",
+      "status": "completed",
+      "event_digest": "02346fc65d789a37add3967f3b3f63278ddd656f83f7407f481cfd71c8bbbf87",
+      "environment_digest": "78ddd2f4432c70ec239a469da15cc41b34e6283d5bf67c633ee491b4f90333de",
+      "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+      "machine_elapsed_seconds": 0.635295,
+      "checkpoint": {
+        "stage": "after-rollback",
+        "run_id": "w7-owner-upgrade-after-rollback",
+        "schema": "zworkbench-composition-owner/v1",
+        "schema_version": 1,
+        "state_digest": "087800966a7b586dbe2f0122b513cda7dddaf31bb1df347b207267fb185d0242",
+        "run_count": 4,
+        "event_count": 28,
+        "run_ids": [
+          "w7-owner-upgrade-after-rollback",
+          "w7-owner-upgrade-after-upgrade",
+          "w7-owner-upgrade-before",
+          "w7-owner-upgrade-controlled-failure"
+        ],
+        "prior_runs_preserved": true
+      }
+    }
+  ],
+  "controlled_failure": {
+    "run_id": "w7-owner-upgrade-controlled-failure",
+    "expected_failure": true,
+    "error": {
+      "type": "CodexProtocolError",
+      "message": "initialize failed: {'code': -32099, 'message': 'controlled startup fault'}"
+    },
+    "persisted_status": "failed",
+    "machine_elapsed_seconds": 0.23632,
+    "prior_runs_preserved": true,
+    "owner_schema": "zworkbench-composition-owner/v1",
+    "failure_is_terminal": true,
+    "no_physical_effects": true
+  },
+  "owner_final": {
+    "schema": "zworkbench-composition-owner/v1",
+    "schema_version": 1,
+    "state_digest": "087800966a7b586dbe2f0122b513cda7dddaf31bb1df347b207267fb185d0242",
+    "run_count": 4,
+    "event_count": 28,
+    "effect_count": 0
+  },
+  "owner_reopen": {
+    "state_digest": "087800966a7b586dbe2f0122b513cda7dddaf31bb1df347b207267fb185d0242",
+    "run_count": 4,
+    "event_count": 28
+  },
+  "checks": {
+    "all_install_commands_pass": true,
+    "all_expected_package_versions": true,
+    "all_platform_package_versions": true,
+    "all_version_and_help_checks_pass": true,
+    "same_owner_schema_across_stages": true,
+    "same_config_identity_across_stages": true,
+    "prior_ledger_preserved_after_upgrade": true,
+    "prior_ledger_preserved_after_rollback": true,
+    "controlled_failure_persisted_fail_closed": true,
+    "rollback_run_completed": true,
+    "all_expected_runs_present": true,
+    "state_survives_owner_reopen": true,
+    "network_boundary_is_loopback_for_provider": true,
+    "real_credentials_false": true,
+    "production_data_false": true
+  },
+  "human_timing": {
+    "status": "unknown",
+    "note": "Runner wall clock is not a single-operator stopwatch."
+  },
+  "interpretation": "The same SQLite composition owner retained schema, configuration identity, prior ledger entries, and a failed adapter run across isolated old/current/rollback Codex installs. This is machine evidence only; it does not close human timing, legal/NOTICE, commercial, remote-exit, or independent-rebuild C7 gates.",
+  "finished_at": "2026-08-31T09:55:14.236826+00:00"
+}

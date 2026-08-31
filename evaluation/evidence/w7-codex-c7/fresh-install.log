@@ -1,0 +1,106 @@
+=== scope ===
+temporary_root=/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j
+temporary_prefix=/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix
+registry=https://registry.npmjs.org
+credentials_in_scope=false
+global_codex_home_modified=false
+=== install ===
+
+added 2 packages in 2s
+npm_config_prefix="$prefix" npm_config_registry=https://registry.npmjs.org np  1.06s user 0.45s system 65% cpu 2.314 total
+=== version ===
+codex-cli 0.139.0
+=== app-server-help ===
+[experimental] Run the app server or related tooling
+
+Usage: codex app-server [OPTIONS] [COMMAND]
+
+Commands:
+  daemon                Manage the local app-server daemon
+  proxy                 Proxy stdio bytes to the running app-server control socket
+  generate-ts           [experimental] Generate TypeScript bindings for the app server protocol
+  generate-json-schema  [experimental] Generate JSON Schema for the app server protocol
+  help                  Print this message or the help of the given subcommand(s)
+
+Options:
+  -c, --config <key=value>
+          Override a configuration value that would otherwise be loaded from `~/.codex/config.toml`.
+          Use a dotted path (`foo.bar.baz`) to override nested values. The `value` portion is parsed
+          as TOML. If it fails to parse as TOML, the raw string is used as a literal.
+          
+          Examples: - `-c model="o3"` - `-c 'sandbox_permissions=["disk-full-read-access"]'` - `-c
+          shell_environment_policy.inherit=all`
+
+      --enable <FEATURE>
+          Enable a feature (repeatable). Equivalent to `-c features.<name>=true`
+
+      --disable <FEATURE>
+          Disable a feature (repeatable). Equivalent to `-c features.<name>=false`
+
+      --strict-config
+          Error out when config.toml contains fields that are not recognized by this version of
+          Codex
+
+      --listen <URL>
+          Transport endpoint URL. Supported values: `stdio://` (default), `unix://`, `unix://PATH`,
+          `ws://IP:PORT`, `off`
+          
+          [default: stdio://]
+
+      --stdio
+          Use stdio as the transport (equivalent to `--listen stdio://`)
+
+      --analytics-default-enabled
+          Controls whether analytics are enabled by default.
+          
+          Analytics are disabled by default for app-server. Users have to explicitly opt in via the
+          `analytics` section in the config.toml file.
+          
+          However, for first-party use cases like the VSCode IDE extension, we default analytics to
+          be enabled by default by setting this flag. Users can still opt out by setting this in
+          their config.toml:
+          
+          ```toml [analytics] enabled = false ```
+          
+          See https://developers.openai.com/codex/config-advanced/#metrics for more details.
+
+      --ws-auth <MODE>
+          Websocket auth mode for non-loopback listeners
+          
+          [possible values: capability-token, signed-bearer-token]
+
+      --ws-token-file <PATH>
+          Absolute path to the capability-token file
+
+      --ws-token-sha256 <HEX>
+          Hex-encoded SHA-256 digest of the capability token
+
+      --ws-shared-secret-file <PATH>
+          Absolute path to the shared secret file for signed JWT bearer tokens
+
+      --ws-issuer <ISSUER>
+          Expected issuer for signed JWT bearer tokens
+
+      --ws-audience <AUDIENCE>
+          Expected audience for signed JWT bearer tokens
+
+      --ws-max-clock-skew-seconds <SECONDS>
+          Maximum clock skew when validating signed JWT bearer tokens
+
+  -h, --help
+          Print help (see a summary with '-h')
+=== artifact-digests ===
+d3be844c45c4fd89392536e56e1010963f94785592596b50cd0c45bb8a341406  /var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix/bin/codex
+c6e68915c8c7c2c5169ccb6d326789850a9a540875cbc3b04dc3df4d775e7412  /var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix/lib/node_modules/@openai/codex/package.json
+e690d7640a91f7045f621e18aa493e23a9b390e239834988eb6096676d21ca3a  /var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json
+c6ede9ef9b672ef5a99384e507bec5476cbb60934c03f19cbd0355d9fdd83915  /var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex
+=== npm-tree ===
+{
+  "resolved": "file:../../../../../../../private/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.h0lqPiiL9j/npm-prefix/lib",
+  "dependencies": {
+    "@openai/codex": {
+      "version": "0.139.0",
+      "overridden": false
+    }
+  }
+}

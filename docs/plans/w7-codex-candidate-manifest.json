@@ -129,9 +129,9 @@
     "source_to_binary_provenance": "pass-at-release-level; independent rebuild unknown",
     "independent_attestation_verification": "pass-via-npm-audit-signatures",
     "independent_reproducible_rebuild": "unknown",
-    "license_notice_commercial_review": "unknown",
-    "candidate_c2_to_c7": "unknown",
-    "human_c7_timing": "unknown"
+    "license_notice_commercial_review": "inventory-only; per-package clearance and commercial review unknown",
+    "candidate_c2_to_c7": "unknown; owner-backed machine controls and cross-version compatibility pass, human/legal/remote gates remain open",
+    "human_c7_timing": "partial-evidence-reported; install, upgrade/rollback, isolated owner-backed backup/restore, and predefined fault diagnosis timing reported; fresh-install binding remains incomplete"
   },
   "rollback_target": {
     "identity": "codex-cli 0.138.0",

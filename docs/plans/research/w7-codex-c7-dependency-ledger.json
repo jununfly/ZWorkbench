@@ -1,0 +1,137 @@
+{
+  "schema": "zworkbench-w7-c7-dependency-ledger/v1",
+  "classification": "acceptance/evaluation",
+  "status": "inventory-only/signoff-open",
+  "audited_at": "2026-08-31",
+  "candidate": {
+    "name": "Codex Harness",
+    "version": "0.139.0",
+    "platform": "darwin-arm64",
+    "release_tag": "rust-v0.139.0",
+    "resolved_commit": "a7dff904308535e965aee87680c1fc5ef1d19eec"
+  },
+  "local_observation": {
+    "root_package": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/package.json",
+      "sha256": "c6e68915c8c7c2c5169ccb6d326789850a9a540875cbc3b04dc3df4d775e7412",
+      "declared_license": "Apache-2.0",
+      "runtime_dependencies": 0,
+      "optional_platform_dependencies": 6,
+      "license_notice_files_found": []
+    },
+    "platform_package": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
+      "sha256": "e690d7640a91f7045f621e18aa493e23a9b390e239834988eb6096676d21ca3a",
+      "declared_license": "Apache-2.0",
+      "runtime_dependencies": 0,
+      "license_notice_files_found": []
+    },
+    "vendor_manifest": {
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-package.json",
+      "sha256": "6b5494cb5c5b442cdeabadbccc182036886d64c39af463d6e7e791d4e05bfc6a",
+      "layout_version": 1,
+      "target": "aarch64-apple-darwin",
+      "license_notice_files_found": []
+    }
+  },
+  "components": [
+    {
+      "id": "codex-root-npm",
+      "kind": "direct-npm-package",
+      "name": "@openai/codex",
+      "version": "0.139.0",
+      "license_observed": "Apache-2.0",
+      "license_basis": "package.json metadata and fixed Codex source LICENSE",
+      "notice_status": "not-present-in-installed-package",
+      "commercial_status": "not-reviewed",
+      "status": "declared-only"
+    },
+    {
+      "id": "codex-darwin-arm64-npm",
+      "kind": "direct-platform-package",
+      "name": "@openai/codex",
+      "version": "0.139.0-darwin-arm64",
+      "license_observed": "Apache-2.0",
+      "license_basis": "platform package.json metadata",
+      "notice_status": "not-present-in-installed-package",
+      "commercial_status": "not-reviewed",
+      "status": "declared-only"
+    },
+    {
+      "id": "codex-vendor-binary",
+      "kind": "vendored-binary",
+      "name": "codex",
+      "version": "0.139.0",
+      "target": "aarch64-apple-darwin",
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
+      "sha256": "c6ede9ef9b672ef5a99384e507bec5476cbb60934c03f19cbd0355d9fdd83915",
+      "license_observed": "Apache-2.0 at workspace/source declaration",
+      "license_basis": "fixed Codex source workspace package declaration; binary dependency notices not extracted",
+      "notice_status": "unknown",
+      "commercial_status": "not-reviewed",
+      "status": "source-declaration-only"
+    },
+    {
+      "id": "ripgrep-vendor",
+      "kind": "vendored-tool",
+      "name": "ripgrep",
+      "version": "15.1.0",
+      "revision_observed": "af60c2de9d",
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-path/rg",
+      "sha256": "4fdf1d8365af224bc70e3c1490d8461d859c37cc70e739a11e987af0215f3e94",
+      "license_observed": "MIT OR Unlicense",
+      "license_source": "https://raw.githubusercontent.com/BurntSushi/ripgrep/15.1.0/COPYING",
+      "license_source_sha256": "01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f",
+      "notice_status": "source-license-located; binary redistribution material not verified",
+      "commercial_status": "not-reviewed",
+      "status": "review-required"
+    },
+    {
+      "id": "pcre2-vendor-dependency",
+      "kind": "observed-vendored-feature-dependency",
+      "name": "PCRE2",
+      "version": "10.45",
+      "evidence": "ripgrep --version reports PCRE2 10.45 available",
+      "license_observed": "BSD-3-Clause WITH PCRE2-exception",
+      "license_source": "https://raw.githubusercontent.com/PCRE2Project/pcre2/pcre2-10.45/LICENCE.md",
+      "license_source_sha256": "9cf7ac6976099a1d856826d3ef1b093bd6b84489dc6100628ac79e740cf9885a",
+      "notice_status": "source-license-located; exact binary linkage and redistribution material not verified",
+      "commercial_status": "not-reviewed",
+      "status": "review-required"
+    },
+    {
+      "id": "zsh-vendor",
+      "kind": "vendored-runtime",
+      "name": "zsh",
+      "version": "5.9.0.3-test",
+      "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/codex-resources/zsh/bin/zsh",
+      "sha256": "db6fe1a78eaceaff3b0f0cde25fc25afe466d61b0bf76b4ebe35812e4bc8dd71",
+      "license_observed": "Zsh license; GPL shell-function caveat applies where included",
+      "license_source": "https://raw.githubusercontent.com/zsh-users/zsh/zsh-5.9/LICENCE",
+      "license_source_sha256": "d06fdf3ef9b1ec69d6b9e170b0a9516fbad3523261ff1668bde3bfea6e0ef5f5",
+      "notice_status": "source-license-located; exact binary build contents not verified",
+      "commercial_status": "not-reviewed",
+      "status": "review-required"
+    }
+  ],
+  "rust_lock_inventory": {
+    "source": "https://raw.githubusercontent.com/openai/codex/a7dff904308535e965aee87680c1fc5ef1d19eec/codex-rs/Cargo.lock",
+    "sha256": "4315b596d910df46b6091580476f9df6a388b9d90874e45544a93346ccf24e37",
+    "lock_format_version": 4,
+    "package_count": 1332,
+    "workspace_package_count": 123,
+    "registry_package_count": 1197,
+    "git_package_count": 12,
+    "license_resolution": "not-per-package-resolved",
+    "notice_resolution": "not-per-package-resolved",
+    "status": "inventory-only/signoff-open"
+  },
+  "controls": {
+    "installed_package_license_files_checked": true,
+    "installed_package_license_files_found": false,
+    "complete_notice_signoff": false,
+    "commercial_api_trademark_signoff": false,
+    "independent_reproducible_rebuild": false,
+    "interpretation": "This ledger identifies observed direct and vendored components and pins the source lock inventory. It is not a complete SPDX or NOTICE clearance and cannot authorize redistribution or commercial use."
+  }
+}

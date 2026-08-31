@@ -1,0 +1,2 @@
+{"direction":"outbound","message":{"id":1,"jsonrpc":"2.0","method":"initialize","params":{"clientInfo":{"name":"zworkbench-codex-adapter","version":"zworkbench-codex-app-server-adapter/v1"}}}}
+{"direction":"inbound","message":{"error":{"code":-32099,"message":"controlled startup fault"},"id":1,"jsonrpc":"2.0"}}

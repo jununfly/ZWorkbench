@@ -1,0 +1,90 @@
+{
+  "schema": "zworkbench-w7-codex-owner-c7/v1",
+  "run_id": "w7-owner-c7-backup_restore-repeat-01",
+  "scenario": "backup_restore",
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace",
+  "owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace/composition.sqlite3",
+  "code_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace/codex-home",
+  "classification": "acceptance/evaluation",
+  "real_owner_state_required": true,
+  "status": "completed",
+  "checks": {
+    "run_id_present": true,
+    "run_completed": true,
+    "real_owner_database": true,
+    "adapter_schema_recorded": true,
+    "thread_id_recorded": true,
+    "turn_id_recorded": true,
+    "provider_identity_recorded": true,
+    "recorded_view_present": true,
+    "adapter_results_present": true,
+    "schema_is_owner_schema": true,
+    "no_effects_claimed": true,
+    "semantic_result_fixture_ok": true,
+    "provider_is_loopback": true,
+    "backup_manifest_present": true,
+    "backup_database_present": true,
+    "backup_state_json_present": true,
+    "backup_integrity_ok": true,
+    "corrupted_target_replaced": true,
+    "restore_digest_matches": true,
+    "restore_snapshot_matches": true
+  },
+  "operation_details": {
+    "operation_kind": "backup_restore",
+    "thread_id": "01a05746-d15e-70d2-8a9d-9e02736b3aad",
+    "turn_id": "01a05746-d18a-7030-a9b4-9f8991776893",
+    "provider_identity": {
+      "provider": "w7-owner-c7-loopback",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "transport": "loopback-only"
+    },
+    "event_digest": "f3995ed712c579e54c7e0bea2307f8d2c57637947749fc5e11440f23db2aad7e",
+    "environment_digest": "4c87fcd76ff5af82ab1935a7ae7e529a04165bef056929759263679c557c542a",
+    "raw_event_count": 18,
+    "owner_state_digest_before_operation": "3aa14261ae00cdde5455075e5406fd2b806e100e220c3ba2721683200e2e4023",
+    "real_owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace/composition.sqlite3",
+    "backup_directory": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace/backup",
+    "restore_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/workspace/restored.sqlite3",
+    "restored_state_digest": "3aa14261ae00cdde5455075e5406fd2b806e100e220c3ba2721683200e2e4023"
+  },
+  "owner_state_digest": "3aa14261ae00cdde5455075e5406fd2b806e100e220c3ba2721683200e2e4023",
+  "machine_elapsed_seconds": 1.079886,
+  "machine_elapsed_source": "runner monotonic wall clock; not human operation time",
+  "network_calls": 0,
+  "loopback_provider_calls_allowed": true,
+  "real_credentials": false,
+  "production_data": false,
+  "service_manifest": {
+    "schema": "zworkbench-w7-owner-c7-services/v1",
+    "managed_services": [
+      {
+        "name": "codex-cli-0.139.0-app-server",
+        "kind": "local-runtime",
+        "counted": true
+      },
+      {
+        "name": "sqlite-composition-owner",
+        "kind": "local-durable-owner",
+        "counted": true
+      }
+    ],
+    "excluded_services": [
+      {
+        "name": "loopback-fake-provider",
+        "reason": "case-local test-only process"
+      },
+      {
+        "name": "host-os",
+        "reason": "excluded by C7 threshold"
+      }
+    ],
+    "maintained_service_count": 2,
+    "provider_and_host_os_counted": false
+  },
+  "evidence": {
+    "adapter_event_log": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/codex-adapter-events.jsonl",
+    "provider_request_log": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-c7-human-20260831T180332/cases/backup_restore/repeat-01/provider-requests.jsonl"
+  }
+}

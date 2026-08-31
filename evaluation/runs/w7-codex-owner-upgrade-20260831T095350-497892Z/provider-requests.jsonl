@@ -1,0 +1,6 @@
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_request","path":"/v1/responses","model":"fake-model","stream":true,"request_number":1,"function_call_output_count":0,"response_kind":"message","mode":"normal"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_result","request_number":1,"status":"completed","response_kind":"message"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_request","path":"/v1/responses","model":"fake-model","stream":true,"request_number":2,"function_call_output_count":0,"response_kind":"message","mode":"normal"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_result","request_number":2,"status":"completed","response_kind":"message"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_request","path":"/v1/responses","model":"fake-model","stream":true,"request_number":3,"function_call_output_count":0,"response_kind":"message","mode":"normal"}
+{"schema":"zworkbench-w7-codex-c56-provider/v1","provider_id":"w7-owner-upgrade-loopback","kind":"responses_result","request_number":3,"status":"completed","response_kind":"message"}

@@ -1,0 +1,29 @@
+{
+  "stage": "after-rollback",
+  "version": "0.138.0",
+  "run_id": "w7-owner-upgrade-after-rollback",
+  "thread_id": "01a0573e-9295-7553-91d1-21a4e97a3305",
+  "turn_id": "01a0573e-92a1-7662-9e0e-c7b1257eb3fa",
+  "text": "fixture-ok",
+  "status": "completed",
+  "event_digest": "02346fc65d789a37add3967f3b3f63278ddd656f83f7407f481cfd71c8bbbf87",
+  "environment_digest": "78ddd2f4432c70ec239a469da15cc41b34e6283d5bf67c633ee491b4f90333de",
+  "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+  "machine_elapsed_seconds": 0.635295,
+  "checkpoint": {
+    "stage": "after-rollback",
+    "run_id": "w7-owner-upgrade-after-rollback",
+    "schema": "zworkbench-composition-owner/v1",
+    "schema_version": 1,
+    "state_digest": "087800966a7b586dbe2f0122b513cda7dddaf31bb1df347b207267fb185d0242",
+    "run_count": 4,
+    "event_count": 28,
+    "run_ids": [
+      "w7-owner-upgrade-after-rollback",
+      "w7-owner-upgrade-after-upgrade",
+      "w7-owner-upgrade-before",
+      "w7-owner-upgrade-controlled-failure"
+    ],
+    "prior_runs_preserved": true
+  }
+}

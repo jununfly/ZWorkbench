@@ -1,0 +1,27 @@
+{
+  "stage": "after-upgrade",
+  "version": "0.139.0",
+  "run_id": "w7-owner-upgrade-after-upgrade",
+  "thread_id": "01a0573e-8351-7ef2-b75d-31cff5883998",
+  "turn_id": "01a0573e-835f-71c3-9009-fc20f01f51f5",
+  "text": "fixture-ok",
+  "status": "completed",
+  "event_digest": "8986db567812709a451813555ed66c9d0c15a0f0243372774ab0123b8cdc4335",
+  "environment_digest": "94b366107f292bb1f0ea56a99e79e2ebb320efb6ac92e6a3000e10729eeaa521",
+  "config_identity_sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45",
+  "machine_elapsed_seconds": 0.644763,
+  "checkpoint": {
+    "stage": "after-upgrade",
+    "run_id": "w7-owner-upgrade-after-upgrade",
+    "schema": "zworkbench-composition-owner/v1",
+    "schema_version": 1,
+    "state_digest": "a70f0aad9049a884d3201e52566a8685d42b8dfdfefec3ecf8078cde57f0f9f6",
+    "run_count": 2,
+    "event_count": 16,
+    "run_ids": [
+      "w7-owner-upgrade-after-upgrade",
+      "w7-owner-upgrade-before"
+    ],
+    "prior_runs_preserved": true
+  }
+}

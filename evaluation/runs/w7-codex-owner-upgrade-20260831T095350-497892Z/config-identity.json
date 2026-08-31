@@ -1,0 +1,25 @@
+{
+  "value": {
+    "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+    "model": "fake-model",
+    "model_provider": "ollama",
+    "sandbox": "read-only",
+    "approval_policy": "never",
+    "config_overrides": [
+      "oss_provider=\"ollama\"",
+      "model_provider=\"ollama\"",
+      "model=\"fake-model\""
+    ],
+    "disabled_features": [
+      "plugins",
+      "apps"
+    ],
+    "provider": {
+      "provider": "w7-owner-upgrade-loopback",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "transport": "loopback-only"
+    }
+  },
+  "sha256": "29b53c591b9f7ed27ef3017cd47189c8e75e4f1812281428fff628f6d50a5b45"
+}

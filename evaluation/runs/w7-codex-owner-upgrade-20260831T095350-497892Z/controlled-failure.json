@@ -1,0 +1,14 @@
+{
+  "run_id": "w7-owner-upgrade-controlled-failure",
+  "expected_failure": true,
+  "error": {
+    "type": "CodexProtocolError",
+    "message": "initialize failed: {'code': -32099, 'message': 'controlled startup fault'}"
+  },
+  "persisted_status": "failed",
+  "machine_elapsed_seconds": 0.23632,
+  "prior_runs_preserved": true,
+  "owner_schema": "zworkbench-composition-owner/v1",
+  "failure_is_terminal": true,
+  "no_physical_effects": true
+}
