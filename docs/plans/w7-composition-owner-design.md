@@ -1,6 +1,6 @@
 # ZWorkbench composition owner 第一切片
 
-状态：`1-8-1`–`1-8-4` 已完成 · `1-8-5` 待接入 · 产品实现路线
+状态：`1-8-1`–`1-8-5` 已完成 · C7 总签核仍受独立证据门阻断 · 产品实现路线
 
 ## 目标
 
@@ -9,8 +9,8 @@
 Codex `CODEX_HOME`、thread/turn 文件的别名。
 
 第一版是单进程本地模块，使用一个 SQLite 文件作为唯一 durable source of truth。
-它不执行模型、shell 或外部副作用；Codex app-server 接入会通过后续 adapter
-接入，不能绕过 owner 的 claim/reconcile 语义。
+它不执行模型、shell 或外部副作用；Codex app-server 接入通过薄 adapter 完成，
+不能绕过 owner 的 claim/reconcile 语义。
 
 ## 外部接口与不变量
 
@@ -56,7 +56,6 @@ PYTHONPATH=src python -m zworkbench.composition_cli --db .zworkbench/composition
 
 ## 明确不在本切片内
 
-- Codex app-server JSON-RPC adapter；
 - scheduler/cron、Provider router、模型 fallback；
 - 生产凭证、生产项目和 live replay；
 - 远端备份、加密密钥托管、跨版本迁移和法律/NOTICE 签核；
@@ -66,7 +65,10 @@ PYTHONPATH=src python -m zworkbench.composition_cli --db .zworkbench/composition
 event metadata 作为 owner 的 adapter result/event 写入，而不是把 Codex 内部状态
 提升为 composition truth。
 
-当前状态的重要边界：owner 模块已经真实存在并能创建、重开、备份和恢复 SQLite
-state，但在 Codex app-server adapter 接入前，还没有“由真实工作台任务流产生的
-composition state”。因此 C7 Gate C 仍不能签核；`1-8-5` 完成一次受控真实
-Codex→owner flow 后，才重新执行 C7 backup/restore 和退出审计。
+当前状态的重要边界：`src/zworkbench/codex_adapter.py` 已通过真实 Codex
+`initialize → thread/start → turn/start → turn/completed` 流把 thread/turn、Provider
+identity、环境 digest、事件 digest 和 turn result 写入 SQLite owner；对应的
+`evaluation/runner/run_codex_owner_c7.py` 已完成 backup/restore×3 与 exit×3 的隔离
+回归。此前“真实 composition state 不存在”的阻断已对这两个机器控制关闭，但不等于
+C7 总签核：人工 stopwatch、真实候选安装/升级、NOTICE/商业边界、source-to-binary
+provenance、远端资源退出和 Codex 原生 approval 仍需独立证据。

@@ -1,0 +1,222 @@
+{
+  "schema": "zworkbench-composition-owner/v1",
+  "schema_version": 1,
+  "runs": [
+    {
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "task_type": "c7.owner-backed-turn",
+      "status": "completed",
+      "created_at": "2026-08-31T08:21:50.163+00:00",
+      "updated_at": "2026-08-31T08:21:50.804+00:00",
+      "input": {
+        "prompt": "W7_OWNER_C7 Return the exact text fixture-ok and do not call tools."
+      },
+      "metadata": {
+        "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+        "codex_executable": "/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js",
+        "codex_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/backup_restore/repeat-02/workspace/codex-home",
+        "cwd": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/backup_restore/repeat-02/workspace/task",
+        "model": "fake-model",
+        "model_provider": "ollama",
+        "repeat": 2,
+        "scenario": "backup_restore"
+      }
+    }
+  ],
+  "approvals": [],
+  "effects": [],
+  "effect_attempts": [],
+  "results": [
+    {
+      "result_id": "12e8b2cd-c2ec-4672-a895-ae453ff96d25",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "kind": "adapter.initialized",
+      "source_id": "app-server",
+      "created_at": "2026-08-31T08:21:50.267+00:00",
+      "value": {
+        "command": [
+          "/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js",
+          "app-server",
+          "--listen",
+          "stdio://",
+          "-c",
+          "oss_provider=\"ollama\"",
+          "-c",
+          "model_provider=\"ollama\"",
+          "-c",
+          "model=\"fake-model\"",
+          "--disable",
+          "plugins",
+          "--disable",
+          "apps"
+        ]
+      }
+    },
+    {
+      "result_id": "2f77dbd5-0d88-4ab5-9094-02300e6743d3",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "kind": "adapter.thread",
+      "source_id": "w7-owner-c7-backup_restore-repeat-02:thread:01a056e9-123d-7d81-addb-984f8b746b36",
+      "created_at": "2026-08-31T08:21:50.803+00:00",
+      "value": {
+        "provider_identity": {
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "fake-model",
+          "provider": "w7-owner-c7-loopback",
+          "transport": "loopback-only"
+        },
+        "thread_id": "01a056e9-123d-7d81-addb-984f8b746b36"
+      }
+    },
+    {
+      "result_id": "16374d82-365f-4fb6-9c30-2d84ffe653a4",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "kind": "semantic",
+      "source_id": "run",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "value": {
+        "environment_digest": "2b410ebf22e48738430fc082efdc2ede4918d313908c5bf5c3b255b3280bb6fd",
+        "event_digest": "aead4403182aa50a64d767a046994b322bbe9f26905bd801a18ffc055898a247",
+        "provider_identity": {
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "fake-model",
+          "provider": "w7-owner-c7-loopback",
+          "transport": "loopback-only"
+        },
+        "status": "completed",
+        "text": "fixture-ok",
+        "thread_id": "01a056e9-123d-7d81-addb-984f8b746b36",
+        "turn_id": "01a056e9-125d-7702-89ac-cbc25141ea1e"
+      }
+    },
+    {
+      "result_id": "726b7f01-d8df-4877-b41e-a5ba130b85ce",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "kind": "adapter.turn",
+      "source_id": "w7-owner-c7-backup_restore-repeat-02:turn:01a056e9-125d-7702-89ac-cbc25141ea1e",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "value": {
+        "status": "completed",
+        "text": "fixture-ok",
+        "thread_id": "01a056e9-123d-7d81-addb-984f8b746b36",
+        "turn_id": "01a056e9-125d-7702-89ac-cbc25141ea1e"
+      }
+    }
+  ],
+  "replays": [
+    {
+      "replay_id": "w7-owner-c7-backup_restore-repeat-02:recorded-view",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "mode": "recorded_view",
+      "source_event_digest": "aead4403182aa50a64d767a046994b322bbe9f26905bd801a18ffc055898a247",
+      "environment_digest": "2b410ebf22e48738430fc082efdc2ede4918d313908c5bf5c3b255b3280bb6fd",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "provider_identity": {
+        "endpoint": "http://127.0.0.1:11434",
+        "model": "fake-model",
+        "provider": "w7-owner-c7-loopback",
+        "transport": "loopback-only"
+      },
+      "metadata": {
+        "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+        "thread_id": "01a056e9-123d-7d81-addb-984f8b746b36",
+        "turn_id": "01a056e9-125d-7702-89ac-cbc25141ea1e"
+      }
+    }
+  ],
+  "events": [
+    {
+      "seq": 1,
+      "event_id": "8086f783-8c4e-4988-81c6-b30ce46fe9d9",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "run.created",
+      "created_at": "2026-08-31T08:21:50.163+00:00",
+      "payload": {
+        "task_type": "c7.owner-backed-turn"
+      }
+    },
+    {
+      "seq": 2,
+      "event_id": "79e6b162-06e5-4f94-acca-12ca9d252aaf",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "run.started",
+      "created_at": "2026-08-31T08:21:50.163+00:00",
+      "payload": {
+        "from": "created",
+        "to": "running"
+      }
+    },
+    {
+      "seq": 3,
+      "event_id": "d475097c-0a51-4aa1-bede-0eac179560e9",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "result.recorded",
+      "created_at": "2026-08-31T08:21:50.267+00:00",
+      "payload": {
+        "kind": "adapter.initialized",
+        "result_id": "12e8b2cd-c2ec-4672-a895-ae453ff96d25",
+        "source_id": "app-server"
+      }
+    },
+    {
+      "seq": 4,
+      "event_id": "806ae64c-e72c-4606-9624-a77bf53b3c3f",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "result.recorded",
+      "created_at": "2026-08-31T08:21:50.803+00:00",
+      "payload": {
+        "kind": "adapter.thread",
+        "result_id": "2f77dbd5-0d88-4ab5-9094-02300e6743d3",
+        "source_id": "w7-owner-c7-backup_restore-repeat-02:thread:01a056e9-123d-7d81-addb-984f8b746b36"
+      }
+    },
+    {
+      "seq": 5,
+      "event_id": "8e907739-522f-45e8-8fc6-f30db7ecaf3b",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "result.recorded",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "payload": {
+        "kind": "adapter.turn",
+        "result_id": "726b7f01-d8df-4877-b41e-a5ba130b85ce",
+        "source_id": "w7-owner-c7-backup_restore-repeat-02:turn:01a056e9-125d-7702-89ac-cbc25141ea1e"
+      }
+    },
+    {
+      "seq": 6,
+      "event_id": "558fb7a7-8ced-4e73-80bb-bf2f2677b2ef",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "replay.metadata.recorded",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "payload": {
+        "environment_digest": "2b410ebf22e48738430fc082efdc2ede4918d313908c5bf5c3b255b3280bb6fd",
+        "mode": "recorded_view",
+        "replay_id": "w7-owner-c7-backup_restore-repeat-02:recorded-view",
+        "source_event_digest": "aead4403182aa50a64d767a046994b322bbe9f26905bd801a18ffc055898a247"
+      }
+    },
+    {
+      "seq": 7,
+      "event_id": "491215ef-79de-4def-8a7d-2f52ed4041bb",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "result.recorded",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "payload": {
+        "kind": "semantic",
+        "result_id": "16374d82-365f-4fb6-9c30-2d84ffe653a4",
+        "source_id": "run"
+      }
+    },
+    {
+      "seq": 8,
+      "event_id": "3a5ca653-fb7d-482e-9322-b16e1a85527a",
+      "run_id": "w7-owner-c7-backup_restore-repeat-02",
+      "type": "run.completed",
+      "created_at": "2026-08-31T08:21:50.804+00:00",
+      "payload": {
+        "from": "running",
+        "to": "completed"
+      }
+    }
+  ]
+}

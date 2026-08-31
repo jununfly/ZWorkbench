@@ -1,0 +1,92 @@
+{
+  "schema": "zworkbench-w7-codex-owner-c7/v1",
+  "run_id": "w7-owner-c7-exit-repeat-02",
+  "scenario": "exit",
+  "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace",
+  "owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace/composition.sqlite3",
+  "code_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace/codex-home",
+  "classification": "acceptance/evaluation",
+  "real_owner_state_required": true,
+  "status": "completed",
+  "checks": {
+    "run_id_present": true,
+    "run_completed": true,
+    "real_owner_database": true,
+    "adapter_schema_recorded": true,
+    "thread_id_recorded": true,
+    "turn_id_recorded": true,
+    "provider_identity_recorded": true,
+    "recorded_view_present": true,
+    "adapter_results_present": true,
+    "schema_is_owner_schema": true,
+    "no_effects_claimed": true,
+    "semantic_result_fixture_ok": true,
+    "provider_is_loopback": true,
+    "export_state_present": true,
+    "export_digest_matches_owner": true,
+    "independent_import_digest_matches": true,
+    "independent_backup_restore_matches": true,
+    "workspace_deleted": true,
+    "owner_database_deleted": true,
+    "codex_home_deleted": true
+  },
+  "operation_details": {
+    "operation_kind": "exit",
+    "thread_id": "01a056e9-1a7e-7e83-b282-2ae1d53c0f6a",
+    "turn_id": "01a056e9-1a95-7730-bd1c-974aaf2122b4",
+    "provider_identity": {
+      "provider": "w7-owner-c7-loopback",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434",
+      "transport": "loopback-only"
+    },
+    "event_digest": "85056d5327240085ab26957aff4fbac9d82de103e31921de30493aae148043ce",
+    "environment_digest": "c5965a35e3112d7f58a93436f0743401b837da8952370a60ed61dba05add01f8",
+    "raw_event_count": 18,
+    "owner_state_digest_before_operation": "aa2c5aaa754d9fcab374707533f33f17e3b80abf725fd350f69dc7a40fb30d64",
+    "real_owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace/composition.sqlite3",
+    "export_directory": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace/export",
+    "import_directory": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/workspace/imported",
+    "imported_state_digest": "aa2c5aaa754d9fcab374707533f33f17e3b80abf725fd350f69dc7a40fb30d64",
+    "external_data_deleted": false,
+    "user_data_deleted": false
+  },
+  "owner_state_digest": "aa2c5aaa754d9fcab374707533f33f17e3b80abf725fd350f69dc7a40fb30d64",
+  "machine_elapsed_seconds": 0.699523,
+  "machine_elapsed_source": "runner monotonic wall clock; not human operation time",
+  "network_calls": 0,
+  "loopback_provider_calls_allowed": true,
+  "real_credentials": false,
+  "production_data": false,
+  "service_manifest": {
+    "schema": "zworkbench-w7-owner-c7-services/v1",
+    "managed_services": [
+      {
+        "name": "codex-cli-0.139.0-app-server",
+        "kind": "local-runtime",
+        "counted": true
+      },
+      {
+        "name": "sqlite-composition-owner",
+        "kind": "local-durable-owner",
+        "counted": true
+      }
+    ],
+    "excluded_services": [
+      {
+        "name": "loopback-fake-provider",
+        "reason": "case-local test-only process"
+      },
+      {
+        "name": "host-os",
+        "reason": "excluded by C7 threshold"
+      }
+    ],
+    "maintained_service_count": 2,
+    "provider_and_host_os_counted": false
+  },
+  "evidence": {
+    "adapter_event_log": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/codex-adapter-events.jsonl",
+    "provider_request_log": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/exit/repeat-02/provider-requests.jsonl"
+  }
+}

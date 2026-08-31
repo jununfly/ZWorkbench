@@ -10,6 +10,13 @@ from .composition import (
     NotFoundError,
     PolicyDenied,
 )
+from .codex_adapter import (
+    ADAPTER_SCHEMA,
+    CodexAdapterError,
+    CodexAppServerAdapter,
+    CodexExecution,
+    CodexProtocolError,
+)
 
 __all__ = [
     "ApprovalError",
@@ -20,4 +27,9 @@ __all__ = [
     "InvalidTransition",
     "NotFoundError",
     "PolicyDenied",
+    "ADAPTER_SCHEMA",
+    "CodexAdapterError",
+    "CodexAppServerAdapter",
+    "CodexExecution",
+    "CodexProtocolError",
 ]

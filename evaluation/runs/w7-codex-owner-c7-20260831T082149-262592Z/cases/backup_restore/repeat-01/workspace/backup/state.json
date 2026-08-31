@@ -1,0 +1,224 @@
+{
+  "approvals": [],
+  "effect_attempts": [],
+  "effects": [],
+  "events": [
+    {
+      "created_at": "2026-08-31T08:21:49.327+00:00",
+      "event_id": "2613d38b-78c3-4058-901b-6b3684f33337",
+      "payload": {
+        "task_type": "c7.owner-backed-turn"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 1,
+      "type": "run.created"
+    },
+    {
+      "created_at": "2026-08-31T08:21:49.327+00:00",
+      "event_id": "e838c384-8a88-43f6-a12c-cfd0aebccfb3",
+      "payload": {
+        "from": "created",
+        "to": "running"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 2,
+      "type": "run.started"
+    },
+    {
+      "created_at": "2026-08-31T08:21:49.542+00:00",
+      "event_id": "9fe09345-17da-406b-808d-423d8b4d115c",
+      "payload": {
+        "kind": "adapter.initialized",
+        "result_id": "ca8f493b-ddb5-4162-a5d3-e8b53c619bbc",
+        "source_id": "app-server"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 3,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.089+00:00",
+      "event_id": "e7ff055f-7937-4e35-a7c4-75a15bfda212",
+      "payload": {
+        "kind": "adapter.thread",
+        "result_id": "568a58bc-794b-4f3e-8465-e068ea890018",
+        "source_id": "w7-owner-c7-backup_restore-repeat-01:thread:01a056e9-0f6d-7611-82fd-24e67f3582d1"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 4,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.089+00:00",
+      "event_id": "da9e3e21-3698-4905-9398-49b9508b67b5",
+      "payload": {
+        "kind": "adapter.turn",
+        "result_id": "8589550f-9878-4c20-908a-d7f29a118c02",
+        "source_id": "w7-owner-c7-backup_restore-repeat-01:turn:01a056e9-0f92-7301-a465-5a667f3e2cee"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 5,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.090+00:00",
+      "event_id": "c353c726-1627-41e1-a85e-ff1ddcf9bf66",
+      "payload": {
+        "environment_digest": "0704c9227141edb7829330ba8c3d68d2ead7c6cd185e7f75e8b7eebb1ed56e4c",
+        "mode": "recorded_view",
+        "replay_id": "w7-owner-c7-backup_restore-repeat-01:recorded-view",
+        "source_event_digest": "424e7f507dc72a880435ae70a77040650172002931d1b8a85b06017daf6b4bd0"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 6,
+      "type": "replay.metadata.recorded"
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.090+00:00",
+      "event_id": "1e592bcc-778c-4511-8e07-a68b379ce9ef",
+      "payload": {
+        "kind": "semantic",
+        "result_id": "33d091ac-2fbd-4f44-8819-fba1a49b2632",
+        "source_id": "run"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 7,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.090+00:00",
+      "event_id": "9fa0da6d-0ccc-4f28-b74b-9e093240849d",
+      "payload": {
+        "from": "running",
+        "to": "completed"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "seq": 8,
+      "type": "run.completed"
+    }
+  ],
+  "exported_at": "2026-08-31T08:21:50.100+00:00",
+  "replays": [
+    {
+      "created_at": "2026-08-31T08:21:50.090+00:00",
+      "environment_digest": "0704c9227141edb7829330ba8c3d68d2ead7c6cd185e7f75e8b7eebb1ed56e4c",
+      "metadata": {
+        "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+        "thread_id": "01a056e9-0f6d-7611-82fd-24e67f3582d1",
+        "turn_id": "01a056e9-0f92-7301-a465-5a667f3e2cee"
+      },
+      "mode": "recorded_view",
+      "provider_identity": {
+        "endpoint": "http://127.0.0.1:11434",
+        "model": "fake-model",
+        "provider": "w7-owner-c7-loopback",
+        "transport": "loopback-only"
+      },
+      "replay_id": "w7-owner-c7-backup_restore-repeat-01:recorded-view",
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "source_event_digest": "424e7f507dc72a880435ae70a77040650172002931d1b8a85b06017daf6b4bd0"
+    }
+  ],
+  "results": [
+    {
+      "created_at": "2026-08-31T08:21:49.542+00:00",
+      "kind": "adapter.initialized",
+      "result_id": "ca8f493b-ddb5-4162-a5d3-e8b53c619bbc",
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "source_id": "app-server",
+      "value": {
+        "command": [
+          "/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js",
+          "app-server",
+          "--listen",
+          "stdio://",
+          "-c",
+          "oss_provider=\"ollama\"",
+          "-c",
+          "model_provider=\"ollama\"",
+          "-c",
+          "model=\"fake-model\"",
+          "--disable",
+          "plugins",
+          "--disable",
+          "apps"
+        ]
+      }
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.089+00:00",
+      "kind": "adapter.thread",
+      "result_id": "568a58bc-794b-4f3e-8465-e068ea890018",
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "source_id": "w7-owner-c7-backup_restore-repeat-01:thread:01a056e9-0f6d-7611-82fd-24e67f3582d1",
+      "value": {
+        "provider_identity": {
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "fake-model",
+          "provider": "w7-owner-c7-loopback",
+          "transport": "loopback-only"
+        },
+        "thread_id": "01a056e9-0f6d-7611-82fd-24e67f3582d1"
+      }
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.089+00:00",
+      "kind": "adapter.turn",
+      "result_id": "8589550f-9878-4c20-908a-d7f29a118c02",
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "source_id": "w7-owner-c7-backup_restore-repeat-01:turn:01a056e9-0f92-7301-a465-5a667f3e2cee",
+      "value": {
+        "status": "completed",
+        "text": "fixture-ok",
+        "thread_id": "01a056e9-0f6d-7611-82fd-24e67f3582d1",
+        "turn_id": "01a056e9-0f92-7301-a465-5a667f3e2cee"
+      }
+    },
+    {
+      "created_at": "2026-08-31T08:21:50.090+00:00",
+      "kind": "semantic",
+      "result_id": "33d091ac-2fbd-4f44-8819-fba1a49b2632",
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "source_id": "run",
+      "value": {
+        "environment_digest": "0704c9227141edb7829330ba8c3d68d2ead7c6cd185e7f75e8b7eebb1ed56e4c",
+        "event_digest": "424e7f507dc72a880435ae70a77040650172002931d1b8a85b06017daf6b4bd0",
+        "provider_identity": {
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "fake-model",
+          "provider": "w7-owner-c7-loopback",
+          "transport": "loopback-only"
+        },
+        "status": "completed",
+        "text": "fixture-ok",
+        "thread_id": "01a056e9-0f6d-7611-82fd-24e67f3582d1",
+        "turn_id": "01a056e9-0f92-7301-a465-5a667f3e2cee"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "created_at": "2026-08-31T08:21:49.327+00:00",
+      "input": {
+        "prompt": "W7_OWNER_C7 Return the exact text fixture-ok and do not call tools."
+      },
+      "metadata": {
+        "adapter_schema": "zworkbench-codex-app-server-adapter/v1",
+        "codex_executable": "/opt/homebrew/lib/node_modules/@openai/codex/bin/codex.js",
+        "codex_home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/backup_restore/repeat-01/workspace/codex-home",
+        "cwd": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runs/w7-codex-owner-c7-20260831T082149-262592Z/cases/backup_restore/repeat-01/workspace/task",
+        "model": "fake-model",
+        "model_provider": "ollama",
+        "repeat": 1,
+        "scenario": "backup_restore"
+      },
+      "run_id": "w7-owner-c7-backup_restore-repeat-01",
+      "status": "completed",
+      "task_type": "c7.owner-backed-turn",
+      "updated_at": "2026-08-31T08:21:50.090+00:00"
+    }
+  ],
+  "schema": "zworkbench-composition-owner/v1",
+  "schema_version": 1,
+  "state_digest": "0230c5a03c4035225d2ddc3c2047a083d7c97bd8646802972c921c0b5d3ba98c"
+}

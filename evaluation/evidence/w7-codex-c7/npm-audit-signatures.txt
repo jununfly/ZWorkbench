@@ -1,0 +1,23 @@
+W7 Codex C7 isolated npm signature/provenance verification
+date: 2026-08-31
+registry: https://registry.npmjs.org
+npm: 10.9.8
+scope: temporary project containing only @openai/codex@0.139.0; --ignore-scripts
+
+command:
+npm install --ignore-scripts @openai/codex@0.139.0
+npm audit signatures
+
+result:
+audited 2 packages in 5s
+
+2 packages have verified registry signatures
+
+2 packages have verified attestations
+
+interpretation:
+The npm CLI verified the registry signatures and provenance attestations for the
+root and Darwin arm64 Codex packages in an isolated install. This is independent
+verification by the npm CLI, not an independently rebuilt binary. The npm
+registry, package bytes, and attestation subject must be rechecked when the
+candidate version or installation channel changes.

@@ -13,9 +13,22 @@
     "resolved_commit": "a7dff904308535e965aee87680c1fc5ef1d19eec",
     "tag_resolution_evidence": "git ls-remote refs/tags/rust-v0.139.0^{}",
     "package_version_match": "0.139.0",
-    "binary_build_provenance": "unknown",
-    "source_to_binary_verified": false,
-    "interpretation": "The release/tag, package version, and artifact digests are pinned. No build attestation proves that this binary was reproducibly built from the resolved commit."
+    "binary_build_provenance": "pass-at-npm-slsa-release-level",
+    "source_to_binary_verified": true,
+    "provenance_scope": "npm-published root package and darwin-arm64 platform package, bound to the local npm installation",
+    "provenance_limitations": [
+      "No independent local rebuild was performed",
+      "The npm CLI verification passed; no standalone Sigstore policy verification was performed",
+      "This does not cover a different installation channel or complete dependency NOTICE/commercial review"
+    ],
+    "npm_signature_attestation_verification": {
+      "status": "pass",
+      "tool": "npm 10.9.8 audit signatures",
+      "scope": "isolated install of root and Darwin arm64 packages",
+      "result": "2 packages have verified registry signatures; 2 packages have verified attestations",
+      "evidence": "evaluation/evidence/w7-codex-c7/npm-audit-signatures.txt"
+    },
+    "interpretation": "The npm SLSA provenance for both the wrapper and Darwin arm64 package resolves to the rust-v0.139.0 tag and commit. Official registry tarball integrity matched the attestation subject, and the installed package contents matched the corresponding tarballs. npm CLI signature and attestation verification also passed. This is release-level source-to-artifact evidence, not an independent reproducible rebuild."
   },
   "runtime": {
     "os": "Darwin 25.5.0",
@@ -32,12 +45,19 @@
       "path": "/opt/homebrew/lib/node_modules/@openai/codex/package.json",
       "sha256": "c6e68915c8c7c2c5169ccb6d326789850a9a540875cbc3b04dc3df4d775e7412",
       "version": "0.139.0",
-      "license": "Apache-2.0"
+      "license": "Apache-2.0",
+      "registry_tarball_integrity": "sha512-wr2fRE+fzW0CjEbfFsLh1ftarVEcw0CMLWS7QyA0nyOz5qacQPVq3cq2+/U7oEbwm1TOqoi0Fm1nxniB5FkpmA==",
+      "registry_tarball_sha512_hex": "c2bd9f444f9fcd6d028c46df16c2e1d5fb5aad511cc3408c2d64bb4320349f23b3e6a69c40f56addcab6fbf53ba046f09b54ceaa88b4166d67c67881e4592998",
+      "registry_tarball_content_binding": "pass; local package matches except installed optional node_modules directory"
     },
     "platform_package": {
       "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/package.json",
       "sha256": "e690d7640a91f7045f621e18aa493e23a9b390e239834988eb6096676d21ca3a",
-      "version": "0.139.0-darwin-arm64"
+      "version": "0.139.0-darwin-arm64",
+      "license": "Apache-2.0",
+      "registry_tarball_integrity": "sha512-o+0ZKWwgDFMMLO7rwinzO0PQsgK+Vme1pMN2GeAxsX29ZgGZcyPICfpJbeGSUO1mb2a36Skjx6nfdRnxMY0r7w==",
+      "registry_tarball_sha512_hex": "a3ed19296c200c530c2ceeebc229f33b43d0b202be5667b5a4c37619e031b17dbd6601997323c809fa496de19250ed666f66b7e92923c7a9df7519f1318d2bef",
+      "registry_tarball_content_binding": "pass; extracted official tarball matches local platform package"
     },
     "vendor_binary": {
       "path": "/opt/homebrew/lib/node_modules/@openai/codex/node_modules/@openai/codex-darwin-arm64/vendor/aarch64-apple-darwin/bin/codex",
@@ -105,12 +125,18 @@
     "c2_unapproved_execution": 0,
     "c2_critical_interception_rate": 1.0,
     "c2_run_id": "w6-0.1-c2-20260830T144743-847310Z",
-    "reproducible_build_attestation": "unknown",
+    "reproducible_build_attestation": "pass-at-npm-slsa-release-level",
+    "source_to_binary_provenance": "pass-at-release-level; independent rebuild unknown",
+    "independent_attestation_verification": "pass-via-npm-audit-signatures",
+    "independent_reproducible_rebuild": "unknown",
+    "license_notice_commercial_review": "unknown",
     "candidate_c2_to_c7": "unknown",
     "human_c7_timing": "unknown"
   },
   "rollback_target": {
-    "identity": "rust-v0.139.0 / a7dff904308535e965aee87680c1fc5ef1d19eec",
-    "rollback_evidence": "Not exercised; W7-1 only freezes the target identity."
+    "identity": "codex-cli 0.138.0",
+    "rollback_evidence": "evaluation/evidence/w7-codex-c7/upgrade-rollback.log",
+    "rollback_evidence_sha256": "892bc389c35f63e77f4f734ccc3a8920e2653f1460050279208c2a169603520e",
+    "scope": "temporary C7 npm prefix; operator-reported 0.138.0 → 0.139.0 → 0.138.0"
   }
 }

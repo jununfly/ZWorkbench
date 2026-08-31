@@ -1,0 +1,23 @@
+{
+  "counts": {
+    "approvals": 0,
+    "effect_attempts": 0,
+    "effects": 0,
+    "events": 8,
+    "replays": 1,
+    "results": 4,
+    "runs": 1
+  },
+  "created_at": "2026-08-31T08:21:50.810+00:00",
+  "database_filename": "composition.sqlite3",
+  "database_sha256": "5b9f22e52fcc824cbda867ea7add08bc6012a9592d7dd0b0f7a411fdb84fe725",
+  "integrity_check": {
+    "integrity_check": "ok",
+    "ok": true,
+    "user_version": 1
+  },
+  "schema": "zworkbench-composition-owner/v1",
+  "schema_version": 1,
+  "state_digest": "3c4ed0c397ecb073488225f1c5274d717578512ee318ac3c19e15c70daf2ddec",
+  "state_filename": "state.json"
+}
