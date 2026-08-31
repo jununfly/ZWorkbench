@@ -1,0 +1,237 @@
+{
+  "title": "W8 受控个人试点产品边界与最小纵向切片",
+  "description": "产品执行路线：在个人开发者或小团队约束下，围绕 Codex 0.139.0 与单一 SQLite composition owner 设计受控个人试点的产品边界和最小可交付纵向切片。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "W8 受控个人试点产品边界与最小纵向切片",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6"
+      ],
+      "decisions": [
+        {
+          "q": "W8 的路线角色和完成范围是什么？",
+          "answer": "W8 是 Product execution 路线，但本节点只完成受控个人试点的产品边界、责任地图、最小纵向切片和放行/停止条件；暂不修改产品代码，不执行真实 Provider 或不可逆副作用。",
+          "note": "W7 是 acceptance/evaluation；W8 的设计不能把 W7 fixture pass 升级成产品已实现。"
+        },
+        {
+          "q": "W8 采用什么最小运行时组合？",
+          "answer": "固定 Codex 0.139.0 作为唯一主 Harness，配一个本地 SQLite composition owner；owner 是 run、approval、effect、result、event、backup 和 replay metadata 的唯一 durable truth。暂不引入第二 Harness、Temporal/LangGraph、LiteLLM、独立观测平台或常驻 gateway。",
+          "note": "个人开发者/小团队约束：维护服务不超过 3 个，且不能新增无证据的重复状态或权限 owner。"
+        },
+        {
+          "q": "受控个人试点的用户、数据和外部边界是什么？",
+          "answer": "目标用户是单一操作者的个人开发者，或最多小团队内部使用；第一阶段仅处理本地、可恢复、可审计的项目任务。provider API key 只允许由运行环境/凭证工具注入，ZWorkbench 不记录 key 值、不创建或管理火山方舟侧任务、Webhook、备份、账户或云资源，并明确数据会离开本地边界。",
+          "note": "火山方舟的远端数据、任务、Webhook、备份属于 Provider/账户 owner 责任；当前不宣称远端零残留。"
+        },
+        {
+          "q": "最小纵向切片选择哪条用户可见路径？",
+          "answer": "先实现一个 local_read_only_run：输入任务 → 创建 owner run → policy preflight → 启动固定 Codex app-server → 记录 thread/turn/provider/environment/events → 生成 semantic result → 完成 run → 提供 recorded view、snapshot、export 和 backup。第一切片不包含自动调度、真实远端 Provider、live replay、部署或不可逆副作用。",
+          "note": "该切片能验证产品 seam 是否闭合，同时把 C2/C4 未签核的危险路径留在 safe-stop。"
+        },
+        {
+          "q": "第一切片的安全和停止语义是什么？",
+          "answer": "未知工具类别、未确认 approval、凭证/网络/工作区边界不满足、Codex server request 无法映射、event identity 缺失或 owner 状态不确定时，必须 deny/safe-stop；不得以完成文本、部分事件或 Harness 内部状态推断成功。live_replay 默认 deny。",
+          "note": "W7 C2/C4/C6 是局部组合证据；W8 只能继承合同，不得宣称宿主级 approval 已签核。"
+        },
+        {
+          "q": "W8 第一切片何时允许进入真实 Provider 或真实写操作？",
+          "answer": "在 C2 宿主级强制边界、Codex native approval、许可证/商业边界和 Provider 数据责任尚未签核前，第一切片只允许 loopback/fake Provider 与 read-only workspace；真实 Provider 或 write/deploy/effect 另开节点，必须有显式 owner、可恢复目标、脱敏策略和新的 C2–C7 回归证据。",
+          "note": "unknown/stop 不是失败，但关键门处不能放行；远端退出责任仍 delegated-to-provider/account-owner。"
+        }
+      ],
+      "notes": "设计文档：docs/plans/w8-controlled-pilot-scope-and-vertical-slice.md；当前焦点是产品边界已冻结，下一执行节点为 1-5。"
+    },
+    "1-1": {
+      "id": "1-1",
+      "label": "冻结受控个人试点的产品边界与责任地图",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-2": {
+      "id": "1-2",
+      "label": "定义本地数据、凭证、Provider 与副作用安全边界",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-3": {
+      "id": "1-3",
+      "label": "设计 local_read_only_run 最小纵向切片",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-4": {
+      "id": "1-4",
+      "label": "固化第一切片的验收、停止与回滚条件",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5": {
+      "id": "1-5",
+      "label": "实现并验证 local_read_only_run",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4",
+        "1-5-5"
+      ],
+      "decisions": [
+        {
+          "q": "实现节点的最小交付顺序和放行标准是什么？",
+          "answer": "先做入口配置与 preflight，再复用 composition owner/Codex adapter 完成 local_read_only_run orchestration，随后加入成功与边界失败 fixture、脱敏/网络/身份/backup 回归，最后生成可复核 evidence；任一硬门 unknown 都保持 unknown/stop。",
+          "note": "实现节点不能顺带开放真实 Provider、写操作、scheduler、live replay 或第二 Harness。"
+        }
+      ],
+      "notes": ""
+    },
+    "1-6": {
+      "id": "1-6",
+      "label": "评估真实 Provider 与可恢复写操作的放行资格",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "label": "定义 local_read_only_run 入口配置与 preflight 结果结构",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "入口配置与 preflight 的公共接口如何划分？",
+          "answer": "新增一个 local_run 模块：LocalReadOnlyRunConfig 只描述 case_root、workspace、SQLite state、CODEX_HOME、Codex executable、event log、Provider identity 与固定 read-only 参数；preflight(config) 只返回脱敏、可 JSON 序列化的 PreflightResult，不启动进程、不创建目录、不访问网络。",
+          "note": "准入模块保持深接口：调用方只依赖 config + result；Codex adapter 仍是执行 seam，composition owner 仍是 durable truth。"
+        },
+        {
+          "q": "第一切片 preflight 的放行条件是什么？",
+          "answer": "仅当 mode=local_read_only、workspace/state/CODEX_HOME/event log 位于 case-local root、workspace 为目录、Codex executable 可执行、Provider identity 显式且 endpoint 为 loopback、plugins/apps 被禁用、凭证字段不存在时 status=pass；任何未知或不满足条件都返回 deny 并给出稳定 violation code。",
+          "note": "preflight 只能证明配置合同，不宣称宿主级网络隔离、Codex native approval 或真实 Provider 安全已签核。"
+        },
+        {
+          "q": "Provider identity 的 endpoint 校验如何保持 fail-closed？",
+          "answer": "只接受有效的 HTTP(S) endpoint，且 host 必须是 localhost 或 loopback IP；畸形 URL、非 HTTP(S)、远端 host、URL 内嵌凭证和不可 JSON 序列化 identity 均返回结构化 deny，不让 preflight 自身抛出异常或回显敏感值。",
+          "note": "这是配置合同检查，不等价于运行时网络隔离；运行时仍需在后续 1-5-4 用隔离 fixture 验证。"
+        }
+      ],
+      "notes": "已实现 src/zworkbench/local_run.py 与 zworkbench 顶层导出；LocalReadOnlyRunConfig、PreflightResult、preflight 具备 case-local/read-only/HTTP(S)-loopback/无凭证/JSON-safe/fail-closed 检查；tests/test_local_run.py 6/6 pass，全量测试 20/20 pass。"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "label": "复用 composition owner 与 Codex adapter 完成运行编排 seam",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "运行编排 seam 如何避免复制 owner 和 Codex adapter 语义？",
+          "answer": "新增 LocalReadOnlyRunOrchestrator：先调用 preflight，deny 时不打开 owner、不创建 state；pass 时只负责打开单一 CompositionOwner、构造 Codex adapter、把 preflight 结果作为脱敏 metadata 传给 adapter.execute，并返回统一的 LocalReadOnlyRunResult。run/thread/turn/event/result 的 durable 语义继续由 owner 和 adapter 各自负责。",
+          "note": "adapter factory 是测试/替换 seam，不引入第二 Harness；默认 factory 仍构造真实 CodexAppServerAdapter。"
+        },
+        {
+          "q": "编排节点允许哪些副作用和失败行为？",
+          "answer": "仅在 preflight pass 后允许创建 case-local SQLite、CODEX_HOME、event-log 目录并启动固定 Codex app-server；不执行工具 effect、scheduler、live replay 或真实 Provider。adapter 抛错时保留其 owner 状态并向调用方传播原异常，后续失败 fixture 再验证 safe-stop/diagnosis。",
+          "note": "preflight 不是运行时隔离证明；执行状态仍必须由 owner state 和 adapter evidence 复核。"
+        }
+      ],
+      "notes": "已实现 src/zworkbench/local_run.py 的 LocalReadOnlyRunOrchestrator 与 LocalReadOnlyRunResult，并从 zworkbench 顶层导出；成功路径复用单一 CompositionOwner/CodexAppServerAdapter，deny 在打开 owner 前短路，异常路径关闭 adapter 并保留 owner 现场；编排测试 3/3 pass，全量测试 23/23 pass。"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "label": "建立成功与未知边界失败的隔离 fixture",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "成功和未知边界 fixture 的事实源与隔离方式是什么？",
+          "answer": "建立 evaluation/fixtures/w8_local_read_only/v1 manifest 与确定性 fixture adapter，并由 evaluation/runner/run_w8_local_read_only.py 在每个 case 的临时 root 中创建 workspace、state、CODEX_HOME 和 executable placeholder；fixture 只写本地 SQLite/JSON，不访问网络、真实凭证或外部副作用。",
+          "note": "fixture 通过不等于 Codex 原生或产品生产通过；每次运行保留独立 scenario 结果，禁止共享 state。"
+        },
+        {
+          "q": "unknown-boundary fixture 应如何表达失败？",
+          "answer": "使用一个 preflight 已通过但 adapter 收到未知/不支持请求的确定性 fixture：adapter 在同一 owner 中创建并启动 run，将其 safe-stop，抛出可识别的 FixtureUnknownBoundary 异常；runner 必须捕获预期异常、确认 adapter 已关闭和 owner run 为 safe_stopped，并把该结果记为 expected fail-closed，而不是 pass 或静默成功。",
+          "note": "这只验证编排 seam 的失败现场；Codex native server-request 映射和完整默认拒绝仍需后续 1-5-4 验证。"
+        },
+        {
+          "q": "两个 fixture scenario 的 runner 输出与隔离契约如何统一？",
+          "answer": "success 和 unknown_boundary 共用 evaluation/fixtures/w8_local_read_only/v1/manifest.json 与同一个 runner 输出 schema；每次 scenario 都创建独立 case root，分别拥有 workspace、SQLite composition owner、CODEX_HOME、event log 和 executable placeholder，输出 expected outcome、owner run status、adapter_closed、effects_count、network/credentials/external side effects 计数和 case_root。",
+          "note": "统一输出便于后续 1-5-4 复用验证；独立 case root 防止成功场景污染失败场景，runner 不把 expected fail-closed 当作 pass。"
+        }
+      ],
+      "notes": "已完成：evaluation/fixtures/w8_local_read_only/v1/manifest.json、README.md、fixture_adapters.py（FixtureSuccessAdapter 与 FixtureUnknownBoundaryAdapter），以及 evaluation/runner/run_w8_local_read_only.py 和 tests/test_w8_local_read_only_fixture.py。两个 scenario 每次使用独立 case root、workspace、SQLite、CODEX_HOME、event log 与 executable placeholder；success 为 completed/fixture-ok，unknown_boundary 捕获 FixtureUnknownBoundary 并验证 safe_stopped，未记为成功。PYTHONPATH=src python -m unittest discover -s tests -v：28/28 pass；runner --repeats 2：4/4 case pass；compileall 与 git diff --check pass。fixture 通过仅证明本地编排 seam，不代表 Codex native approval、宿主隔离或真实 Provider 通过。"
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "label": "验证身份关联、脱敏、网络零访问与默认拒绝",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "身份、脱敏、网络零访问和默认拒绝如何形成可复核证据？",
+          "answer": "新增独立的 evaluation/runner/run_w8_local_read_only_security.py 与验收测试：身份控制重新打开同一 case-local owner，逐项核对 run/thread/turn/provider/replay/result 的 run_id 关联；脱敏控制传入带 api_key 的 loopback 配置，要求 preflight deny、adapter factory 不被调用且输出不含 secret；网络控制在 success 与 unknown-boundary fixture 外围安装进程内 socket tripwire，网络尝试必须为 0；默认拒绝控制直接调用 CodexAppServerAdapter 的未知 server request seam，要求 deny error、owner safe_stopped、无 semantic completion。",
+          "note": "这些是 W8 隔离 seam 的控制证据；默认拒绝不宣称 Codex native approval 或宿主级网络隔离已签核，真实 Provider 仍禁止接入。"
+        }
+      ],
+      "notes": "已完成：evaluation/runner/run_w8_local_read_only_security.py 与 tests/test_w8_local_read_only_security.py。identity 控制重新打开 case-local SQLite，核对 run_id→thread_id→turn_id→provider/replay/result/event 全链路；redaction 控制使用 loopback + api_key fixture，preflight=deny、adapter factory=0、owner database 未创建且 secret 出现次数=0；network tripwire 覆盖 success/identity 与 default-deny 控制，socket/DNS 尝试=0；default_deny 控制对未知 future/server-request.v1 返回 -32001 deny、owner=safe_stopped、无 semantic completion。security runner 3/3 pass；全量测试 31/31 pass；compileall、git diff --check、roadmap validate pass。证据仅限进程内/adapter seam 隔离验证，不代表宿主级网络隔离、Codex native approval 或真实 Provider 签核。"
+    },
+    "1-5-5": {
+      "id": "1-5-5",
+      "label": "验证 backup/restore 并生成第一切片 evidence",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "第一切片 evidence 如何覆盖备份恢复且保持可退出和可复核？",
+          "answer": "新增 evaluation/runner/run_w8_local_read_only_evidence.py：在独立临时 evidence root 中复用 W8 success fixture 产生真实 case-local owner state，同时汇总 1-5-4 security controls；记录 owner 初始 state_digest，执行 export_state、backup，检查 backup manifest/database/state.json 和 SQLite integrity，再用 replace=True 将 case-local 损坏目标恢复并重新打开，要求 restored state_digest 与 snapshot 一致。所有 workspace/state/CODEX_HOME/event/backup/export/restore 资产均在同一 case root，执行过程用进程内 socket/DNS tripwire，secret-pattern 扫描结果必须为 0，默认不写入仓库。",
+          "note": "backup/restore 的 machine evidence 证明 owner 状态可恢复，不证明 Provider 远端资源可退出；损坏目标仅为 case-local 可逆测试资产，仍不触碰真实凭证、网络或外部副作用。"
+        }
+      ],
+      "notes": "已完成：evaluation/runner/run_w8_local_read_only_evidence.py 与 tests/test_w8_local_read_only_evidence.py。evidence runner 在独立临时 root 中复用 success fixture 和 1-5-4 security controls，记录真实 owner state digest，执行 export_state、backup，校验 manifest/composition.sqlite3/state.json/integrity/database digest/state digest，再以 replace=True 替换损坏的 case-local restore target，并重新打开验证 restored digest 与 snapshot 一致。secret-pattern 扫描为 0，socket/DNS tripwire 尝试为 0，effects 为 0，所有资产均 case-local。evidence runner pass：security 3/3、backup_restore pass；全量测试 34/34 pass；compileall、git diff --check、roadmap validate pass。数据库文件 hash 按 restore 返回瞬间校验，重开后的语义状态按 digest/snapshot 校验。该 evidence 不代表真实 Provider 远端退出、宿主级网络隔离或 Codex native approval 已签核。"
+    }
+  },
+  "metadata": {
+    "created": "2026-08-31 21:34:09",
+    "updated": "2026-09-01 00:02:10",
+    "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
+  }
+}
