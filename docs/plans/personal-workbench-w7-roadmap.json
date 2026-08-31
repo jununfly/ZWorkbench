@@ -15,7 +15,9 @@
         "1-3",
         "1-4",
         "1-5",
-        "1-6"
+        "1-6",
+        "1-7",
+        "1-8"
       ],
       "decisions": [
         {
@@ -116,22 +118,39 @@
     "1-5": {
       "id": "1-5",
       "label": "由单一操作者完成优先候选 C7 运维许可证与退出审计",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "C7 候选级运维、许可证与退出审计如何设置边界和放行阈值？",
+          "answer": "本轮建立 Codex 0.139.0 的候选级、case-local C7 audit adapter：只读核验固定 release/二进制/入口/许可证身份，记录运行时依赖和维护服务清单；在隔离目录执行可逆的 backup/restore、export/re-import/delete 和预制故障诊断，验证与 C2-C6 evidence identity 的关联。不得操作全局 CODEX_HOME、真实 Provider、真实凭证、外网升级、生产项目或不可逆用户数据。W6 阈值继续冻结：首次安装人工时间≤90分钟，升级/备份恢复/故障定位各≤30分钟，维护常驻服务≤3，无额外专家；四类流程各3次。机器流程通过不能替代单一真实操作者 stopwatch；未具备真人计时、真实候选升级/回滚或许可证/退出一手证据时，C7 与 G7 保持 unknown/stop。",
+          "note": "ATAM 优先验证 C7 的安装/升级/恢复/退出和责任边界，区分候选原生能力与外部 composition owner；CBAM 只允许一个薄 adapter，若引入第二 Harness、gateway、workflow 或观测服务，必须重新计入服务、依赖、许可证、备份、排障和退出成本。当前正式 artifact 为 evaluation/runner/run_codex_c7.py、evaluation/fixtures/w7-codex-c7/、docs/plans/w7-codex-c7-findings.md。"
+        },
+        {
+          "q": "C7 首轮机器审计是否达到候选签核？",
+          "answer": "机器合同 18/18 pass，六类场景各重复 3 次；但 C7/G7 必须保持 unknown/stop。人工 stopwatch 尚未提供，真实候选安装、升级/回滚未执行，商业边界与 NOTICE 审查未知，source package 0.0.0-dev 到本机 0.139.0 二进制的 provenance 未被证明。退出 fixture 3/3 完成 export、独立 re-import、delete 与零残留。",
+          "note": "正式证据为 evaluation/runs/w7-codex-c7-20260830T172916-565440Z/summary.json；一手来源为 docs/plans/research/w7-codex-c7-primary-sources.md。初次 12/18 是 fixture oracle 把预期 false 当作失败，已修正为显式 not_executed 安全断言并保留初始证据；不影响最终候选结论。C7 审计工作完成，但不放行候选采用。"
+        }
+      ],
+      "notes": "C7 审计工作完成：正式运行 18/18 machine pass，exit 3/3 零残留；C7/G7 保持 unknown/stop，未宣称候选签核。真实安装、升级/回滚、人工 stopwatch、商业/NOTICE 审查和 source-to-binary provenance 仍是放行前置条件。详细 findings：docs/plans/w7-codex-c7-findings.md；primary sources：docs/plans/research/w7-codex-c7-primary-sources.md。"
     },
     "1-6": {
       "id": "1-6",
       "label": "基于候选 C1至C7 证据完成 ATAM/CBAM 采用姿态决策",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "基于 C1-C7 证据，Codex 与组合路线的采用姿态是什么？",
+          "answer": "生产采用 defer；条件保留 Codex 作为唯一主 Harness，允许一个必要的薄 composition owner 统一承接跨 Run durable/schedule/幂等/effect/result ledger、C2 policy/approval ledger、C5 Provider capability/fallback 和 C6 canonical replay/evidence。C1/C2 scripted path/C3/C5/C6 的局部或 composition 证据支持继续受控试点，但不提升为 Codex 原生能力或生产签核。C4 approval-boundary-unknown、C7 真人 install/upgrade/rollback/stopwatch unknown、许可证/NOTICE/商业边界 unknown、source-to-binary provenance unknown 和 C2 宿主级强制边界 unknown 均为生产 blocking；未关闭前所有危险动作 fail-closed，C7/G7 保持 unknown/stop。暂不引入第二 Harness、Temporal/LangGraph、LiteLLM 或独立观测平台；新增组件必须用同一 C2-C7 矩阵证明非重复收益超过维护、升级、备份、排障和退出成本。",
+          "note": "正式决策文档：docs/plans/w7-codex-atam-cbam-adoption-decision.md；证据包括 C1 基线、C2 summary、C3/C4 summary、C5/C6 summary 和 C7 summary。个人开发者/小团队硬约束：维护服务 ≤3、无额外专家、安装 ≤90 分钟、升级/备份恢复/故障定位各 ≤30 分钟；C7 machine 18/18 pass 不替代真人 stopwatch。下一步仅在受控隔离边界内关闭 C4/C7 blocking，并按版本、schema、Provider、policy 或服务拓扑变化持续重跑 C1-C7。"
+        }
+      ],
+      "notes": "1-6 ATAM/CBAM 采用姿态已完成：生产采用 defer；Codex 作为唯一主 Harness 的条件候选，允许一个必要的薄 composition owner；暂不引入第二 Harness、Temporal/LangGraph、LiteLLM 或独立观测平台。C4 approval、C7 真人生命周期、许可证/NOTICE/商业边界、source-to-binary provenance 和 C2 宿主级强制边界仍为生产 blocking，C7/G7 保持 unknown/stop。详细评审：docs/plans/w7-codex-atam-cbam-adoption-decision.md。"
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -168,11 +187,148 @@
         }
       ],
       "notes": "C3/C4 composition adapter 首轮完成：C3 15/15 pass-with-composition；C4 recovery controls 36/36，通过状态保留、reconcile/safe-stop、retry≤1 和副作用唯一性检查；C4 overall 24/36 pass、12/36 unknown、0 fail，12 个 approval-required case 均未收到 Codex 原生 requestApproval，因此保留 approval-boundary-unknown。详见 docs/plans/w7-codex-c3-c4-findings.md 与两份 evaluation/runs/w7-codex-c3-c4-* summary。此节点为 acceptance/evaluation，不代表产品实现或候选总体采用。"
+    },
+    "1-7": {
+      "id": "1-7",
+      "label": "关闭 Codex C4 approval owner 与原生/组合边界",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "C4 approval-boundary-unknown 如何继续作为主线关闭？",
+          "answer": "采用显式 composition-owned approval path 作为当前可执行主线，同时保留 Codex 原生 approval 结论为 unknown。C4 adapter 必须在真实 Codex app-server tool request 边界接入单一 fail-closed policy owner：无 approval request、未知 server request、scope 不匹配、token 重放、非 allowlist 命令和状态/副作用账本不一致时均 deny/safe-stop；只允许 one-action-one-resource-one-attempt 的 case-local 正向路径。不得把 W6 C2 adapter 的 scripted 通过回填为 Codex 原生审批通过；另建 C4 approval composition fixture，并在固定 Codex 0.139.0、同一 C2-C6 identity 下重跑 recovery matrix。",
+          "note": "完成标准：approval request/decision/effect/result 全链路字段 100% 完整；无人审批未授权执行 0；批准 scope 一次性且重放 0；危险副作用重复 0；未知请求 fail-closed；native approval 缺失继续显式记录为 unknown。此节点仍是 acceptance/evaluation，不修改 ZWorkbench 产品代码。"
+        },
+        {
+          "q": "C4 组合式 approval 首轮结果如何判定？",
+          "answer": "正式运行 36/36 pass-with-composition；将 C4 的组合路径与 recovery controls 关闭为通过，但 Codex 原生 approval 继续保持 unknown/not-required-for-composition，不把组合 gate 或 W6 C2 evidence 回填为原生能力。",
+          "note": "证据：evaluation/runs/w7-codex-c4-approval-20260831T032346-194000Z/summary.json。阈值全部满足：状态丢失 0、危险副作用重复 0、最大 retry 1、未授权/scope/token replay effect 0、approval/effect/result 关联完整。修正前 runner oracle 误用独立 replay ledger 的历史运行保留但不纳入结论。范围仍为 acceptance/evaluation，不修改 ZWorkbench 产品代码；C7 unknown/stop 继续为下一节点。"
+        }
+      ],
+      "notes": "C4 组合路径 36/36 pass-with-composition；Codex 原生 approval 保持 unknown。正式证据见 docs/plans/w7-codex-c4-approval-findings.md 与 evaluation/runs/w7-codex-c4-approval-20260831T032346-194000Z/summary.json。C7 仍是下一节点。"
+    },
+    "1-8": {
+      "id": "1-8",
+      "label": "完成 Codex C7 真实单人生命周期验证与退出签核",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5"
+      ],
+      "decisions": [
+        {
+          "q": "C7 真实单人生命周期如何继续而不越过安全边界？",
+          "answer": "先进入真实单人生命周期 gate 的准备阶段：机器侧只做固定版本身份、隔离目录、runbook、人工 stopwatch 模板和许可证/provenance 证据清单；不改全局 CODEX_HOME、不执行全局安装/升级/回滚、不接触真实凭证或生产数据。只有在明确授权且操作者在场时，才运行真实 install、upgrade/rollback、backup/restore、fault diagnosis 和 exit；任一人工时间、许可证/NOTICE/商业边界或 source-to-binary provenance 缺失，均保持 C7 unknown/stop。",
+          "note": "个人开发者/小团队硬约束：首次安装 <=90 分钟，其余 upgrade/rollback、backup/restore、故障定位各 <=30 分钟，维护常驻服务 <=3、无需额外专家。C4 native approval unknown 必须原样传递；C7 仅关闭生命周期证据，不回填 C4/C2-C6 原生能力。"
+        },
+        {
+          "q": "C7 Gate C 当前是否存在可签核的真实 composition state？",
+          "answer": "同意结论：真实 composition state 不存在；backup/restore 保持 unknown。evaluation/fixtures、Codex CODEX_HOME、机器审计生成的 case-local state 都不计入真实 composition state；不得用它们回填 C7 真实生命周期签核。",
+          "note": "这是 Human 已确认的边界决策。未来只有当实际 composition owner 接入真实工作台任务流并持有 durable run/effect/result/event/replay state 后，才可重新执行 C7 backup/restore；在此之前 C7 overall 继续 unknown/stop。"
+        },
+        {
+          "q": "真实 composition owner 第一切片的范围是什么？",
+          "answer": "只实现一个本地、单进程、单一 SQLite durable owner；它拥有 run identity、状态迁移、approval decision/token、effect/result/event ledger、reconcile 和 backup/restore。Codex 只作为可替换执行 adapter，不复制 Agent loop、Provider router 或 Codex 原生状态。",
+          "note": "这是产品实现路线；evaluation fixtures 只作为测试 oracle，不作为生产 state。先关闭真实 composition state 不存在这一 C7 阻断。"
+        },
+        {
+          "q": "为什么第一版使用 SQLite 而不是新增长驻服务？",
+          "answer": "使用 Python 标准库 sqlite3 的单文件 SQLite store，事务边界和备份语义由 owner 统一持有；不引入 Temporal、LangGraph、LiteLLM、独立观测平台或额外常驻服务。",
+          "note": "符合个人开发者/小团队约束，减少安装、升级、排障和退出成本；未来可在保持 owner interface 不变时替换 adapter。"
+        },
+        {
+          "q": "composition owner 的权威状态是什么？",
+          "answer": "owner 的 SQLite ledger 是 run、approval、effect、result、event 和 replay metadata 的唯一权威；Codex thread/turn、CODEX_HOME、Provider 日志和 case-local fixture 都是外部引用或输入，不是 owner state。所有危险副作用必须先经过 owner claim，未知状态只能 reconcile 或 safe-stop。",
+          "note": "确保 C4/C7 不再把 harness 内部文件冒充真实 composition state。"
+        }
+      ],
+      "notes": "真实 composition owner 核心已实现：src/zworkbench/composition.py 使用单一 SQLite 持有 run/approval/effect/effect_attempt/result/replay metadata/event durable state，具备 fail-closed claim、uncertain reconcile、bounded retry、safe-stop、export、backup/restore；12 个隔离测试和 CLI smoke 已通过。C7 Gate C 仍保持 unknown：尚未接入 Codex app-server 的真实工作台任务流，不能把产品测试 state 冒充真实 C7 state。下一步为 1-8-5 Codex→owner adapter 与隔离回归。"
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "label": "实现 composition owner 深模块接口与 SQLite 持久化",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "owner 的外部 seam 如何保持足够深？",
+          "answer": "由 CompositionOwner 暴露 run lifecycle、approval/effect seam、uncertainty reconcile 和 evidence/backup 四组少量操作；Codex、Provider、shell 和 scheduler 都留在外部 adapter，不进入 owner public interface。",
+          "note": "接口是测试面；调用者不需要学习 SQLite schema 或状态转移细节。"
+        }
+      ],
+      "notes": "已实现 src/zworkbench/composition.py 的 SQLite owner、run identity、schema 初始化和重开持久化；tests/test_composition.py 覆盖重开与事件读取。"
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "label": "实现 run、approval、effect、result 与 event durable ledger",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "哪些 ledger 必须由 owner durable 持有？",
+          "answer": "runs、approvals、effects、effect_attempts、results、events 全部写入同一 SQLite 事务；事件和结果既可用于 recorded view，也用于恢复后的身份核对。",
+          "note": "Codex thread/turn 只作为 adapter 写入的 metadata/result，不替代这些账本。"
+        }
+      ],
+      "notes": "已实现 runs/approvals/effects/effect_attempts/results/replays/events durable ledger，同一事务记录状态与事件；支持 replay metadata 的显式 recorded_view/simulated_replay/live_replay 模式、snapshot、events 和 state_digest。12 个隔离测试全部通过。"
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "label": "实现 fail-closed approval、幂等 claim 与中断后 reconcile",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "副作用不确定时允许什么动作？",
+          "answer": "不确定状态禁止再次 claim；只有显式 reconcile 为 not-applied 才能进入最多一次 bounded retry，applied 直接完成并计为一次物理副作用，unknown 立即 safe-stop。",
+          "note": "这把 C4 的重复副作用风险变成 owner 的状态不变量，而非调用方自律。"
+        }
+      ],
+      "notes": "已实现已知 effect class allowlist、approval token hash/精确 scope/单次消费、幂等 replay、uncertain reconcile、bounded retry 与 unknown safe-stop。"
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "label": "实现 composition state backup、restore、导出与完整性校验",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "backup/restore 的最小可复核格式是什么？",
+          "answer": "backup 目录必须同时包含 SQLite copy、state.json 和 manifest.json；manifest 记录 schema、数据库 SHA-256、state digest、计数和 integrity check。restore 默认不覆盖既有目标，必须显式 replace=True 并在替换前验证全部 digest。",
+          "note": "这是可重新打开的真实 composition state，且能在 C7 中由独立 operator 验证。"
+        }
+      ],
+      "notes": "已实现 CLI/API export_state、SQLite backup、manifest/state digest、integrity check、显式 replace restore；篡改和覆盖保护均有隔离测试。"
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "label": "接入 Codex app-server adapter 并完成真实 owner 隔离回归",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 01:00:33",
+    "updated": "2026-08-31 15:52:14",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }
