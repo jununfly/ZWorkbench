@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-w7-codex-c34/v1",
+  "run_id": "w8-native-no-ci-20260831T165857-887242Z",
+  "schedule_id": "w8-1-6-3-native-no-ci-v1",
+  "idempotency_key": "w8-1-6-3-native-no-ci:20260831T165857-887242Z",
+  "scenario": "native-approval-no-ci",
+  "thread_id": "01a058c2-8551-7fc0-94ac-744e42590fff",
+  "turn_id": "01a058c2-8583-77c3-85a6-00fcbeeb7433",
+  "phase": "turn-started",
+  "status": "running",
+  "retry_count": 0,
+  "last_checkpoint": "turn-started",
+  "effect_status": "unknown",
+  "result_status": "unknown",
+  "safe_stop_reason": null
+}

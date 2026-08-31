@@ -116,12 +116,49 @@
     "1-6": {
       "id": "1-6",
       "label": "评估真实 Provider 与可恢复写操作的放行资格",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
-      "children": [],
-      "decisions": [],
-      "notes": ""
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3",
+        "1-6-4",
+        "1-6-5"
+      ],
+      "decisions": [
+        {
+          "q": "真实 Provider 与可恢复写操作的放行评估如何分层？",
+          "answer": "将 1-6 分成两个独立 gate：A) 真实 Provider 资格，评估 endpoint/auth/data retention/remote resource/exit responsibility；B) local recoverable write 资格，评估 workspace boundary、approval、idempotency、interruption/recovery、replay/backup 和 rollback。任一关键证据为 unknown 都保持 HOLD/UNKNOWN，不因另一 gate 通过而放行；在评估完成前不调用真实 Provider、不读取 API key、不执行真实写操作。",
+          "note": "本节点产出决策与证据边界，不直接开放能力；沿用个人开发者/小团队约束、Codex 0.139.0 唯一主 Harness、单一 SQLite owner 和最多 3 个维护服务。"
+        },
+        {
+          "q": "1-6 的真实 Provider gate 当前是否放行？",
+          "answer": "HOLD / UNKNOWN。用户报告的火山方舟 endpoint、个人账户及远端数据/任务/Webhook/备份只能作为 externally-owned inventory 起点；在认证、数据类别/retention、远端资源 ID、删除/撤销/备份清理、账单和责任人均有可复核证据前，不调用真实 Provider。",
+          "note": "官方 Ark 文档入口已识别，但本轮详细页面受 WAF 无法可靠核验；OpenAI-compatible 只证明协议表面，不证明合同或退出语义。"
+        },
+        {
+          "q": "1-6 的可恢复写操作 gate 当前是否放行？",
+          "answer": "HOLD。W7 已有 composition approval/recovery 和 owner backup/restore 的隔离证据，但宿主级强制边界、Codex native approval、真实写 effect 的 claim/commit、幂等、中断恢复、reconcile 和 rollback 尚未形成候选级闭环。",
+          "note": "继续只允许 local_read_only_run 和 case-local reversible fake sink；未知 effect 一律 safe-stop，不自动 retry。"
+        },
+        {
+          "q": "1-6 是否在当前阶段引入第二 Harness 或常驻组合件？",
+          "answer": "不引入。继续 Codex 0.139.0 唯一主 Harness + 一个 SQLite composition owner + 必要薄层；第二 Harness、LiteLLM、Temporal/LangGraph、独立观测后端只有在同一 C2-C7 批次证明非重复收益且满足个人开发者/小团队成本与退出阈值时另行评估。",
+          "note": "CBAM 结论是保留单主 Harness 路线；不能以功能数量抵消新增状态、权限、服务、许可证和退出责任。"
+        },
+        {
+          "q": "1-6 的下一执行顺序是什么？",
+          "answer": "先完成 1-6-1 Provider 认证/数据保留/远端资源退出清单，再考虑真实 Provider 只读 staging；并行在 1-6-3/1-6-4 补宿主强制边界与 fake sink 可恢复写矩阵，最后由 1-6-5 做 ATAM/CBAM 综合复审。",
+          "note": "1-6-1 完成前不得配置真实 key 或执行真实 Provider 请求；Gate A 与 Gate B 独立验收，互不替代。"
+        },
+        {
+          "q": "官方一手资料核验后，真实 Provider gate 的证据等级如何收窄？",
+          "answer": "收窄为 partially-official-verified / scope-limited：官方资料已确认 Coding Plan OpenAI-compatible endpoint、API Key 获取/禁用/删除、个人版数据授权、广义数据处理、套餐账单和账号注销规则；但目标 Coding endpoint 的通用任务/Webhook/备份生命周期、逐对象 retention、实际账户资源清单和最终零残留仍为 unknown，因此 Gate A 仍 HOLD/UNKNOWN。",
+          "note": "研究记录：docs/plans/research/w8-provider-exit-primary-sources.md；标准 Ark /api/v3 的 Response/File/视频任务证据不能外推到 /api/coding/v3。"
+        }
+      ],
+      "notes": "决策文档：docs/plans/w8-1-6-provider-and-recoverable-write-gates.md；Provider 一手来源：docs/plans/research/w8-provider-exit-primary-sources.md。Gate A=HOLD/UNKNOWN（部分官方事实已确认，目标 Coding 远端资源/retention/最终退出仍 unknown），Gate B=HOLD；下一步先做 1-6-1。"
     },
     "1-5-1": {
       "id": "1-5-1",
@@ -227,11 +264,100 @@
         }
       ],
       "notes": "已完成：evaluation/runner/run_w8_local_read_only_evidence.py 与 tests/test_w8_local_read_only_evidence.py。evidence runner 在独立临时 root 中复用 success fixture 和 1-5-4 security controls，记录真实 owner state digest，执行 export_state、backup，校验 manifest/composition.sqlite3/state.json/integrity/database digest/state digest，再以 replace=True 替换损坏的 case-local restore target，并重新打开验证 restored digest 与 snapshot 一致。secret-pattern 扫描为 0，socket/DNS tripwire 尝试为 0，effects 为 0，所有资产均 case-local。evidence runner pass：security 3/3、backup_restore pass；全量测试 34/34 pass；compileall、git diff --check、roadmap validate pass。数据库文件 hash 按 restore 返回瞬间校验，重开后的语义状态按 digest/snapshot 校验。该 evidence 不代表真实 Provider 远端退出、宿主级网络隔离或 Codex native approval 已签核。"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "label": "Provider 认证、数据保留与远端资源退出清单",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-1 的完成标准和未闭合边界是什么？",
+          "answer": "完成 Provider 认证、数据保留与远端退出的证据 baseline：官方来源、Human-reported profile、数据流 inventory、远端资源 inventory 和人工退出顺序已落盘。实际账户的 model/project/key fingerprint、Coding 任务/Webhook/备份 resource ID、逐对象 retention、删除结果和最终零残留仍 unknown；因此 1-6-1 完成不等于 Gate A 放行，1-6-2 仍需 Human 补齐前置证据。",
+          "note": "文档：docs/plans/w8-1-6-1-provider-exit-inventory.md；一手来源：docs/plans/research/w8-provider-exit-primary-sources.md。"
+        }
+      ],
+      "notes": "Provider 认证、数据保留与远端退出 inventory baseline 已完成；账户级 resource ID、逐对象 retention、删除结果和最终零残留仍 unknown。Gate A 继续 HOLD，1-6-2 需 Human 补齐前置证据。"
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "label": "真实 Provider 只读 staging 资格验证",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "label": "宿主强制边界与 Codex native approval 验证",
+      "status": "blocked",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-3 如何区分 adapter fail-closed 与宿主级强制边界？",
+          "answer": "分成三层证据：L1 policy/adapter 在动作执行前返回 deny；L2 Codex native approval 与 app-server request 语义可见且缺失时 safe-stop；L3 OS/host sandbox 或 helper broker 实际阻断越界文件、凭证、网络和子进程。只有 L3 与 L2 均有候选级证据才可讨论真实写操作；L1 pass 不能升级为宿主隔离 pass。",
+          "note": "当前 W7 只有 scripted adapter path pass，宿主强制边界和 Codex native approval 仍 unknown。验证只使用 case-local temp assets、loopback/fake Provider 和无副作用 negative probes。"
+        },
+        {
+          "q": "宿主机制探针与 app-server schema 观察后，1-6-3 的当前判定是什么？",
+          "answer": "L1 pass；L2 Codex native approval unknown；L3 host-write-mechanism-pass 但产品级继承与完整最小权限边界 unknown；保持 HOLD，不进入真实写操作。",
+          "note": "已在隔离临时目录完成 3/3 case-local 写入允许、workspace 外写入阻断的 macOS sandbox 机制探针；Codex app-server generate-json-schema/help 只能证明 approval 控制面存在，不能证明运行时 request/decision/owner 关联或 app-server 全进程树继承 host profile。"
+        },
+        {
+          "q": "额外的 workspace 外越界命令负向 probe 是否关闭 L2/L3？",
+          "answer": "不能关闭。固定 Codex 0.139.0、case-local CODEX_HOME、loopback/fake Provider、approvalPolicy=on-request 下，fake Provider 提议写入 workspace sibling sentinel；运行记录显示 native approval request=0、commandExecution started/completed=0、turn completed，sentinel 未改变。因为没有 command denial 或 host rejection 事件，属于 unobserved/unknown，不得记为 native approval pass 或 host enforcement pass。",
+          "note": "证据目录：evaluation/runs/w8-codex-1-6-3-native-negative-probe-20260831T165709-867080Z/。结论强化 HOLD：需要可观察的 request→decision→执行/拒绝关联与 host-level denial，未获得前不重复同类 probe 或放行真实写操作。"
+        },
+        {
+          "q": "去掉 CODEX_CI=1 后重复越界命令 probe，是否能关闭 native approval 或 host enforcement unknown？",
+          "answer": "不能关闭。固定 Codex 0.139.0、case-local CODEX_HOME、loopback/fake Provider、approvalPolicy=on-request 下，未注入 CODEX_CI 的独立 probe 仍观察到 native approval request=0、commandExecution started/completed=0、turn completed、sibling sentinel 未改变。该变量已排除，但没有显式 denial/rejection event，仍只能判定 unobserved/unknown；不把目标未改变当作 L3 pass。",
+          "note": "证据目录：evaluation/runs/w8-codex-1-6-3-native-no-ci-probe-20260831T165857-887242Z/。当前同形状 probe 的增量收益已耗尽；后续必须更换可观察的 Codex 工具/权限组合或引入候选 host/broker rejection surface，未获新边界前不重复、不放行真实写入。"
+        }
+      ],
+      "notes": "当前阻断：固定 Codex 0.139.0 app-server 接入面在 approvalPolicy=on-request、workspaceWrite、loopback/fake Provider 下，正向 case-local effect 可在无 native request 时执行；越界命令在有/无 CODEX_CI 两种配置下均未产生 native approval、commandExecution 或 rejection event，临时目标未改变。无法据此证明 native approval 或 host enforcement。已完成 L3 普通 sandbox 机制 3/3 probe、schema/help 观察和三组运行时观察；同形状 probe 增量收益耗尽。解锁条件：更换可确认触发 approval 的 Codex 工具/权限组合，或引入候选级可审计 host/broker rejection surface，并取得 request→decision→执行/拒绝及进程/边界证据。在此之前保持真实写入 HOLD。详见 docs/plans/w8-1-6-3-host-boundary-native-approval.md。"
+    },
+    "1-6-4": {
+      "id": "1-6-4",
+      "label": "可恢复本地写操作故障矩阵验证",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-4 的范围和完成标准是什么？",
+          "answer": "将 1-6-4 定义为 acceptance/evaluation artifact：在 case-local reversible fake sink 中核验 B3 claim/commit、B4 幂等、B5 中断/恢复/reconcile、B6 backup/restore、B7 replay、B8 rollback 证据和 B9 诊断关联；真实项目写入、Git push、部署和远端 Provider 仍禁止。若 B1 宿主强制或 B2 Codex native approval 未闭合，只能给出 fixture-level pass/production HOLD，不能放行真实写操作。",
+          "note": "个人开发者/小团队约束继续有效：常驻维护服务不超过 3 个，不能新增第二 Harness 或 workflow engine；未知 effect 必须 safe-stop，不自动 retry。"
+        }
+      ],
+      "notes": "隔离故障矩阵证据已组合完成：B3 claim/commit、B4 幂等、B5 中断/恢复/reconcile、B6 owner backup/restore、B7 replay、B9 诊断均达到 fixture-level pass-with-composition；B8 仅完成 Codex 0.138.0→0.139.0→0.138.0 下 owner schema/config/ledger 保持的 machine compatibility，workspace/schema/cassette 统一 rollback 仍 partial。B1 宿主强制和 B2 Codex native approval 仍 unknown，Gate B 继续 HOLD；不放行真实项目写入。文档：docs/plans/w8-1-6-4-recoverable-write-fault-matrix.md。"
+    },
+    "1-6-5": {
+      "id": "1-6-5",
+      "label": "ATAM CBAM 综合放行复审",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-5 的综合复审范围和最终决策规则是什么？",
+          "answer": "把 Gate A 真实 Provider、Gate B 可恢复写操作、C7/NOTICE/商业边界/退出责任和个人开发者或小团队维护成本放到同一 ATAM/CBAM 复审；安全、数据责任、退出和未知 effect 是硬门，不能由功能收益或综合分抵消。任一关键证据 unknown 即整体 HOLD；可仅对已验证的 local_read_only_run 和隔离 fake sink 给出 CONDITIONAL/GO-within-scope。",
+          "note": "继续 Codex 0.139.0 唯一主 Harness + 一个 SQLite composition owner；不引入第二 Harness、LiteLLM、Temporal/LangGraph、独立观测平台或常驻 broker，除非后续证明非重复收益并满足服务数≤3、单人维护和可退出阈值。"
+        }
+      ],
+      "notes": "ATAM/CBAM 综合复审完成：W8 local_read_only_run 在隔离范围内 GO-within-scope；case-local reversible fake sink 仅 CONDITIONAL；真实 Provider Gate A=HOLD/UNKNOWN；真实本地写 Gate B=HOLD；C7/NOTICE/商业边界/真实远端退出仍未完整签核。继续 Codex 0.139.0 唯一主 Harness + 一个 SQLite composition owner，不引入第二 Harness、LiteLLM、Temporal/LangGraph、独立观测平台或常驻 broker。硬门不做平均分：host/native approval、unknown effect、Provider 数据/退出和许可证/供应链缺证据即 stop。文档：docs/plans/w8-1-6-5-atam-cbam-release-review.md。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-01 00:02:10",
+    "updated": "2026-09-01 01:00:37",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }
