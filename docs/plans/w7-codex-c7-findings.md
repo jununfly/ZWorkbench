@@ -1,6 +1,6 @@
 # W7 Codex C7 运维、许可证与退出审计结果
 
-状态：`machine-contract-pass / candidate-signoff-unknown-stop` ·
+状态：`machine-contract-pass / notice-commercial-boundary-mapped / candidate-signoff-unknown-stop` ·
 `acceptance/evaluation` · 不代表 Codex 原生或 ZWorkbench 产品通过
 
 本轮对固定 Codex Harness `0.139.0` 建立并运行了候选级 C7 audit adapter。它把
@@ -71,7 +71,7 @@ oracle，错误得到 `12/18`；随后已改为显式的 `*_not_executed` 安全
 | candidate install | `pass-at-install-timing-and-identity-level` | 临时 prefix 全新安装 `0.139.0`；同一次 raw log 固化安装输出、版本、help、npm tree 和四个 artifact digest，SHA-256 已记录；完整 C7 仍 unknown/stop |
 | candidate upgrade/rollback | `partial-exercised` | 临时 C7 prefix 中真实完成 `0.138.0 → 0.139.0 → 0.138.0`，版本与 app-server help 已存档；另有同一 owner 的跨版本 machine probe 通过；真实发布环境/人工 gate 仍未签核 |
 | license declared | `Apache-2.0` | 固定源码 LICENSE 和本机 package metadata 声明一致 |
-| commercial/notice review | `unknown` | 不能由单一 LICENSE 文件覆盖所有依赖、NOTICE、商标和商业边界 |
+| commercial/notice review | `bounded-evidence / signoff-open` | 已有固定版本的一手来源与工程边界地图；逐包 NOTICE clearance、商业/API/账户/数据模式和商标责任人签核仍缺 |
 | source-to-binary provenance | `pass-at-release-level` | root/platform npm SLSA attestation 绑定 `rust-v0.139.0` / `a7dff904…`；官方 tarball 与本机安装内容核对通过；npm CLI attestation 验证通过；独立重建仍开放 |
 | C7 / G7 signoff | **`unknown/stop`** | 关键 unknown 未达到冻结的放行阈值 |
 
@@ -174,7 +174,7 @@ C7 的定位是生命周期审计，不是把 C2-C6 的 composition 结果重新
 | `R-C7-03` ledger 损坏后无法恢复 | 3 次 case-local restore digest/health oracle；另有单人隔离 owner-backed restore `12.38s`、20/20 checks pass | composition owner | 人工时间项通过；生产 retention、加密、跨版本迁移未测 |
 | `R-C7-04` 故障定位超过小团队能力 | fault/run 关联、bounded diagnosis 和受控 adapter failure persistence 通过；单一操作者完成诊断并保存结论 `2.85517min` | 候选诊断面 + composition owner | 预制 fixture 的人工时间项通过；生产故障的范围和真实远端责任未测 |
 | `R-C7-05` 服务拼盘超出维护能力 | 计入 2 个，低于上限 3 | 候选运行时 + 一个薄 adapter | 当前可保留；新增服务须重新走 C7 |
-| `R-C7-06` 许可证/NOTICE/商业边界遗漏 | Apache-2.0 一手来源已记录 | 项目维护者 + 合规审查 | `commercial_boundary` 和 notice review 仍 unknown |
+| `R-C7-06` 许可证/NOTICE/商业边界遗漏 | 固定 commit/LICENSE、vendor/transitive ledger、OpenAI 服务/个人服务/使用政策/品牌一手来源及边界地图已记录 | 项目维护者 + 合规审查 | 已收窄为 `bounded-evidence / signoff-open`；逐包 NOTICE、再分发材料、商业/API/账户/数据模式和商标审查仍未签核 |
 | `R-C7-07` 发布二进制无法追溯到源码 | root/platform npm SLSA attestation、npm CLI 验证、tag/commit、registry tarball integrity 和本机 bytes 均已绑定；commit API 仍为 unsigned | 发布供应链 | release-artifact provenance 已 pass；独立重建及其他安装渠道仍 unknown |
 | `R-C7-08` 退出留下真实残留 | case-local 导出/导入/删除达到零残留 | composition owner + 外部账户/数据 owner | 仅机器 fixture 通过；真实账户、远程资源、备份 retention 未审计 |
 
@@ -244,12 +244,13 @@ fake Provider 仅为 case-local test process；无真实凭证、无生产数据
 
 因此，之前“无真实 composition state”对 C7 backup/restore 和 exit 机器控制的阻断已
 关闭；本轮也把 source-to-binary 从完全 unknown 收窄为 npm release-artifact provenance
-pass-at-release-level。随后单一操作者在隔离 owner-backed case 上完成 backup/restore，
+pass-at-release-level，并把 NOTICE/商业边界从“完全未知”收窄为有一手条款和停止边界的
+工程地图。随后单一操作者在隔离 owner-backed case 上完成 backup/restore，
 耗时 `12.38 秒`，低于 ≤30 分钟阈值，20/20 operation checks 通过，关闭该人工时间项的
 fixture-level gate。随后单一操作者在预制 fault fixture 上完成读取、关联、分类和 bounded
 diagnosis 保存，耗时 `2 分 51.31 秒`，低于 ≤30 分钟阈值；诊断文本已保存并与
-`fault_id/run_id` 对齐。C7 总体仍是 `unknown/stop`，因为真实候选安装完整计时绑定、
-NOTICE/商业边界、独立重建、远端资源退出和 Codex 原生 approval 的完整签核状态仍未改变。
+`fault_id/run_id` 对齐。C7 总体仍是 `unknown/stop`，因为逐包 NOTICE/商业边界、独立
+重建、远端资源退出和 Codex 原生 approval 的完整签核状态仍未改变。
 
 ## 9. 跨版本 owner 兼容性与依赖盘点（2026-08-31）
 
@@ -266,5 +267,27 @@ NOTICE/商业边界、独立重建、远端资源退出和 Codex 原生 approval
 
 依赖 ledger 已确认 root/platform npm declared license、vendor `codex`/`rg`/PCRE2/zsh
 边界及固定 commit Cargo.lock 的 `1332` 个 package entry（workspace `123`、registry
-`1197`、git `12`）。它仍明确标记逐包 SPDX/NOTICE、vendor 再分发文本、商业/API/商标
-和独立重建为 open；不能用该盘点代替合规责任人签核。
+`1197`、git `12`）。它与一手来源和边界地图一起把 NOTICE/商业边界收窄为
+`bounded-evidence / signoff-open`，但仍明确标记逐包 SPDX/NOTICE、vendor 再分发文本、
+商业/API/商标和独立重建为 open；不能用该盘点代替合规责任人签核。
+
+## 10. NOTICE/商业边界处理结果（2026-08-31）
+
+本轮没有把“Codex 源码声明 Apache-2.0”扩大解释为整个 ZWorkbench 发行物或服务的
+许可结论，而是形成了一个可执行的边界地图：
+
+| 路径 | 当前工程处置 | 仍需什么才能改变处置 |
+|---|---|---|
+| 个人/小团队成员各自安装固定版本，在本机受控试用 | 可继续；ZWorkbench 不分发 Codex artifact | 继续保持版本、provenance、凭证和敏感数据边界，并由使用者承担适用条款责任 |
+| 在 ZWorkbench npm、安装器、容器或压缩包中捆绑 Codex | 停止再分发 | 完整 root/platform/vendor/Cargo 逐包许可证、版权、NOTICE/例外和发布材料 clearance |
+| 用 OpenAI API 为自己的产品提供能力 | 条件路径，当前不签核 | 确认适用服务协议、使用政策、数据/隐私、地区、账户/API key 和产品责任 |
+| 用个人 ChatGPT 账户驱动共享工作台或对外 SaaS | 停止 | 不能用个人服务条款替代开发者/API 集成审查；需重新确定合法、合约和账户路径 |
+| 使用 OpenAI/Codex/GPT logo、名称或营销背书 | 默认停止 logo/背书用法 | 商标责任人审核事实性兼容性说明、命名、截图和视觉资产 |
+
+证据入口为 [`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)、
+独立核查 [`w7-codex-c7-notice-commercial-primary-sources.md`](./research/w7-codex-c7-notice-commercial-primary-sources.md)、
+[`w7-codex-c7-license-provenance-audit.md`](./research/w7-codex-c7-license-provenance-audit.md)
+和 [`w7-codex-c7-notice-commercial-boundary.md`](./research/w7-codex-c7-notice-commercial-boundary.md)。
+结论是 `bounded-evidence / signoff-open`，不是法律意见、再分发授权或商业批准；在
+逐包 clearance、商业/API/账户/数据模式和商标/归属责任人完成签核前，C7/G7 继续
+`unknown/stop`。

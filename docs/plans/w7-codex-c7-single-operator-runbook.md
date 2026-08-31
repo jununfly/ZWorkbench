@@ -208,7 +208,7 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 | C7 human timing | `fixture-level-pass`：install `17.01 秒`、upgrade/rollback `14.35 秒`、隔离 owner-backed backup/restore `12.38 秒`、预制故障定位 `2 分 51.31 秒`均由单一操作者报告并低于阈值；install 人工 stopwatch 已与同一次 raw log 绑定 |
 | C7 real install | `pass-at-install-timing-and-identity-level`：临时 prefix 全新安装 `0.139.0`，人工耗时 `17.01 秒`，版本/help/npm tree/四个 digest 与 raw log 已关联；完整 C7 仍受其他阻断 |
 | C7 real upgrade/rollback | `partial-exercised`：临时 prefix `0.138.0 → 0.139.0 → 0.138.0`，`14.35 秒`；版本/help 原始日志和同一 owner 跨版本 machine probe 已固化；生产 migration 未验证 |
-| C7 license/NOTICE/commercial | `inventory-only / unknown`：vendor/transitive ledger 已生成，逐包 clearance 和商业/API/商标审查未签核 |
+| C7 license/NOTICE/commercial | `bounded-evidence / signoff-open`：一手来源、vendor/transitive ledger 和工程边界地图已生成；逐包 clearance、商业/API/账户/数据模式和商标审查未签核 |
 | C7 source-to-binary provenance | `pass-at-release-level`（npm SLSA + npm CLI 验签 + 本机 npm bytes binding）；独立重建 `unknown` |
 | overall | **`unknown/stop` until all missing gates are signed** |
 
@@ -218,6 +218,7 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 - [`w7-codex-c4-approval-findings.md`](./w7-codex-c4-approval-findings.md)
 - [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)
 - [`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)
+- [`w7-codex-c7-notice-commercial-primary-sources.md`](./research/w7-codex-c7-notice-commercial-primary-sources.md)
 - [`fresh-install.log`](../../evaluation/evidence/w7-codex-c7/fresh-install.log)
 - [`fresh-install-human-bound.Vta7cz`](../../evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz)
 - [`w7-codex-c7-dependency-ledger.md`](./research/w7-codex-c7-dependency-ledger.md)
