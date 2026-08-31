@@ -36,6 +36,29 @@
     "node": "v22.23.1",
     "cli_version_observed": "codex-cli 0.139.0"
   },
+  "provider_auth_profile": {
+    "protocol": "OpenAI-compatible API",
+    "provider_count": "one-confirmed; broader-set-unresolved",
+    "provider_vendor_list": [
+      {
+        "vendor": "火山方舟",
+        "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+        "endpoint_host": "ark.cn-beijing.volces.com",
+        "authentication": "provider-specific API key",
+        "account_scope": "personal",
+        "remote_resources_reported": ["data", "tasks", "webhooks", "backups"],
+        "inventory_status": "human-reported/inventory-partial"
+      }
+    ],
+    "additional_providers": "unresolved",
+    "authentication": "provider-specific API key",
+    "account_scope": "火山方舟: personal; other providers unresolved",
+    "key_values_recorded": false,
+    "remote_exit_status": "delegated-to-provider/account-owner",
+    "product_owned_remote_resources": false,
+    "provider_side_deletion_verified": false,
+    "interpretation": "Protocol compatibility does not identify the contractual provider, account owner, data retention policy, billing scope, or deletion endpoint. ZWorkbench does not create or manage provider-side tasks, webhooks, backups, cloud resources, accounts, or projects; it owns only local stop, local state cleanup, and data-boundary disclosure."
+  },
   "artifacts": {
     "wrapper": {
       "path": "/opt/homebrew/bin/codex",
@@ -129,6 +152,8 @@
     "source_to_binary_provenance": "pass-at-release-level; independent rebuild unknown",
     "independent_attestation_verification": "pass-via-npm-audit-signatures",
     "independent_reproducible_rebuild": "unknown",
+    "remote_exit_responsibility": "delegated-to-provider/account-owner; provider-side deletion not verified",
+    "remote_exit_evidence": "docs/plans/w7-codex-c7-remote-exit-responsibility.md",
     "license_notice_commercial_review": "bounded-evidence; per-package clearance, commercial/API mode, and trademark signoff open",
     "license_notice_commercial_boundary": {
       "status": "bounded-evidence/signoff-open",

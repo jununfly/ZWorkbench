@@ -33,6 +33,8 @@
 | release / commit | `rust-v0.139.0` / `a7dff904308535e965aee87680c1fc5ef1d19eec` |
 | current version before change |  |
 | real credentials in use | 必须为 `false`，除非该 gate 明确获批且记录范围 |
+| provider/auth profile | 已确认火山方舟 `https://ark.cn-beijing.volces.com/api/coding/v3`、个人账户、各自 API key；其他厂商/endpoint/账户范围逐项填写 |
+| secret values in evidence | 必须为 `false`；只允许 key fingerprint 或脱敏 ID |
 | production data in scope | 必须为 `false` |
 | backup destination | case-local 或已批准的可恢复位置： |
 | rollback target |  |
@@ -167,13 +169,18 @@ terminal `failed`。本轮单一操作者完成同一隔离 fixture 的读取、
 
 ## 8. 退出与许可证补充审计
 
-退出是机器 contract + 人工责任清单的组合：
+退出是机器 contract + 人工责任清单的组合。当前已确认工作台采用多个模型厂商的
+OpenAI-compatible API、各自 API key；这不是一个统一 Provider。厂商、endpoint、账户
+范围（个人/团队/企业）、组织/project、地区、数据和 retention 必须逐项填写，不能
+从协议兼容性推断。详细的资源清单和责任模板见
+[`w7-codex-c7-remote-exit-responsibility.md`](./w7-codex-c7-remote-exit-responsibility.md)。
 
 - 导出候选 identity、composition schema、策略引用、Provider 配置引用、事件/回放
   元数据和许可证清单；
 - 在独立目录 re-import 并校验；
-- 明确删除本地 export/import、case-local `CODEX_HOME`、composition ledger 副本、
-  Provider 账户/密钥引用、远端资源和 retention 记录的责任人；
+- 明确删除本地 export/import、case-local `CODEX_HOME`、composition ledger 副本和
+  Provider 密钥引用的责任人；火山方舟侧数据、任务、Webhook、备份和 retention 由
+  个人账户所有者/Provider 责任人处理，ZWorkbench 不创建或管理这些资源；
 - 保存删除前后清单，不把无法观察的远程残留写成零残留；
 - 对固定源码 LICENSE、package/platform metadata、所有依赖 NOTICE、商标、API/
   商业使用边界和发布 artifact provenance 分别签核。
@@ -185,6 +192,9 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 层，不等同于独立 reproducible rebuild、完整 NOTICE/商业边界或其他安装渠道的签核。
 法律或供应链签核不能由本 runbook 自行代替。详细证据见
 [`w7-codex-c7-license-provenance-audit.md`](./research/w7-codex-c7-license-provenance-audit.md)。
+真实远端退出的资源 inventory、责任人、删除/撤销证据和 safe-stop 条件单独记录在
+[`w7-codex-c7-remote-exit-responsibility.md`](./w7-codex-c7-remote-exit-responsibility.md)；
+本 runbook 不把 case-local 删除结果写成远端零残留。
 
 ## 9. C4/C7 联合停止条件与签核
 
@@ -219,6 +229,7 @@ root/platform 两个包的 registry signatures 与 attestations。这只关闭 r
 - [`w7-codex-candidate-manifest.json`](./w7-codex-candidate-manifest.json)
 - [`w7-codex-c7-primary-sources.md`](./research/w7-codex-c7-primary-sources.md)
 - [`w7-codex-c7-notice-commercial-primary-sources.md`](./research/w7-codex-c7-notice-commercial-primary-sources.md)
+- [`w7-codex-c7-remote-exit-responsibility.md`](./w7-codex-c7-remote-exit-responsibility.md)
 - [`fresh-install.log`](../../evaluation/evidence/w7-codex-c7/fresh-install.log)
 - [`fresh-install-human-bound.Vta7cz`](../../evaluation/evidence/w7-codex-c7/fresh-install-human-bound.Vta7cz)
 - [`w7-codex-c7-dependency-ledger.md`](./research/w7-codex-c7-dependency-ledger.md)

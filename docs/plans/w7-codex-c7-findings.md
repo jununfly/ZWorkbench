@@ -176,7 +176,7 @@ C7 的定位是生命周期审计，不是把 C2-C6 的 composition 结果重新
 | `R-C7-05` 服务拼盘超出维护能力 | 计入 2 个，低于上限 3 | 候选运行时 + 一个薄 adapter | 当前可保留；新增服务须重新走 C7 |
 | `R-C7-06` 许可证/NOTICE/商业边界遗漏 | 固定 commit/LICENSE、vendor/transitive ledger、OpenAI 服务/个人服务/使用政策/品牌一手来源及边界地图已记录 | 项目维护者 + 合规审查 | 已收窄为 `bounded-evidence / signoff-open`；逐包 NOTICE、再分发材料、商业/API/账户/数据模式和商标审查仍未签核 |
 | `R-C7-07` 发布二进制无法追溯到源码 | root/platform npm SLSA attestation、npm CLI 验证、tag/commit、registry tarball integrity 和本机 bytes 均已绑定；commit API 仍为 unsigned | 发布供应链 | release-artifact provenance 已 pass；独立重建及其他安装渠道仍 unknown |
-| `R-C7-08` 退出留下真实残留 | case-local 导出/导入/删除达到零残留 | composition owner + 外部账户/数据 owner | 仅机器 fixture 通过；真实账户、远程资源、备份 retention 未审计 |
+| `R-C7-08` 退出留下真实残留 | case-local 导出/导入/删除达到零残留；已明确 ZWorkbench 不拥有 Provider 侧任务、Webhook、备份或账户生命周期 | composition owner + 外部账户/数据 owner | 产品责任为本地停止/清理和数据边界披露；Provider 侧数据、备份、账单和 retention 由账户/供应商责任人处理，未验证零残留 |
 
 ATAM 结论：本轮把 C7 的主要风险从“没有生命周期证据、没有发布 provenance”收窄为
 “机器 contract 和 npm release-artifact provenance 已有证据，但真实操作者、独立构建
@@ -291,3 +291,39 @@ diagnosis 保存，耗时 `2 分 51.31 秒`，低于 ≤30 分钟阈值；诊断
 结论是 `bounded-evidence / signoff-open`，不是法律意见、再分发授权或商业批准；在
 逐包 clearance、商业/API/账户/数据模式和商标/归属责任人完成签核前，C7/G7 继续
 `unknown/stop`。
+
+## 11. 真实远端退出责任准备结果（2026-08-31）
+
+本轮建立了独立的[真实远端退出责任包](./w7-codex-c7-remote-exit-responsibility.md)。
+它把远端退出拆成认证身份、Provider 数据、远端任务、webhook/集成、backup/retention、
+发布制品、账单/组织和第三方项目权限，并要求每项记录资源 ID（脱敏）、数据类别、
+创建来源、删除或撤销入口、第一责任人、retention、人工操作时间和验证证据。
+
+当前 C7 fixture 仍只使用 loopback-only fake Provider；npm/GitHub 是只读证据来源，不计为
+用户远端资源。真实 Provider 侧数据、任务、Webhook、备份和账单不由 fixture 验证，
+因此本轮没有执行或授权任何真实删除。
+
+当前已确认的真实工作台接入画像是多个模型厂商的 OpenAI-compatible API，各自使用
+Provider-specific API key；协议兼容不代表统一合同主体或统一删除入口。具体厂商、
+endpoint、账户范围（个人/团队/企业）、org/project、地区、数据/retention、账单和
+责任人仍需逐厂商确认；只记录 key fingerprint，不记录 key 值，也不执行跨 Provider
+批量撤销或删除。
+
+其中已由用户确认一条具体记录：火山方舟，endpoint 为
+`https://ark.cn-beijing.volces.com/api/coding/v3`，个人账户，且远端数据、任务、
+Webhook 和备份存在，但 ZWorkbench 不创建或管理这些 Provider 侧资源。该记录因此是
+`human-reported / externally-owned`：资源级删除由个人账户所有者/火山方舟责任人负责，
+ZWorkbench 只负责本地停止调用、清理本地状态和披露数据边界。资源 ID、实际数据类别
+和时间范围、任务/调度状态、Webhook 权限、备份位置与 retention、账单责任和删除/撤销
+结果仍未取得；不能把火山方舟记录为已退出，也不能据此推断其他模型厂商的状态。
+
+真实操作的安全顺序是：冻结新 run 与自动触发 → 由账户所有者确认账户/Provider/组织和
+资源清单 → 导出脱敏的最小必要审计材料 → 停用 schedule/worker/webhook → 按对应供应商
+规则删除数据或提交 retention 请求 → 撤销凭证和第三方权限 → 核对延迟 retention、账单
+和是否重新产生写入 → 最后删除本地副本并由责任人签核。资源范围、授权、恢复窗口、
+删除入口或供应商结果不明确时，必须 `safe-stop`。
+
+关闭门槛见退出责任包第 6 节。当前产品边界已明确为
+`remote_resource_lifecycle = delegated-to-provider/account-owner`，但
+`provider_side_deletion = not-performed/not-verified`；C7/G7 仍因其他未签核门保持
+`unknown/stop`。如果未来要签核个人账户本身的退出，才需要账户所有者补充资源级清单。
