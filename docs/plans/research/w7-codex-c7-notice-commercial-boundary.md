@@ -116,6 +116,9 @@ composition state、事件、回放元数据和审计引用，不复制 Codex ve
 在这些字段没有明确责任人、签核日期和证据引用前，`complete_notice_signoff` 和
 `commercial_api_trademark_signoff` 继续为 `false`，C7/G7 继续 `unknown/stop`。
 
+真实 Provider、账户、远端 backup/retention 和第三方权限的退出责任不在本文件中
+臆测，单独见 [`w7-codex-c7-remote-exit-responsibility.md`](../w7-codex-c7-remote-exit-responsibility.md)。
+
 ## 6. 一手来源
 
 访问日期均为 `2026-08-31`；官方页面可能更新，重审时需重新记录页面版本/生效日。

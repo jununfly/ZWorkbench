@@ -404,6 +404,31 @@
           "q": "NOTICE/商业边界处理后，C7 的签核状态和允许范围是什么？",
           "answer": "已将 NOTICE/商业边界从完全未知收窄为 bounded-evidence / signoff-open：固定版本 Codex 的 LICENSE、vendor/transitive 依赖盘点、OpenAI 服务协议/个人服务条款/使用政策/品牌指南一手来源及工程边界地图均已记录。个人开发者或小团队可在各自机器上自行安装固定版本做受控内部试用，前提是 ZWorkbench 不捆绑或再分发 Codex artifact、不共享或转售账户/API key、不用个人 ChatGPT 服务账户驱动共享或对外 SaaS、不使用 logo 或暗示背书；OpenAI API 产品集成仍需按账户、数据、地区、服务协议和产品责任单独确认。完整逐包 SPDX/版权/NOTICE/例外 clearance、再分发材料、商业/API/账户/数据模式、商标/归属审查和远端退出责任未签核，因此 complete_notice_signoff 与 commercial_api_trademark_signoff 继续为 false，C7/G7 继续 unknown/stop。",
           "note": "ATAM 将条款事实、组件 NOTICE、商业模式和退出责任拆为独立敏感点；CBAM 维持一个 Codex runtime + 一个 SQLite composition owner，不为合规审计引入第二 Harness、常驻 gateway 或观测服务。边界地图见 docs/plans/research/w7-codex-c7-notice-commercial-boundary.md。"
+        },
+        {
+          "q": "真实远端退出责任如何开始而不误删用户资源？",
+          "answer": "本轮只建立远端退出责任包，不执行真实删除：先枚举认证身份、Provider 数据、远端任务/调度、webhook、远端 backup/retention、发布 artifact、账单/组织资源和第三方项目权限；为每项绑定创建来源、数据类别、凭证、删除/撤销入口、责任人、保留期、验证证据和不可删除例外。当前 loopback-only fixture 没有真实远端资源，npm registry/GitHub 官方来源只是只读取证，不计为用户远端资源；真实 OpenAI/其他 Provider 账户、地区、数据、账单和组织状态保持 unknown。只有账户所有者或明确授权管理员在场，且先冻结新运行、导出脱敏审计元数据、确认资源清单和恢复窗口后，才能逐项撤销凭证、停用调度/webhook、删除远端数据与 backup、核对 retention，并记录删除结果。任何资源无法识别、责任人/范围/保留期/删除证据不明确，均 safe-stop，C7/G7 继续 unknown/stop。",
+          "note": "ATAM 把远端退出拆成身份撤销、数据删除、任务停用、备份 retention、供应商/账单和第三方权限六类敏感点；CBAM 维持一个 Codex runtime + 一个 SQLite composition owner，远端退出只建立责任包，不为审计引入常驻服务或第二 Harness。"
+        },
+        {
+          "q": "真实远端退出责任准备阶段完成了什么？",
+          "answer": "已建立 docs/plans/w7-codex-c7-remote-exit-responsibility.md：将认证身份、Provider 数据、远端任务/调度、webhook/集成、远端 backup/retention、发布制品、账单/组织和第三方项目权限列为逐项 inventory，并要求脱敏 resource ID、数据类别、创建来源、删除/撤销入口、责任人、retention、人工计时、验证证据和不可删除例外。当前只确认 loopback-only fixture；npm/GitHub 是只读证据来源，不计为用户远端资源；真实账户、Provider、远端数据、调度、backup、账单和组织状态仍 unknown/human-required。此次没有执行真实删除。只有账户所有者或授权管理员在场，完成冻结新 run、资源清单、最小脱敏导出、停用自动触发、供应商删除/retention 请求、凭证/第三方权限撤销、延迟 retention 核对和本地收尾后，才能逐项签核；资源范围或删除证据不明确即 safe-stop，C7/G7 继续 unknown/stop。",
+          "note": "ATAM 将远端退出拆成身份撤销、数据删除、任务停用、backup retention、供应商/账单和第三方权限六类敏感点；CBAM 只建立责任包，不引入新的常驻服务、第二 Harness 或远端审计平台。"
+        },
+        {
+          "q": "已确认的 Provider/认证信息如何记录并影响远端退出责任？",
+          "answer": "当前确认的是多 Provider、OpenAI-compatible API 协议、每个模型厂商使用各自 API-Key；这只确定了接入方式，不确定实际厂商、账户/组织/project、地区、数据处理、账单和 retention。OpenAI-compatible 是协议兼容性，不是合同主体或统一删除入口，因此必须按每个厂商/endpoint 单独建账。账户范围“个人/团队/企业”尚未逐项选定，暂记 account-scope-unresolved；不得把它当成个人账户，也不得把多个厂商合并执行撤销或删除。退出前每个厂商都要由账户 owner/admin 确认 key fingerprint、组织/project、数据范围、删除入口、retention、账单和责任人；不提供 key 值。",
+          "note": "ATAM 将协议、认证、账户主体、数据/retention、账单和退出动作分成独立敏感点；CBAM 只增加一个配置清单，不增加 Provider gateway、常驻服务或第二 Harness。"
+        },
+        {
+          "q": "火山方舟远端 Provider 信息确认后，退出责任推进到哪一步？",
+          "answer": "已确认具体 Provider 为火山方舟，OpenAI-compatible endpoint 为 https://ark.cn-beijing.volces.com/api/coding/v3，账户范围为个人；用户确认存在远端数据、任务、Webhook 和备份。将其记录为 human-reported / inventory-partial，而不是 verified deletion scope：必须继续补齐 resource ID、数据类别和时间范围、任务/调度状态、Webhook/集成权限、备份位置与 retention、账单/账户责任、删除或撤销入口及结果证据。当前不执行注销、删除、批量撤销或 API key 操作；不记录 key 值。只有账户所有者确认清单、冻结新写入、保留最小脱敏导出和恢复窗口后，才能逐项执行并验证。其他模型厂商仍未列出，不能将火山方舟作为全部 Provider。C7/G7 继续 unknown/stop。",
+          "note": "ATAM 将火山方舟的认证身份、数据、远端任务、Webhook、备份 retention 和账单拆成独立敏感点；CBAM 仅扩充 provider inventory，不引入新的 gateway、常驻服务或第二 Harness。"
+        },
+        {
+          "q": "ZWorkbench 是否拥有火山方舟侧的任务、Webhook、备份和远端资源生命周期？",
+          "answer": "不拥有。ZWorkbench 只通过火山方舟的 OpenAI-compatible API 发起请求，不创建或管理 Provider 侧任务、Webhook、备份、云资源或账户项目；这些属于火山方舟及个人账户所有者的外部责任。ZWorkbench 的产品责任收窄为：本地 provider 配置与 key 引用管理、停止本地 run/schedule/retry、避免 secret 和敏感内容进入日志/回放、删除本地 composition state/export/缓存，并声明数据离开本地边界且不承诺 Provider 侧零残留。资源 ID、远端删除和 retention 证据不作为当前产品实现前置输入；只有未来项目开始代管或自动创建远端资源，才重新纳入 C7 资源级退出审计。当前 C7 remote exit 标记为 delegated-to-provider/account-owner，不回填为 remote deletion pass。",
+          "note": "ATAM 将本地控制权、Provider 数据责任和账户责任分开；CBAM 因不引入远端资源管理器而维持一个 Codex runtime + 一个 SQLite composition owner，不增加云资源、gateway 或远端审计服务。"
         }
       ],
       "notes": "本轮已收齐四类隔离 fixture-level C7 人工时间证据：fresh install 17.01 秒、upgrade/rollback 14.35 秒、backup/restore 12.38 秒、预制 fault diagnosis 2 分 51.31 秒，均低于冻结阈值；fresh install 人工 stopwatch 已与同一次 raw log 绑定，日志 SHA-256 为 6db2fe3abaf3febe72ab6a6acbd282e587daf1876b7c5cb255fd66e7eaefecb5，四个 artifact digest 与候选 manifest 一致。C7/G7 仍 unknown/stop：完整逐包 NOTICE/商业/API/商标审查、独立 reproducible rebuild、真实远端账户/Provider/retention 退出责任和 Codex native approval 继续阻断。ATAM 继续按独立敏感点拆分证据；CBAM 继续约束为一个 Codex runtime + 一个薄 SQLite composition owner，不引入常驻审计服务。"
@@ -411,7 +436,7 @@
   },
   "metadata": {
     "created": "2026-08-30 22:39:36",
-    "updated": "2026-08-31 20:44:07",
+    "updated": "2026-08-31 21:22:17",
     "md_file": "docs/plans/personal-workbench-w7-roadmap.md"
   }
 }
