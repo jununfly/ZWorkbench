@@ -1,0 +1,45 @@
+{
+  "schema": "zworkbench-deepseek-c7-audit/v1",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "DeepSeek Harness",
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "version": "0.1.2-alpha.1"
+  },
+  "source_audit": {
+    "checkout_clean": true,
+    "root_license": "MIT",
+    "root_license_sha256": "ebb4f09972aee8608be255debaf78451a68e95c290f55c240dec2ecfa16ea6be",
+    "third_party_notices_present": true,
+    "third_party_notices_sha256": "b0245871962b81ef8c6f4ade35b15c3effd0e72341fdf4472ce4982eccc01da7",
+    "dsh_package_license_check": "pass: 250 packages checked; all declare MIT",
+    "third_party_notices_check": "pass: committed file is up to date",
+    "commercial_boundary": "MIT root terms apply to DeepSeek Harness; dependencies and vendored/native components retain their own disclosed terms."
+  },
+  "machine_preflight": {
+    "pnpm_install_frozen_lockfile": "completed in fixed checkout before C1-C6 probes",
+    "pnpm_build_lib": "completed in fixed checkout before C1-C6 probes",
+    "version_and_headless_help": "pass",
+    "generated_entrypoint": "apps/cli/lib/bin.js",
+    "entrypoint_git_tracked": false
+  },
+  "missing_human_or_operational_evidence": {
+    "fresh_install_stopwatch_minutes": null,
+    "upgrade_stopwatch_minutes": null,
+    "backup_restore_stopwatch_minutes": null,
+    "fault_diagnosis_stopwatch_minutes": null,
+    "real_composition_backup_restore": "not established",
+    "real_remote_exit_responsibility": "not run; all candidate probes used loopback fake Providers",
+    "source_to_binary_provenance": "not established beyond fixed source commit and local generated artifact hashes",
+    "extra_expert_required": "unknown",
+    "resident_maintenance_services": "unknown"
+  },
+  "candidate_c7_status": "unknown-stop",
+  "hard_gate_reason": "C7 requires human lifecycle timings and operational backup/restore, fault diagnosis, and exit evidence; static license checks and machine build facts cannot substitute for them.",
+  "non_claims": [
+    "MIT declarations are not legal advice or a complete downstream distribution review.",
+    "A locally built entrypoint is not a signed release binary or provenance attestation.",
+    "No real credential, remote task, webhook, backup, or production data was used."
+  ]
+}

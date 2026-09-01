@@ -1,0 +1,40 @@
+{
+  "schema": "zworkbench-deepseek-candidate/v1",
+  "candidate": "DeepSeek Harness",
+  "repository": "https://github.com/deepseek-ai/deepseek-harness",
+  "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+  "version": "0.1.2-alpha.1",
+  "source_status": "fixed-source-checkout-required",
+  "runtime": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0",
+    "build_command": "pnpm run build:lib",
+    "entrypoint": "apps/cli/lib/bin.js",
+    "profile": "headless",
+    "full_host_build_required": true
+  },
+  "required_built_paths": [
+    "apps/cli/lib/bin.js",
+    "packages/api/gateway/lib/index.js",
+    "packages/boot/app-boot/lib/index.js",
+    "packages/bundle/base/lib/index.js",
+    "packages/bundle/headless/lib/index.js",
+    "packages/typert/registry/lib/index.js"
+  ],
+  "evaluation": {
+    "classification": "acceptance/evaluation",
+    "shared_fixture": "evaluation/fixtures/w6-0.1",
+    "scenarios": ["C1", "C2", "C3", "C4", "C5", "C6", "C7"],
+    "first_slice": ["C1"],
+    "provider": "loopback fake-a or fake-b",
+    "real_credentials": false,
+    "external_network": false,
+    "production_data": false,
+    "external_side_effects": false
+  },
+  "non_claims": [
+    "A C1 pass does not prove C2-C7.",
+    "OpenAI-compatible wire compatibility does not prove semantic or operational compatibility.",
+    "A built source checkout is not a released binary provenance attestation."
+  ]
+}

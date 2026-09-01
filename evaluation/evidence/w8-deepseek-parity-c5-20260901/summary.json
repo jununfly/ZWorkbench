@@ -1,0 +1,571 @@
+{
+  "schema": "zworkbench-deepseek-c5-provider/v1",
+  "status": "pass",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "schema": "zworkbench-deepseek-candidate/v1",
+    "candidate": "DeepSeek Harness",
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "version": "0.1.2-alpha.1",
+    "source_status": "fixed-source-checkout-required",
+    "runtime": {
+      "node": ">=22.0.0",
+      "pnpm": ">=11.0.0",
+      "build_command": "pnpm run build:lib",
+      "entrypoint": "apps/cli/lib/bin.js",
+      "profile": "headless",
+      "full_host_build_required": true
+    },
+    "required_built_paths": [
+      "apps/cli/lib/bin.js",
+      "packages/api/gateway/lib/index.js",
+      "packages/boot/app-boot/lib/index.js",
+      "packages/bundle/base/lib/index.js",
+      "packages/bundle/headless/lib/index.js",
+      "packages/typert/registry/lib/index.js"
+    ],
+    "evaluation": {
+      "classification": "acceptance/evaluation",
+      "shared_fixture": "evaluation/fixtures/w6-0.1",
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "first_slice": [
+        "C1"
+      ],
+      "provider": "loopback fake-a or fake-b",
+      "real_credentials": false,
+      "external_network": false,
+      "production_data": false,
+      "external_side_effects": false
+    },
+    "non_claims": [
+      "A C1 pass does not prove C2-C7.",
+      "OpenAI-compatible wire compatibility does not prove semantic or operational compatibility.",
+      "A built source checkout is not a released binary provenance attestation."
+    ]
+  },
+  "preflight": {
+    "schema": "zworkbench-deepseek-preflight/v1",
+    "status": "pass",
+    "candidate_repo": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness",
+    "candidate_entrypoint": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+    "expected_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "actual_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "package_version": "0.1.2-alpha.1",
+    "missing_built_paths": [],
+    "node": "/opt/homebrew/bin/node",
+    "pnpm": "/Users/bilibili/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm",
+    "version": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "0.1.2-alpha.1\n",
+      "stderr": "",
+      "duration_ms": 76,
+      "timed_out": false
+    },
+    "headless_help": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--profile",
+        "headless",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "Usage: dsh --profile headless [options] [task...]\n\nAnswer one task, stream reasoning to stderr, print the final assistant message,\nand exit.\n\nArguments:\n  task        the task text; multiple words are joined by spaces\n\nOptions:\n  -h, --help  show this help\n\nExamples:\n  dsh --profile headless \"run the tests\"     answer one task and exit\n\n",
+      "stderr": "",
+      "duration_ms": 660,
+      "timed_out": false
+    },
+    "checks": {
+      "candidate_repo_present": true,
+      "candidate_commit_matches": true,
+      "candidate_version_matches": true,
+      "node_present": true,
+      "pnpm_present": true,
+      "entrypoint_present": true,
+      "full_host_build_closure_present": true,
+      "version_command_passed": true,
+      "headless_help_passed": true
+    },
+    "build_command": "pnpm run build:lib",
+    "build_note": "Run pnpm run build:lib in the fixed checkout before retrying if closure is missing."
+  },
+  "candidate_c5_status": "unknown: no candidate-owned provider failover/degradation contract observed",
+  "normal_routes": {
+    "status": "pass",
+    "cases": "10/10",
+    "providers": [
+      "fake-a",
+      "fake-b"
+    ]
+  },
+  "failure_probe": {
+    "status": "observed",
+    "same_route_retry_only": true,
+    "automatic_second_provider_contacted": false,
+    "degradation_reason_contract": "not established"
+  },
+  "threshold_interpretation": {
+    "normal_deterministic_threshold": "met for isolated configured routes",
+    "downgrade_reason_threshold": "not met/unknown because no fallback transition exists to explain",
+    "unknown_rule": "same-route retry is not provider failover; a composition router would need a separate adapter and ledger"
+  },
+  "cases": [
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 1,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-a",
+      "repeat": 1
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 2,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-a",
+      "repeat": 2
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 3,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-a",
+      "repeat": 3
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 4,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-a",
+      "repeat": 4
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 5,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-a",
+      "repeat": 5
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 1,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-b",
+      "repeat": 1
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 2,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-b",
+      "repeat": 2
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 3,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-b",
+      "repeat": 3
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 4,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-b",
+      "repeat": 4
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true
+      },
+      "observed": {
+        "request_count": 5,
+        "session_event_count": 21,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": []
+      },
+      "scenario": "normal_route",
+      "provider": "fake-b",
+      "repeat": 5
+    },
+    {
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "session_close_ok": true,
+        "process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "provider_request_seen": true,
+        "expected_provider_seen": true,
+        "second_provider_not_contacted": true
+      },
+      "observed": {
+        "request_count": 2,
+        "session_event_count": 24,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "llm/retry",
+          "llm/retry-started",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "primary_request_count": 2,
+        "second_provider_request_count": 0,
+        "same_route_retry_only": true
+      },
+      "scenario": "failure_no_fallback",
+      "provider": "fake-a",
+      "repeat": 1
+    }
+  ],
+  "checks": {
+    "preflight_passed": true,
+    "normal_routes_passed": true,
+    "no_real_credentials": true,
+    "no_external_network": true,
+    "no_production_data": true,
+    "no_external_side_effects": true
+  }
+}

@@ -1,0 +1,1123 @@
+{
+  "schema": "zworkbench-deepseek-c1-runner/v1",
+  "status": "pass",
+  "classification": "acceptance/evaluation",
+  "started_at": "2026-09-01T11:38:03.860531+00:00",
+  "candidate": {
+    "schema": "zworkbench-deepseek-candidate/v1",
+    "candidate": "DeepSeek Harness",
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "version": "0.1.2-alpha.1",
+    "source_status": "fixed-source-checkout-required",
+    "runtime": {
+      "node": ">=22.0.0",
+      "pnpm": ">=11.0.0",
+      "build_command": "pnpm run build:lib",
+      "entrypoint": "apps/cli/lib/bin.js",
+      "profile": "headless",
+      "full_host_build_required": true
+    },
+    "required_built_paths": [
+      "apps/cli/lib/bin.js",
+      "packages/api/gateway/lib/index.js",
+      "packages/boot/app-boot/lib/index.js",
+      "packages/bundle/base/lib/index.js",
+      "packages/bundle/headless/lib/index.js",
+      "packages/typert/registry/lib/index.js"
+    ],
+    "evaluation": {
+      "classification": "acceptance/evaluation",
+      "shared_fixture": "evaluation/fixtures/w6-0.1",
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "first_slice": [
+        "C1"
+      ],
+      "provider": "loopback fake-a or fake-b",
+      "real_credentials": false,
+      "external_network": false,
+      "production_data": false,
+      "external_side_effects": false
+    },
+    "non_claims": [
+      "A C1 pass does not prove C2-C7.",
+      "OpenAI-compatible wire compatibility does not prove semantic or operational compatibility.",
+      "A built source checkout is not a released binary provenance attestation."
+    ]
+  },
+  "preflight": {
+    "schema": "zworkbench-deepseek-preflight/v1",
+    "status": "pass",
+    "candidate_repo": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness",
+    "candidate_entrypoint": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+    "expected_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "actual_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "package_version": "0.1.2-alpha.1",
+    "missing_built_paths": [],
+    "node": "/opt/homebrew/bin/node",
+    "pnpm": "/Users/bilibili/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm",
+    "version": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "0.1.2-alpha.1\n",
+      "stderr": "",
+      "duration_ms": 67,
+      "timed_out": false
+    },
+    "headless_help": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--profile",
+        "headless",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "Usage: dsh --profile headless [options] [task...]\n\nAnswer one task, stream reasoning to stderr, print the final assistant message,\nand exit.\n\nArguments:\n  task        the task text; multiple words are joined by spaces\n\nOptions:\n  -h, --help  show this help\n\nExamples:\n  dsh --profile headless \"run the tests\"     answer one task and exit\n\n",
+      "stderr": "",
+      "duration_ms": 581,
+      "timed_out": false
+    },
+    "checks": {
+      "candidate_repo_present": true,
+      "candidate_commit_matches": true,
+      "candidate_version_matches": true,
+      "node_present": true,
+      "pnpm_present": true,
+      "entrypoint_present": true,
+      "full_host_build_closure_present": true,
+      "version_command_passed": true,
+      "headless_help_passed": true
+    },
+    "build_command": "pnpm run build:lib",
+    "build_note": "Run pnpm run build:lib in the fixed checkout before retrying if closure is missing."
+  },
+  "providers": [
+    {
+      "provider_id": "fake-a",
+      "status": "pass",
+      "sample_count": 5,
+      "passed_count": 5,
+      "samples": [
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-a",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 572,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 65,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-a-c1-m9qni4dk/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-a-c1-m9qni4dk-project--/session-51af1ed3-9b0c-4735-a793-d82969fa6478/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-a-c1-01",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-a/sample-01/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-a",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 540,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 26,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-a-c1-q9b54bxi/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-a-c1-q9b54bxi-project--/session-162dd6b6-5370-4a9c-bd97-7ecdcbe5ff15/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-a-c1-02",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-a/sample-02/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-a",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 541,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 23,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-a-c1-0aqtyi6n/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-a-c1-0aqtyi6n-project--/session-dbabce62-cc48-4624-854c-8eb38743f9ba/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-a-c1-03",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-a/sample-03/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-a",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 538,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 29,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-a-c1-jgyke22w/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-a-c1-jgyke22w-project--/session-628c488e-380a-4d61-8a6d-4531ff129c0c/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-a-c1-04",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-a/sample-04/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-a",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 524,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 23,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-a-c1-ht4r44ij/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-a-c1-ht4r44ij-project--/session-7b8eee24-79bb-4021-9f19-4f9e52d6fad2/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-a-c1-05",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-a/sample-05/run-manifest.json"
+        }
+      ]
+    },
+    {
+      "provider_id": "fake-b",
+      "status": "pass",
+      "sample_count": 5,
+      "passed_count": 5,
+      "samples": [
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-b",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 577,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 24,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-b-c1-8oao53vt/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-b-c1-8oao53vt-project--/session-2a26ea6f-524e-45e9-89e5-1bdb2a972e90/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-b-c1-01",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-b/sample-01/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-b",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 541,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 26,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-b-c1-4l2u1gvc/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-b-c1-4l2u1gvc-project--/session-074b8f20-2e8c-4735-af58-9dfdb8191295/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-b-c1-02",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-b/sample-02/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-b",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 558,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 26,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-b-c1-bdfi5lr3/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-b-c1-bdfi5lr3-project--/session-96dd4095-cc93-4a9f-87b4-98ad5ea073d1/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-b-c1-03",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-b/sample-03/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-b",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 543,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 24,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-b-c1-tl8vrtrn/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-b-c1-tl8vrtrn-project--/session-4a756ebe-fae4-45f0-be03-df87ce14ea06/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-b-c1-04",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-b/sample-04/run-manifest.json"
+        },
+        {
+          "schema": "zworkbench-deepseek-c1-sample/v1",
+          "status": "pass",
+          "provider_id": "fake-b",
+          "candidate_result": {
+            "command": [
+              "/opt/homebrew/bin/node",
+              "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+              "--profile",
+              "headless",
+              "C1 evaluation task. Read README.md, fix the documented normalize_label defect with the smallest allowed change, add a regression test, run the tests, and report the diff and test result. Only modify src/ and tests/."
+            ],
+            "returncode": 0,
+            "stdout": "fixture-ok\n",
+            "stderr": "",
+            "duration_ms": 549,
+            "timed_out": false
+          },
+          "oracle_result": {
+            "command": [
+              "/Users/bilibili/anaconda3/bin/python",
+              "-m",
+              "unittest",
+              "discover",
+              "-s",
+              "tests",
+              "-v"
+            ],
+            "returncode": 0,
+            "stdout": "",
+            "stderr": "test_collapses_whitespace_to_hyphens (test_normalize.NormalizeLabelTests.test_collapses_whitespace_to_hyphens) ... ok\ntest_empty_label_is_stable (test_normalize.NormalizeLabelTests.test_empty_label_is_stable) ... ok\ntest_preserves_case_without_extra_changes (test_normalize.NormalizeLabelTests.test_preserves_case_without_extra_changes) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.000s\n\nOK\n",
+            "duration_ms": 24,
+            "timed_out": false
+          },
+          "modified_files": [
+            "src/tinycalc/normalize.py",
+            "tests/test_normalize.py"
+          ],
+          "modified_outside_allowed": [],
+          "event_types": [
+            "agent/inbox/spliced",
+            "approval/policy",
+            "assistant/chunk",
+            "assistant/message",
+            "permission/preset",
+            "request/context",
+            "request/header",
+            "sandbox/mode",
+            "session",
+            "session/title",
+            "session/title-llm-request",
+            "step/end",
+            "step/start",
+            "tool/call",
+            "tool/result",
+            "turn/end",
+            "turn/start",
+            "user/message"
+          ],
+          "binding": {
+            "call_count": 2,
+            "result_count": 2,
+            "call_ids_have_results": true,
+            "invalid_arguments": 0,
+            "commands": [
+              "python3 -c 'from pathlib import Path; p=Path(\"src/tinycalc/normalize.py\"); p.write_text(p.read_text().replace(\"\\\"_\\\".join\", \"\\\"-\\\".join\")); t=Path(\"tests/test_normalize.py\"); s=t.read_text(); marker=\"\\n\\nif __name__ == \\\"__main__\\\":\"; addition=\"\\n\\n    def test_empty_label_is_stable(self):\\n        self.assertEqual(normalize_label(\\\"\\\"), \\\"\\\")\"; t.write_text(s.replace(marker, addition + marker) if \"test_empty_label_is_stable\" not in s else s)'",
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "forbidden_commands": [],
+            "test_commands": [
+              "PYTHONPATH=src python3 -m unittest discover -s tests -v"
+            ],
+            "test_success_results": 1
+          },
+          "final_assistant_text": "fixture-ok",
+          "session_path": "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/zwb-w8-fake-b-c1-2ipte1de/dsh-home/sessions/--private-var-folders-bk-25klw83n5wn38lj2m3wbr9fc0000gn-T-zwb-w8-fake-b-c1-2ipte1de-project--/session-00ca1771-d36e-4cef-a50b-6b390b9018fd/session.jsonl.zstd",
+          "invalid_session_lines": [],
+          "checks": {
+            "candidate_process_completed": true,
+            "oracle_tests_passed": true,
+            "expected_code_fix_present": true,
+            "regression_test_changed": true,
+            "no_out_of_scope_modifications": true,
+            "session_ledger_unique": true,
+            "session_ledger_valid": true,
+            "required_event_types_present": true,
+            "tool_result_bound_to_call": true,
+            "tool_arguments_valid": true,
+            "candidate_test_tool_observed": true,
+            "candidate_test_result_observed": true,
+            "forbidden_command_count_zero": true,
+            "final_assistant_result_expected": true,
+            "completed_turn_present": true,
+            "provider_identity_recorded": true
+          },
+          "run_id": "w8-1-8-deepseek-fake-b-c1-05",
+          "run_manifest": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c1-both-20260901/fake-b/sample-05/run-manifest.json"
+        }
+      ]
+    }
+  ],
+  "checks": {
+    "preflight_passed": true,
+    "all_provider_runs_passed": true,
+    "no_real_credentials": true,
+    "no_external_network": true,
+    "no_production_data": true,
+    "no_external_side_effects": true
+  },
+  "interpretation": {
+    "c1_status": "pass",
+    "candidate_overall_status": "unknown; C2-C7 not executed by this runner",
+    "full_build_is_required": true
+  },
+  "non_claims": [
+    "A C1 pass does not prove C2-C7.",
+    "OpenAI-compatible wire compatibility does not prove semantic or operational compatibility.",
+    "A built source checkout is not a released binary provenance attestation."
+  ]
+}

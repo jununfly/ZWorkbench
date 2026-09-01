@@ -1,0 +1,375 @@
+{
+  "schema": "zworkbench-deepseek-c6-replay/v1",
+  "status": "pass",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "schema": "zworkbench-deepseek-candidate/v1",
+    "candidate": "DeepSeek Harness",
+    "repository": "https://github.com/deepseek-ai/deepseek-harness",
+    "commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "version": "0.1.2-alpha.1",
+    "source_status": "fixed-source-checkout-required",
+    "runtime": {
+      "node": ">=22.0.0",
+      "pnpm": ">=11.0.0",
+      "build_command": "pnpm run build:lib",
+      "entrypoint": "apps/cli/lib/bin.js",
+      "profile": "headless",
+      "full_host_build_required": true
+    },
+    "required_built_paths": [
+      "apps/cli/lib/bin.js",
+      "packages/api/gateway/lib/index.js",
+      "packages/boot/app-boot/lib/index.js",
+      "packages/bundle/base/lib/index.js",
+      "packages/bundle/headless/lib/index.js",
+      "packages/typert/registry/lib/index.js"
+    ],
+    "evaluation": {
+      "classification": "acceptance/evaluation",
+      "shared_fixture": "evaluation/fixtures/w6-0.1",
+      "scenarios": [
+        "C1",
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "C6",
+        "C7"
+      ],
+      "first_slice": [
+        "C1"
+      ],
+      "provider": "loopback fake-a or fake-b",
+      "real_credentials": false,
+      "external_network": false,
+      "production_data": false,
+      "external_side_effects": false
+    },
+    "non_claims": [
+      "A C1 pass does not prove C2-C7.",
+      "OpenAI-compatible wire compatibility does not prove semantic or operational compatibility.",
+      "A built source checkout is not a released binary provenance attestation."
+    ]
+  },
+  "preflight": {
+    "schema": "zworkbench-deepseek-preflight/v1",
+    "status": "pass",
+    "candidate_repo": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness",
+    "candidate_entrypoint": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+    "expected_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "actual_commit": "cd5ef8148158c3a752a658978873241fdf8e2bbc",
+    "package_version": "0.1.2-alpha.1",
+    "missing_built_paths": [],
+    "node": "/opt/homebrew/bin/node",
+    "pnpm": "/Users/bilibili/.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/fallback/pnpm",
+    "version": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--version"
+      ],
+      "returncode": 0,
+      "stdout": "0.1.2-alpha.1\n",
+      "stderr": "",
+      "duration_ms": 76,
+      "timed_out": false
+    },
+    "headless_help": {
+      "command": [
+        "/opt/homebrew/bin/node",
+        "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+        "--profile",
+        "headless",
+        "--help"
+      ],
+      "returncode": 0,
+      "stdout": "Usage: dsh --profile headless [options] [task...]\n\nAnswer one task, stream reasoning to stderr, print the final assistant message,\nand exit.\n\nArguments:\n  task        the task text; multiple words are joined by spaces\n\nOptions:\n  -h, --help  show this help\n\nExamples:\n  dsh --profile headless \"run the tests\"     answer one task and exit\n\n",
+      "stderr": "",
+      "duration_ms": 660,
+      "timed_out": false
+    },
+    "checks": {
+      "candidate_repo_present": true,
+      "candidate_commit_matches": true,
+      "candidate_version_matches": true,
+      "node_present": true,
+      "pnpm_present": true,
+      "entrypoint_present": true,
+      "full_host_build_closure_present": true,
+      "version_command_passed": true,
+      "headless_help_passed": true
+    },
+    "build_command": "pnpm run build:lib",
+    "build_note": "Run pnpm run build:lib in the fixed checkout before retrying if closure is missing."
+  },
+  "candidate_c6_status": "unknown: candidate session recording/resume is present, but no candidate-owned replay mode/contract is exposed",
+  "observed": {
+    "cases": "5/5",
+    "recorded_view": "present",
+    "session_resume": "present",
+    "simulated_replay": "evaluator-only deterministic decode",
+    "live_replay": "0 observed because resume intentionally emits no historical updates"
+  },
+  "threshold_interpretation": {
+    "required_events_and_mode_labels": "not promoted to pass without a candidate replay contract",
+    "simulated_replay_threshold": "met only for evaluator decode, not candidate capability",
+    "live_effect_threshold": "0 observed in the no-tool resume probe",
+    "unknown_rule": "session/resume restoring state is not transcript replay; no live replay or side-effect replay is claimed"
+  },
+  "cases": [
+    {
+      "scenario": "record_resume_without_replay",
+      "repeat": 1,
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "first_close_ok": true,
+        "first_process_exited": true,
+        "recorded_view_present": true,
+        "resume_ok": true,
+        "resume_close_ok": true,
+        "second_process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "simulated_decode_is_deterministic": true,
+        "resume_does_not_replay_old_wire_updates": true,
+        "live_replay_effects": 0
+      },
+      "observed": {
+        "first_recorded_update_count": 2,
+        "resume_wire_update_count": 0,
+        "session_event_count": 22,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/end-seed",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "provider": {
+          "endpoint": "http://127.0.0.1:54845",
+          "transport": "loopback-only"
+        }
+      }
+    },
+    {
+      "scenario": "record_resume_without_replay",
+      "repeat": 2,
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "first_close_ok": true,
+        "first_process_exited": true,
+        "recorded_view_present": true,
+        "resume_ok": true,
+        "resume_close_ok": true,
+        "second_process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "simulated_decode_is_deterministic": true,
+        "resume_does_not_replay_old_wire_updates": true,
+        "live_replay_effects": 0
+      },
+      "observed": {
+        "first_recorded_update_count": 2,
+        "resume_wire_update_count": 0,
+        "session_event_count": 22,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/end-seed",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "provider": {
+          "endpoint": "http://127.0.0.1:54845",
+          "transport": "loopback-only"
+        }
+      }
+    },
+    {
+      "scenario": "record_resume_without_replay",
+      "repeat": 3,
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "first_close_ok": true,
+        "first_process_exited": true,
+        "recorded_view_present": true,
+        "resume_ok": true,
+        "resume_close_ok": true,
+        "second_process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "simulated_decode_is_deterministic": true,
+        "resume_does_not_replay_old_wire_updates": true,
+        "live_replay_effects": 0
+      },
+      "observed": {
+        "first_recorded_update_count": 2,
+        "resume_wire_update_count": 0,
+        "session_event_count": 22,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/end-seed",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "provider": {
+          "endpoint": "http://127.0.0.1:54845",
+          "transport": "loopback-only"
+        }
+      }
+    },
+    {
+      "scenario": "record_resume_without_replay",
+      "repeat": 4,
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "first_close_ok": true,
+        "first_process_exited": true,
+        "recorded_view_present": true,
+        "resume_ok": true,
+        "resume_close_ok": true,
+        "second_process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "simulated_decode_is_deterministic": true,
+        "resume_does_not_replay_old_wire_updates": true,
+        "live_replay_effects": 0
+      },
+      "observed": {
+        "first_recorded_update_count": 2,
+        "resume_wire_update_count": 0,
+        "session_event_count": 22,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/end-seed",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "provider": {
+          "endpoint": "http://127.0.0.1:54845",
+          "transport": "loopback-only"
+        }
+      }
+    },
+    {
+      "scenario": "record_resume_without_replay",
+      "repeat": 5,
+      "status": "pass",
+      "checks": {
+        "initialize_ok": true,
+        "session_new_ok": true,
+        "prompt_completed": true,
+        "first_close_ok": true,
+        "first_process_exited": true,
+        "recorded_view_present": true,
+        "resume_ok": true,
+        "resume_close_ok": true,
+        "second_process_exited": true,
+        "one_session_log": true,
+        "session_log_decodes": true,
+        "simulated_decode_is_deterministic": true,
+        "resume_does_not_replay_old_wire_updates": true,
+        "live_replay_effects": 0
+      },
+      "observed": {
+        "first_recorded_update_count": 2,
+        "resume_wire_update_count": 0,
+        "session_event_count": 22,
+        "session_event_types": [
+          "agent/inbox/spliced",
+          "approval/policy",
+          "assistant/chunk",
+          "assistant/message",
+          "permission/preset",
+          "request/context",
+          "request/header",
+          "sandbox/mode",
+          "session",
+          "session/end-seed",
+          "session/title",
+          "step/end",
+          "step/start",
+          "turn/end",
+          "turn/start",
+          "user/message"
+        ],
+        "invalid_session_lines": [],
+        "provider": {
+          "endpoint": "http://127.0.0.1:54845",
+          "transport": "loopback-only"
+        }
+      }
+    }
+  ],
+  "checks": {
+    "preflight_passed": true,
+    "all_record_resume_probes_passed": true,
+    "no_real_credentials": true,
+    "no_external_network": true,
+    "no_production_data": true,
+    "no_external_side_effects": true
+  }
+}

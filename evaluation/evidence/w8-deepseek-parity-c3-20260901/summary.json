@@ -1,0 +1,404 @@
+{
+  "schema": "zworkbench-w8-deepseek-c34/v1",
+  "mode": "c3",
+  "classification": "acceptance/evaluation",
+  "candidate": {
+    "name": "DeepSeek Harness",
+    "version": "0.1.2-alpha.1",
+    "entrypoint": "/Users/bilibili/Documents/workspace/github/deepseek-ai/deepseek-harness/apps/cli/lib/bin.js",
+    "acp": true
+  },
+  "adapter": {
+    "version": "w8-deepseek-c3-c4-composition-adapter/v1",
+    "fixture": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w8-deepseek-c3-c4",
+    "effect_sink_reused_from": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w7-codex-c3-c4/effect-sink.py"
+  },
+  "threshold": {
+    "scenarios": [
+      "first_trigger",
+      "same_key_duplicate",
+      "delayed_trigger",
+      "interrupted_retry",
+      "missed_trigger"
+    ],
+    "repeats_per_scenario": 3,
+    "same_key_effective_side_effects": 1,
+    "duplicate_extra_effects": 0,
+    "native_scheduler": "not measured; external deterministic trigger"
+  },
+  "status": "pass-with-composition",
+  "cases_passed": 15,
+  "cases_total": 15,
+  "checks": {
+    "all_cases_pass": true,
+    "one_effect_per_key": true,
+    "missing_evidence_stops": true
+  },
+  "native_capability_boundary": {
+    "scheduler": "not measured",
+    "durable_owner": "composition adapter",
+    "candidate_turn_identity": "not exposed by ACP; adapter prompt id recorded"
+  },
+  "cases": [
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "d33de69d-bd5c-4f75-ab83-46f06783c212",
+        "adapter_turn_id": "w8-deepseek-c3-first_trigger-01:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/first_trigger/repeat-01"
+    },
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "b8f1f941-440d-45bb-b328-92ca243c4119",
+        "adapter_turn_id": "w8-deepseek-c3-first_trigger-02:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/first_trigger/repeat-02"
+    },
+    {
+      "scenario": "first_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "18609118-3e59-4300-85e5-f035f8e37104",
+        "adapter_turn_id": "w8-deepseek-c3-first_trigger-03:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/first_trigger/repeat-03"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "c159eb15-1574-442f-9428-bac27269f998",
+        "adapter_turn_id": "w8-deepseek-c3-same_key_duplicate-01:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/same_key_duplicate/repeat-01"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "02403cce-9d41-425e-ad31-0c33276a39b8",
+        "adapter_turn_id": "w8-deepseek-c3-same_key_duplicate-02:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/same_key_duplicate/repeat-02"
+    },
+    {
+      "scenario": "same_key_duplicate",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "e3d47eef-ed09-4f55-b5dd-99e2fc42056b",
+        "adapter_turn_id": "w8-deepseek-c3-same_key_duplicate-03:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/same_key_duplicate/repeat-03"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "61f5b0e0-10b6-43f6-8b39-10b8e565c52b",
+        "adapter_turn_id": "w8-deepseek-c3-delayed_trigger-01:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/delayed_trigger/repeat-01"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "2d79ad5f-8a8b-467f-aa39-4e156350e2f6",
+        "adapter_turn_id": "w8-deepseek-c3-delayed_trigger-02:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/delayed_trigger/repeat-02"
+    },
+    {
+      "scenario": "delayed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 2,
+        "attempt_records": 4,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "39db72e8-289a-495d-b977-1400f6ed29de",
+        "adapter_turn_id": "w8-deepseek-c3-delayed_trigger-03:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/delayed_trigger/repeat-03"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "2cffc31c-c0ef-450d-8e0e-46fe94c0523e",
+        "adapter_turn_id": "w8-deepseek-c3-interrupted_retry-01:prompt-2",
+        "candidate_tool_calls": 0
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/interrupted_retry/repeat-01"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "cc16d137-b7ed-4cd4-8d20-419d5b4a2326",
+        "adapter_turn_id": "w8-deepseek-c3-interrupted_retry-02:prompt-2",
+        "candidate_tool_calls": 0
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/interrupted_retry/repeat-02"
+    },
+    {
+      "scenario": "interrupted_retry",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 3,
+        "attempt_records": 6,
+        "duplicate_events": 1,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "8c194ca9-8c1b-4438-a111-2b7b9565b3fa",
+        "adapter_turn_id": "w8-deepseek-c3-interrupted_retry-03:prompt-2",
+        "candidate_tool_calls": 0
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/interrupted_retry/repeat-03"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "75d70d67-b131-4e5d-9821-733b2fb402d2",
+        "adapter_turn_id": "w8-deepseek-c3-missed_trigger-01:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/missed_trigger/repeat-01"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "bd3e24bf-fb3c-4073-bb17-15b7189883bc",
+        "adapter_turn_id": "w8-deepseek-c3-missed_trigger-02:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/missed_trigger/repeat-02"
+    },
+    {
+      "scenario": "missed_trigger",
+      "status": "pass",
+      "observed": {
+        "schedule_records": 1,
+        "attempt_records": 2,
+        "duplicate_events": 0,
+        "effect_records": 1,
+        "tool_result_records": 1,
+        "result_records": 1,
+        "candidate_session_id": "a9e5e12a-ce23-4894-bd5f-926e83c8b7c0",
+        "adapter_turn_id": "w8-deepseek-c3-missed_trigger-03:prompt-3",
+        "candidate_tool_calls": 1
+      },
+      "checks": {
+        "one_effect_per_key": true,
+        "duplicate_delivery_suppressed": true,
+        "attempt_history_complete": true,
+        "ids_correlated": true,
+        "durable_result": true,
+        "candidate_tool_call_observed": true
+      },
+      "evidence_dir": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-parity-c3-20260901/missed_trigger/repeat-03"
+    }
+  ]
+}

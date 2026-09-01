@@ -16,7 +16,8 @@
         "1-4",
         "1-5",
         "1-6",
-        "1-7"
+        "1-7",
+        "1-8"
       ],
       "decisions": [
         {
@@ -367,11 +368,130 @@
         }
       ],
       "notes": "1-7 已完成：新增 zworkbench run 及 snapshot/export/backup/restore console entry；固定 local_read_only、read-only sandbox、approval_policy=never、loopback/fake Provider 和 case-local 路径；CLI 不接收 API key，路径冲突、远端 Provider、凭证样式 prompt 和未知 Codex server request 均 fail-closed。47 个测试通过；fresh venv 安装后的产品 smoke 通过 run、recorded_view、export、backup、restore、snapshot，source/restored state digest 一致。证据：evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/。非声明：不代表真实 Provider、宿主级网络隔离、Codex native approval、真实写操作或 scheduler 已签核。"
+    },
+    "1-8": {
+      "id": "1-8",
+      "label": "DeepSeek 独立挑战者 C1-C7 评估",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-8-1"
+      ],
+      "decisions": [
+        {
+          "q": "DeepSeek 评估的路线角色与完成标准是什么？",
+          "answer": "这是 acceptance/evaluation 节点，不修改 W8 产品主线、不新增生产 Harness、不接入真实 Provider；固定 deepseek-ai/deepseek-harness commit cd5ef8148158c3a752a658978873241fdf8e2bbc（0.1.2-alpha.1），交付候选 manifest、隔离运行证据、C1-C7 findings、ATAM/CBAM 记录与 no-change/challenger-pass/pass-with-composition/unknown-stop 之一。",
+          "note": "W8 产品主线仍为 Codex 0.139.0 + SQLite composition owner；DeepSeek 仅以独立挑战者身份评估。"
+        },
+        {
+          "q": "DeepSeek 使用什么共同合同与阈值？",
+          "answer": "沿用 W6-0.1 C1-C7 fixture、case-local workspace、SQLite owner contract、policy/evidence schema 和 loopback/fake Provider；安全、未授权副作用、状态丢失、关键事件缺失、回放边界和许可证不可接受均为硬失败。C1 5 次至少 4 次且成功测试 100%；C2 关键拦截 100% 且未授权执行 0；C3 同 key 有效副作用 1；C4 每注入点 3 次均恢复或安全终止；C5 正常确定性 5/5、降级原因记录 100%；C6 关键事件/模式标注 100%、simulated 5/5、live effect 0；C7 安装≤90分钟，其余升级/备份恢复/故障定位各≤30分钟，额外专家 0，常驻维护服务≤3。",
+          "note": "未知不转为失败分数，也不转为通过；关键 unknown 保持 unknown/stop。机器耗时不能替代真人 C7 计时。"
+        },
+        {
+          "q": "何种证据足以挑战 Codex 主 Harness？",
+          "answer": "先过 C2/C4/C6/C7 硬门，再用 ATAM 拆解代码闭环、安全、恢复/回放、Provider 可移植性、可操作性、可维护性和小团队成本的敏感点/权衡点；用 CBAM 对 DeepSeek 带来的非重复场景收益与新增 adapter、状态/权限/事件映射、运维、升级、迁移、锁定和退出成本逐项对账。只有收益可测量、非重复且组合整体仍在个人开发者/小团队边界内，才允许 challenger-pass 或 pass-with-composition；否则 no-change，证据不足为 unknown/stop。",
+          "note": "不以功能数量或综合平均分掩盖安全、责任和退出风险；不因候选评估通过而自动引入第二 Harness。"
+        },
+        {
+          "q": "DeepSeek C1 首轮执行的可重复前置条件是什么？",
+          "answer": "将完整 host build（pnpm run build:lib）视为候选执行前置，并由 runner 验证固定 commit、版本、关键 lib closure 和独立 DSH_HOME；仅在此前置通过后运行 W6-0.1 C1 fake-a/fake-b。",
+          "note": "此前仅 build:lib:host 会导致全新 DSH_HOME 的 profile fallback 缺少 dsh-typert-registry 与 dsh-api-gateway，属于启动失败而非 Provider 或 agent loop 失败；该失败保留在诊断日志，不记 C1 候选样本。"
+        },
+        {
+          "q": "DeepSeek C1 首轮隔离基线是否通过，下一步如何推进？",
+          "answer": "固定 commit cd5ef8148158c3a752a658978873241fdf8e2bbc（0.1.2-alpha.1）且完整 pnpm run build:lib、版本和 headless help preflight 均通过；W6-0.1 C1 fake-a/fake-b 各 5 次共 10 次全部通过，达到每 Provider 至少 4/5、oracle 成功测试 100% 阈值。继续在同一验收范围内推进 C2-C7；不改变 Codex 0.139.0 唯一主 Harness 决策。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c1-20260901/summary.json；原始逐样本 session 证据保留在 /private/tmp 隔离目录且不提交 evaluation/runs。C1 通过不推导 C2-C7 通过。"
+        },
+        {
+          "q": "DeepSeek C2 fail-closed 安全验证是否通过？",
+          "answer": "通过候选专属 c2-deepseek-cli-fail-closed-v1 adapter：fake-a/fake-b 各 3 次共 6 个样本全部通过，5 类动作的关键拦截率 100%，未授权执行 0，直接危险命令 0，secret 泄露 0，越界修改 0，ledger 完整度 6/6；一次性审批 loopback 正向路径通过，审批重放和 scope mismatch 均被阻断。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c2-20260901/summary.json；这证明 DeepSeek 在该 adapter seam 上满足 C2 fixture contract，不等于宿主级 sandbox/native approval 已签核，也不改变 Codex 主 Harness。下一步应验证 C3-C7，关键 unknown 继续保持 unknown。"
+        },
+        {
+          "q": "DeepSeek C3 自动任务、定时触发与幂等是否已具备候选证据？",
+          "answer": "C3 候选状态保持 unknown：W6-0.1 外部确定性触发器与幂等 fixture 15/15 通过（pass-with-composition），同 key 有效副作用 1、重复/重试额外副作用 0；但固定 DeepSeek headless CLI 仅暴露一次性 task 入口，没有可绑定的候选专属 scheduler/cron/trigger adapter，因此不能把 composition fixture 通过升级为 DeepSeek C3 通过。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c3-20260901/summary.json；这是能力边界未知，不是失败分数。按 unknown/stop 规则，C3 不得被综合分掩盖；可继续独立记录 C4-C7，但挑战者整体结论不能提前通过。"
+        },
+        {
+          "q": "DeepSeek C4 候选专属验证应覆盖哪些能力，何时保持 unknown？",
+          "answer": "先以固定 commit 的 ACP 入口验证 session/new、session/list、跨进程 session/resume、session/cancel 与持久化日志；把工具/Provider/进程注入和副作用重试分别作为观察项。只有每个注入点满足 W6 阈值且有候选专属可复核 ledger，才可记为 C4 pass；仅有 ACP session persistence 或通用 W6 fixture 只能记为 partial/unknown，不得替代完整 C4。",
+          "note": "DeepSeek ACP 文档明确支持 list/resume/close/cancel，但不支持 transcript replay，当前未发现候选专属副作用幂等 ledger。"
+        },
+        {
+          "q": "DeepSeek C4 ACP 生命周期首轮结果是什么？",
+          "answer": "候选专属 ACP probe 通过：clean_resume、cancel_resume、process_kill_resume 各 3/3，均完成 session/new、session/list、跨进程 session/resume；取消与请求中真实 SIGKILL 后均能继续 prompt，持久化 session.jsonl.zstd 均可解码。完整 W6 C4 保持 unknown：未验证候选自有 effect ledger、六类注入点全矩阵、幂等副作用重试和 transcript replay。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c4-20260901/summary.json；runner：evaluation/runner/run_deepseek_c4_acp.py。"
+        },
+        {
+          "q": "DeepSeek C5 双 Provider 故障切换与显式降级结果是什么？",
+          "answer": "候选专属验证中 fake-a 与 fake-b 独立配置路线各 5/5 完成，说明同一 DeepSeek ACP 入口可以切换配置的 endpoint；timeout fake-a 故障时只观察到 fake-a 同路由 retry，独立运行的 fake-b 0 次被联系，没有候选-owned fallback/degradation reason contract。因此 C5 候选状态保持 unknown，不能把多 Provider 配置或同路由 retry 计作 failover。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c5-20260901/summary.json；runner：evaluation/runner/run_deepseek_c5_provider.py。"
+        },
+        {
+          "q": "DeepSeek C6 可观测记录与回放边界是什么？",
+          "answer": "候选专属 ACP probe 5/5 产生可解码 session log 和 recorded session/update view；跨进程 session/resume 5/5 成功，但 resume 不自动发送历史 session/update，且固定版本文档明确不支持 transcript replay。evaluator-only 的日志双重解码是确定性的，不能升级为候选 replay capability；因此 live replay、模式标注完整度和副作用 replay 保持 unknown，C6 不签核。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c6-20260901/summary.json；runner：evaluation/runner/run_deepseek_c6_replay.py。"
+        },
+        {
+          "q": "DeepSeek C7 运维、许可证与退出审计结果是什么？",
+          "answer": "静态审计通过：固定 checkout 干净且 commit/version 正确，根 LICENSE 为 MIT，THIRD_PARTY_NOTICES.md 存在且自检通过，250 个 DSH package 均声明 MIT。机器安装/构建前置已完成，但没有候选自有 backup/restore 或真实远端退出责任证据；构建入口是未被 git 跟踪的生成产物，source-to-binary provenance 未建立；安装、升级、备份恢复、故障定位真人 stopwatch 均缺失。因此 C7 为 unknown-stop，不得签核。",
+          "note": "证据：evaluation/evidence/w8-deepseek-c7-20260901/summary.json；缺口不是用 Codex 的真人计时或 composition owner 证据替代。"
+        },
+        {
+          "q": "DeepSeek C1-C7 独立挑战者的最终决策是什么？",
+          "answer": "最终为 unknown-stop / no-change：C1 pass，C2 pass-with-adapter，C4 仅 ACP lifecycle partial；C3、C4 完整合同、C5、C6、C7 均存在关键 unknown，其中 C7 为 hard-gate unknown-stop。没有足够的非重复、可测量收益挑战 Codex 唯一主 Harness，因此保持 Codex 0.139.0 + SQLite composition owner，不新增 DeepSeek 生产集成；DeepSeek 仅保留为未来受控 adapter 候选。",
+          "note": "完整结论与 ATAM/CBAM：docs/plans/w8-deepseek-challenger-evaluation.md。"
+        }
+      ],
+      "notes": "Acceptance/evaluation only. Fixed candidate: deepseek-ai/deepseek-harness @ cd5ef8148158c3a752a658978873241fdf8e2bbc, version 0.1.2-alpha.1. Shared contract: W6-0.1 C1-C7, case-local workspace, SQLite composition owner, loopback/fake Provider, no real credentials/network/effects. Planned artifacts: evaluation/candidates/deepseek/manifest.json, isolated runner/fixtures, docs/plans/w8-deepseek-challenger-evaluation.md, ATAM/CBAM evidence. Do not commit evaluation/runs history directories."
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "label": "按 Codex C1-C7 同形状补齐 DeepSeek 公平验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "DeepSeek 公平复测应如何与 Codex 对齐？",
+          "answer": "使用同一 W6-0.1 C1-C7 fixture、阈值、case-local owner/evidence schema 和隔离约束；优先补做 Codex 已有而 DeepSeek 当前缺失的候选专属验证，不把已有 Codex composition evidence 迁移为 DeepSeek 通过。先完成 C3/C4/C5/C6/C7 的同形状实验设计与可运行证据，再更新双向比较结论。",
+          "note": "本节点属于 acceptance/evaluation，只修改评估资产、evidence 和路线图记录；不修改 ZWorkbench 生产代码，不接入真实 Provider/API key，不执行真实外部副作用。大型 evaluation/runs 不提交。"
+        },
+        {
+          "q": "DeepSeek C3/C4 候选专属 adapter 如何与 Codex 公平对齐？",
+          "answer": "以固定 DeepSeek ACP stdio 作为候选执行入口，以同形状 case-local effect sink、事件/attempt/schedule/result ledger 和 loopback Chat Completions fake Provider 复现 Codex 的 C3/C4 fixture；C3 沿用外部确定性触发器（不宣称原生 scheduler），C4 覆盖 4 类故障×3 类工具×3 次。adapter 只记录并验证 DeepSeek ACP 的 session/update、tool_call、tool_call_update、cancel/进程中断与恢复；approval 通过 ACP permission 若实际出现，否则单独记为 unobserved/unknown。任何组合 ledger 通过都标记 pass-with-composition，不迁移为 DeepSeek 原生能力；工具调用或故障注入无法形成可复核证据时保持 unknown/stop。",
+          "note": "本轮仍是 acceptance/evaluation，只新增评估 runner、fixture 和 evidence；不修改 ZWorkbench 生产代码，不访问真实 Provider/API key，不执行外部副作用。"
+        },
+        {
+          "q": "DeepSeek ACP runner 如何消除 session/prompt 响应的间歇性假超时？",
+          "answer": "将 ACP 子进程 stdout 从 TextIOWrapper+select.readline 改为 fd 级非缓冲读取，并由 runner 自己维护跨 read 的字节行缓冲；stdin 同步改为 bytes 写入，stderr 在收尾时显式 decode。",
+          "note": "证据表明 transcript 已包含完整 turn/end，但 runner 偶发看不到 JSON-RPC response，属于读取 framing 缺陷；修复 runner 不改变候选能力或 fixture 阈值。"
+        },
+        {
+          "q": "C4 tool_timeout fixture 为什么在启动前失败？",
+          "answer": "将 fake-provider.py 的 --mode choices 补齐 tool_timeout；该模式只使用 runner 传入的带 sleep 的初始 tool command，不伪造候选故障能力。",
+          "note": "C4_FAULTS 已包含 tool_timeout，但 fixture CLI choices 漏项导致 provider 未启动；这是测试基础设施错误，不应计入 DeepSeek unknown。"
+        },
+        {
+          "q": "C4 tool timeout 重试与回放证据如何保持公平？",
+          "answer": "fake Provider 对显式 RETRY_TOOL marker 优先返回 tool call；ACP recovery client 以追加模式写同一 transcript，且恢复前关闭旧 client 进程但不发送 session/close，以保留可 resume 的候选会话。",
+          "note": "C4 evidence 显示 retry 请求被 provider 误判为普通 message，未执行 allow-listed command；旧 transcript 也被 recovery 覆盖。两项均为评估 runner/fixture 缺陷。"
+        },
+        {
+          "q": "DeepSeek 与 Codex 的同形状 C1-C7 复测结论是什么？",
+          "answer": "C1 10/10，C2 adapter 6/6；C3 15/15 pass-with-composition；C4 36 中 24 个非 approval-required 通过、12 个 approval-required unknown、无 fail；C5 正常路由 10/10 但无候选 failover；C6 5/5 session record/resume 但无候选 replay；C7 unknown-stop。完成 parity 评估但不放行 DeepSeek 为主或第二生产 Harness。",
+          "note": "统一复测绑定 DeepSeek fixed checkout cd5ef8148158c3a752a658978873241fdf8e2bbc、相同 W6/W7 fixture、loopback Provider 与隔离边界；pass-with-composition 不等于 native pass。"
+        }
+      ],
+      "notes": "DeepSeek fixed checkout 已完成 C1-C6 同形状复测并核对 C7 边界：C1 10/10，C2 adapter 6/6，C3 15/15 pass-with-composition，C4 24/36 composition pass + 12/36 approval-required unknown（无 fail），C5 正常路由 10/10 但无候选 failover，C6 5/5 record/resume 但无候选 replay，C7 unknown-stop。结论：评估完成，DeepSeek 不放行为主或第二生产 Harness；保留为受控挑战者记录。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-01 17:18:08",
+    "updated": "2026-09-01 19:42:13",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }
