@@ -9,5 +9,8 @@ description = "Personal workbench composition owner"
 requires-python = ">=3.9"
 dependencies = []
 
+[project.scripts]
+zworkbench = "zworkbench.cli:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]

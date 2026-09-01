@@ -1,0 +1,15 @@
+{
+  "schema": "zworkbench-cli/v1",
+  "command": "restore",
+  "status": "completed",
+  "result": {
+    "target_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/restore/composition.sqlite3",
+    "database_sha256": "7529c78dab9c24425e3239a6d8fea400e63e6f6fa545f449be2cab8931a5e1ea",
+    "state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5",
+    "integrity_check": {
+      "ok": true,
+      "integrity_check": "ok",
+      "user_version": 1
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "schema": "zworkbench-w8-1-7-product-smoke/v1",
+  "status": "pass",
+  "installed_package_version": "0.1.0",
+  "commands": {
+    "run": [
+      "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.yIczvxz8un/venv/bin/zworkbench",
+      "run",
+      "--case-root",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case",
+      "--workspace",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/workspace",
+      "--prompt",
+      "inspect the fixture and return fixture-ok",
+      "--codex",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/fake-codex",
+      "--run-id",
+      "w8-1-7-product-smoke-01",
+      "--export",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/export/owner.json",
+      "--backup",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/backup",
+      "--summary",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/run-summary.json"
+    ],
+    "restore": [
+      "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.yIczvxz8un/venv/bin/zworkbench",
+      "restore",
+      "--db",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/restore/composition.sqlite3",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/backup",
+      "--replace"
+    ],
+    "snapshot": [
+      "/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.yIczvxz8un/venv/bin/zworkbench",
+      "snapshot",
+      "--db",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/restore/composition.sqlite3"
+    ]
+  },
+  "observed": {
+    "run_status": "completed",
+    "owner_run_status": "completed",
+    "run_id": "w8-1-7-product-smoke-01",
+    "thread_id": "cli-fixture-thread",
+    "turn_id": "cli-fixture-turn",
+    "recorded_view_present": true,
+    "event_count": 8,
+    "state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5",
+    "restored_state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5",
+    "snapshot_run_status": "completed",
+    "export_present": true,
+    "backup_manifest_present": true,
+    "backup_database_present": true,
+    "restore_target_present": true,
+    "network_requests": 0,
+    "real_credentials": 0,
+    "external_side_effects": 0
+  },
+  "checks": {
+    "installed_console_script": true,
+    "run_completed": true,
+    "owner_completed": true,
+    "identity_complete": true,
+    "recorded_view_present": true,
+    "export_present": true,
+    "backup_present": true,
+    "restore_digest_matches": true,
+    "snapshot_restored_run": true,
+    "no_network_or_external_effect": true
+  },
+  "evidence_files": {
+    "run_summary": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/run-summary.json",
+    "export": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/export/owner.json",
+    "backup": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/backup",
+    "restore_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/restore/composition.sqlite3",
+    "cli_run_stdout": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/cli-run.stdout.json",
+    "cli_restore_stdout": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/cli-restore.stdout.json",
+    "cli_snapshot_stdout": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/cli-snapshot.stdout.json"
+  },
+  "non_claims": [
+    "The fake app-server smoke does not prove host-level network isolation.",
+    "It does not prove Codex native approval or real Provider behavior.",
+    "It does not open write, scheduler, live replay, or external side-effect paths."
+  ]
+}

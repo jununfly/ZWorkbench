@@ -1,0 +1,11 @@
+{"direction":"outbound","message":{"id":1,"jsonrpc":"2.0","method":"initialize","params":{"clientInfo":{"name":"zworkbench-codex-adapter","version":"zworkbench-codex-app-server-adapter/v1"}}}}
+{"direction":"inbound","message":{"id":1,"jsonrpc":"2.0","result":{}}}
+{"direction":"outbound","message":{"jsonrpc":"2.0","method":"initialized","params":{}}}
+{"direction":"outbound","message":{"id":2,"jsonrpc":"2.0","method":"thread/start","params":{"approvalPolicy":"never","cwd":"/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/workspace","ephemeral":false,"model":"fake-model","modelProvider":"ollama","sandbox":"read-only"}}}
+{"direction":"inbound","message":{"id":2,"jsonrpc":"2.0","result":{"thread":{"id":"cli-fixture-thread"}}}}
+{"direction":"outbound","message":{"id":3,"jsonrpc":"2.0","method":"turn/start","params":{"input":[{"text":"inspect the fixture and return fixture-ok","type":"text"}],"threadId":"cli-fixture-thread"}}}
+{"direction":"inbound","message":{"id":3,"jsonrpc":"2.0","result":{"turn":{"id":"cli-fixture-turn"}}}}
+{"direction":"outbound","message":{"id":4,"jsonrpc":"2.0","method":"thread/read","params":{"threadId":"cli-fixture-thread"}}}
+{"direction":"inbound","message":{"jsonrpc":"2.0","method":"item/agentMessage/delta","params":{"delta":"fixture-ok","turnId":"cli-fixture-turn"}}}
+{"direction":"inbound","message":{"jsonrpc":"2.0","method":"turn/completed","params":{"threadId":"cli-fixture-thread","turn":{"id":"cli-fixture-turn","status":"completed"}}}}
+{"direction":"inbound","message":{"id":4,"jsonrpc":"2.0","result":{"thread":{"id":"cli-fixture-thread"}}}}

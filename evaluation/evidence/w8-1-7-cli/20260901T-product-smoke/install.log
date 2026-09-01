@@ -1,0 +1,11 @@
+Processing /Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: zworkbench
+  Building wheel for zworkbench (pyproject.toml): started
+  Building wheel for zworkbench (pyproject.toml): finished with status 'done'
+  Created wheel for zworkbench: filename=zworkbench-0.1.0-py3-none-any.whl size=27921 sha256=f2f4c47ab83cf737d8d838b83e001951aa6b4001bbdd2c1a030cf9f901fa66e2
+  Stored in directory: /private/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/pip-ephem-wheel-cache-__ppgzbe/wheels/10/ef/33/c883c2918746d51af95fbe5101243524b179018051b0530f53
+Successfully built zworkbench
+Installing collected packages: zworkbench
+Successfully installed zworkbench-0.1.0

@@ -1,0 +1,32 @@
+#!/var/folders/bk/25klw83n5wn38lj2m3wbr9fc0000gn/T/tmp.yIczvxz8un/venv/bin/python
+
+import json
+import sys
+
+THREAD_ID = "cli-fixture-thread"
+TURN_ID = "cli-fixture-turn"
+
+
+def send(message):
+    sys.stdout.write(json.dumps(message, separators=(",", ":")) + "\n")
+    sys.stdout.flush()
+
+
+for line in sys.stdin:
+    message = json.loads(line)
+    if "id" not in message:
+        continue
+    method = message.get("method")
+    request_id = message["id"]
+    if method == "initialize":
+        send({"jsonrpc": "2.0", "id": request_id, "result": {}})
+    elif method == "thread/start":
+        send({"jsonrpc": "2.0", "id": request_id, "result": {"thread": {"id": THREAD_ID}}})
+    elif method == "turn/start":
+        send({"jsonrpc": "2.0", "id": request_id, "result": {"turn": {"id": TURN_ID}}})
+        send({"jsonrpc": "2.0", "method": "item/agentMessage/delta", "params": {"turnId": TURN_ID, "delta": "fixture-ok"}})
+        send({"jsonrpc": "2.0", "method": "turn/completed", "params": {"threadId": THREAD_ID, "turn": {"id": TURN_ID, "status": "completed"}}})
+    elif method == "thread/read":
+        send({"jsonrpc": "2.0", "id": request_id, "result": {"thread": {"id": THREAD_ID}}})
+    else:
+        send({"jsonrpc": "2.0", "id": request_id, "error": {"code": -32601, "message": "unknown method"}})

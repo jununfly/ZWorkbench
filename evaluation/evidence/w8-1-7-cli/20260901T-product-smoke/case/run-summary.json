@@ -1,0 +1,84 @@
+{
+  "schema": "zworkbench-cli/v1",
+  "command": "run",
+  "mode": "local_read_only",
+  "status": "completed",
+  "run_id": "w8-1-7-product-smoke-01",
+  "preflight": {
+    "status": "pass",
+    "mode": "local_read_only",
+    "config_digest": "57cb308fb645772ce281413d76f675599a13054583f51a8434a3c726b51ec819",
+    "allowed": true,
+    "checks": {
+      "case_root_directory": true,
+      "mode_local_read_only": true,
+      "read_only_sandbox": true,
+      "approval_policy_never": true,
+      "workspace_directory": true,
+      "workspace_inside_case": true,
+      "state_inside_case": true,
+      "code_home_inside_case": true,
+      "event_log_inside_case": true,
+      "codex_executable_file": true,
+      "codex_executable_executable": true,
+      "provider_identity_explicit": true,
+      "provider_loopback": true,
+      "provider_identity_json_serializable": true,
+      "plugins_and_apps_disabled": true,
+      "no_credentials_in_config": true
+    },
+    "violations": []
+  },
+  "execution": {
+    "run_id": "w8-1-7-product-smoke-01",
+    "thread_id": "cli-fixture-thread",
+    "turn_id": "cli-fixture-turn",
+    "status": "completed",
+    "text": "fixture-ok",
+    "provider_identity": {
+      "provider": "fake-loopback",
+      "model": "fake-model",
+      "endpoint": "http://127.0.0.1:11434"
+    },
+    "event_digest": "6d4f8c1926a653b4a08c1a8c61eee6f356cd1c0a748db2754c0afb9f0c678477",
+    "environment_digest": "73ee3e63f17b305e78582fd4479bbeecb92094c5eb71d99d040e1e3dbc615c3e",
+    "raw_event_count": 6
+  },
+  "owner": {
+    "database_present": true,
+    "run_status": "completed",
+    "state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5",
+    "recorded_view_present": true,
+    "event_count": 8
+  },
+  "artifacts": {
+    "export": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/case/export/owner.json",
+      "sha256": "0a687374059f6c63d594998e464d7bbfe9b88cb52ea5b8398efa293097a038cd",
+      "state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5"
+    },
+    "backup": {
+      "schema": "zworkbench-composition-owner/v1",
+      "schema_version": 1,
+      "created_at": "2026-09-01T09:16:40.540+00:00",
+      "database_filename": "composition.sqlite3",
+      "database_sha256": "7529c78dab9c24425e3239a6d8fea400e63e6f6fa545f449be2cab8931a5e1ea",
+      "state_filename": "state.json",
+      "state_digest": "8112088dcdfaf48c97ec077dd8cad4787f56d17dc496ce5bb635036ac4176ba5",
+      "counts": {
+        "runs": 1,
+        "approvals": 0,
+        "effects": 0,
+        "effect_attempts": 0,
+        "results": 4,
+        "replays": 1,
+        "events": 8
+      },
+      "integrity_check": {
+        "ok": true,
+        "integrity_check": "ok",
+        "user_version": 1
+      }
+    }
+  }
+}

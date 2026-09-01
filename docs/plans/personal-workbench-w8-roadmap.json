@@ -15,7 +15,8 @@
         "1-3",
         "1-4",
         "1-5",
-        "1-6"
+        "1-6",
+        "1-7"
       ],
       "decisions": [
         {
@@ -52,9 +53,14 @@
           "q": "真实 Provider 资料不完整时，W8 主路线如何推进？",
           "answer": "将真实 Provider 的认证、账户、数据保留、远端任务/Webhook/备份和退出视为路线外、按需的人工验证；W8 核心默认使用 loopback/fake Provider，继续推进本地 roadmap，不创建 Provider 资格子节点或重复的 API Key 交接循环。只有 Human 明确要求真实验证时，才运行独立本地安全 wizard，并把脱敏 summary 作为可选证据。",
           "note": "真实 Provider 证据不会阻塞 ZWorkbench 主线；真实 Key 不进入聊天、仓库、日志、backup 或 Agent 输出。"
+        },
+        {
+          "q": "W8 下一步应先开 1-7 产品闭环，还是先评估 DeepSeek 挑战者？",
+          "answer": "建议先开 1-7：实现并验证可安装、可执行的 local_read_only_run 产品入口；DeepSeek 延后作为独立 acceptance/evaluation 挑战者节点。1-7 只依赖已完成的 1-5，不等待 1-6-3 的真实写操作宿主边界签核；保持 Codex adapter seam，不把产品实现扩展为第二 Harness。1-7 完成后，用同一切片、同一 owner/policy/evidence contract、固定 DeepSeek 版本和预先声明的 ATAM/CBAM 阈值做时间盒评估；只有出现非重复收益且无安全、运维、许可证与退出回归，才重新审视主 Harness。",
+          "note": "这是 Product execution 与 acceptance/evaluation 的先后分工：当前优先获得可用基线，避免在没有产品入口时重复做候选 fixture；DeepSeek 不是 W8 核心阻断。"
         }
       ],
-      "notes": "设计文档：docs/plans/w8-controlled-pilot-scope-and-vertical-slice.md；当前焦点是产品边界已冻结，下一执行节点为 1-5。"
+      "notes": "设计文档：docs/plans/w8-controlled-pilot-scope-and-vertical-slice.md；1-5 已完成，1-6-3 仍 blocked/HOLD（仅影响真实本地写操作）；当前建议下一执行节点为 1-7 产品入口与可安装运行闭环。DeepSeek 保留为 1-7 完成后的独立 acceptance/evaluation 挑战者，不阻断 W8 核心产品开发。"
     },
     "1-1": {
       "id": "1-1",
@@ -335,11 +341,37 @@
         }
       ],
       "notes": "ATAM/CBAM 综合复审完成：W8 local_read_only_run 在隔离范围内 GO-within-scope；case-local reversible fake sink 仅 CONDITIONAL；真实本地写 Gate B=HOLD；C7/NOTICE/商业边界仍按本地产品放行要求执行。真实 Provider 明确为 out-of-roadmap/on-demand，不再是 W8 核心开发阻断。继续 Codex 0.139.0 唯一主 Harness + 一个 SQLite composition owner，不引入第二 Harness、LiteLLM、Temporal/LangGraph、独立观测平台或常驻 broker；未来新增组合件必须通过独立 CBAM 节点。文档：docs/plans/w8-1-6-5-atam-cbam-release-review.md。"
+    },
+    "1-7": {
+      "id": "1-7",
+      "label": "local_read_only_run 产品入口与可安装运行闭环",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-7 的最小产品交付边界是什么？",
+          "answer": "新增一个用户可调用的 zworkbench run CLI：在调用方提供的 case-local 目录中完成 local_read_only_run，输出脱敏 JSON summary，并可选生成 recorded view、export 和 backup。默认只使用 Codex adapter、loopback/fake Provider、read-only workspace；不加入真实 Provider、写操作、scheduler、live replay、自动 retry、第二 Harness 或常驻服务。",
+          "note": "Product execution；验收以隔离 fixture 和 fresh checkout 安装运行成立为准。"
+        },
+        {
+          "q": "1-7 如何避免把 CLI 绑定成不可替换的 Codex 产品？",
+          "answer": "CLI 只负责参数解析、case-local 路径准备、preflight、orchestrator 调用、脱敏输出和生命周期命令；Harness 通过现有 adapter_factory seam 注入，默认实现仍为 Codex 0.139.0。不得在 CLI 中复制 agent loop、owner 状态或 policy 判断。",
+          "note": "保持未来 DeepSeek challenger 可在相同 contract 下做独立 adapter/evaluation，不在本节点接入。"
+        },
+        {
+          "q": "1-7 的硬验收门是什么？",
+          "answer": "fresh checkout 可安装；zworkbench run 在隔离 case-local fixture 上成功完成；输出包含 run/preflight/execution/state identity；recorded view、export、backup/restore 可复核；真实凭证和外网请求为 0；live replay、越界路径和未知边界默认 deny/safe-stop；现有测试和 C1-C7 回归不退化。",
+          "note": "任何关键检查 unknown 都保留 evidence 并停止，不能以 CLI 返回码或模型文本代替 owner 事实。"
+        }
+      ],
+      "notes": "1-7 已完成：新增 zworkbench run 及 snapshot/export/backup/restore console entry；固定 local_read_only、read-only sandbox、approval_policy=never、loopback/fake Provider 和 case-local 路径；CLI 不接收 API key，路径冲突、远端 Provider、凭证样式 prompt 和未知 Codex server request 均 fail-closed。47 个测试通过；fresh venv 安装后的产品 smoke 通过 run、recorded_view、export、backup、restore、snapshot，source/restored state digest 一致。证据：evaluation/evidence/w8-1-7-cli/20260901T-product-smoke/。非声明：不代表真实 Provider、宿主级网络隔离、Codex native approval、真实写操作或 scheduler 已签核。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-01 12:12:57",
+    "updated": "2026-09-01 17:18:08",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }
