@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-01 01:00:37
+> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-01 12:12:57
 
 [~][X+] 1. W8 受控个人试点产品边界与最小纵向切片
 ├── [x][Y+] 1-1. 冻结受控个人试点的产品边界与责任地图
@@ -14,9 +14,7 @@
 │   ├── [x][Y+] 1-5-3. 建立成功与未知边界失败的隔离 fixture
 │   ├── [x][Y+] 1-5-4. 验证身份关联、脱敏、网络零访问与默认拒绝
 │   └── [x][Y+] 1-5-5. 验证 backup/restore 并生成第一切片 evidence
-└── [~][X+] 1-6. 评估真实 Provider 与可恢复写操作的放行资格
-    ├── [x][X+] 1-6-1. Provider 认证、数据保留与远端资源退出清单
-    ├── [ ][X+] 1-6-2. 真实 Provider 只读 staging 资格验证
+└── [~][X+] 1-6. 可恢复本地写操作与运行边界验收
     ├── [!][X+] 1-6-3. 宿主强制边界与 Codex native approval 验证
     ├── [x][X+] 1-6-4. 可恢复本地写操作故障矩阵验证
     └── [x][X+] 1-6-5. ATAM CBAM 综合放行复审

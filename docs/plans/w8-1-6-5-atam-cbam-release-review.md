@@ -1,11 +1,11 @@
 # W8 `1-6-5`：ATAM / CBAM 综合放行复审
 
-状态：`GO-within-scope / real Provider HOLD / real write HOLD` · 路线类型：
+状态：`GO-within-scope / external Provider optional / real write HOLD` · 路线类型：
 `Product execution decision review` · 日期：`2026-09-01`
 
-本文把 W8 第一切片、W7 Codex 候选 C2–C7 证据、Provider 退出 inventory、宿主边界
-观察和个人开发者/小团队约束放到同一个决策包中。它的目的不是给不同项目按功能数
-打分，而是决定当前哪些能力可以继续使用、哪些能力必须停在边界外。
+本文把 W8 第一切片、W7 Codex 候选 C2–C7 证据、宿主边界观察和个人开发者/小团队
+约束放到同一个决策包中；Provider 责任只作为明确的路线外边界记录。它的目的不是
+给不同项目按功能数打分，而是决定当前哪些能力可以继续使用、哪些能力必须停在边界外。
 
 ## 1. 决策结论
 
@@ -13,7 +13,7 @@
 |---|---|---|
 | W8 受控第一切片 | **GO-within-scope** | Codex `0.139.0` 唯一主 Harness、一个 SQLite composition owner、case-local workspace/`CODEX_HOME`、loopback/fake Provider、`local_read_only_run`、recorded view、simulated replay、backup/restore |
 | 隔离 reversible fake sink | **CONDITIONAL** | 仅用于继续 C2–C7 验收；未知 effect 必须 reconcile/safe-stop；不接真实项目 |
-| 真实 Provider | **HOLD / UNKNOWN** | 不连接火山方舟或其他真实 endpoint；不读取真实 API key；继续补账户级数据/资源/退出证据 |
+| 外部 Provider 验证 | **OUT-OF-ROADMAP / ON-DEMAND** | 不作为 W8 核心开发或发布前置条件；用户明确需要时，通过本地安全 wizard 做一次性验证 |
 | 真实本地写操作 | **HOLD** | 不写真实 workspace，不执行 Git push、部署、消息发送或远端任务；B1/B2/B8 未闭合 |
 | 第二 Harness / LiteLLM / Temporal / LangGraph / 独立观测平台 | **不引入** | 除非重新证明非重复收益，并通过服务数、人工维护、备份、排障、许可证和退出门槛 |
 
@@ -43,7 +43,7 @@ C1–C7 evidence + ATAM/CBAM gate
 | C5 Provider portability | `19/19 pass-with-composition` | fake-a/fake-b、timeout、stream interrupt、能力缺失均显式记录 | 真实 Provider 语义、成本、限额、凭证未验证 |
 | C6 replay/evaluation | `15/15 pass-with-composition` | recorded/simulated/live 三模式；simulated 5/5，live default-deny | Codex 原生 replay contract、批准后 live replay 未验证 |
 | C7 operations | `machine pass + human timing pass for reported gates` | 安装 17.01s、升级/回滚 14.35s、backup/restore 12.38s、故障定位 2分51.31秒 | NOTICE/商业边界、独立重建、真实远端退出仍未签核 |
-| Gate A 真实 Provider | `HOLD / UNKNOWN` | Provider inventory 和官方资料的 scope-limited baseline | Coding endpoint 逐对象 retention、远端资源 ID、删除/退出结果未知 |
+| 外部 Provider 试验 | `out-of-roadmap / on-demand` | Provider inventory 和官方资料仅作为按需验证输入 | 不影响 W8 核心开发；真实请求仍须遵守独立 runbook 的人工授权和安全边界 |
 | Gate B 真实写操作 | `HOLD` | fake sink 的 B3–B7、B9 fixture 证据 | B1 host、B2 native approval、B8 完整 rollback 未闭合 |
 
 ## 3. ATAM：质量属性与敏感点
@@ -54,7 +54,7 @@ C1–C7 evidence + ATAM/CBAM gate
 |---|---|---|---|
 | 安全/审批 | 未授权命令、越界文件、假凭证、非 loopback 网络、未知 server request | 在 effect 前 deny；未知或不确定时 safe-stop；保存可关联证据 | adapter fixture 已通过；host/native 仍 unknown |
 | 恢复/副作用 | turn、Provider、tool 或进程在提交边界中断 | 先 reconcile；可安全才 bounded retry；不可判断则停止；危险副作用不重复 | composition fixture 通过；真实 sink 未放行 |
-| Provider/数据责任 | Prompt、代码、output、错误、任务、Webhook 或 backup 离开本地 | identity、数据类别、retention、区域、owner 和退出动作可查 | 真实 Provider 资料不完整，保持 HOLD |
+| Provider/数据责任 | Prompt、代码、output、错误、任务、Webhook 或 backup 离开本地 | identity、数据类别、retention、区域、owner 和退出动作可查 | 不属于 W8 核心验收；按需外部试验自行负责 |
 | 回放/可观测 | 查看记录、模拟 replay、live replay 混用 | 三种 mode 明确分离；simulated 不执行；live 默认拒绝 | fixture 通过；批准 live replay 未放行 |
 | 升级/回滚 | Harness/adapter/owner schema 版本变化或启动失败 | 既有 state 可读；失败持久化；回滚不丢 evidence；workspace 可恢复 | owner machine compatibility 通过；统一 workspace rollback unknown |
 | 小团队运维 | 单人安装、升级、恢复、故障定位和退出 | 时间、服务数、专家介入、责任人可复核 | 已有报告的人工时间通过；法律/远端退出未签核 |
@@ -74,13 +74,13 @@ C1–C7 evidence + ATAM/CBAM gate
 
 | 风险 | 触发信号 | 响应 | 当前状态 |
 |---|---|---|---|
-| 协议兼容被误认为语义/合同兼容 | OpenAI-compatible endpoint 被当作统一 Provider | 按厂商、endpoint、账户、model、region 单独建账 | Gate A HOLD |
+| 协议兼容被误认为语义/合同兼容 | OpenAI-compatible endpoint 被当作统一 Provider | 按厂商、endpoint、账户、model、region 单独建账 | 仅在按需外部试验中检查 |
 | adapter deny 被误认为宿主隔离 | 只有 preflight/脚本 negative 证据 | 增加 OS/broker 的物理拒绝和进程树证据 | B1 unknown |
 | composition approval 被误认为 native approval | 配置出现 `on-request` 或 schema 出现 approval | 必须看到真实 request/decision/owner 关联；否则 unknown | B2 unknown |
 | 不确定 effect 被自动重试 | effect/result ledger 没有明确结果 | 进入 uncertain，先查 sink/reconcile；不可判断就 safe-stop | fixture 已有策略 |
 | 回放变成真实执行 | live replay 复用了工具/Provider | mode 明确；live 默认 deny；approved live 另行 gate | C6 fixture pass |
 | 组合件维护成本超出单人能力 | 常驻服务、权限 owner、升级矩阵增加 | 做 CBAM 增量收益复核；不满足则不引入/退出 | 当前不引入 |
-| 退出责任被本地删除掩盖 | 只删除 case-local 文件 | Provider 远端资源、retention、账单和账户由 owner 单独签核 | Gate A/C7 HOLD |
+| 退出责任被本地删除掩盖 | 只删除 case-local 文件 | Provider 远端资源、retention、账单和账户由 owner 单独签核 | W8 核心不代管；按需外部试验单独签核 |
 
 ## 4. CBAM：采用路线与增量价值
 
@@ -89,7 +89,7 @@ C1–C7 evidence + ATAM/CBAM gate
 | 选项 | 增量收益 | 增量成本/风险 | 当前决策 |
 |---|---|---|---|
 | O0：Codex + composition owner + W8 第一切片 | 立刻得到代码任务闭环、事件、导出、回放和本地恢复的受控基线 | 只读、fake Provider，不能处理真实写入/真实远端任务 | **GO-within-scope** |
-| O1：接入真实 Provider 薄 adapter | 获得真实模型延迟、限额、语义和账户验证 | 数据离境、凭证、retention、账单、远端任务/Webhook/backup、退出责任 | **条件候选；Gate A 全闭合前不引入** |
+| O1：接入真实 Provider 薄 adapter | 获得真实模型延迟、限额、语义和账户验证 | 数据离境、凭证、retention、账单、远端任务/Webhook/backup、退出责任 | **按需外部试验；不作为 W8 主线 gate** |
 | O2：放行真实本地 reversible write | 完成受控项目修改 | host sandbox、native approval、幂等、reconcile、rollback、事故责任 | **条件候选；Gate B 全闭合前不引入** |
 | O3：第二 Harness | 可能覆盖一个 Codex 不擅长的任务或模型入口 | 第二套状态、权限、事件、Provider、升级、备份和退出 | **不引入** |
 | O4：LiteLLM/Temporal/LangGraph/观测后端 | 可能补路由、durable workflow 或查询分析 | 常驻服务、凭证/数据面、迁移、许可证、排障和退出 | **不引入；需专门 CBAM 重审** |
@@ -161,7 +161,8 @@ NOTICE/商业边界或退出责任缺证据，评估器必须输出 `unknown/sto
 
 ### 当前不得放行
 
-- 火山方舟或其他真实 Provider 请求；
+- W8 核心默认不发起火山方舟或其他真实 Provider 请求；如需验证，按需使用外部 runbook，
+  不把该试验当作 W8 release gate；
 - 真实 API key、生产项目、用户数据或未声明凭证继承；
 - 真实 workspace 写入、Git push、部署、消息发送；
 - 创建/修改/删除 Provider 任务、Webhook、备份或其他远端资源；
@@ -182,11 +183,10 @@ NOTICE/商业边界或退出责任缺证据，评估器必须输出 `unknown/sto
 ## 7. 最终后续顺序
 
 1. **保持 W8 第一切片运行**：只读、loopback/fake、单 owner、自动化 C1–C7 回归。
-2. **若要真实 Provider**：先由账户 owner 补齐 `1-6-1` 的 model/project、key fingerprint、
-   数据类别、retention、任务/Webhook/backup resource ID、删除/停用入口和退出结果；
-   未闭合前不进入 `1-6-2` 业务请求。
-3. **若要真实写操作**：先补 `1-6-3` B1/B2 的 host/native 证据，再补 B8 workspace/schema/
+2. **若要真实写操作**：先补 `1-6-3` B1/B2 的 host/native 证据，再补 B8 workspace/schema/
    cassette 统一 rollback，之后才能重跑真实 sink 的 C2–C4。
+3. **若要真实 Provider**：按需使用 `docs/references/optional-real-provider-staging.md`
+   和本地安全 wizard；这不是 W8 主线节点，也不改变 W8 release review 结果。
 4. **若引入新开源组合件**：单独创建 CBAM 节点，证明非重复收益与退出路径，不在主线上
    预先部署常驻服务。
 5. **再次评审**：发生版本、Provider、策略、schema、服务拓扑或数据边界变化时，回到
@@ -194,8 +194,9 @@ NOTICE/商业边界或退出责任缺证据，评估器必须输出 `unknown/sto
 
 ## 8. 关联证据
 
-- [`W8 provider/write gates`](./w8-1-6-provider-and-recoverable-write-gates.md)
-- [`1-6-1 Provider exit inventory`](./w8-1-6-1-provider-exit-inventory.md)
+- [`W8 recoverable-write/runtime boundary`](./w8-1-6-recoverable-write-and-runtime-boundary.md)
+- [`optional-real-provider-staging.md`](../references/optional-real-provider-staging.md)
+- [`optional-provider-exit-inventory.md`](../references/optional-provider-exit-inventory.md)
 - [`1-6-3 host/native approval`](./w8-1-6-3-host-boundary-native-approval.md)
 - [`1-6-4 recoverable-write matrix`](./w8-1-6-4-recoverable-write-fault-matrix.md)
 - [`W8 scope and vertical slice`](./w8-controlled-pilot-scope-and-vertical-slice.md)
