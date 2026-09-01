@@ -424,6 +424,7 @@ class CodexAppServerAdapter:
         process = self.process
         if process is None:
             return
+        stderr = ""
         try:
             if process.poll() is None:
                 try:
@@ -447,6 +448,12 @@ class CodexAppServerAdapter:
                     self.selector.unregister(process.stdout)
                 except Exception:
                     pass
+            for stream in (process.stdin, process.stdout, process.stderr):
+                if stream is not None:
+                    try:
+                        stream.close()
+                    except Exception:
+                        pass
             self.process = None
 
     def __enter__(self) -> "CodexAppServerAdapter":

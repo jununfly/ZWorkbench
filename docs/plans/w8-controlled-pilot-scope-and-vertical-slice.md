@@ -191,15 +191,16 @@ replay 或 Provider 请求。
 run 和故障证据。通过这些门只表示 W8 第一切片在隔离环境成立，不表示 C7、
 Codex native approval、真实 Provider 或商业/许可证审查已经签核。
 
-## 7. 实施顺序（下一节点）
+## 7. 产品入口（1-7）
 
-下一执行节点是 `1-5 实现并验证 local_read_only_run`，按以下顺序落地：
+`1-5` 已完成 Python orchestration seam；`1-7` 将其暴露为安装后的
+`zworkbench run`，具体契约和验收记录见
+[`w8-1-7-local-read-only-cli.md`](./w8-1-7-local-read-only-cli.md)。入口要求显式
+的 case-local root、workspace 和固定 Codex executable，默认使用 loopback/fake
+Provider，并可按需在 case-local 路径生成 owner export、backup 和 summary。
 
-1. 定义入口配置和 preflight 结果结构；
-2. 复用现有 composition owner 与 Codex adapter，补齐第一切片 orchestration seam；
-3. 增加一条完整成功 fixture 和未知请求/边界失败 fixture；
-4. 增加身份关联、脱敏、网络零访问、backup/restore 和默认拒绝测试；
-5. 生成 run summary、操作说明和可复核证据，再决定是否开放下一节点。
+CLI 只做控制面编排：参数与路径边界、preflight、orchestrator 调用、脱敏摘要和
+产物写出；不复制 agent loop、owner 状态、policy 判断或 replay 执行。
 
 实现期间继续遵守：不接真实火山方舟、不读取全局 `CODEX_HOME`、不使用真实
 API key、不执行真实写操作、不引入第二 Harness 或常驻服务。
