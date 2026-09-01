@@ -1,17 +1,18 @@
-# W8 1-6 火山方舟 Provider 退出与责任一手来源
+# 参考：火山方舟 Provider 退出与责任一手来源
 
-状态：`evidence-captured / provider-exit-signoff-open / endpoint-boundary-incident-recorded` · 核查日期：`2026-09-01`
+状态：`reference-only / on-demand / out-of-roadmap` · 核查日期：`2026-09-01`
 （Asia/Shanghai）
 
-本记录服务于 W8 `1-6` 的真实 Provider 资格 gate：核对火山引擎/火山方舟
+本记录仅供账户 owner 在明确触发真实 Provider 验证时查阅，用于核对火山引擎/火山方舟
 （Ark）及其 Coding API 的 endpoint、认证、远端对象、数据处理、保留、账户/账单
 和退出责任。它只使用火山引擎/火山方舟官方文档、官方政策/条款和官方控制台/API
 说明作为外部来源；不执行认证业务 API、不读取或使用凭证、不执行控制台删除或停用；
 本轮另记录了一次未携带凭证的 endpoint 根路径边界观察，详见第 12 节，
 也不构成推荐、法律意见、隐私/DPA 意见或 Provider 侧删除证明。
 
-本轮只调查真实 Provider 资格 gate，不替代另一条“local recoverable write” gate。
-本轮结论只描述证据和责任边界，不把任何 `official-unknown` 自动解释成“没有能力”。
+本记录不属于 ZWorkbench 目标树、W8 主线或发布门；不创建 roadmap 子节点，也不把
+其中的 unknown 转化为核心开发待办。本轮结论只描述证据和责任边界，不把任何
+`official-unknown` 自动解释成“没有能力”。
 
 ## 1. 判定词与证据规则
 
@@ -42,7 +43,7 @@ Coding Plan 能力。
 不得将 API key、Cookie、完整账户邮箱、私有请求内容或远端资源秘密复制到本记录
 或后续 evidence。
 
-## 3. W8 1-6 当前边界结论
+## 3. 参考边界结论
 
 | 命题 | 证据状态 | 本轮可说到哪里 |
 |---|---|---|
@@ -380,7 +381,7 @@ ZWorkbench 观察到零残留。
 - 不能说“OpenAI-compatible”意味着遵循 OpenAI 的合同、资源模型、Webhook、账单或
   退出流程；本记录的合同主体是火山引擎/火山方舟官方材料。
 
-## 10. W8 1-6 证据结论
+## 10. 本参考记录的证据结论
 
 `official-verified` 的最小集合：
 

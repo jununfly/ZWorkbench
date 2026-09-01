@@ -14,6 +14,11 @@
 
 **Provider**：提供模型推理或模型 API 的服务、运行时或适配方；Provider 身份、模型和能力不能被静默替换。
 
+**路线外 Provider 验证**：真实 Provider 的认证、数据保留、远端任务/Webhook/备份和账户退出不属于
+ZWorkbench 主路线的开发待办。核心开发默认使用 loopback/fake Provider；只有 Human 明确要求时，才在
+本机运行独立的安全 wizard，并把脱敏 summary 作为可选证据。缺少真实 Provider 资料时，Agent 继续推进
+本地路线，不创建重复的 Provider gate、roadmap 子节点或 API Key 交接循环。
+
 ## 评估语言
 
 **评估 Fixture**：用于候选比较的版本化、隔离且可清理的任务环境、输入、假服务、策略和预期结果。Fixture 不使用真实生产项目、真实凭证或不可逆外部副作用。
@@ -29,4 +34,3 @@
 **模拟回放（Simulated replay）**：使用已封存的模型、工具、网络或环境 cassette/fixture 重新驱动流程，不访问真实副作用目标。
 
 **实时回放（Live replay）**：重新访问真实 Provider 或外部工具并可能产生副作用的执行方式；默认禁止，必须经过显式授权和额外安全策略。
-

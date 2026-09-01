@@ -35,8 +35,8 @@ ZWorkbench 第一阶段服务于一个个人开发者，或一个很小的内部
 | Host / project workspace | 提供本地文件、进程、凭证注入和 OS 隔离边界 | W8 不宣称已经获得宿主级强制隔离；未签核路径必须 safe-stop |
 
 当前火山方舟信息只用于说明真实 Provider 的数据边界：endpoint、API key、
-账户和远端资源不会写入 owner ledger。第一切片不访问该真实 endpoint；未来
-接入时必须按 Provider 单独确认数据、retention、账单和退出责任。
+账户和远端资源不会写入 owner ledger。第一切片不访问该真实 endpoint；真实
+Provider 验证属于按需外部 runbook，不是 W8 核心产品开发或发布前置条件。
 
 ## 3. 第一阶段允许和禁止的事情
 
@@ -208,7 +208,7 @@ API key、不执行真实写操作、不引入第二 Harness 或常驻服务。
 
 只有第一切片稳定后，才分别评估：
 
-- `1-6`：真实 Provider 接入的数据/retention/退出责任；
+- 按需真实 Provider 验证：使用独立本地安全 runner；不阻断 W8 核心开发；
 - 自动触发与 retry 的 C3/C4 产品化，而不是直接启用 cron；
 - 可恢复的本地写操作及 C2 宿主级边界；
 - 多 Provider capability/fallback，而不是默认添加 gateway；

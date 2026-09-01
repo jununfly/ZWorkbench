@@ -157,10 +157,8 @@ policy/approval、tool/effect/result 和 next action 均可从隔离目录复核
    返回了配置摘要；运行时观察仍为 `item/commandExecution/requestApproval=0`，
    composition approval 不能回填 native approval；
 3. **B8 完整 rollback**：workspace/checkpoint/schema/cassette 的统一回滚未知；
-4. **真实 Provider Gate A**：真实 endpoint 的数据 retention、远端任务/Webhook/备份
-   和逐对象退出责任仍为 unknown；
-5. **C7 法律/供应链/退出**：NOTICE、商业/API 边界、独立重建和真实远端退出仍未完全
-   签核。
+4. **C7 法律/供应链/退出**：NOTICE、商业/API 边界和独立重建仍未完全签核；真实
+   Provider 远端退出属于路线外的账户 owner 责任，不是本地写操作 gate。
 
 任何 effect 在执行后结果未知，都必须转为 `uncertain → reconcile/safe-stop`；不得
    因 C3/C4/C6 的 fixture pass 自动 retry 或自动触发真实项目写入。
@@ -198,6 +196,6 @@ policy/approval、tool/effect/result 和 next action 均可从隔离目录复核
 - 允许范围：`local_read_only_run`、模拟回放和 case-local reversible fake sink；
 - 禁止范围：真实项目写入、Git push、部署、远端任务/Webhook/备份和真实 Provider。
 
-下一执行节点为 `1-6-5`：把 Gate A、Gate B、C7/NOTICE 和个人开发者/小团队成本放到
-同一 ATAM/CBAM 复审中，输出最终 `GO / CONDITIONAL / HOLD`。在此之前不改写本节点
-为真实写入已通过。
+下一执行节点为 `1-6-5`：把 Gate B、C7/NOTICE 和个人开发者/小团队成本放到同一
+ATAM/CBAM 复审中，输出最终 `GO / CONDITIONAL / HOLD`。真实 Provider 不属于本节点
+后续待办；在此之前不改写本节点为真实写入已通过。

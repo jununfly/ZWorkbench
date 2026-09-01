@@ -1,0 +1,44 @@
+{
+  "schema": "zworkbench-optional-real-provider-probe/v1",
+  "classification": "external/on-demand; not a ZWorkbench product gate",
+  "at": "2026-09-01T08:21:58.305999+00:00",
+  "provider": "volcengine-ark",
+  "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3/responses",
+  "model": "ark-code-latest",
+  "credential": {
+    "fingerprint_algorithm": "SHA-256",
+    "api_key_fingerprint": "9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451"
+  },
+  "synthetic_fixture": {
+    "id": "staging-fixture-001",
+    "request_payload_sha256": "b4ff97b02256840e12bd79be2ddedc827ad412a3350cb48f2ca6f0951b56fecb"
+  },
+  "request_count": 1,
+  "retry_count": 0,
+  "raw_request_or_response_persisted": false,
+  "remote_resource_inventory": "not performed by this one-shot probe",
+  "http_status": 200,
+  "outcome": "http_success",
+  "response_truncated": false,
+  "response": {
+    "body_sha256": "777668a71a15d50e1747ef668b553f197d395bf04ba388c4e9508cfc653c28fe",
+    "body_bytes": 633,
+    "fixture_token_present": true,
+    "json": true,
+    "top_level_keys": [
+      "caching",
+      "created_at",
+      "id",
+      "max_output_tokens",
+      "model",
+      "object",
+      "output",
+      "service_tier",
+      "status",
+      "store",
+      "usage"
+    ],
+    "response_id_sha256": "fc9c7461e406777af42455d828b1c9a742591c3cf91ffcc9e36eea27417f2022",
+    "response_model": "auto"
+  }
+}

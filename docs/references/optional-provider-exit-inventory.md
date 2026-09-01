@@ -1,8 +1,8 @@
-# W8 `1-6-1`：Provider 与远端退出 inventory
+# 可选：Provider 与远端退出 inventory
 
-状态：`baseline-complete / human-fill-required / Gate-A-HOLD`
+状态：`reference-only / on-demand / out-of-roadmap`
 
-本文是给一次具体 Provider 账户填写的脱敏清单，不是远端删除脚本，也不是法律/隐私
+本文是给一次具体 Provider 账户填写的脱敏清单，不是 W8 产品目标节点、远端删除脚本，也不是法律/隐私
 签核。当前目标账户是用户报告的火山方舟个人账户；所有未确认字段保留为
 `unknown`，不能用“控制台没看到”填成 `none`。
 
@@ -25,14 +25,14 @@
 | 产品/套餐 | Coding Plan（待账户 owner 确认） | Human + 官方 Coding Plan 资料 | `partial` |
 | OpenAI-compatible endpoint | `https://ark.cn-beijing.volces.com/api/coding/v3` | Human；官方 Coding Plan Base URL 页面交叉核对 | `official-verified / actual-account-unverified` |
 | region | endpoint 含 `cn-beijing`；实际账户/数据区待确认 | endpoint 字符串不能代替账户/数据区证明 | `unknown` |
-| model / Model ID | 待填写 | 账户 owner 在控制台确认 | `unknown` |
+| model / Model ID | `ark-code-latest` | Human 提供，2026-09-01 | `human-reported / actual-account-unverified` |
 | account scope | 个人 | Human 提供；官方资料仅说明个人版产品范围 | `human-reported / scope-limited` |
 | project / billing | 待填写脱敏标识 | 账户 owner | `unknown` |
 | authentication path | Provider API Key | Human + 官方 API Key 资料 | `official-verified / target-key-unverified` |
-| key fingerprint | 不填写原文，只填写不可逆 fingerprint | 账户 owner 本地生成 | `unknown` |
+| key fingerprint | `9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451`（SHA-256） | Human 提供，生成于 2026-09-01；未记录 Key 原文 | `human-reported / target-key-unverified` |
 | ZWorkbench ownership | 不创建、不管理、不删除 Provider 侧资源 | W8 产品边界 | `product-boundary` |
 
-官方来源索引见 [`w8-provider-exit-primary-sources.md`](./research/w8-provider-exit-primary-sources.md)，
+官方来源索引见 [`optional-provider-exit-primary-sources.md`](./optional-provider-exit-primary-sources.md)，
 包括 Coding Plan endpoint、API Key 管理、数据授权、隐私、服务条款、账号注销和
 标准 `/api/v3` 对象删除页面。标准 `/api/v3` 的对象能力不得外推到 Coding
 `/api/coding/v3`。
@@ -102,14 +102,14 @@ real_provider_read_only_staging: not-authorized
 Gate A: HOLD / UNKNOWN
 ```
 
-进入 `1-6-2` 前至少需要账户 owner 补齐：实际 model/project、key fingerprint、数据
+进入可选真实 Provider staging 前至少需要账户 owner 补齐：实际 model/project、key fingerprint、数据
 类别、适用条款/生效日期、任务/Webhook/backup 的脱敏 ID、删除/停用入口、retention
 或到期规则、账单责任人和退出验证证据。这里不要求把 key 值交给 ZWorkbench。
 
 ## 7. 与 1-6 和 W8 的关系
 
-- 本清单完成的是 `1-6-1` 的证据 baseline，不是 Gate A 放行。
+- 本清单是外部 Provider 试验的证据 baseline，不是 W8 产品开发节点，也不是 Gate A 自动放行。
 - 在 Gate A 未闭合前，继续使用 loopback/fake Provider；不得读取真实 key 或执行真实
   Provider 业务请求。
 - 可恢复写操作仍受 Gate B 独立约束；Provider 资料完整也不能放行本地写 effect。
-- 相关决策见 [`w8-1-6-provider-and-recoverable-write-gates.md`](./w8-1-6-provider-and-recoverable-write-gates.md)。
+- 本地写操作另受 [`w8-1-6-recoverable-write-and-runtime-boundary.md`](../plans/w8-1-6-recoverable-write-and-runtime-boundary.md) 的独立 Gate B 约束。
