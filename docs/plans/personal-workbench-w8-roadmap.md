@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-01 17:18:08
+> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-01 19:42:13
 
 [~][X+] 1. W8 受控个人试点产品边界与最小纵向切片
 ├── [x][Y+] 1-1. 冻结受控个人试点的产品边界与责任地图
@@ -18,5 +18,7 @@
 │   ├── [!][X+] 1-6-3. 宿主强制边界与 Codex native approval 验证
 │   ├── [x][X+] 1-6-4. 可恢复本地写操作故障矩阵验证
 │   └── [x][X+] 1-6-5. ATAM CBAM 综合放行复审
-└── [x][Y+] 1-7. local_read_only_run 产品入口与可安装运行闭环
+├── [x][Y+] 1-7. local_read_only_run 产品入口与可安装运行闭环
+└── [x][X+] 1-8. DeepSeek 独立挑战者 C1-C7 评估
+    └── [x][Y+] 1-8-1. 按 Codex C1-C7 同形状补齐 DeepSeek 公平验证
 <!-- ROADMAP_SECTION_END -->

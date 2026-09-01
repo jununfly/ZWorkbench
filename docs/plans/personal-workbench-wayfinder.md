@@ -1,9 +1,9 @@
 # 个人工作台：Wayfinder 决策地图
 
-状态：🧭 研究完成，W1/W5 已确认，W6-0.1 fixture/阈值已冻结，C1–C7 fixture 证据完成，条件性交接 W7
+状态：🧭 研究与 W8 `1-7` 产品切片、W8-1 DeepSeek 独立挑战者评估已完成，Codex 保留为唯一主 Harness 条件候选
 载体：local-markdown tracker（本文件是唯一地图与票据载体）  
 创建日期：2026-08-30  
-当前基线：仓库只有 `README.md`，尚无实现、领域词汇、ADR 或既有架构约束。
+当前基线：W8 `local_read_only_run` 已具备可安装 CLI、SQLite composition owner、Codex adapter、隔离 fixture 与 evidence；真实写操作宿主边界仍 HOLD。
 
 ## Destination
 
@@ -34,11 +34,13 @@
 - W6 已转入 roadmap-driven 跟踪：评估矩阵、ATAM、CBAM、持续评估和 W7 交接节点记录在 [`personal-workbench-roadmap.json`](./personal-workbench-roadmap.json)，其 Markdown 视图为 [`personal-workbench-roadmap.md`](./personal-workbench-roadmap.md)。Wayfinder 仍保存决策地图，roadmap JSON 保存节点/决策历史。
 - W6 已完成 C1–C7 的 `W6-0.1` fixture 与阈值规格：共享隔离项目、假 Provider、负向权限动作、故障注入、recorded/simulated replay 和单人运维演练；关键安全、副作用、事件完整和回放边界采用零容忍/100%门槛，其余阈值作为首轮冻结基线，结果后才可由 ATAM/CBAM 校准。
 - W6-0.1 已获 Human 确认并冻结为首轮基线：C1/C5 样本量与通过标准、安全/回放零容忍、C3/C4 恢复语义、个人/小团队运维门槛、`pass-with-composition` 判定和首轮阈值变更纪律均已确定。C1–C7 的候选无关 fixture 证据已形成；候选 C2–C7、C7 真人运维工时和 G0/G7 仍为 unknown，W6 不签最终采用，只条件性交接 W7。
+- W7 已完成采用姿态决策：Codex `0.139.0` + 一个 SQLite composition owner 保留为唯一主 Harness 条件候选；DeepSeek 不作为第二生产 Harness 接入，而作为在同一合同下验证非重复收益的独立挑战者。
+- W8-1 已完成 DeepSeek 固定版本 C1–C7 公平复测：C1 `10/10`，C2 `pass-with-adapter` `6/6`，C3 `15/15 pass-with-composition`；C4 非 approval-required 组合 `24/24` 通过、approval-required `12/12 unknown` 且无 fail；C5/C6 仍分别缺候选原生 failover/replay，C7 为 `unknown-stop`。没有足够的非重复、可测量收益挑战 Codex，因此最终 `no-change`，DeepSeek 不进入生产主线，仅保留为未来受控 adapter 候选；完整报告见 [`w8-deepseek-challenger-evaluation.md`](./w8-deepseek-challenger-evaluation.md)。
 
 ## Not yet specified
 
-- 首批任务已有首轮 C1 实测和运行时长基线：DeepSeek Harness、Codex Harness 在两个 fake Provider 上均为 5/5；C2–C6 已形成候选无关 fixture 合同证据，C7 机器流程 12/12 pass，但候选 adapter 与真人运维成本仍待验证。
-- “适合个人开发者或小团队”的首轮基线已固化：安装 ≤90 分钟，升级/备份恢复/预制故障排查各 ≤30 分钟，无需额外专家，MVP 常驻人工维护服务 ≤3 个；参考 fixture 维护服务 2 个，真人时间与候选成本仍待验证。
+- 首批任务已有首轮 C1 实测和运行时长基线：DeepSeek Harness、Codex Harness 在两个 fake Provider 上均为 5/5；C2–C6 已形成候选无关 fixture 合同证据，C7 机器流程 12/12 pass；DeepSeek 候选 adapter 与真人运维成本仍待验证。
+- “适合个人开发者或小团队”的首轮基线已固化：安装 ≤90 分钟，升级/备份恢复/预制故障排查各 ≤30 分钟，无需额外专家，MVP 常驻人工维护服务 ≤3 个；Codex 的隔离人工证据已形成，DeepSeek 候选成本仍待验证。
 - 已确定最小权限、项目级沙箱、危险副作用审批和无人值守限制；凭证、网络、文件系统、进程、数据留存/外发和部署的细化策略仍待后续票据。
 - 本地优先、远程执行、云端服务和混合部署的边界；个人数据、源码、运行轨迹和模型请求的留存/外发策略。
 - 任务、计划任务、Agent Run、工具调用、项目、Provider、评测样本、回放记录之间的领域关系和生命周期。
@@ -63,9 +65,9 @@
 
 当前 frontier 是所有未认领、无未完成阻塞项的开放票据：
 
-- [W7 — 选择采用姿态：现成项目、单一基座、组合拼装、分叉还是自建薄层 [G]](#w7--选择采用姿态现成项目单一基座组合拼装分叉还是自建薄层-g)
+- 当前没有已认领的 DeepSeek 挑战者评估票据；后续工作回到 W8 Provider 抽象与模型能力降级策略。
 
-W8–W9 已写成清晰的后续问题，但依赖 W7 的采用姿态，暂不冒充当前 frontier。
+W9 仍依赖 W8 Provider 抽象与模型能力降级策略；W8-1 的评估结论已完成并不冒充当前 frontier。
 
 ---
 
@@ -249,7 +251,7 @@ process pass，但真人运维计时为 `0/12`，五个候选的关键 C2–C7 �
 
 ## W7 — 选择采用姿态：现成项目、单一基座、组合拼装、分叉还是自建薄层 [G]
 
-状态：⬜ OPEN · HITL · 未认领
+状态：✅ 已完成 · HITL · 用户确认
 
 ### Question
 
@@ -265,7 +267,29 @@ process pass，但真人运维计时为 `0/12`，五个候选的关键 C2–C7 �
 
 推荐默认：先选一个主候选做试点，加一层尽可能薄的 ZWorkbench 边界；只有出现可测量的能力缺口时才组合第二个项目。自建仅限跨候选的产品能力或明确不存在的深模块，不从零重写已有 Agent 运行循环。
 
-⛔ blocked by：至少一个候选固定版本 C2–C7 adapter、真人 C7 计时、许可证/升级/回滚/退出审计
+### Resolution
+
+在 W7 的候选证据与 C7 边界审查基础上，采用“一个主 Harness + 一个薄 composition owner/产品层”：Codex `0.139.0` 保留为唯一主 Harness 条件候选，SQLite composition owner 负责跨运行的 durable truth；不引入第二生产 Harness、常驻 scheduler、Provider gateway 或独立观测后端。DeepSeek 只有在独立、同合同、同阈值的 C1–C7 评估中证明可测量且非重复的收益，才重新审视该决策；否则保持 `no-change`，证据不足则 `unknown/stop`。相关实现与证据见 [`personal-workbench-w8-roadmap.md`](./personal-workbench-w8-roadmap.md) 和 [`w7-codex-atam-cbam-adoption-decision.md`](./w7-codex-atam-cbam-adoption-decision.md)。
+
+---
+
+## W8-1 — DeepSeek 独立挑战者评估 [R] ✅ Codex
+
+状态：✅ 已完成 · AFK research/evaluation · Codex
+
+### Question
+
+在固定 DeepSeek Harness 源码提交 `cd5ef8148158c3a752a658978873241fdf8e2bbc`（版本 `0.1.2-alpha.1`）与同一套 W6-0.1 C1–C7 合同下，DeepSeek 是否能相对 Codex `0.139.0` 带来足以改变主 Harness 决策的、可测量且非重复的收益？评估必须使用 case-local 隔离 workspace、同一 SQLite composition owner contract、同一安全策略、loopback/fake Provider 和版本化 evidence schema；不修改 W8 产品主线，不使用真实 API key，不执行真实写操作、Git push、部署、Webhook 或远端任务。
+
+必须分别核验安装/启动/退出、C1 代码闭环、C2 fail-closed、C3 幂等、C4 中断恢复、C5 Provider seam/显式降级、C6 recorded/simulated replay、C7 单人运维/许可证/升级/备份/退出边界，并用 ATAM 记录质量属性风险/敏感点/权衡点，用 CBAM 记录非重复收益与新增集成、维护、迁移、锁定和退出成本。任何安全硬失败、未授权副作用、不可恢复状态丢失、关键事件缺失、许可证边界不可接受或关键证据缺失，都不能被综合分抵消。
+
+⛔ blocked by：无
+
+### Resolution
+
+固定 `deepseek-ai/deepseek-harness @ cd5ef8148158c3a752a658978873241fdf8e2bbc`（`0.1.2-alpha.1`）已在 W6-0.1 同合同下完成候选专属隔离评估。C1 通过 10/10，C2 在明确 fail-closed adapter 上通过 6/6，C3 在外部 composition owner 下通过 15/15；C4 通过 24/36，剩余 12 个 approval-required case 因未观察到候选原生 permission request 而保持 unknown，且无 fail。C5 没有自动第二 Provider failover，C6 没有 transcript replay，C7 缺少真人生命周期计时、真实 backup/restore、远端退出责任和 source-to-binary provenance，因此整体为 `unknown-stop / no-change`；`pass-with-composition` 不升级为候选原生通过。
+
+证据：[C1–C7 findings](./w8-deepseek-challenger-evaluation.md)、[C1 parity summary](../../evaluation/evidence/w8-deepseek-parity-c1-both-20260901/summary.json)、[C3 parity summary](../../evaluation/evidence/w8-deepseek-parity-c3-20260901/summary.json)、[C4 parity summary](../../evaluation/evidence/w8-deepseek-parity-c4-20260901/summary.json)、[C5 parity summary](../../evaluation/evidence/w8-deepseek-parity-c5-20260901/summary.json)、[C6 parity summary](../../evaluation/evidence/w8-deepseek-parity-c6-20260901/summary.json)、[C7 audit summary](../../evaluation/evidence/w8-deepseek-c7-20260901/summary.json)。
 
 ---
 
