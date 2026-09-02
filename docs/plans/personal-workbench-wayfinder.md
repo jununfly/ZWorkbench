@@ -118,7 +118,7 @@ W9 仍依赖 W8 Provider 抽象与模型能力降级策略；W8-1 的评估结�
 
 三个名称的纳入对象分别核实为 `deepseek-ai/deepseek-harness`、`earendil-works/pi` 和暂按 `openai/codex` OSS CLI/app-server。DeepSeek 的覆盖面最完整但版本仍是 developer preview；Pi 的运行循环、Provider、session/evals 和扩展面清晰，但明确不内建权限/沙箱且没有被证实的通用 scheduler；Codex 的 app-server、项目工具、Provider 配置、沙箱和 rollout trace 较强，但面向用户的通用 cron/schedule 仍未知。三者的 session/operation/rollout replay 都不能自动承诺外部副作用 exactly-once。
 
-证据与完整 findings：[W2 — 点名 Harness 研究](./research/w2-named-harnesses.md)；采集阻塞状态：[W2 — collection status](./research/w2-named-harnesses.collection-status.json)
+证据与完整 findings：[W2 — 点名 Harness 研究](./research/w2-named-harnesses.md)；当前 fresh collection：[W2 v2 request](./research/w2-named-harnesses.v2.request.json)、[collection status](./research/w2-named-harnesses.v2.collection-status.json)、[sealed ledger](./research/w2-named-harnesses.v2.ledger-response.json)。历史 blocked 状态仍保留在原始 v1 sidecar。
 
 ---
 
@@ -169,9 +169,9 @@ W9 仍依赖 W8 Provider 抽象与模型能力降级策略；W8-1 的评估结�
 
 ### Resolution
 
-现有方案普遍覆盖观测/记录，并可支持数据集、实验或评分，但“session replay”、trace 导入和实验 rerun 都不能直接等同于确定性执行回放。OpenTelemetry GenAI 约定适合做跨 Harness/Provider 的低层事件词汇，却不是完整的事件溯源或回放协议。ZWorkbench 至少必须自有 canonical event ledger、脱敏策略、Replay contract、副作用/状态快照、运行 artifact lock、评测编排与跨后端语义降级；研究中的 GitHub sealed ledger 因匿名 API 配额阻塞，stars、topic match、HEAD/commit 级比较仍未知。
+现有方案普遍覆盖观测/记录，并可支持数据集、实验或评分，但“session replay”、trace 导入和实验 rerun 都不能直接等同于确定性执行回放。OpenTelemetry GenAI 约定适合做跨 Harness/Provider 的低层事件词汇，却不是完整的事件溯源或回放协议。ZWorkbench 至少必须自有 canonical event ledger、脱敏策略、Replay contract、副作用/状态快照、运行 artifact lock、评测编排与跨后端语义降级；W4 v2 已通过 authenticated fresh collection 封存当前 GitHub revision、stars、topicMatch 和 Evidence，仍保留 collection 未覆盖的明确 unknown。
 
-证据与完整 findings：[W4 — 可观测性、回放与评测研究](./research/w4-observability-replay-evaluation.md)
+证据与完整 findings：[W4 — 可观测性、回放与评测研究](./research/w4-observability-replay-evaluation.md)；当前 fresh collection：[W4 v2 brief](./research/w4-research-brief.v2.json)、[collection status](./research/w4-research-brief.v2.collection-status.json)、[sealed ledger](./research/w4-research-brief.v2.ledger-response.json)。历史 blocked status 保留在原始 v1 sidecar。
 
 ---
 

@@ -372,11 +372,13 @@
     "1-8": {
       "id": "1-8",
       "label": "DeepSeek 独立挑战者 C1-C7 评估",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
-        "1-8-1"
+        "1-8-1",
+        "1-8-2",
+        "1-8-3"
       ],
       "decisions": [
         {
@@ -487,11 +489,174 @@
         }
       ],
       "notes": "DeepSeek fixed checkout 已完成 C1-C6 同形状复测并核对 C7 边界：C1 10/10，C2 adapter 6/6，C3 15/15 pass-with-composition，C4 24/36 composition pass + 12/36 approval-required unknown（无 fail），C5 正常路由 10/10 但无候选 failover，C6 5/5 record/resume 但无候选 replay，C7 unknown-stop。结论：评估完成，DeepSeek 不放行为主或第二生产 Harness；保留为受控挑战者记录。"
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "label": "DeepSeek 插件生态挑战与公平增量评估",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [
+        {
+          "q": "DeepSeek 的 C3-C7 缺口是否应优先按插件生态重新评估？",
+          "answer": "是。前一轮只测固定 Harness 与通用 composition，未系统纳入官方插件合同、社区插件、市场/雷达和跨 Harness bridge；本节点先做 GitHub 固定版本证据与最小生态候选筛选，不改变 Codex 主线或引入生产插件。",
+          "note": "范围为 acceptance/evaluation；必须区分 native、plugin-composed、outer-composed 与 unknown，并按个人开发者/小团队的集成、升级、安全和退出成本验收。"
+        },
+        {
+          "q": "本轮 DeepSeek 插件生态研究的结论是什么？",
+          "answer": "DeepSeek plugin-composed bundle 升级为一等挑战架构，但本轮仅完成固定版本 GitHub 证据与决策报告，尚未完成任何插件组合的统一 E1–E6/C1–C7 实测；Codex + 单一 SQLite composition owner 继续作为当前生产主线，下一验证应在隔离环境按相同门槛评估 dsh-context、dsh-routing-suite、dsh-memoir、dsh-config-migrate，并选择一个跨 Harness bridge。",
+          "note": "结论修正了 core-only 的过度否定，但不把生态证据等同于运行级通过；实时 market、remote、IM、外部控制面暂缓。"
+        }
+      ],
+      "notes": ""
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "label": "DeepSeek 首个 pinned plugin bundle 的 E1-E6 隔离验证",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-8",
+      "children": [
+        "1-8-3-1"
+      ],
+      "decisions": [
+        {
+          "q": "首个 DeepSeek plugin-composed bundle 的固定边界是什么？",
+          "answer": "以固定 source checkout 和本地 tarball/工作区链接为评估输入，不使用实时 registry：DeepSeek core 固定在已审计的 Alpha.4 commit 4e84901e6471b79ec0338099867ebb4606d12bb；四个插件分别固定为 dsh-context 552bb9077f9ec5885bd37e35037c5e0de51d4c6d、dsh-routing-suite f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30、dsh-memoir 4416d50ee6d888f12677a81b36c4b4d5954c546a、dsh-config-migrate 24aa64188386181bdaf21f4b46fea02bddf77e71。先验证 core-only，再逐个加入插件，最后验证四插件组合；所有插件均须通过 E1/E2 后才允许进入 E3-E6。统一使用 case-local DSH_HOME、W6 fake loopback Provider、单一 ZWorkbench composition owner，禁止真实 API key、外网运行时安装、真实文件副作用、远端任务/Webhook/备份。",
+          "note": "本节点是 acceptance/evaluation，不是产品实现；若插件与 Alpha.4 ABI 不兼容，必须记录 explicit incompatible/unknown 并停止，不降级到旧 alpha 混合运行。"
+        },
+        {
+          "q": "首个四插件 DeepSeek plugin-composed bundle 的 E1-E6 首轮结果是什么？",
+          "answer": "完整请求组合为 blocked：E1=fail，E2=pass（仅限固定本地 provenance/安装安全账），E3-E6=blocked-by-E1；阻断成员是 dsh-config-migrate，它声明 dsh.plugin.host/client 而不是标准 dsh.bundle。前三个标准成员 core+dsh-context+dsh-routing-suite+dsh-memoir 的局部 E1/E2 装配观察为 pass，但 E3-E6 not-run，不能借用 Codex 或 ZWorkbench composition owner 证据。",
+          "note": "证据：evaluation/evidence/w8-deepseek-plugin-bundle-e1-e6-20260902/summary.json；fixture：evaluation/fixtures/w8-deepseek-plugin-bundle/v1/manifest.json；不把 E1 fail 扩大解释为 DeepSeek 生态无价值。下一步单独定义 dynamic-plugin adapter，再重开 E3-E6。"
+        },
+        {
+          "q": "dsh-config-migrate dynamic-plugin adapter 的第一道放行边界是什么？",
+          "answer": "采用 evaluation-only、outer-composed、fail-closed adapter：固定 commit/version/package 与 host/client 入口；只在 case-local 隔离 loader 中做语法/入口/能力声明验证，不把动态插件加入 dsh.profile.bundles；adapter-owned RPC 记录和 capability facade 只允许受控 fs/settings/subprocess，配置迁移 state 与 ZWorkbench canonical owner state 分离，export/import 写入必须经过 owner/policy gate。先通过 E1/E2，之后才重开 E3-E6；当前决策为 revise，不批准产品集成。",
+          "note": "本轮目标是关闭标准 bundle ABI 阻断并验证安全边界，不执行真实 Provider、真实凭据、外网安装或产品运行时修改。"
+        },
+        {
+          "q": "dsh-config-migrate dynamic-plugin adapter 的 E1/E2 隔离首轮结果是什么？",
+          "answer": "adapter E1=pass、E2=pass（均为 static/parse-only、case-local scope）：固定 commit/package/version、host/client 入口解析、dynamic contract、profile 不静默 bundle 化、capability allowlist、plugin full-access 请求覆盖策略、license/dependency/lifecycle/artifact ledger 和零外部副作用均满足阈值。E3-E6 尚未重开或运行。",
+          "note": "证据：evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun2/summary.json；设计：docs/plans/w8-deepseek-config-migrate-dynamic-adapter-design.md。通过仅授予下一轮 plugin-aware runtime gate 资格，不代表产品集成或 E3-E6 通过。"
+        },
+        {
+          "q": "dsh-config-migrate adapter 的最终 E1/E2 evidence 应以哪一轮为准？",
+          "answer": "以 rerun3 为准：E1=pass、E2=pass，且所有 gate checks 为布尔 true；host.js/client.js 从 pinned Git object 完整读取后均 parse-only 通过。此前初轮和 rerun1/2 仅为 evaluator 修正过程，不作为最终证据。E3-E6 尚未运行。",
+          "note": "最终证据：evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun3/summary.json；runner 的输出明确 plugin_not_executed=true、owner_database_not_touched=true、E3-E6=not-reopened。"
+        },
+        {
+          "q": "E1/E2 通过后，如何显式重开 dsh-config-migrate 的 E3-E6？",
+          "answer": "不直接把 E3-E6 标为通过；新增 acceptance 子节点 1-8-3-1，先在同一隔离环境实现/审查 plugin-aware runtime seam（RPC/tool correlation、owner/policy write gate、pinned subprocess sandbox、dispose），再以独立 evidence 重开 E3-E6。Codex/前三插件/owner 证据不得继承。",
+          "note": "当前 E1/E2 static/parse-only 资格已满足；运行时 seam 未实现前，E3-E6 保持 not-reopened，避免把设计证据误写成运行时能力。"
+        }
+      ],
+      "notes": "dsh-config-migrate 已完成独立 dynamic-plugin adapter 设计、E1/E2 static/parse-only 和 runtime seam 验证：E1=pass、E2=pass、runtime seam=pass。最终 runtime evidence：evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/summary.json；plugin_not_executed 仅适用于 E1/E2，runtime seam 使用真实 pinned host/client 但所有写入均由 case-local adapter policy 拒绝；owner correlation、dispose、pinned subprocess、full-access 覆盖和 state separation 均通过。E3-E6 尚未运行，已进入 1-8-3-1-1 独立重开，不继承 Codex/standard-bundle evidence。"
+    },
+    "1-8-3-1": {
+      "id": "1-8-3-1",
+      "label": "dsh-config-migrate plugin-aware runtime seam 与 E3-E6 独立重开",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-8-3",
+      "children": [
+        "1-8-3-1-1"
+      ],
+      "decisions": [
+        {
+          "q": "E3-E6 独立重开前的最小 runtime seam 验收是什么？",
+          "answer": "只在 case-local 隔离环境实现 evaluation-only plugin-aware seam：不执行真实 Provider/凭据/外网；验证 host RPC/tool request→owner correlation、write/import 前 policy gate、plugin-supplied full-access 被覆盖、pinned Node subprocess sandbox、registration dispose 无泄漏、migration state 与 owner canonical state 分离。全部通过后，独立运行 E3-E6；任一 unknown 则 blocked/safe-stop。",
+          "note": "该节点不是 ZWorkbench 产品集成批准；E3-E6 必须使用新的 adapter evidence，不能借用前三插件、Codex 或已有 owner fixture 结论。"
+        },
+        {
+          "q": "runtime seam 通过后，当前节点如何收口？",
+          "answer": "runtime seam 在 case-local pinned host/client + adapter facade + CompositionOwner 下通过：RPC/tool/UI/style registration 可卸载，write/full-access/path/subprocess gate 均 fail-closed，request/result 与 owner correlation 完整，migration state 与 owner DB 分离。将 1-8-3-1 标记 completed，并把 E3-E6 独立重开交给新子节点 1-8-3-1-1。",
+          "note": "证据：evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/summary.json；本节点不运行 E3-E6，不继承 Codex/standard-bundle evidence。"
+        }
+      ],
+      "notes": "runtime seam 验证完成：固定 commit 的真实 dsh-config-migrate host/client 在 adapter-owned facade 中加载并运行；config/status 成功；export/import/tool 写入均被 policy gate 拒绝；插件 danger-full-access 被记录但 effective policy 保持 adapter-controlled-deny；pinned node crypto script allow、非 allowlisted Python/shell deny；RPC/tool/UI/style registrations 从 4/1/2/1 dispose 到 0/0/0/0；CompositionOwner 记录 7 个 request/result、run completed、effect=0；migration state 与 owner DB 分离。最终证据：evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/summary.json。E3-E6 未由本节点执行，已转交新子节点 1-8-3-1-1 独立重开。"
+    },
+    "1-8-3-1-1": {
+      "id": "1-8-3-1-1",
+      "label": "E3-E6 独立重开：plugin-aware adapter evidence",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-8-3-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "E3-E6 独立重开的验收规则是什么？",
+          "answer": "使用新的 plugin-aware adapter evidence，在同一 case-local owner、相同隔离边界和 Codex 对等阈值下独立运行 E3-E6：E3 覆盖安全/副作用与未知 effect，E4 覆盖幂等/Provider/failover/replay，E5 覆盖小团队生命周期/退出，E6 只在 E1-E5 全部通过后比较非重复收益；禁止继承 Codex、前三个 standard bundle 或旧 owner fixture 的通过结论。",
+          "note": "当前 runtime seam 只证明可执行边界，不证明 E3-E6；任一 runtime policy、correlation、dispose 或 sandbox unknown 都先 blocked。"
+        },
+        {
+          "q": "runtime seam 是否达到独立重开 E3-E6 的前置门槛？",
+          "answer": "是：runtime seam 独立证据通过，可进入 E3-E6 plugin-aware 独立重开；但本节点仍保持 in_progress，不能把 seam 通过等同于 E3-E6 通过。",
+          "note": "证据：evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun5/summary.json；固定 dsh-config-migrate commit 24aa64188386181bdaf21f4b46fea02bddf77e71；注册 dispose 后 rpc/tools/ui/styles=0/0/0/0；owner run completed，7 results，10 events，effects=0。非声明：未验证真实 DSH_HOME 写入、宿主 OS sandbox、真实 Provider/凭据或产品集成。"
+        },
+        {
+          "q": "E3-E6 如何在 runtime seam 通过后独立重开？",
+          "answer": "在同一 case-local DSH_HOME、owner database 与 adapter-controlled capability facade 上，使用新 plugin-aware runner 和全新 evidence 目录独立运行 E3/E4/E5；仅当 E3-E5 全部通过后运行 E6 的非重复收益比较。不得继承 Codex、前三个 standard bundle、旧 owner fixture 或 runtime seam 的 E3-E6 结论。",
+          "note": "保持真实 Provider、真实凭据、外网、真实 DSH_HOME、生产项目写入关闭；未知 capability/effect、owner correlation 丢失、policy widening、资源泄漏立即 fail-closed。"
+        },
+        {
+          "q": "plugin-aware E3-E6 重跑的最终门禁结论是什么？",
+          "answer": "以全新 evidence rerun2 为准：E3=pass；E4=unknown/stop（dsh-routing-suite 的任务/人格/阶段路由、dsh-memoir 的 deterministic bounded memory、CompositionOwner 幂等与模拟回放均通过，但候选没有 Provider selection/fallback/degradation/fallback-reason ledger 合同）；E5=unknown/stop（机器 fixture 操作通过，但人工单人计时与真实远端退出责任未知）；E6=blocked-by-E3-E5-prerequisites。节点保持 in_progress，不批准 DeepSeek 替换或并列 Codex。",
+          "note": "证据：evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun2/summary.json；本轮只修复 evaluator 的 dsh-memoir/lib 入口路径并独立重跑，未执行真实 Provider、凭据、外网、真实 DSH_HOME 或远端副作用。"
+        },
+        {
+          "q": "E4 是否增加一次真实火山方舟 Provider staging 请求？",
+          "answer": "增加，但仅作为 E4 的 external/on-demand Provider identity 与真实请求连通性证据：固定 endpoint=https://ark.cn-beijing.volces.com/api/coding/v3/responses、model=ark-code-latest，使用本机隐藏输入复用 Human 已确认的 Ark API Key，不把 key 注入聊天、命令行、仓库或证据。一次成功请求不能证明 Provider failover；E4 仍要求候选-owned 的第二 Provider selection/fallback/degradation/fallback-reason ledger 合同，缺失时保持 unknown/stop。",
+          "note": "边界：最多一次固定合成请求；无 tools/files/tasks/Webhook/backup/重试；禁止真实项目和真实 DSH_HOME；仅保存脱敏 summary。现有 2026-09-01 Ark 成功 summary 不能替代本轮 DeepSeek/plugin-aware 关联证据。"
+        },
+        {
+          "q": "如何把真实 Ark 请求纳入 DeepSeek E4 证据而不把单 Provider 连通性误判为 failover？",
+          "answer": "在 plugin-aware E4 runner 增加 --real-provider-summary summary-only bridge：只读取已有脱敏 summary 并校验固定 Ark endpoint/model、HTTP 成功、一次请求、零重试、合成 fixture 命中和 raw request/response 未持久化；将其记录为真实 Provider identity/semantic staging evidence。E4 的 provider_failover_contract 继续要求候选-owned 第二 Provider selection/fallback/degradation/fallback-reason ledger，单一 Ark 成功请求不能使该项通过。",
+          "note": "不得读取或传递 API key 原文；E3/E4 本地 fixture 仍无外网，只有明确标注的 Ark staging probe 使用外网。新 evidence 必须使用全新目录并保留真实 Provider 与本地 plugin behavior 的边界。"
+        },
+        {
+          "q": "解决 E4 Provider failover 缺口的下一步是什么？",
+          "answer": "先对已发现的开源候选做 commit-pinned primary-source review：dsh-llm-failover、dsh-model-failover、dsh-search-failover，并保留当前 dsh-routing-suite 作为负对照；只要候选没有明确的第二模型 Provider selection、失败分类、fallback/degradation 和 fallback-reason ledger 合同，就不进入运行验证。通过来源审查的候选再在同一隔离 DeepSeek bundle 中做 E4 plugin-owned evidence。",
+          "note": "这是 acceptance/evaluation 研究，不修改 ZWorkbench 产品运行时；候选必须适合个人开发者/小团队，且安全、许可证、安装和退出边界可封账。真实 Ark 仅作为已完成的单 Provider staging 基线，不参与 failover 通过判定。"
+        },
+        {
+          "q": "探索性源审查后首先验证哪些 E4 Provider 候选？",
+          "answer": "验证两个模型 Provider failover 候选：HB00/dsh-llm-failover@919272faf9f9eb0d379b70f45c5612c1d5aa47a5 与 Letter2025/dsh-model-failover@47588d4692a76d64382865e518d2a927eda4891b；Walvez/dsh-search-failover 与 yjh051108/dsh-routing-suite 只作负对照，不进入模型 failover 运行验证。",
+          "note": "正式 zj-research fresh collection 仍被 GitHub compiler 配额阻断，因此候选身份、stars/topic 等 GitHub 结论保持未封账；本轮运行证据必须标 exploratory pinned-source review。两个候选都要验证 Provider switch、failure classification、cooldown/no-loop、selected/fallback identity、observability，以及是否存在 candidate-owned durable fallback-reason ledger；后者缺失则 E4 仍 unknown/stop。"
+        },
+        {
+          "q": "两个模型 Provider failover 候选的隔离 E4 结果是什么？",
+          "answer": "E4 候选扩展 evidence 显示：HB00/dsh-llm-failover@919272faf9f9eb0d379b70f45c5612c1d5aa47a5 与 Letter2025/dsh-model-failover@47588d4692a76d64382865e518d2a927eda4891b 均在 loopback RATE_LIMIT 下完成 primary→secondary 模型 Provider 切换并暴露 Provider/model identity 与失败分类；dsh-model-failover 在全路由冷却时 fail-closed，dsh-llm-failover 会返回已冷却的最终 fallback。两者 candidate-owned durable fallback/reason/degradation ledger 均未观察到，因此 E4 仍为 unknown/stop；Codex 主 Harness 决策不变。",
+          "note": "正式 zj-research fresh collection 仍为 collection-blocked，未产生 fresh sealed ledger；本轮仅是 exploratory pinned-source review + case-local Node seam。证据：evaluation/evidence/w8-deepseek-e4-provider-failover-candidates-20260902/summary.json；fixture 与 runner 已落盘。不得用 evaluator-owned owner ledger 把候选原生能力补成通过，也不调用真实 Ark/API key。"
+        },
+        {
+          "q": "E4 候选扩展最终 evidence 应以哪一轮为准？",
+          "answer": "以 w8-deepseek-e4-provider-failover-candidates-20260902-rerun2 为准：两个 pinned 模型 Provider failover 候选均在 loopback RATE_LIMIT 下完成 primary→secondary 切换；dsh-model-failover 全路由冷却时 fail-closed，dsh-llm-failover 返回已冷却最终 fallback；两者 candidate-owned durable fallback/reason/degradation ledger 均为 0。E4 保持 unknown/stop，Codex 主 Harness 决策不变。",
+          "note": "证据：evaluation/evidence/w8-deepseek-e4-provider-failover-candidates-20260902-rerun2/summary.json；本轮 evaluator runner 与 fixture hash 已写入 evidence。正式 GitHub collection 仍 collection-blocked，无 fresh sealed ledger。该结果关闭了“候选是否真正能切 Provider”的 unknown，但保留 durable ledger、全候选 fail-closed、真实 Provider schema 与同语义重复矩阵等阻断；不修改 ZWorkbench 产品运行时。"
+        },
+        {
+          "q": "E4 候选扩展 rerun3 的全冷却语义如何准确记录？",
+          "answer": "以 rerun3 为准：两个候选均完成 loopback primary→secondary Provider 切换；dsh-model-failover 在 primary 与 fallback 都冷却时不再选择新的 fallback、回到 primary 让失败暴露，但 route-only probe 不证明宿主层 safe-stop；dsh-llm-failover 会继续返回已冷却的最终 fallback。两者 candidate-owned durable fallback/reason/degradation ledger 均未观察到，E4 仍 unknown/stop，Codex 主 Harness 决策不变。",
+          "note": "证据：evaluation/evidence/w8-deepseek-e4-provider-failover-candidates-20260902-rerun3/summary.json；fixture threshold 已改为 all_routes_cooled_no_new_fallback_switch，避免把候选 routeFor 行为扩大解释为宿主安全保证。正式 GitHub collection 仍 collection-blocked，无 fresh sealed ledger；不修改产品运行时。"
+        },
+        {
+          "q": "GitHub collection 配额阻断如何解决并纳入 E4",
+          "answer": "不把 gh keyring 当作采集器自动认证；由 Human 在本机显式将 gh auth token 注入当前进程的 GITHUB_TOKEN，仅用于一次 fresh collection。采集器读取最新 collection-status sidecar 动态决定 fresh-collection/collection-blocked，并关联同目录 sealed ledger；GitHub token 不输出、不落盘、不进入仓库。此修复只更新 acceptance/evaluation 证据链，不修改 ZWorkbench 产品运行时。",
+          "note": "根因是 gh 已登录但 zj-research 仅读取 GITHUB_TOKEN，导致匿名额度；最新 sidecar 已验证 authenticated/core quota=5000/fresh-collection。E4 候选仍须独立通过 durable fallback-reason ledger 与 fail-closed 门槛。"
+        },
+        {
+          "q": "正式 GitHub collection 恢复后的 E4 结论是什么？",
+          "answer": "正式 collection 已从配额阻断恢复：authenticated、GitHub core quota=5000、4 个 repository、18 条 evidence、2 个 unknown criteria，sealed ledger 与 brief fingerprint 匹配。以 rerun4 为准，两个候选仍在 loopback RATE_LIMIT 下完成 primary→secondary 切换，但均没有 candidate-owned durable fallback/reason/degradation ledger；dsh-llm-failover 在全冷却时仍选已冷却最终 fallback，dsh-model-failover 通过 route-level no-new-fallback。E4 继续 unknown/stop，Codex 主 Harness 决策不变。",
+          "note": "正式 GitHub Evidence IDs：dsh-llm identity=8b1b5b96debf89a88c24d1ea、provider contract=357f99ac391b5cc690b1b09d；dsh-model identity=62a5f880e4a0e4c19e4a4b57、provider contract=c70c560e1a0b9f7606175e9f、failure-ledger criterion=ab14a944ca50f5d5fcd6b90b。运行证据：evaluation/evidence/w8-deepseek-e4-provider-failover-candidates-20260902-rerun4/summary.json；状态 sidecar 与 ledger 位于 docs/plans/research。"
+        }
+      ],
+      "notes": "E4 已加入一次真实火山方舟 Ark staging 子门，并以全新 plugin-aware rerun3 重新封账：evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/summary.json。真实 Ark summary 校验通过：volcengine-ark，https://ark.cn-beijing.volces.com/api/coding/v3/responses，配置 model=ark-code-latest，响应 model=auto 按已确认映射归属该路由，HTTP 200，1 request/0 retry，staging-fixture-001 命中，raw request/response 未持久化；key 仅以既有 SHA-256 fingerprint 关联。E3=pass；E4=unknown/stop：routing/memoir、owner 幂等/模拟回放和真实 Provider staging 通过，但候选仍无 Provider selection/fallback/degradation/fallback-reason ledger；E5=unknown/stop；E6=blocked。真实 staging 不等于 Provider failover，不批准 DeepSeek 替换或并列 Codex。详细 findings：docs/plans/w8-deepseek-plugin-aware-e3-e6-findings.md。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-01 19:42:13",
+    "updated": "2026-09-02 11:36:08",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }

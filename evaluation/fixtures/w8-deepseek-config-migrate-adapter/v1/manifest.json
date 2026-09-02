@@ -1,0 +1,96 @@
+{
+  "schema": "zworkbench-w8-deepseek-config-migrate-adapter-fixture/v1",
+  "fixture_id": "w8-deepseek-config-migrate-adapter",
+  "version": "1",
+  "classification": "acceptance/evaluation",
+  "description": "Static, case-local eligibility fixture for an outer-composed adapter around dsh-config-migrate. The dynamic plugin is parsed and audited, never executed by this E1/E2 runner.",
+  "plugin": {
+    "id": "dsh-config-migrate",
+    "source_dir": "dsh-config-migrate",
+    "repository": "https://github.com/kol-mm/dsh-config-migrate",
+    "package": "dsh-config-migrate",
+    "version": "1.0.0",
+    "commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "contract": "dsh.plugin.host/client",
+    "host_entry": "host.js",
+    "client_entry": "client.js",
+    "artifact": null,
+    "artifact_policy": "source-only; do not claim source-to-binary reproducibility"
+  },
+  "adapter": {
+    "id": "zworkbench.dsh-config-migrate.dynamic-plugin",
+    "version": "0.1.0",
+    "mode": "outer-composed",
+    "execution_in_this_gate": "parse-only",
+    "canonical_owner": "ZWorkbench composition owner",
+    "plugin_state_namespace": "dsh-config-migrate/migration",
+    "profile_binding": {
+      "profile": "headless",
+      "dynamic_plugin_must_not_be_in_dsh_profile_bundles": true,
+      "manifest_version_must_be_recorded": true
+    },
+    "capability_facade": {
+      "ctx_services": ["fs", "settings", "sandboxPolicy", "subprocess", "slots"],
+      "host_bridge": ["handle", "defineTool", "registerTool"],
+      "client_bridge": ["call", "inject", "register", "insert", "React"],
+      "fs_operations": ["resolve", "stat", "listDir", "readText", "readBytes", "writeText"],
+      "settings_operations": ["prepareDocument"],
+      "subprocess": {
+        "executable_allowlist": ["node"],
+        "shell": false,
+        "cwd": "case-root-only",
+        "network": "deny",
+        "credentials": "deny",
+        "generated_script_policy": "pinned-source-only-and-adapter-verified"
+      },
+      "policy": {
+        "mode": "adapter-controlled",
+        "plugin_policy_arguments": "ignore-and-replace",
+        "write_gate": "owner-policy-before-write",
+        "path_escape": "deny",
+        "external_home": "deny-in-this-gate"
+      },
+      "registrations": "adapter-owned-and-disposed"
+    }
+  },
+  "gates": {
+    "E1": {
+      "name": "dynamic-plugin identity, contract and load seam",
+      "thresholds": [
+        "pinned commit, package and version identity match 100%",
+        "host.js and client.js are both present under the pinned package root and parse as function bodies",
+        "dsh.plugin.host/client is explicit and dsh.bundle is not inferred",
+        "dynamic plugin is not silently added to dsh.profile.bundles",
+        "adapter id/version is bound to the pinned plugin identity",
+        "plugin source is never executed during E1/E2"
+      ]
+    },
+    "E2": {
+      "name": "dynamic-plugin capability and installation safety",
+      "thresholds": [
+        "all source paths remain under the isolated bundle root",
+        "ctx, bridge, filesystem, settings and subprocess requests are recorded against an allowlist",
+        "plugin policy cannot widen adapter policy; external paths, network and credentials are denied in this gate",
+        "lifecycle scripts, dependency ledger, license and artifact absence are recorded",
+        "registry install, real credential, external network and external effect count are 0",
+        "ZWorkbench canonical owner state is not created or modified"
+      ]
+    }
+  },
+  "isolation": {
+    "case_local_output": true,
+    "case_local_dsh_home": true,
+    "real_credentials": false,
+    "production_data": false,
+    "external_network": false,
+    "external_effects": false,
+    "owner_database_touched": false,
+    "runtime_plugin_execution": false
+  },
+  "non_claims": [
+    "E1/E2 pass is an adapter eligibility result within this isolated static gate, not runtime security certification.",
+    "The runner does not prove that arbitrary subprocess code is safe; future runtime execution must enforce the pinned-script and OS sandbox policy.",
+    "The dynamic plugin remains responsible for migration semantics; it does not own ZWorkbench run/effect/event/replay state.",
+    "No E3-E6 parity, product readiness, real Provider, real credential, remote exit or source-to-binary reproducible-build claim is made."
+  ]
+}
