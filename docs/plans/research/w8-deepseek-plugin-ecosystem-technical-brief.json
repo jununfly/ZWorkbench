@@ -1,0 +1,52 @@
+{
+  "schema": "technical-decision-brief/v1",
+  "user": {
+    "actor": "个人开发者/小团队负责人",
+    "job": "构建一个能完成代码与通用任务、运行少量自动/定时任务、接入多个 LLM Provider，并具备可观测、可回放、可评测和可排障能力的个人工作台。"
+  },
+  "baseline": {
+    "workflow": "当前以 Codex 作为主 Harness，使用一个 SQLite composition owner 补充跨运行的自动化、状态、Provider、回放和运维合同；DeepSeek 只完成了固定 core/通用 fixture 的独立挑战评估。",
+    "failureModes": [
+      "把 Harness core 未直接提供的能力误判为整个生态无法提供",
+      "插件、市场或外部控制面形成重复状态、权限和升级责任",
+      "插件自述的兼容/回放/安全能力没有映射到 C1-C7 硬阈值",
+      "实时 registry、远程渠道和凭据把个人工作台变成不可控的远端系统"
+    ]
+  },
+  "targetOutcome": "在不复制第二套运行时语义的前提下，证明 DeepSeek core + 固定版本 plugin-composed bundle 是否能以更低的个人/小团队总拥有成本补齐 Codex 路线的真实能力增量；若不能，则保留 Codex 主线并删除实验组合。",
+  "goals": [
+    "识别 DeepSeek 官方插件 ABI、社区插件生态和外部控制面的真实边界",
+    "判断插件组合是否能补齐 ZWorkbench 的 C3-C7，而不是只证明插件可以安装",
+    "用 ATAM 识别插件版本、供应链、状态 owner、安全和退出敏感点",
+    "用 CBAM 比较复用生态与沿用 Codex composition owner 的增量收益和维护成本"
+  ],
+  "nonGoals": [
+    "本节点不把 DeepSeek 切换为生产主 Harness",
+    "不把实时插件市场、远程工作区、IM webhook 或外部控制面接入首个个人试点",
+    "不为兼容全部 DeepSeek 生态重写 ZWorkbench 的 run/effect/replay/security owner",
+    "不把 GitHub Stars、目录数量或插件 README 自述当作 C1-C7 通过证据"
+  ],
+  "constraints": [
+    {"id":"small-team","statement":"适合个人开发者或小团队；首次安装、升级/回滚、backup/restore 和故障定位必须可由单一维护者完成。"},
+    {"id":"single-owner","statement":"run/thread/turn/event/effect/result、权限和回放合同必须各有唯一 canonical owner；插件只能投影或通过明确 adapter 接入。"},
+    {"id":"safety","statement":"关键安全拦截 100%、未授权执行 0、危险副作用重复 0；未知安全边界不放行。"},
+    {"id":"reproducibility","statement":"每个 core/plugin 必须固定 commit、版本、lockfile、依赖、许可证和 dshTarget；评估不能依赖实时 registry。"},
+    {"id":"service-budget","statement":"MVP 常驻人工维护服务不超过 3 个；引入第二运行时默认需要单独决策。"}
+  ],
+  "assumptions": [
+    "W6 C1-C7 阈值和 pass-with-composition 语义继续有效。",
+    "DeepSeek alpha 版本之间可能存在插件 ABI 和 client package 破坏性变化。",
+    "当前研究只使用 GitHub 固定 commit 的 canonical evidence；运行级结论需要后续隔离复现。",
+    "ZWorkbench 的第一切片仍以 local_read_only_run 为主，真实写入继续受 Gate B/HOLD 约束。"
+  ],
+  "stage": "usefulness-validation",
+  "decisionScope": "是否把 DeepSeek plugin-composed bundle 作为与 Codex + 单一 SQLite composition owner 对照的第二架构候选，并决定下一轮隔离验证的最小插件集合。",
+  "options": [
+    {"id":"codex-owner","name":"Codex + 单一 composition owner"},
+    {"id":"dsh-core","name":"DeepSeek core-only"},
+    {"id":"dsh-plugin-bundle","name":"DeepSeek core + pinned plugin-composed bundle"},
+    {"id":"dsh-market-sprawl","name":"DeepSeek + 实时 market/registry 拼盘"},
+    {"id":"outer-runtime","name":"DeepSeek + AgentRQ/Sandbase 等外部控制面"},
+    {"id":"from-scratch","name":"从零重写工作台运行时"}
+  ]
+}

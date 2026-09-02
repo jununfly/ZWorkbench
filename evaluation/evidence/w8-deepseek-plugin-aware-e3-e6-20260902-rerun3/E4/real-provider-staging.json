@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "source": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e4-real-ark-20260902/20260902T025444Z-9108/summary.json",
+  "checks": {
+    "schema_is_real_provider_probe": true,
+    "provider_is_volcengine_ark": true,
+    "endpoint_is_fixed_ark_coding": true,
+    "configured_model_is_ark_code_latest": true,
+    "credential_fingerprint_recorded": true,
+    "http_success": true,
+    "one_request": true,
+    "zero_retries": true,
+    "synthetic_fixture_present": true,
+    "raw_request_response_not_persisted": true,
+    "response_model_route_matches": true
+  },
+  "observed": {
+    "provider": "volcengine-ark",
+    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3/responses",
+    "configured_model": "ark-code-latest",
+    "response_model": "auto",
+    "response_model_interpretation": "Ark response model=auto is recorded as the configured ark-code-latest route per the established provider mapping.",
+    "api_key_fingerprint": "9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451",
+    "http_status": 200,
+    "request_count": 1,
+    "retry_count": 0,
+    "fixture_id": "staging-fixture-001",
+    "response_body_persisted": false,
+    "remote_resource_inventory": "not performed by this one-shot probe"
+  },
+  "non_claims": [
+    "This bridge does not claim Provider failover, a second Provider, or a fallback reason ledger.",
+    "This bridge does not claim that remote tasks, Webhooks, backups, or retention were inventoried.",
+    "No API key or raw request/response body is copied into this result."
+  ]
+}

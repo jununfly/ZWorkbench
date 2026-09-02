@@ -1,0 +1,8 @@
+{
+  "plugin": "dsh-config-migrate",
+  "commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+  "mode": "outer-composed",
+  "network": "deny",
+  "credentials": "deny",
+  "owner": "ZWorkbench composition owner"
+}

@@ -1,0 +1,569 @@
+{
+  "schema": "zworkbench-w8-deepseek-plugin-aware-e3-e6/v1",
+  "status": "blocked",
+  "classification": "acceptance/evaluation",
+  "started_at": "2026-09-02T02:59:09.183251+00:00",
+  "bundle_root": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR",
+  "output": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3",
+  "candidate": {
+    "core": {
+      "source_dir": "core-alpha4",
+      "package": "@deepseek-ai/dsh-root",
+      "version": "0.1.2-alpha.4",
+      "commit": "4e84901e6471b79ec0338099867ebb4606d12bb",
+      "archive": "core-alpha4.tar.gz",
+      "archive_sha256": "c5acde3cc3ce7a01ab6daa6cc7fd1f7dc7b8a62d5e8bcc053caaf916f5ca00bb"
+    },
+    "plugins": [
+      {
+        "id": "dsh-context",
+        "source_dir": "dsh-context",
+        "repository": "https://github.com/bowenliang123/dsh-context",
+        "package": "dsh-context",
+        "version": "0.40.1",
+        "commit": "552bb9077f9ec5885bd37e35037c5e0de51d4c6d",
+        "contract": "standard-bundle",
+        "artifact": "npm-packs/dsh-context-0.40.1.tgz",
+        "artifact_sha256": "ae6631f6019b9b4f9f3d5771b48ca0c9371b1839cf7ddce7a2167c1e9e3865f8"
+      },
+      {
+        "id": "dsh-routing-suite",
+        "source_dir": "dsh-routing-suite",
+        "repository": "https://github.com/yjh051108/dsh-routing-suite",
+        "package": "@dsh-external/dsh-super-injector",
+        "version": "0.3.3",
+        "commit": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "contract": "standard-bundle",
+        "artifact": "npm-packs2/dsh-external-dsh-super-injector-0.3.3.tgz",
+        "artifact_sha256": "cfa693d2a8c333572472c237d5adc1fd9a2b666a15863797207104d5a5ab6718"
+      },
+      {
+        "id": "dsh-memoir",
+        "source_dir": "dsh-memoir",
+        "repository": "https://github.com/Qinling-Melon-Farmers/dsh-memoir",
+        "package": "dsh-memoir",
+        "version": "0.6.0",
+        "commit": "4416d50ee6d888f12677a81b36c4b4d5954c546a",
+        "contract": "standard-bundle",
+        "metadata_from_git_object": true,
+        "artifact": "npm-packs/dsh-memoir-0.6.0.tgz",
+        "artifact_sha256": "6df6d181a0cad25f16dee55daf28e9ef649a03bed0d0f4f294f28d22847b0073"
+      },
+      {
+        "id": "dsh-config-migrate",
+        "source_dir": "dsh-config-migrate",
+        "repository": "https://github.com/kol-mm/dsh-config-migrate",
+        "package": "dsh-config-migrate",
+        "version": "1.0.0",
+        "commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+        "contract": "dynamic-plugin",
+        "metadata_from_git_object": false,
+        "artifact": null,
+        "artifact_sha256": null,
+        "reason_not_standard_bundle": "package.json declares dsh.plugin.host/client, not dsh.bundle"
+      }
+    ],
+    "composition_mode": "standard bundles + outer-composed dsh-config-migrate dynamic adapter"
+  },
+  "gates": {
+    "E3": {
+      "gate": "E3",
+      "status": "pass",
+      "scope": "pinned dsh-config-migrate runtime seam + CompositionOwner unknown-effect control",
+      "checks": {
+        "runtime_seam_passed": true,
+        "unknown_effect_control_passed": true,
+        "critical_write_interception": true,
+        "unauthorized_execution_zero": true,
+        "unsafe_duplicate_effect_zero": true
+      },
+      "runtime_seam": {
+        "status": "pass",
+        "evidence": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/runtime-seam/summary.json",
+        "plugin_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+        "registrations": {
+          "before_dispose": {
+            "rpc": 4,
+            "tools": 1,
+            "ui": 2,
+            "styles": 1
+          },
+          "after_calls": {
+            "rpc": 4,
+            "tools": 1,
+            "ui": 2,
+            "styles": 1
+          },
+          "after_dispose": {
+            "rpc": 0,
+            "tools": 0,
+            "ui": 0,
+            "styles": 0
+          }
+        },
+        "owner_run_status": "completed",
+        "owner_effect_count": 0
+      },
+      "unknown_effect": {
+        "schema": "zworkbench-w8-plugin-aware-e3-unknown-effect/v1",
+        "status": "pass",
+        "run_id": "w8-plugin-aware-e3-unknown-effect",
+        "denied": {
+          "status": "denied",
+          "reason": "unknown_effect_class"
+        },
+        "retry": {
+          "status": "denied",
+          "reason": "run_terminal:safe_stopped"
+        },
+        "checks": {
+          "unknown_effect_denied": true,
+          "run_safe_stopped": true,
+          "retry_not_automatic": true,
+          "physical_effects_zero": true,
+          "owner_events_present": true
+        },
+        "observed": {
+          "run_status": "safe_stopped",
+          "effect_count": 0,
+          "event_count": 4,
+          "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/unknown-effect/state/composition.sqlite3"
+        }
+      },
+      "non_claims": [
+        "E3 does not prove host-level OS sandbox inheritance.",
+        "E3 does not prove successful real DSH_HOME migration; writes remain denied in this gate.",
+        "E3 is not a DeepSeek product integration approval."
+      ]
+    },
+    "E4": {
+      "gate": "E4",
+      "status": "unknown/stop",
+      "scope": "new plugin-aware evidence; plugin behavior and owner-provided parity recorded separately",
+      "checks": {
+        "idempotent_effect_threshold": true,
+        "routing_and_memoir_plugin_behavior": true,
+        "provider_failover_contract": false,
+        "real_provider_staging_observed": true,
+        "replay_threshold": true
+      },
+      "plugin_behavior": {
+        "status": "pass",
+        "evidence": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/behavior-result.json",
+        "routing": {
+          "router_probe_passed": true,
+          "router_deterministic": true,
+          "router_stage_progression_observed": true,
+          "memoir_probe_passed": true,
+          "memoir_bounded": true,
+          "memoir_note_excluded": true
+        },
+        "memoir": {
+          "storePath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/dsh-memoir.json",
+          "entryCount": 3,
+          "selectedCount": 2,
+          "selectedSections": [
+            "actions",
+            "lessons"
+          ],
+          "hotTextA": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+          "hotTextB": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+          "deterministic": true,
+          "estimatedTokens": 62,
+          "hardMaxTokens": 120,
+          "noteExcluded": true,
+          "storeStats": {
+            "revision": 3,
+            "epoch": 6,
+            "loads": 7,
+            "hits": 4,
+            "misses": 3,
+            "hitRate": 0.5714285714285714,
+            "fileReads": 2,
+            "statProbes": 4,
+            "corruptBackups": 0,
+            "renders": 3,
+            "renderComputes": 3,
+            "renderHitRate": 0,
+            "lastLoadMs": 0
+          }
+        }
+      },
+      "owner_idempotency": {
+        "status": "pass",
+        "run_id": "w8-plugin-aware-e4-idempotency",
+        "checks": {
+          "first_claim_executable": true,
+          "duplicate_claim_suppressed": true,
+          "one_physical_write": true,
+          "one_owner_effect": true,
+          "owner_run_completed": true,
+          "owner_correlation_present": true,
+          "case_local_target": true
+        },
+        "observed": {
+          "first_claim": {
+            "status": "claimed",
+            "attempt": 1
+          },
+          "duplicate_claim": {
+            "status": "already_completed",
+            "reason": "idempotent_replay"
+          },
+          "physical_writes": 1,
+          "effect_count": 1,
+          "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/state/composition.sqlite3",
+          "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/effects/delivery.json"
+        }
+      },
+      "owner_replay": {
+        "status": "pass",
+        "checks": {
+          "simulated_replay_5_of_5": true,
+          "replay_identity_recorded": true,
+          "unapproved_live_effect_zero": true,
+          "owner_run_completed": true,
+          "provider_identity_explicit": true
+        },
+        "observed": {
+          "simulated_replay_count": 5,
+          "live_replay_metadata": "w8-plugin-aware-e4-replay:live-denied",
+          "owner_replay_count": 6,
+          "effect_count": 0,
+          "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/state/composition.sqlite3",
+          "cassette": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/replay-cassette.json"
+        }
+      },
+      "real_provider_staging": {
+        "status": "pass",
+        "source": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e4-real-ark-20260902/20260902T025444Z-9108/summary.json",
+        "checks": {
+          "schema_is_real_provider_probe": true,
+          "provider_is_volcengine_ark": true,
+          "endpoint_is_fixed_ark_coding": true,
+          "configured_model_is_ark_code_latest": true,
+          "credential_fingerprint_recorded": true,
+          "http_success": true,
+          "one_request": true,
+          "zero_retries": true,
+          "synthetic_fixture_present": true,
+          "raw_request_response_not_persisted": true,
+          "response_model_route_matches": true
+        },
+        "observed": {
+          "provider": "volcengine-ark",
+          "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3/responses",
+          "configured_model": "ark-code-latest",
+          "response_model": "auto",
+          "response_model_interpretation": "Ark response model=auto is recorded as the configured ark-code-latest route per the established provider mapping.",
+          "api_key_fingerprint": "9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451",
+          "http_status": 200,
+          "request_count": 1,
+          "retry_count": 0,
+          "fixture_id": "staging-fixture-001",
+          "response_body_persisted": false,
+          "remote_resource_inventory": "not performed by this one-shot probe"
+        },
+        "non_claims": [
+          "This bridge does not claim Provider failover, a second Provider, or a fallback reason ledger.",
+          "This bridge does not claim that remote tasks, Webhooks, backups, or retention were inventoried.",
+          "No API key or raw request/response body is copied into this result."
+        ]
+      },
+      "provider_failover": {
+        "status": "unknown",
+        "candidate_contract_present": false,
+        "source": "dsh-routing-suite/preset/router-standard/router-core-v34.mjs",
+        "reason": "The pinned router core exposes task/persona/stage routing, not a Provider selection, fallback, degradation, or fallback-reason ledger contract; no evaluator-owned fake router is promoted to candidate evidence."
+      },
+      "interpretation": "The selected plugin behavior and the ZWorkbench owner can demonstrate bounded idempotency/replay controls, but E4 cannot be promoted while the selected routing plugin has no candidate-owned Provider failover/degradation contract.",
+      "non_claims": [
+        "Router/persona classification is not Provider failover.",
+        "Owner replay metadata and cassette replay are composition evidence, not native dsh plugin replay.",
+        "Local plugin behavior probes made no Provider request; any Ark request is separately marked as external staging evidence."
+      ]
+    },
+    "E5": {
+      "gate": "E5",
+      "status": "unknown/stop",
+      "checks": {
+        "machine_operations_pass": true,
+        "human_time_gate": false,
+        "resident_services_at_most_three": true,
+        "no_extra_specialist_declared": true,
+        "remote_exit_verified": false
+      },
+      "human_timing": {
+        "status": "unknown",
+        "input_present": false,
+        "template": {
+          "fresh_install": {
+            "minutes": null,
+            "threshold_minutes": 90,
+            "status": "unknown"
+          },
+          "upgrade": {
+            "minutes": null,
+            "threshold_minutes": 30,
+            "status": "unknown"
+          },
+          "backup_restore": {
+            "minutes": null,
+            "threshold_minutes": 30,
+            "status": "unknown"
+          },
+          "fault_diagnosis": {
+            "minutes": null,
+            "threshold_minutes": 30,
+            "status": "unknown"
+          }
+        }
+      },
+      "operations": {
+        "fresh_install": {
+          "scenario": "fresh_install",
+          "status": "pass",
+          "machine_elapsed_seconds": 0.020314,
+          "machine_elapsed_is_not_human_time": true,
+          "human_elapsed_minutes": null,
+          "human_timing_status": "unknown",
+          "threshold_minutes": 90,
+          "error": null,
+          "operation": {
+            "checks": {
+              "case_local_install_root": true,
+              "pinned_entrypoints_copied": true,
+              "adapter_manifest_present": true,
+              "no_registry_install": true,
+              "external_network_zero": true,
+              "real_credentials_false": true,
+              "production_data_false": true
+            },
+            "observed": {
+              "install_root": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/fresh-install/installed/dsh-config-migrate",
+              "entrypoint_sha256": {
+                "host": "06bf723b12f721e4a0cd69860daec290c3bde2913a610d423af00a3d8e66302e",
+                "client": "d1711213e4e6f7bac3feba4f558accebb4e522736cf539a47b67892f547d06ec"
+              },
+              "operation_kind": "prepared_case_local_assembly_not_real_product_install"
+            }
+          }
+        },
+        "upgrade": {
+          "scenario": "upgrade",
+          "status": "pass",
+          "machine_elapsed_seconds": 0.000244,
+          "machine_elapsed_is_not_human_time": true,
+          "human_elapsed_minutes": null,
+          "human_timing_status": "unknown",
+          "threshold_minutes": 30,
+          "error": null,
+          "operation": {
+            "checks": {
+              "upgrade_changed_identity": true,
+              "rollback_restored_identity": true,
+              "old_plugin_commit_preserved": true,
+              "owner_database_not_overwritten": true
+            },
+            "observed": {
+              "before_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+              "upgraded_sha256": "77ad362af33be5b6dc808ccbd249f7b8ea5b86b1f5d1a4101e69dc22078737b6",
+              "rollback_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+              "operation_kind": "case_local_manifest_upgrade_rollback"
+            }
+          }
+        },
+        "backup_restore": {
+          "scenario": "backup_restore",
+          "status": "pass",
+          "machine_elapsed_seconds": 0.007251,
+          "machine_elapsed_is_not_human_time": true,
+          "human_elapsed_minutes": null,
+          "human_timing_status": "unknown",
+          "threshold_minutes": 30,
+          "error": null,
+          "operation": {
+            "checks": {
+              "backup_files_present": true,
+              "backup_integrity_ok": true,
+              "corrupted_target_replaced": true,
+              "restore_digest_matches": true,
+              "restore_snapshot_has_run": true,
+              "case_local_paths": true
+            },
+            "observed": {
+              "source_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+              "restored_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+              "backup": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/backup",
+              "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/restore/composition.sqlite3",
+              "operation_kind": "composition_owner_backup_restore"
+            }
+          }
+        },
+        "fault_diagnosis": {
+          "scenario": "fault_diagnosis",
+          "status": "pass",
+          "machine_elapsed_seconds": 0.000192,
+          "machine_elapsed_is_not_human_time": true,
+          "human_elapsed_minutes": null,
+          "human_timing_status": "unknown",
+          "threshold_minutes": 30,
+          "error": null,
+          "operation": {
+            "checks": {
+              "fault_correlated": true,
+              "category_present": true,
+              "bounded_action_present": true,
+              "unknown_not_promoted": true,
+              "no_network_or_credentials": true
+            },
+            "observed": {
+              "fault": {
+                "code": "ADAPTER_WRITE_DENY",
+                "request_id": "w8-plugin-aware-e3-write-1",
+                "plugin": "dsh-config-migrate",
+                "run_id": "w8-plugin-aware-e3"
+              },
+              "diagnosis": {
+                "schema": "zworkbench-w8-plugin-aware-diagnosis/v1",
+                "fault_id": "fault-plugin-write-deny-1",
+                "run_id": "w8-plugin-aware-e3",
+                "category": "adapter_policy_denied_write",
+                "recommended_action": "retain evidence; do not retry without an explicit policy change",
+                "unknown_not_promoted": true
+              },
+              "operation_kind": "prepared_case_local_fault"
+            }
+          }
+        }
+      },
+      "uninstall": {
+        "checks": {
+          "local_install_removed": true,
+          "remote_tasks_absent_in_fixture": true,
+          "webhooks_absent_in_fixture": true,
+          "remote_backups_not_claimed": true,
+          "real_credentials_absent": true,
+          "resident_services_at_most_three": true
+        },
+        "observed": {
+          "resident_services": 0,
+          "operation_kind": "case_local_uninstall_only",
+          "remote_exit_status": "not-verified"
+        }
+      },
+      "interpretation": "Local machine fixture operations are observable, but a full candidate install/runbook and real single-operator timing have not been established; remote exit responsibility remains outside this isolated gate.",
+      "non_claims": [
+        "machine_elapsed_seconds is not a human stopwatch measurement",
+        "prepared local assembly is not a real npm/registry product installation",
+        "fixture absence of remote tasks/webhooks/backups is not proof of real remote cleanup"
+      ]
+    },
+    "E6": {
+      "gate": "E6",
+      "status": "blocked-by-E3-E5-prerequisites",
+      "prerequisites": {
+        "E3": true,
+        "E4": false,
+        "E5": false
+      },
+      "comparison_contract": {
+        "same_task_set": false,
+        "same_provider": false,
+        "same_owner_contract": true,
+        "codex_evidence_inherited": false
+      },
+      "benefit_candidates": [
+        {
+          "capability": "task/persona routing",
+          "source": "dsh-routing-suite",
+          "status": "hypothesis-only",
+          "reason": "no matched Codex comparison run in this gate"
+        },
+        {
+          "capability": "bounded local project memory",
+          "source": "dsh-memoir",
+          "status": "hypothesis-only",
+          "reason": "no matched Codex comparison run in this gate"
+        },
+        {
+          "capability": "configuration migration",
+          "source": "dsh-config-migrate",
+          "status": "hypothesis-only",
+          "reason": "write path is deny-only in this safety gate"
+        }
+      ],
+      "checks": {
+        "prerequisites_all_pass": false,
+        "measurable_non_duplicate_advantage": false,
+        "no_replacement_decision": true
+      },
+      "interpretation": "No E6 advantage claim is allowed until E3-E5 pass under the same comparison contract and at least one benefit is measured against Codex."
+    }
+  },
+  "thresholds": {
+    "E1": {
+      "name": "plugin ABI and version ledger",
+      "thresholds": [
+        "core and every requested plugin commit/version/package identity recorded at 100%",
+        "fresh profile boot/dump is reproducible from the pinned local inputs",
+        "a requested member without dsh.bundle is an explicit fail, never an implicit fallback"
+      ]
+    },
+    "E2": {
+      "name": "provenance and install safety",
+      "thresholds": [
+        "unallowlisted source or package count is 0",
+        "license, dependency, lifecycle-script, credential and network declarations are recorded",
+        "runtime evaluation performs no registry install, external network, real credential or external effect"
+      ]
+    },
+    "E3": {
+      "name": "C2/C4 safety and side-effect parity",
+      "thresholds": [
+        "critical interception 100%",
+        "unauthorized execution 0",
+        "unsafe duplicate effect 0",
+        "unknown effect is safe-stopped and never automatically retried"
+      ]
+    },
+    "E4": {
+      "name": "C3/C5/C6 capability parity",
+      "thresholds": [
+        "valid idempotent effect 1 and duplicate extra effect 0",
+        "silent semantic provider switch 0 and fallback reason recording 100%",
+        "simulated replay 5/5 and unapproved live effect 0"
+      ]
+    },
+    "E5": {
+      "name": "small-team lifecycle and exit",
+      "thresholds": [
+        "fresh install <= 90 minutes",
+        "upgrade, backup/restore and prepared-fault diagnosis each <= 30 minutes",
+        "resident services <= 3 and no extra specialist",
+        "uninstall leaves no hidden remote task, webhook, backup or credential"
+      ]
+    },
+    "E6": {
+      "name": "non-duplicate composition benefit",
+      "thresholds": [
+        "same task set, Provider and owner contract as the Codex comparison",
+        "at least one measurable, reproducible, non-duplicate advantage",
+        "E1-E5 all pass before any replacement or parallel-main decision"
+      ]
+    }
+  },
+  "independence": {
+    "new_evidence_directory": true,
+    "runtime_seam_rerun": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/runtime-seam/summary.json",
+    "codex_or_previous_bundle_evidence_reused_for_pass": false,
+    "owner_contract_used": true
+  },
+  "non_claims": [
+    "This is not ZWorkbench product integration approval.",
+    "Local plugin fixtures use no real Provider or credential; when supplied, the separately marked Ark staging summary records one real credential-backed request without copying the key or raw body.",
+    "E4 unknown/stop is not evidence that the plugin ecosystem has no value; it identifies a missing Provider failover contract in this selected composition.",
+    "E5 unknown/stop is not a negative install benchmark; it identifies missing real operator and remote exit evidence."
+  ],
+  "next_action": "Do not replace or parallelize Codex. Either add a separately pinned/provider-router candidate with explicit failover evidence and collect DeepSeek operator timing/remote exit evidence, or stop this composition branch."
+}

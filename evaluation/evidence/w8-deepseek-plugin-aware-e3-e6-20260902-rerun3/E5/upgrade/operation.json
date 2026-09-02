@@ -1,0 +1,24 @@
+{
+  "scenario": "upgrade",
+  "status": "pass",
+  "machine_elapsed_seconds": 0.000244,
+  "machine_elapsed_is_not_human_time": true,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "threshold_minutes": 30,
+  "error": null,
+  "operation": {
+    "checks": {
+      "upgrade_changed_identity": true,
+      "rollback_restored_identity": true,
+      "old_plugin_commit_preserved": true,
+      "owner_database_not_overwritten": true
+    },
+    "observed": {
+      "before_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+      "upgraded_sha256": "77ad362af33be5b6dc808ccbd249f7b8ea5b86b1f5d1a4101e69dc22078737b6",
+      "rollback_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+      "operation_kind": "case_local_manifest_upgrade_rollback"
+    }
+  }
+}

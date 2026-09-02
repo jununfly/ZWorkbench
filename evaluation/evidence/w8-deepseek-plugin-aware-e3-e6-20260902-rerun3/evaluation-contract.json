@@ -1,0 +1,15 @@
+{
+  "schema": "zworkbench-w8-deepseek-plugin-aware-e3-e6/v1",
+  "classification": "acceptance/evaluation",
+  "independent_evidence": true,
+  "bundle_root": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR",
+  "real_provider": true,
+  "real_credentials": true,
+  "external_network": true,
+  "local_fixture_real_credentials": false,
+  "local_fixture_external_network": false,
+  "production_data": false,
+  "codex_evidence_inherited": false,
+  "human_timings_present": false,
+  "real_provider_summary": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e4-real-ark-20260902/20260902T025444Z-9108/summary.json"
+}

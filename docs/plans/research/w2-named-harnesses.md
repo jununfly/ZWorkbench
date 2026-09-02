@@ -2,11 +2,37 @@
 
 状态：证据 findings，非最终推荐
 
-研究日期：2026-08-30（Asia/Shanghai）
+研究日期：2026-09-02 refresh v2（Asia/Shanghai）；原始 v1 findings 创建于 2026-08-30
 
 ## 研究边界与证据口径
 
-本票据只核实用户点名对象的身份和能力证据，不修改决策地图、不写实现代码、不作最终推荐。能力事实优先取官方仓库源码/仓库文档/协议/一手 API；GitHub 热度与能力事实分开。链接中的 GitHub 源码均固定到本次观察到的分支 tip commit：
+本票据只核实用户点名对象的身份和能力证据，不修改决策地图、不写实现代码、不作最终推荐。能力事实优先取官方仓库源码/仓库文档/协议/一手 API；GitHub 热度与能力事实分开。v2 refresh 已用 authenticated GitHub collection 重新封存仓库 revision、stars、topic match 和 criterion-level Evidence；原始 v1 的能力叙述与旧提交链接保留为历史上下文，不覆盖历史证据。
+
+## v2 refresh：正式 collection 已恢复
+
+当前 canonical request、collection status 和 sealed ledger：
+
+- [v2 request](./w2-named-harnesses.v2.request.json)
+- [v2 collection status](./w2-named-harnesses.v2.collection-status.json)：`fresh-collection`、`authenticated`、GitHub core quota `5000`
+- [v2 sealed ledger](./w2-named-harnesses.v2.ledger-response.json)：`36` 条 canonical Evidence、`0` 个 unknown criteria，brief fingerprint 为 `ec82b581498108a18b64736ce090614abd438fb2885ebd3b626d8ab75d7ebdb4`
+
+| 当前 canonical 仓库 | v2 pinned revision | stars / topicMatch |
+|---|---|---:|
+| [`deepseek-ai/deepseek-harness`](https://github.com/deepseek-ai/deepseek-harness) | [`4e84901e6471b79ec0338099867ebb4606d12bb5`](https://github.com/deepseek-ai/deepseek-harness/commit/4e84901e6471b79ec0338099867ebb4606d12bb5) | 208,339 / 29 |
+| [`earendil-works/pi`](https://github.com/earendil-works/pi) | [`b8b873b9872db04a938fb4357b5e8e824ddc051c`](https://github.com/earendil-works/pi/commit/b8b873b9872db04a938fb4357b5e8e824ddc051c) | 100,623 / 29 |
+| [`openai/codex`](https://github.com/openai/codex) | [`5a0419edb5ad720ae31fa1adf8b3b24c8f0c52c5`](https://github.com/openai/codex/commit/5a0419edb5ad720ae31fa1adf8b3b24c8f0c52c5) | 120,751 / 29 |
+
+v2 对 12 个 criteria × 3 个仓库均产生 canonical Evidence，且没有 unknown criteria。Evidence ID 映射如下；这些 ID 只证明 GitHub pinned-source 事实，不替代本地 C1–C7/E1–E6 运行证据：
+
+| 仓库 | criterion → Evidence ID |
+|---|---|
+| `deepseek-ai/deepseek-harness` | `identity_scope`→`004b6ec8cfe251162498ef98`; `tools_workspace_state`→`8606a9bfbc9c662e6fc6b611`; `code_loop`→`7b37c8e28eedd1e70f5865d8`; `extension_api`→`2a808f1dd6f95d96f0930011`; `automation_scheduling`→`0e47f1ff23427aa7ca3d3ac3`; `failure_concurrency`→`7c5193afe7aac4fc3b0aba5c`; `execution_loop`→`d509e3880a221b30b73f6930`; `provider_abstraction`→`4c17d5bcf6d434e80204e39c`; `traces_replay_evaluation`→`f4a329027886cc6d8614ffed`; `sandbox_security`→`f2c55e3379f49b99b4e80454`; `license_governance`→`e6450b0351fcb9d1814531be`; `maintenance_release_anchor`→`1fedb269dd64bb1e3266e4fb` |
+| `earendil-works/pi` | `identity_scope`→`58d5461bccd81bb36124fb96`; `execution_loop`→`82df270d24c16a5f79b4e111`; `tools_workspace_state`→`d67abb5c9e5fda48711e1133`; `code_loop`→`b201fc418d35842b587d63c4`; `extension_api`→`8d14eaa6d00b5b6e27eebde9`; `provider_abstraction`→`73b338812f045cbb0a13199`; `automation_scheduling`→`5bf6a40aab9cc0e7fef78554`; `traces_replay_evaluation`→`6fe6d976e676b2cae4a82b55`; `sandbox_security`→`d108f39724c87a5922c60108`; `license_governance`→`477c80ff814ec44bb4aaf470`; `maintenance_release_anchor`→`ef5a481873b001ce469c56b4`; `failure_concurrency`→`3fbbb92b36cfc9364870695e` |
+| `openai/codex` | `tools_workspace_state`→`b52659bd5d81a9e9cc68d268`; `code_loop`→`4a2a1adbc568f1e1523065dd`; `sandbox_security`→`a29adffe93282acfd0e9a68e`; `license_governance`→`356c1ee94e5f04f23395b8a7`; `provider_abstraction`→`98353a14a5782a6c1ceffa56`; `traces_replay_evaluation`→`fe9487830f043957aa025e9`; `maintenance_release_anchor`→`ddf6eab6d92b060ed2aeee2f`; `identity_scope`→`95cbeb0e338845391195659e`; `execution_loop`→`14353c5a1016ee6c0372a2e2`; `extension_api`→`6d5bab03068c8f08a8d85703`; `automation_scheduling`→`c1185040fb258e6762a7aca0`; `failure_concurrency`→`672e699041317c436773a0f1` |
+
+## 原始 v1 findings（保留）
+
+下方详细能力叙述保留 2026-08-30 的历史提交锚点，作为当时的研究快照；若引用当前 GitHub revision、stars、topic match 或 criterion-level Evidence，应以上方 v2 ledger 为准。
 
 | 对象 | 纳入的 canonical 开源仓库 | tip commit（2026-08-30 观察） | 许可证/版本证据 |
 |---|---|---|---|
@@ -14,7 +40,7 @@
 | Pi Agent Harness | [`earendil-works/pi`](https://github.com/earendil-works/pi) | [`853a80d26c90a14c1886f0ebb8ffaae133ca2185`](https://github.com/earendil-works/pi/commit/853a80d26c90a14c1886f0ebb8ffaae133ca2185) | 根 README 称 Pi Agent Harness，MIT；最新可核验的官方 release 页面候选为 [`v0.84.4`](https://github.com/earendil-works/pi/releases/tag/v0.84.4) |
 | Codex Harness | [`openai/codex`](https://github.com/openai/codex)（官方 OSS Codex CLI/app-server；“Codex Harness”是此处的工作称呼，不是仓库名） | [`63d213884daea50e4f74efc192cdc44f549b67d5`](https://github.com/openai/codex/commit/63d213884daea50e4f74efc192cdc44f549b67d5) | 根 LICENSE 为 Apache-2.0；`codex-cli/package.json` 标为 `@openai/codex`、Apache-2.0：[`codex-cli/package.json#L1-L18`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-cli/package.json#L1-L18) |
 
-本次按 `zj-research` 的 multi-repository technical comparison 规则保存了完整 brief：[`w2-named-harnesses.request.json`](./w2-named-harnesses.request.json)。canonical collector 已执行，但 GitHub API 在 compiler 阶段返回 `GITHUB_RATE_LIMITED`，因此没有生成 sealed ledger，也没有引用旧 ledger；原始状态保存在 [`w2-named-harnesses.collection-status.json`](./w2-named-harnesses.collection-status.json)。所以本文不报告 stars、topic match 或基于它们的热度判断。提交锚点来自 Git remote ref，能力锚点来自下面固定 commit 的一手内容。
+原始 v1 brief 和 blocked 状态仍保存在 [`w2-named-harnesses.request.json`](./w2-named-harnesses.request.json) 与 [`w2-named-harnesses.collection-status.json`](./w2-named-harnesses.collection-status.json)，仅作为历史过程证据；v2 已完成新的 authenticated fresh collection。
 
 ## 1. 名称身份与歧义
 
@@ -65,7 +91,7 @@
 9. **沙箱/安全。** `dsh-sandbox-local` 提供 Linux bwrap/Landlock、macOS Seatbelt、Windows ACL restricted-token backend；`read-only`/`workspace-write`/`danger-full-access` 只定义文件效果，网络和 process visibility 不属于该词汇。官方安全说明同时明确：能执行模型生成的代码/命令、加载第三方插件、访问被授予的网络/进程/凭据/文件，未经过 security audit，不应视为 secure/production-ready。见 [`docs/subsystems/sandbox.md#L1-L38`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/docs/subsystems/sandbox.md#L1-L38)、[`SAFETY.md#L5-L23`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/SAFETY.md#L5-L23)。
 10. **失败恢复/并发。** persistence 有 flush barrier、后台写失败暂停自动 retry、冷 session interrupted-turn repair；approval 为 fail-closed；jobs 有 owner/session fence、bounded wait 和 `maxConcurrentJobsPerOwner`；agent teams 有 durable roster/mailbox/task DAG。见 [`docs/subsystems/persistence.md#L9-L19`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/docs/subsystems/persistence.md#L9-L19)、[`docs/subsystems/approval.md#L21-L37`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/docs/subsystems/approval.md#L21-L37)、[`docs/subsystems/jobs.md#L155-L177`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/docs/subsystems/jobs.md#L155-L177)、[`docs/subsystems/agent-team.md#L1-L83`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/docs/subsystems/agent-team.md#L1-L83)。
 11. **许可证。** 根项目声明 MIT，第三方依赖许可证在 `THIRD_PARTY_NOTICES.md` 中披露；这是仓库级事实，不代表每个外部插件都使用 MIT。见 [`README.md#L59-L63`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/README.md#L59-L63)。
-12. **维护/版本锚点。** 本次 Git remote 的 `master` tip 为 `cd5ef…`；仓库自报 `0.1.2-alpha.1`，并明确处于 developer preview/可能 breaking changes。GitHub stars/topic match 因 collector blocked 不报告。见 [`package.json#L1-L9`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/package.json#L1-L9)、[`README.md#L11-L15`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/README.md#L11-L15)。
+12. **维护/版本锚点。** 本次历史 v1 Git remote 的 `master` tip 为 `cd5ef…`；仓库自报 `0.1.2-alpha.1`，并明确处于 developer preview/可能 breaking changes。v1 未报告 GitHub stars/topic match；当前值以上方 v2 sealed ledger 为准。见 [`package.json#L1-L9`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/package.json#L1-L9)、[`README.md#L11-L15`](https://github.com/deepseek-ai/deepseek-harness/blob/cd5ef8148158c3a752a658978873241fdf8e2bbc/README.md#L11-L15)。
 
 ## 4. Pi Agent Harness：逐项证据
 
@@ -80,7 +106,7 @@
 9. **沙箱/安全。** Pi 根 README 明确“不包含内建 permission system”，默认继承启动进程权限；官方 security 文档把 local code execution/sandboxing 列为 out of scope，要求只在 trusted repos 使用，并建议 Gondolin/Docker/OpenShell 等外部隔离。见 [`README.md#L39-L56`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/README.md#L39-L56)、[`SECURITY.md#L42-L61`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/SECURITY.md#L42-L61)、[`packages/coding-agent/docs/security.md#L1-L55`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/packages/coding-agent/docs/security.md#L1-L55)、[`docs/containerization.md#L1-L79`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/packages/coding-agent/docs/containerization.md#L1-L79)。
 10. **失败恢复/并发。** Harness specification 使用 total durable `op.state` program counter、atomic transactions 和 effect sandwich；crash mid-tool 时按 `replay: never|safe` 决定不重跑或安全重跑，provider stream resumption 是明确 non-goal；工具可并行，但 session 是一进程/一 writer，SQLite 用 fenced lease。见 [`packages/agent/docs/harness.md#L123-L137`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/packages/agent/docs/harness.md#L123-L137)、[`#L180-L214`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/packages/agent/docs/harness.md#L180-L214)、[`#L965-L1087`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/packages/agent/docs/harness.md#L965-L1087)。
 11. **许可证。** 根 README 与 LICENSE 声明 MIT。扩展/npm/git package 的许可证需按各自包另行核验。见 [`README.md#L130-L143`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/README.md#L130-L143)、[`LICENSE`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/LICENSE)。
-12. **维护/版本锚点。** 本次 Git remote 的 `main` tip 为 `853a…`；官方 release 页面有 `v0.84.4`。仓库根 README 同时显示 npm package 入口与开发/构建/测试命令，说明上游仍以 monorepo/package release 方式维护。GitHub stars/topic match 因 collector blocked 不报告。见 [`README.md#L1-L19`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/README.md#L1-L19)、[`v0.84.4`](https://github.com/earendil-works/pi/releases/tag/v0.84.4)。
+12. **维护/版本锚点。** 本次历史 v1 Git remote 的 `main` tip 为 `853a…`；官方 release 页面有 `v0.84.4`。仓库根 README 同时显示 npm package 入口与开发/构建/测试命令，说明上游仍以 monorepo/package release 方式维护。v1 未报告 GitHub stars/topic match；当前值以上方 v2 sealed ledger 为准。见 [`README.md#L1-L19`](https://github.com/earendil-works/pi/blob/853a80d26c90a14c1886f0ebb8ffaae133ca2185/README.md#L1-L19)、[`v0.84.4`](https://github.com/earendil-works/pi/releases/tag/v0.84.4)。
 
 ## 5. Codex Harness：逐项证据
 
@@ -95,7 +121,7 @@
 9. **沙箱/安全。** Codex core 在 macOS 使用 Seatbelt，在 Linux 使用 Landlock/bubblewrap 路径，在 Windows 使用相应 sandbox backend；sandbox policy 控制 filesystem roots 和 network access，某些无法严格执行的 split policy 会 fail closed。审批/exec policy 另有官方文档入口和仓库安全说明。见 [`codex-rs/core/README.md#L19-L63`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/core/README.md#L19-L63)、[`#L65-L92`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/core/README.md#L65-L92)、[`SECURITY.md#L15-L17`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/SECURITY.md#L15-L17)。
 10. **失败恢复/并发。** app-server 使用 bounded ingress/request/outbound queues，过载返回可 retry 的 `-32001`；thread resume/fork/interrupt、durable thread store、queued turns、multi-agent v2 均有 API/状态证据。exec-server 默认 sequential，可开启 bounded concurrent requests；远程 forwarder 不 replay/persist execution state，恢复能力由 destination retention 提供。见 [`codex-rs/app-server/README.md#L46-L55`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/app-server/README.md#L46-L55)、[`#L405-L417`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/app-server/README.md#L405-L417)、[`codex-rs/exec-server/README.md#L28-L40`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/exec-server/README.md#L28-L40)、[`#L121-L137`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/codex-rs/exec-server/README.md#L121-L137)。
 11. **许可证。** 根仓库声明 Apache-2.0；`NOTICE`、CLA 和 SDK 文档是同一上游治理/分发边界的一部分。第三方依赖和外部 plugin/MCP 的许可证不由根许可证自动覆盖。见 [`LICENSE`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/LICENSE)、[`docs/CLA.md#L1-L8`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/docs/CLA.md#L1-L8)、[`sdk/python/README.md#L66-L74`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/sdk/python/README.md#L66-L74)。
-12. **维护/版本锚点。** 本次 Git remote 的 `main` tip 为 `63d213…`；该 tip commit message 是新增 Vim search motions，且根 CHANGELOG 将 release 记录指向官方 releases page。仓库同时维护 app-server、SDK、MCP conformance、sandbox 和 rollout-trace 文档/测试。GitHub stars/topic match 因 collector blocked 不报告。见 [`tip commit`](https://github.com/openai/codex/commit/63d213884daea50e4f74efc192cdc44f549b67d5)、[`CHANGELOG.md`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/CHANGELOG.md)、[`releases`](https://github.com/openai/codex/releases)。
+12. **维护/版本锚点。** 本次历史 v1 Git remote 的 `main` tip 为 `63d213…`；该 tip commit message 是新增 Vim search motions，且根 CHANGELOG 将 release 记录指向官方 releases page。仓库同时维护 app-server、SDK、MCP conformance、sandbox 和 rollout-trace 文档/测试。v1 未报告 GitHub stars/topic match；当前值以上方 v2 sealed ledger 为准。见 [`tip commit`](https://github.com/openai/codex/commit/63d213884daea50e4f74efc192cdc44f549b67d5)、[`CHANGELOG.md`](https://github.com/openai/codex/blob/63d213884daea50e4f74efc192cdc44f549b67d5/CHANGELOG.md)、[`releases`](https://github.com/openai/codex/releases)。
 
 ## 6. Explicit unknowns / 待用户确认项
 
@@ -108,9 +134,9 @@
 - Codex OSS 未核实面向用户的通用 schedule/cron CRUD、错过触发、时区、幂等、重试责任归属；内部 goal continuation、refresh worker、code-mode timer 不足以替代这些语义。
 - 三者的“回放”都不能自动推出外部副作用 exactly-once：DeepSeek 的 session seed、Pi 的 operation replay policy、Codex 的 rollout reducer 主要保证记录/重建/诊断；网络、模型随机性、凭证、文件系统和外部服务替身仍未统一定义。
 - 三者都没有在本票据中完成统一实测基准；`BENCHMARK.md`、Pi evals、Codex e2e/MCP conformance 证明测试入口/测试契约，不构成跨项目质量排名。
-- GitHub stars、forks、topic match 和由此产生的“热度/活跃度”未报告：canonical collector 被 rate limit 阻断，且没有旧 sealed ledger 可复用。只有 commit/tag/release 文档锚点被保留。
+- v2 refresh 已正式封存 GitHub stars、topicMatch 和 immutable revision；它们是同一 collection 时点的仓库快照，不是能力评分、维护承诺或最终推荐。forks 未纳入本次 brief，仍保持 unknown。
 - 外部插件、MCP server、provider adapter、container/microVM、云端执行器的实际许可证、供应链、凭证处理和维护责任需要按具体集成逐项复核；根仓库许可证不能替代这些核验。
 
 ## 覆盖范围结论（不作推荐）
 
-本文已经覆盖三个纳入对象的：运行循环、工具/工作区、代码闭环、MCP/API/插件、Provider、自动化/定时、轨迹/回放/评测、沙箱/安全、状态/失败恢复/并发、许可证、维护活跃度与提交/版本锚点；并单独记录了对象身份歧义、collector blocked 状态以及 unknowns。本文不把这些证据转换为主基座选择、组合路线或最终推荐。
+本文已经覆盖三个纳入对象的：运行循环、工具/工作区、代码闭环、MCP/API/插件、Provider、自动化/定时、轨迹/回放/评测、沙箱/安全、状态/失败恢复/并发、许可证、维护活跃度与提交/版本锚点；并单独记录了对象身份歧义、历史 v1 blocked 状态、当前 v2 fresh 状态以及仍存在的能力 unknowns。本文不把这些证据转换为主基座选择、组合路线或最终推荐。

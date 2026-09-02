@@ -1,0 +1,27 @@
+{
+  "status": "pass",
+  "run_id": "w8-plugin-aware-e4-idempotency",
+  "checks": {
+    "first_claim_executable": true,
+    "duplicate_claim_suppressed": true,
+    "one_physical_write": true,
+    "one_owner_effect": true,
+    "owner_run_completed": true,
+    "owner_correlation_present": true,
+    "case_local_target": true
+  },
+  "observed": {
+    "first_claim": {
+      "status": "claimed",
+      "attempt": 1
+    },
+    "duplicate_claim": {
+      "status": "already_completed",
+      "reason": "idempotent_replay"
+    },
+    "physical_writes": 1,
+    "effect_count": 1,
+    "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/state/composition.sqlite3",
+    "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/effects/delivery.json"
+  }
+}

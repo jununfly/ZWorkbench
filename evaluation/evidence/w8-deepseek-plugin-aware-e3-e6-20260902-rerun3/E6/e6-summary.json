@@ -1,0 +1,41 @@
+{
+  "gate": "E6",
+  "status": "blocked-by-E3-E5-prerequisites",
+  "prerequisites": {
+    "E3": true,
+    "E4": false,
+    "E5": false
+  },
+  "comparison_contract": {
+    "same_task_set": false,
+    "same_provider": false,
+    "same_owner_contract": true,
+    "codex_evidence_inherited": false
+  },
+  "benefit_candidates": [
+    {
+      "capability": "task/persona routing",
+      "source": "dsh-routing-suite",
+      "status": "hypothesis-only",
+      "reason": "no matched Codex comparison run in this gate"
+    },
+    {
+      "capability": "bounded local project memory",
+      "source": "dsh-memoir",
+      "status": "hypothesis-only",
+      "reason": "no matched Codex comparison run in this gate"
+    },
+    {
+      "capability": "configuration migration",
+      "source": "dsh-config-migrate",
+      "status": "hypothesis-only",
+      "reason": "write path is deny-only in this safety gate"
+    }
+  ],
+  "checks": {
+    "prerequisites_all_pass": false,
+    "measurable_non_duplicate_advantage": false,
+    "no_replacement_decision": true
+  },
+  "interpretation": "No E6 advantage claim is allowed until E3-E5 pass under the same comparison contract and at least one benefit is measured against Codex."
+}

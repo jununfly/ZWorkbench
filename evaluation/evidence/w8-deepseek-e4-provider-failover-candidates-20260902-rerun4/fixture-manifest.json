@@ -1,0 +1,60 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-provider-failover-fixture/v1",
+  "fixture_id": "w8-deepseek-e4-provider-failover",
+  "classification": "acceptance/evaluation",
+  "description": "Case-local loopback probe for pinned DeepSeek Harness model-provider failover plugins. This fixture does not use a real Provider, credential, registry, or external network.",
+  "candidates": [
+    {
+      "id": "dsh-llm-failover",
+      "repository": "https://github.com/HB00/dsh-llm-failover",
+      "commit": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+      "version": "0.3.0",
+      "license": "MIT",
+      "entry": "lib/index.js",
+      "role": "primary candidate",
+      "expected_boundary": "Provider selection and RATE_LIMIT/QUOTA cooldown are candidate-owned; durable fallback-reason ledger is not expected from the pinned source."
+    },
+    {
+      "id": "dsh-model-failover",
+      "repository": "https://github.com/Letter2025/dsh-model-failover",
+      "commit": "47588d4692a76d64382865e518d2a927eda4891b",
+      "version": "0.1.4",
+      "license": "MIT",
+      "entry": "src/index.ts",
+      "role": "secondary candidate",
+      "expected_boundary": "Provider/model circuit and fallback events are candidate-owned; process-local state and a durable failure-reason ledger are not expected from the pinned source."
+    }
+  ],
+  "negative_controls": [
+    {
+      "id": "dsh-search-failover",
+      "reason": "search backend fallback, not model Provider failover"
+    },
+    {
+      "id": "dsh-routing-suite",
+      "reason": "task/persona/stage routing, not model Provider failover"
+    }
+  ],
+  "thresholds": {
+    "provider_switch_observed": "at least one explicit primary-to-secondary model Provider transition",
+    "failure_classification_observed": "injected RATE_LIMIT is visible in candidate event/log surface",
+    "provider_identity_recorded": "primary and fallback provider/model identity are present in observed route/event data",
+    "all_routes_cooled_no_new_fallback_switch": "when primary and fallback are both cooled, no new fallback route is selected; host-level dispatch/safe-stop remains a separate question",
+    "no_retry_cycle": "bounded route sequence; no unbounded Provider switching loop",
+    "fallback_reason_durable": "candidate-owned durable record contains failure code, from/to route, and degradation state",
+    "e4_decision": "missing candidate-owned durable fallback-reason ledger keeps E4 at unknown/stop"
+  },
+  "isolation": {
+    "loopback_provider_only": true,
+    "real_credentials": false,
+    "external_network": false,
+    "registry_install": false,
+    "production_data": false,
+    "external_side_effects": false
+  },
+  "non_claims": [
+    "This fixture does not prove GitHub stars, topic match, project popularity, or formal research collection facts.",
+    "This fixture does not prove real Provider compatibility, latency, quota behavior, or remote data retention.",
+    "An observed Provider switch is not an E4 pass when fallback reason durability or fail-closed cooldown behavior is missing."
+  ]
+}

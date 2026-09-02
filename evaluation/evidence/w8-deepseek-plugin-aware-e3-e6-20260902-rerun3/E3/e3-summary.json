@@ -1,0 +1,70 @@
+{
+  "gate": "E3",
+  "status": "pass",
+  "scope": "pinned dsh-config-migrate runtime seam + CompositionOwner unknown-effect control",
+  "checks": {
+    "runtime_seam_passed": true,
+    "unknown_effect_control_passed": true,
+    "critical_write_interception": true,
+    "unauthorized_execution_zero": true,
+    "unsafe_duplicate_effect_zero": true
+  },
+  "runtime_seam": {
+    "status": "pass",
+    "evidence": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/runtime-seam/summary.json",
+    "plugin_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "registrations": {
+      "before_dispose": {
+        "rpc": 4,
+        "tools": 1,
+        "ui": 2,
+        "styles": 1
+      },
+      "after_calls": {
+        "rpc": 4,
+        "tools": 1,
+        "ui": 2,
+        "styles": 1
+      },
+      "after_dispose": {
+        "rpc": 0,
+        "tools": 0,
+        "ui": 0,
+        "styles": 0
+      }
+    },
+    "owner_run_status": "completed",
+    "owner_effect_count": 0
+  },
+  "unknown_effect": {
+    "schema": "zworkbench-w8-plugin-aware-e3-unknown-effect/v1",
+    "status": "pass",
+    "run_id": "w8-plugin-aware-e3-unknown-effect",
+    "denied": {
+      "status": "denied",
+      "reason": "unknown_effect_class"
+    },
+    "retry": {
+      "status": "denied",
+      "reason": "run_terminal:safe_stopped"
+    },
+    "checks": {
+      "unknown_effect_denied": true,
+      "run_safe_stopped": true,
+      "retry_not_automatic": true,
+      "physical_effects_zero": true,
+      "owner_events_present": true
+    },
+    "observed": {
+      "run_status": "safe_stopped",
+      "effect_count": 0,
+      "event_count": 4,
+      "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/unknown-effect/state/composition.sqlite3"
+    }
+  },
+  "non_claims": [
+    "E3 does not prove host-level OS sandbox inheritance.",
+    "E3 does not prove successful real DSH_HOME migration; writes remain denied in this gate.",
+    "E3 is not a DeepSeek product integration approval."
+  ]
+}

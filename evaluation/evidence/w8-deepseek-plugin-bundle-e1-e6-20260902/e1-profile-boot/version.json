@@ -1,0 +1,12 @@
+{
+  "command": [
+    "node",
+    "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/core-alpha4/apps/cli/lib/bin.js",
+    "--version"
+  ],
+  "returncode": 0,
+  "stdout": "0.1.2-alpha.4\n",
+  "stderr": "",
+  "duration_ms": 67,
+  "timed_out": false
+}

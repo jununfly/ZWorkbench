@@ -1,0 +1,90 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-candidate-probe/v1",
+  "candidate": "dsh-model-failover",
+  "routes": [
+    {
+      "provider": "primary",
+      "model": "model-a",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    },
+    {
+      "provider": "secondary",
+      "model": "model-b",
+      "maxTokens": 256
+    },
+    {
+      "provider": "primary",
+      "model": "model-a",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    },
+    {
+      "provider": "primary",
+      "model": "model-a",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    }
+  ],
+  "events": [
+    {
+      "event": "model-failover/circuit-opened",
+      "payload": {
+        "provider": "primary",
+        "model": "model-a",
+        "level": "model"
+      }
+    },
+    {
+      "event": "model-failover/failover",
+      "payload": {
+        "from": {
+          "provider": "primary",
+          "model": "model-a"
+        },
+        "to": {
+          "provider": "secondary",
+          "model": "model-b"
+        },
+        "agentId": "agent-e4"
+      }
+    },
+    {
+      "event": "model-failover/circuit-opened",
+      "payload": {
+        "provider": "secondary",
+        "model": "model-b",
+        "level": "model"
+      }
+    }
+  ],
+  "session_messages": [
+    {
+      "type": "user/message",
+      "message": "⚠️ 模型熔断：primary/model-a 不可用，已切换到 secondary/model-b"
+    }
+  ],
+  "logs": [
+    {
+      "level": "warn",
+      "message": "[dsh-model-failover] %s/%s circuit opened (%s) after %s: %s primary model-a model RATE_LIMIT fixture rate limit"
+    },
+    {
+      "level": "warn",
+      "message": "[dsh-model-failover] %s: %s/%s unavailable, switching to %s/%s agent-e4 primary model-a secondary model-b"
+    },
+    {
+      "level": "warn",
+      "message": "[dsh-model-failover] %s/%s circuit opened (%s) after %s: %s secondary model-b model RATE_LIMIT fixture rate limit"
+    }
+  ],
+  "registrations": {
+    "rpc": 0,
+    "projection": 0
+  },
+  "candidate_owned_durable_records": [],
+  "request_listener_registered": true,
+  "request_error_listener_registered": true,
+  "cleanup_callbacks_invoked": 1,
+  "cleanup_completed": true
+}

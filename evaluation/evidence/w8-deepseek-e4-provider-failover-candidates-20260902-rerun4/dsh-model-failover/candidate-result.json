@@ -1,0 +1,151 @@
+{
+  "candidate": "dsh-model-failover",
+  "status": "partial/unknown",
+  "source": {
+    "schema": "zworkbench-w8-deepseek-e4-candidate-source/v1",
+    "candidate": "dsh-model-failover",
+    "repository": "https://github.com/Letter2025/dsh-model-failover",
+    "commit": "47588d4692a76d64382865e518d2a927eda4891b",
+    "version": "0.1.4",
+    "source_checkout": "/private/tmp/zworkbench-e4-candidates.IUXdiV/dsh-model-failover",
+    "checkout_status": "read-only-input-required",
+    "files": {
+      "package.json": {
+        "present": true,
+        "bytes": 1562,
+        "sha256": "2bf59d5c2c72ea06730c4f6f5f7baed30bb288fc6e5b6266c51d0be36b152bba"
+      },
+      "src/index.ts": {
+        "present": true,
+        "bytes": 12089,
+        "sha256": "7a59c0a450e53d92f9a14780c51065a6868377ff4acf2aaca90c6048e285a805"
+      },
+      "src/circuit.ts": {
+        "present": true,
+        "bytes": 5675,
+        "sha256": "0fa20ea82992f6a6c6bd84b924c543857505a934260efd7ed14d32c2da9c7efc"
+      },
+      "src/types.ts": {
+        "present": true,
+        "bytes": 2521,
+        "sha256": "11b0ee5b276fde3fec68ff2041f23faa10000fb1a3f18a616c9e39d948ec48cb"
+      },
+      "cordis.patch.yml": {
+        "present": true,
+        "bytes": 1714,
+        "sha256": "001032c3264b89b1ae28564396b27c3f41097b345dbf155d60035562ed5a6431"
+      },
+      "LICENSE": {
+        "present": true,
+        "bytes": 1066,
+        "sha256": "18d59820997d14b6d5c29c3dd6fdfd74418087b72850021dd78577bec7fc4782"
+      }
+    }
+  },
+  "probe": {
+    "routes": [
+      {
+        "provider": "primary",
+        "model": "model-a",
+        "reasoningEffort": "high",
+        "maxTokens": 256
+      },
+      {
+        "provider": "secondary",
+        "model": "model-b",
+        "maxTokens": 256
+      },
+      {
+        "provider": "primary",
+        "model": "model-a",
+        "reasoningEffort": "high",
+        "maxTokens": 256
+      },
+      {
+        "provider": "primary",
+        "model": "model-a",
+        "reasoningEffort": "high",
+        "maxTokens": 256
+      }
+    ],
+    "events": [
+      {
+        "event": "model-failover/circuit-opened",
+        "payload": {
+          "provider": "primary",
+          "model": "model-a",
+          "level": "model"
+        }
+      },
+      {
+        "event": "model-failover/failover",
+        "payload": {
+          "from": {
+            "provider": "primary",
+            "model": "model-a"
+          },
+          "to": {
+            "provider": "secondary",
+            "model": "model-b"
+          },
+          "agentId": "agent-e4"
+        }
+      },
+      {
+        "event": "model-failover/circuit-opened",
+        "payload": {
+          "provider": "secondary",
+          "model": "model-b",
+          "level": "model"
+        }
+      }
+    ],
+    "logs": [
+      {
+        "level": "warn",
+        "message": "[dsh-model-failover] %s/%s circuit opened (%s) after %s: %s primary model-a model RATE_LIMIT fixture rate limit"
+      },
+      {
+        "level": "warn",
+        "message": "[dsh-model-failover] %s: %s/%s unavailable, switching to %s/%s agent-e4 primary model-a secondary model-b"
+      },
+      {
+        "level": "warn",
+        "message": "[dsh-model-failover] %s/%s circuit opened (%s) after %s: %s secondary model-b model RATE_LIMIT fixture rate limit"
+      }
+    ],
+    "registrations": {
+      "rpc": 0,
+      "projection": 0
+    },
+    "session_messages": [
+      {
+        "type": "user/message",
+        "message": "⚠️ 模型熔断：primary/model-a 不可用，已切换到 secondary/model-b"
+      }
+    ],
+    "candidate_owned_durable_records": []
+  },
+  "checks": {
+    "source_commit_present": true,
+    "required_source_files_present": true,
+    "candidate_registered_request_and_error": true,
+    "provider_switch_observed": true,
+    "failure_classification_observed": true,
+    "provider_identity_recorded": true,
+    "all_routes_cooled_no_new_fallback_switch": true,
+    "no_retry_cycle": true,
+    "fallback_reason_observable": true,
+    "fallback_reason_durable": false,
+    "candidate_owned_durable_records_present": false,
+    "real_provider_not_used": true,
+    "real_credentials_not_used": true,
+    "external_network_not_used": true
+  },
+  "interpretation": "The candidate performs a real model Provider transition under the loopback seam, but it cannot satisfy E4 while durable candidate-owned fallback reason evidence is missing; the dsh-llm candidate also selects its final fallback after all configured routes are cooled. Host-level dispatch/safe-stop is not claimed by this route-only probe.",
+  "non_claims": [
+    "The probe does not call a real Provider or prove Ark compatibility.",
+    "Console/logger output and in-memory UI notices are observable evidence, not a durable ledger.",
+    "Source review remains exploratory until the formal zj-research collection produces a fresh sealed ledger."
+  ]
+}

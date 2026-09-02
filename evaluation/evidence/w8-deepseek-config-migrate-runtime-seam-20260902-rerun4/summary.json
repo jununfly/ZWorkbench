@@ -1,0 +1,695 @@
+{
+  "schema": "zworkbench-w8-deepseek-config-migrate-runtime-seam/v1",
+  "status": "pass",
+  "classification": "acceptance/evaluation",
+  "started_at": "2026-09-01T17:56:47.274070+00:00",
+  "bundle_root": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR",
+  "output": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4",
+  "plugin": {
+    "source_dir": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate",
+    "expected_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "actual_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "package": "dsh-config-migrate",
+    "version": "1.0.0",
+    "host_sha256": "06bf723b12f721e4a0cd69860daec290c3bde2913a610d423af00a3d8e66302e",
+    "client_sha256": "d1711213e4e6f7bac3feba4f558accebb4e522736cf539a47b67892f547d06ec"
+  },
+  "runtime_probe": {
+    "command": [
+      "/opt/homebrew/bin/node",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w8-deepseek-config-migrate-adapter/v1/runtime-seam-host.mjs",
+      "--case-root=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01",
+      "--host=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/inputs/host.js",
+      "--client=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/inputs/client.js",
+      "--home=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/dsh-home",
+      "--workspace=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace",
+      "--allowed-scripts-json=[\"a5a684880e9af596401efcfdce499fb90a4390b20ec135d6df6bbeb3784f7f9d\",\"e17835e2b99b751d7979223328bdc5d18c0e00860acb848c72ff6e95fe0a56a4\",\"eba645ec0be2ef0e78d0868a6ed9a984c37cf85772c8e9f95a73cf4aa8a41dfe\"]"
+    ],
+    "returncode": 0,
+    "timed_out": false,
+    "stdout_sha256": "ada860bc87852693dc5a95b97abdd288c1bbeb660127a8f628396d75a04b856f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "parsed": {
+      "schema": "zworkbench-dsh-config-migrate-runtime-seam/v1",
+      "plugin_contract": "dsh.plugin.host/client",
+      "operations": [
+        {
+          "request_id": "rpc-status-1",
+          "kind": "rpc",
+          "operation": "config/status",
+          "status": "completed",
+          "value": {
+            "home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/dsh-home",
+            "platform": "Unix",
+            "count": 6,
+            "files": [
+              {
+                "rel": ".agent-presets/default.txt",
+                "size": 15
+              },
+              {
+                "rel": ".anonymous-user-id",
+                "size": 13
+              },
+              {
+                "rel": ".credentials.yaml",
+                "size": 44
+              },
+              {
+                "rel": "external-plugins/demo/package.json",
+                "size": 80
+              },
+              {
+                "rel": "profiles/headless/package.json",
+                "size": 134
+              },
+              {
+                "rel": "settings.yaml",
+                "size": 38
+              }
+            ],
+            "lastExport": null,
+            "discovered": []
+          }
+        },
+        {
+          "request_id": "rpc-export-deny-1",
+          "kind": "rpc",
+          "operation": "config/export",
+          "status": "denied",
+          "error": {
+            "code": "ADAPTER_WRITE_DENY",
+            "message": "write denied by dynamic-plugin adapter policy gate"
+          }
+        },
+        {
+          "request_id": "rpc-import-escape-1",
+          "kind": "rpc",
+          "operation": "config/import",
+          "status": "denied",
+          "error": {
+            "code": "ADAPTER_PATH_DENY",
+            "message": "path outside adapter root: /Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/outside-import.json"
+          }
+        },
+        {
+          "request_id": "rpc-import-write-deny-1",
+          "kind": "rpc",
+          "operation": "config/import",
+          "status": "completed",
+          "value": {
+            "home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/dsh-home",
+            "dryRun": false,
+            "restored": [],
+            "backups": [],
+            "skipped": [
+              "settings.yaml (备份失败)"
+            ],
+            "binaries": 0,
+            "links": [],
+            "predictedLinks": [],
+            "linkErrors": [],
+            "verifyErrors": [],
+            "pluginDeps": [],
+            "decryptedCred": false
+          }
+        },
+        {
+          "request_id": "tool-export-deny-1",
+          "kind": "tool",
+          "operation": "dsh_config_migrate",
+          "status": "denied",
+          "error": {
+            "code": "ADAPTER_WRITE_DENY",
+            "message": "write denied by dynamic-plugin adapter policy gate"
+          }
+        },
+        {
+          "request_id": "rpc-unknown-1",
+          "kind": "rpc",
+          "operation": "future/config.v1",
+          "status": "denied",
+          "error": {
+            "code": "ADAPTER_UNKNOWN_RPC",
+            "message": "future/config.v1"
+          }
+        }
+      ],
+      "registrations": {
+        "before_dispose": {
+          "rpc": 4,
+          "tools": 1,
+          "ui": 2,
+          "styles": 1
+        },
+        "after_calls": {
+          "rpc": 4,
+          "tools": 1,
+          "ui": 2,
+          "styles": 1
+        },
+        "after_dispose": {
+          "rpc": 0,
+          "tools": 0,
+          "ui": 0,
+          "styles": 0
+        }
+      },
+      "write_attempts": [
+        {
+          "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace/dsh-config-export.json",
+          "bytes": 1425,
+          "requested_policy": null,
+          "effective_policy": "adapter-controlled-deny",
+          "decision": "deny"
+        },
+        {
+          "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/dsh-home/settings.yaml.bak-2026-09-01T17-56-47-256Z",
+          "bytes": 38,
+          "requested_policy": {
+            "mode": "danger-full-access",
+            "workspaceRoot": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace"
+          },
+          "effective_policy": "adapter-controlled-deny",
+          "decision": "deny"
+        },
+        {
+          "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace/tool-export.json",
+          "bytes": 1259,
+          "requested_policy": null,
+          "effective_policy": "adapter-controlled-deny",
+          "decision": "deny"
+        }
+      ],
+      "subprocess": {
+        "requests": [
+          {
+            "argv": [
+              "node",
+              "-e",
+              "const crypto=require(\"crypto\");\nconst mode=process.argv[1];\nconst pass=process.argv[2];\nlet chunks=[];\nprocess.stdin.on(\"data\",c=>chunks.push(c));\nprocess.stdin.on(\"end\",()=>{\n  const buf=Buffer.concat(chunks);\n  if(mode===\"enc\"){\n    const salt=crypto.randomBytes(16);\n    const key=crypto.scryptSync(pass,salt,32);\n    const iv=crypto.randomBytes(12);\n    const c=crypto.createCipheriv(\"aes-256-gcm\",key,iv);\n    const enc=Buffer.concat([c.update(buf),c.final()]);\n    process.stdout.write(JSON.stringify({salt:salt.toString(\"base64\"),iv:iv.toString(\"base64\"),tag:c.getAuthTag().toString(\"base64\"),data:enc.toString(\"base64\")}));\n  } else if(mode===\"dec\"){\n    const j=JSON.parse(buf.toString(\"utf8\"));\n    const key=crypto.scryptSync(pass,Buffer.from(j.salt,\"base64\"),32);\n    const d=crypto.createDecipheriv(\"aes-256-gcm\",key,Buffer.from(j.iv,\"base64\"));\n    d.setAuthTag(Buffer.from(j.tag,\"base64\"));\n    try{const plain=Buffer.concat([d.update(Buffer.from(j.data,\"base64\")),d.final()]);process.stdout.write(plain.toString(\"utf8\"));}\n    catch(e){process.exit(3);}\n  } else { process.exit(2); }\n});",
+              "enc",
+              "fixture-password-only"
+            ],
+            "cwd": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace",
+            "shell": false,
+            "script_sha256": "a5a684880e9af596401efcfdce499fb90a4390b20ec135d6df6bbeb3784f7f9d",
+            "source_hash_allowlisted": true,
+            "decision": "allow",
+            "reason": null
+          },
+          {
+            "argv": [
+              "python",
+              "-c",
+              "print(1)"
+            ],
+            "cwd": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01",
+            "shell": false,
+            "script_sha256": "d287bb7f9d15abdc5b6e98536263815744b6ef21c8f3c839fc434ca70d8efe99",
+            "source_hash_allowlisted": false,
+            "decision": "deny",
+            "reason": "executable-or-mode-not-allowlisted"
+          }
+        ],
+        "accepted_count": 1,
+        "denied_count": 1,
+        "negative_probe": {
+          "code": "ADAPTER_SUBPROCESS_DENY",
+          "message": "subprocess denied: executable-or-mode-not-allowlisted"
+        }
+      },
+      "paths": {
+        "case_root": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01",
+        "home": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/dsh-home",
+        "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace",
+        "migration_state": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace/.dshmig-state.json"
+      }
+    },
+    "parse_error": null
+  },
+  "owner_observation": {
+    "run": {
+      "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+      "task_type": "dynamic_plugin_runtime_seam",
+      "status": "completed",
+      "created_at": "2026-09-01T17:56:47.263+00:00",
+      "updated_at": "2026-09-01T17:56:47.264+00:00",
+      "input": {
+        "mode": "case-local",
+        "plugin": "dsh-config-migrate"
+      },
+      "metadata": {
+        "adapter_schema": "zworkbench-w8-deepseek-config-migrate-runtime-seam/v1",
+        "plugin_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+        "provider": {
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "fixture-model",
+          "provider": "fixture-loopback"
+        }
+      },
+      "effects": [],
+      "results": [
+        {
+          "result_id": "26131a95-79d2-4d44-8818-d0bfa74a2d18",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-status-1",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "value": {
+            "error_code": null,
+            "external_effects": 0,
+            "operation": "config/status",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-status-1",
+            "status": "completed"
+          }
+        },
+        {
+          "result_id": "0e16f05f-5ee0-40f6-a28f-1e335f98816f",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.tool",
+          "source_id": "tool-export-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_WRITE_DENY",
+            "external_effects": 0,
+            "operation": "dsh_config_migrate",
+            "plugin": "dsh-config-migrate",
+            "request_id": "tool-export-deny-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "8bc2397c-f092-4acc-a812-6e66b6092da6",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "semantic",
+          "source_id": "run",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "external_effects": 0,
+            "plugin": "dsh-config-migrate",
+            "provider_requests": 0,
+            "status": "runtime-seam-verified"
+          }
+        },
+        {
+          "result_id": "99d4242d-e814-4155-8fc0-5de2d0e36cd3",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-import-write-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": null,
+            "external_effects": 0,
+            "operation": "config/import",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-import-write-deny-1",
+            "status": "completed"
+          }
+        },
+        {
+          "result_id": "c5498954-6b9c-4827-8c5c-5681756277da",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-import-escape-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_PATH_DENY",
+            "external_effects": 0,
+            "operation": "config/import",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-import-escape-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "c57741ce-849b-42f5-8a38-b5153ce958df",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-unknown-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_UNKNOWN_RPC",
+            "external_effects": 0,
+            "operation": "future/config.v1",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-unknown-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "d329e26c-20fd-4a48-a45c-502cb95b4d88",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-export-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_WRITE_DENY",
+            "external_effects": 0,
+            "operation": "config/export",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-export-deny-1",
+            "status": "denied"
+          }
+        }
+      ]
+    },
+    "snapshot": {
+      "schema": "zworkbench-composition-owner/v1",
+      "schema_version": 1,
+      "runs": [
+        {
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "task_type": "dynamic_plugin_runtime_seam",
+          "status": "completed",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "updated_at": "2026-09-01T17:56:47.264+00:00",
+          "input": {
+            "mode": "case-local",
+            "plugin": "dsh-config-migrate"
+          },
+          "metadata": {
+            "adapter_schema": "zworkbench-w8-deepseek-config-migrate-runtime-seam/v1",
+            "plugin_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+            "provider": {
+              "endpoint": "http://127.0.0.1:11434",
+              "model": "fixture-model",
+              "provider": "fixture-loopback"
+            }
+          }
+        }
+      ],
+      "approvals": [],
+      "effects": [],
+      "effect_attempts": [],
+      "results": [
+        {
+          "result_id": "26131a95-79d2-4d44-8818-d0bfa74a2d18",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-status-1",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "value": {
+            "error_code": null,
+            "external_effects": 0,
+            "operation": "config/status",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-status-1",
+            "status": "completed"
+          }
+        },
+        {
+          "result_id": "0e16f05f-5ee0-40f6-a28f-1e335f98816f",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.tool",
+          "source_id": "tool-export-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_WRITE_DENY",
+            "external_effects": 0,
+            "operation": "dsh_config_migrate",
+            "plugin": "dsh-config-migrate",
+            "request_id": "tool-export-deny-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "8bc2397c-f092-4acc-a812-6e66b6092da6",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "semantic",
+          "source_id": "run",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "external_effects": 0,
+            "plugin": "dsh-config-migrate",
+            "provider_requests": 0,
+            "status": "runtime-seam-verified"
+          }
+        },
+        {
+          "result_id": "99d4242d-e814-4155-8fc0-5de2d0e36cd3",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-import-write-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": null,
+            "external_effects": 0,
+            "operation": "config/import",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-import-write-deny-1",
+            "status": "completed"
+          }
+        },
+        {
+          "result_id": "c5498954-6b9c-4827-8c5c-5681756277da",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-import-escape-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_PATH_DENY",
+            "external_effects": 0,
+            "operation": "config/import",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-import-escape-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "c57741ce-849b-42f5-8a38-b5153ce958df",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-unknown-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_UNKNOWN_RPC",
+            "external_effects": 0,
+            "operation": "future/config.v1",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-unknown-1",
+            "status": "denied"
+          }
+        },
+        {
+          "result_id": "d329e26c-20fd-4a48-a45c-502cb95b4d88",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "kind": "adapter.dynamic_plugin.rpc",
+          "source_id": "rpc-export-deny-1",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "value": {
+            "error_code": "ADAPTER_WRITE_DENY",
+            "external_effects": 0,
+            "operation": "config/export",
+            "plugin": "dsh-config-migrate",
+            "request_id": "rpc-export-deny-1",
+            "status": "denied"
+          }
+        }
+      ],
+      "replays": [],
+      "events": [
+        {
+          "seq": 1,
+          "event_id": "17d2bc51-7afd-4f64-9278-2951f8e09bb0",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "run.created",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "payload": {
+            "task_type": "dynamic_plugin_runtime_seam"
+          }
+        },
+        {
+          "seq": 2,
+          "event_id": "15cd21cf-dcb2-405d-a0d5-a367fb69c9d2",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "run.started",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "payload": {
+            "from": "created",
+            "to": "running"
+          }
+        },
+        {
+          "seq": 3,
+          "event_id": "8012d286-27e2-42d8-bb5a-2983a16d940d",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.263+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.rpc",
+            "result_id": "26131a95-79d2-4d44-8818-d0bfa74a2d18",
+            "source_id": "rpc-status-1"
+          }
+        },
+        {
+          "seq": 4,
+          "event_id": "1eae4a22-5ca2-436f-8527-c386f525189b",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.rpc",
+            "result_id": "d329e26c-20fd-4a48-a45c-502cb95b4d88",
+            "source_id": "rpc-export-deny-1"
+          }
+        },
+        {
+          "seq": 5,
+          "event_id": "00b5bce9-fbaf-4867-a667-84fed9f11070",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.rpc",
+            "result_id": "c5498954-6b9c-4827-8c5c-5681756277da",
+            "source_id": "rpc-import-escape-1"
+          }
+        },
+        {
+          "seq": 6,
+          "event_id": "bf931f7f-6529-4e7e-8feb-97182000ec92",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.rpc",
+            "result_id": "99d4242d-e814-4155-8fc0-5de2d0e36cd3",
+            "source_id": "rpc-import-write-deny-1"
+          }
+        },
+        {
+          "seq": 7,
+          "event_id": "e055e0f8-f0b4-48f0-ab13-ce8cdffa7234",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.tool",
+            "result_id": "0e16f05f-5ee0-40f6-a28f-1e335f98816f",
+            "source_id": "tool-export-deny-1"
+          }
+        },
+        {
+          "seq": 8,
+          "event_id": "79129c00-dbb9-4454-b31f-68dd70c4158e",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "adapter.dynamic_plugin.rpc",
+            "result_id": "c57741ce-849b-42f5-8a38-b5153ce958df",
+            "source_id": "rpc-unknown-1"
+          }
+        },
+        {
+          "seq": 9,
+          "event_id": "a513d925-d4a3-4471-bc30-0cf28f0de655",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "result.recorded",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "kind": "semantic",
+            "result_id": "8bc2397c-f092-4acc-a812-6e66b6092da6",
+            "source_id": "run"
+          }
+        },
+        {
+          "seq": 10,
+          "event_id": "9d96fea8-303e-4ec0-9e78-9a33a5b26d56",
+          "run_id": "w8-dsh-config-migrate-runtime-seam-repeat-01",
+          "type": "run.completed",
+          "created_at": "2026-09-01T17:56:47.264+00:00",
+          "payload": {
+            "from": "running",
+            "to": "completed"
+          }
+        }
+      ]
+    },
+    "checks": {
+      "run_completed": true,
+      "all_operation_request_ids_recorded": true,
+      "owner_effect_count_zero": true,
+      "owner_events_bound_to_run": true,
+      "owner_results_bound_to_run": true
+    }
+  },
+  "observed": {
+    "operation_count": 6,
+    "operation_statuses": {
+      "rpc-status-1": "completed",
+      "rpc-export-deny-1": "denied",
+      "rpc-import-escape-1": "denied",
+      "rpc-import-write-deny-1": "completed",
+      "tool-export-deny-1": "denied",
+      "rpc-unknown-1": "denied"
+    },
+    "write_attempt_count": 3,
+    "subprocess_request_count": 2,
+    "registrations": {
+      "before_dispose": {
+        "rpc": 4,
+        "tools": 1,
+        "ui": 2,
+        "styles": 1
+      },
+      "after_calls": {
+        "rpc": 4,
+        "tools": 1,
+        "ui": 2,
+        "styles": 1
+      },
+      "after_dispose": {
+        "rpc": 0,
+        "tools": 0,
+        "ui": 0,
+        "styles": 0
+      }
+    },
+    "owner_run_status": "completed",
+    "owner_result_count": 7,
+    "owner_event_count": 10,
+    "owner_database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/state/composition.sqlite3",
+    "migration_state": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/cases/runtime-seam/repeat-01/workspace/.dshmig-state.json"
+  },
+  "checks": {
+    "node_probe_completed": true,
+    "plugin_commit_pinned": true,
+    "host_client_runtime_contract": true,
+    "status_rpc_completed": true,
+    "export_write_denied": true,
+    "import_path_escape_denied": true,
+    "import_write_denied": true,
+    "tool_write_denied": true,
+    "unknown_rpc_denied": true,
+    "write_attempts_all_denied": true,
+    "plugin_full_access_did_not_widen": true,
+    "subprocess_allowlist_used": true,
+    "subprocess_negative_probe_denied": true,
+    "registrations_created": true,
+    "registrations_disposed": true,
+    "migration_state_separate_from_owner": true,
+    "case_paths_inside_case_root": true,
+    "node_reported_paths_inside_case_root": true,
+    "no_external_effects": true,
+    "run_completed": true,
+    "all_operation_request_ids_recorded": true,
+    "owner_effect_count_zero": true,
+    "owner_events_bound_to_run": true,
+    "owner_results_bound_to_run": true
+  },
+  "e3_e6_reopen": {
+    "status": "eligible-for-independent-reopen",
+    "executed_by_this_runner": false,
+    "reason": "The runtime seam is a prerequisite; E3-E6 require a separate plugin-aware evidence run."
+  },
+  "non_claims": [
+    "This is an evaluation-only runtime seam result, not ZWorkbench product integration approval.",
+    "All plugin writes were denied; successful real configuration migration was not evaluated.",
+    "The probe does not prove host-level OS sandbox inheritance or arbitrary future subprocess safety.",
+    "E3-E6 remain unopened until this seam is reviewed and the same gates are run with independent evidence."
+  ],
+  "next_action": "If Human accepts the runtime seam boundary, reopen E3-E6 with a new plugin-aware adapter runner; do not inherit Codex or standard-bundle evidence."
+}

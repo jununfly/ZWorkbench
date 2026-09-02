@@ -1,0 +1,6 @@
+{
+  "name": "dsh-profile-headless",
+  "dependencies": {
+    "dsh-config-migrate": "file:../external-plugins/dsh-config-migrate"
+  }
+}

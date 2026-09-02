@@ -1,0 +1,67 @@
+{
+  "markdownPath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-plugin-ecosystem-decision.md",
+  "htmlPath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-plugin-ecosystem-decision.html",
+  "reportHash": "7f806f4a38b07cd3472931db810a1eb2c82d3df19f57357df54fd0a720458fc7",
+  "publishCount": 1,
+  "evaluation": {
+    "reportHash": "7f806f4a38b07cd3472931db810a1eb2c82d3df19f57357df54fd0a720458fc7",
+    "reportFamily": "technical-c4/v1",
+    "compilerVersion": "research/v1",
+    "healthy": true,
+    "correctness": {
+      "revisionPinned": true,
+      "provenanceComplete": true,
+      "criticalClaimsEvidence": true,
+      "scoringAxesSeparated": true,
+      "publishExactlyOnce": true,
+      "receiptConsistent": true
+    },
+    "evidenceCount": 143,
+    "unknownCount": 9,
+    "navigationFailureCount": 0,
+    "collection": {
+      "filesRead": 175,
+      "sourceBytesRead": 832083,
+      "durationMs": 154907,
+      "cacheHit": false
+    }
+  },
+  "qualityGate": {
+    "healthy": true,
+    "schema": "technical-research-quality-gate/v1",
+    "briefSchema": "technical-decision-brief/v1",
+    "reportFamily": "technical-c4/v1",
+    "checks": {
+      "decisionFrame": true,
+      "diagramCoverage": true,
+      "candidateScoresFromLedger": true,
+      "criticalClaimsEvidence": true,
+      "comparisonTraceability": true,
+      "recommendationTraceability": true,
+      "metricCoverage": true,
+      "riskRegisterCoverage": true,
+      "unknownsSurfaced": true
+    },
+    "counts": {
+      "concepts": 4,
+      "candidates": 19,
+      "cards": 19,
+      "claims": 19,
+      "comparisons": 5,
+      "recommendations": 5,
+      "metrics": 6,
+      "riskRegister": 6,
+      "ledgerEvidence": 143,
+      "ledgerUnknownCriteria": 9,
+      "graduationCriteria": 5,
+      "versionSkew": false
+    },
+    "brief": {
+      "schema": "technical-decision-brief/v1",
+      "stage": "usefulness-validation",
+      "constraintCount": 5,
+      "optionCount": 6,
+      "goalCount": 4
+    }
+  }
+}

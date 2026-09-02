@@ -1,0 +1,36 @@
+{
+  "scenario": "fault_diagnosis",
+  "status": "pass",
+  "machine_elapsed_seconds": 0.000192,
+  "machine_elapsed_is_not_human_time": true,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "threshold_minutes": 30,
+  "error": null,
+  "operation": {
+    "checks": {
+      "fault_correlated": true,
+      "category_present": true,
+      "bounded_action_present": true,
+      "unknown_not_promoted": true,
+      "no_network_or_credentials": true
+    },
+    "observed": {
+      "fault": {
+        "code": "ADAPTER_WRITE_DENY",
+        "request_id": "w8-plugin-aware-e3-write-1",
+        "plugin": "dsh-config-migrate",
+        "run_id": "w8-plugin-aware-e3"
+      },
+      "diagnosis": {
+        "schema": "zworkbench-w8-plugin-aware-diagnosis/v1",
+        "fault_id": "fault-plugin-write-deny-1",
+        "run_id": "w8-plugin-aware-e3",
+        "category": "adapter_policy_denied_write",
+        "recommended_action": "retain evidence; do not retry without an explicit policy change",
+        "unknown_not_promoted": true
+      },
+      "operation_kind": "prepared_case_local_fault"
+    }
+  }
+}

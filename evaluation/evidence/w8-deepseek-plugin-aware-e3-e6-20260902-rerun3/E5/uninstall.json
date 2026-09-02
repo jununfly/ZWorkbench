@@ -1,0 +1,15 @@
+{
+  "checks": {
+    "local_install_removed": true,
+    "remote_tasks_absent_in_fixture": true,
+    "webhooks_absent_in_fixture": true,
+    "remote_backups_not_claimed": true,
+    "real_credentials_absent": true,
+    "resident_services_at_most_three": true
+  },
+  "observed": {
+    "resident_services": 0,
+    "operation_kind": "case_local_uninstall_only",
+    "remote_exit_status": "not-verified"
+  }
+}

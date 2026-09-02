@@ -1,0 +1,45 @@
+{
+  "version": 4,
+  "projects": {
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/workspace": {
+      "path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/workspace",
+      "title": "workspace",
+      "updatedAt": 1788317949140,
+      "entries": [
+        {
+          "id": "7c21b44d7cf8",
+          "section": "actions",
+          "title": "验证 adapter 边界",
+          "content": "所有动态插件写入都必须经过 owner policy gate。",
+          "time": 1788317949138,
+          "source": {
+            "sessionId": "plugin-aware-e4"
+          },
+          "importance": 5,
+          "pinned": true,
+          "status": "active"
+        },
+        {
+          "id": "018f8a40e4bf",
+          "section": "lessons",
+          "title": "保留 unknown",
+          "content": "没有 Provider failover 合同就不能把同路重试算作切换。",
+          "time": 1788317949139,
+          "importance": 4,
+          "pinned": false,
+          "status": "active"
+        },
+        {
+          "id": "006bbd46375d",
+          "section": "note",
+          "title": "不应注入",
+          "content": "note entry must not enter hot memory.",
+          "time": 1788317949140,
+          "importance": 3,
+          "pinned": false,
+          "status": "active"
+        }
+      ]
+    }
+  }
+}

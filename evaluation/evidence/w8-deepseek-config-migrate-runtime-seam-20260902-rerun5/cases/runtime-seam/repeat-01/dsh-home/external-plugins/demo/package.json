@@ -1,0 +1,6 @@
+{
+  "name": "demo",
+  "dependencies": {
+    "fixture-dependency": "1.0.0"
+  }
+}

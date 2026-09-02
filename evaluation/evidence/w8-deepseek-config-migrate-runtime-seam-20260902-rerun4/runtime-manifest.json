@@ -1,0 +1,72 @@
+{
+  "schema": "zworkbench-w8-deepseek-config-migrate-runtime-seam/v1",
+  "plugin": {
+    "id": "dsh-config-migrate",
+    "source_dir": "dsh-config-migrate",
+    "repository": "https://github.com/kol-mm/dsh-config-migrate",
+    "package": "dsh-config-migrate",
+    "version": "1.0.0",
+    "commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "contract": "dsh.plugin.host/client",
+    "host_entry": "host.js",
+    "client_entry": "client.js",
+    "artifact": null,
+    "artifact_policy": "source-only; do not claim source-to-binary reproducibility"
+  },
+  "probe": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w8-deepseek-config-migrate-adapter/v1/runtime-seam-host.mjs",
+  "policy": {
+    "ctx_services": [
+      "fs",
+      "settings",
+      "sandboxPolicy",
+      "subprocess",
+      "slots"
+    ],
+    "host_bridge": [
+      "handle",
+      "defineTool",
+      "registerTool"
+    ],
+    "client_bridge": [
+      "call",
+      "inject",
+      "register",
+      "insert",
+      "React"
+    ],
+    "fs_operations": [
+      "resolve",
+      "stat",
+      "listDir",
+      "readText",
+      "readBytes",
+      "writeText"
+    ],
+    "settings_operations": [
+      "prepareDocument"
+    ],
+    "subprocess": {
+      "executable_allowlist": [
+        "node"
+      ],
+      "shell": false,
+      "cwd": "case-root-only",
+      "network": "deny",
+      "credentials": "deny",
+      "generated_script_policy": "pinned-source-only-and-adapter-verified"
+    },
+    "policy": {
+      "mode": "adapter-controlled",
+      "plugin_policy_arguments": "ignore-and-replace",
+      "write_gate": "owner-policy-before-write",
+      "path_escape": "deny",
+      "external_home": "deny-in-this-gate"
+    },
+    "registrations": "adapter-owned-and-disposed"
+  },
+  "allowed_script_hashes": [
+    "a5a684880e9af596401efcfdce499fb90a4390b20ec135d6df6bbeb3784f7f9d",
+    "e17835e2b99b751d7979223328bdc5d18c0e00860acb848c72ff6e95fe0a56a4",
+    "eba645ec0be2ef0e78d0868a6ed9a984c37cf85772c8e9f95a73cf4aa8a41dfe"
+  ]
+}

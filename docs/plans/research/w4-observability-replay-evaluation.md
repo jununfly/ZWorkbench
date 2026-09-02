@@ -2,11 +2,43 @@
 
 ## 研究元数据与证据状态
 
-- 研究日期：2026-08-30（Asia/Shanghai）。本文件是 findings，不是技术选型报告，也不包含最终推荐。
+- 研究日期：2026-09-02 refresh v2（Asia/Shanghai）；原始 v1 findings 创建于 2026-08-30。本文件是 findings，不是技术选型报告，也不包含最终推荐。
 - 研究问题：核实 Langfuse、Arize Phoenix、AgentOps、OpenTelemetry GenAI 语义约定及必要替代方案，回答它们实际记录什么/不记录什么、trace/span 与工具和模型事件、脱敏与成本/延迟、确定性或近似回放依赖、跨 Harness/Provider 统一事件模型、自托管与许可证，以及哪些能力必须由工作台自己拥有。
 - 比较对象：`langfuse/langfuse`、`Arize-ai/phoenix`、`AgentOps-AI/agentops`、`open-telemetry/opentelemetry-specification`、`traceloop/openllmetry`、`braintrustdata/braintrust-sdk`。
-- GitHub 采集：已按 `zj-research` 的 `zj-research-brief/v1` 发起 fresh collection；因匿名 GitHub API 配额在编译阶段耗尽，未产生 sealed ledger。可复核的请求和阻塞状态分别见 [`w4-research-brief.json`](./w4-research-brief.json) 与 [`w4-research-collection-status.json`](./w4-research-collection-status.json)。因此本文件**不宣称** stars、topic match、仓库 HEAD 或提交级比较；直接 `main` 链接只用于阅读一手文本，不能替代提交钉死的 ledger。
+- GitHub 采集：原始 v1 曾因匿名 API 配额阻断；v2 已用 authenticated collection 重新封存。v2 request、状态和 sealed ledger 分别见 [`w4-research-brief.v2.json`](./w4-research-brief.v2.json)、[`w4-research-brief.v2.collection-status.json`](./w4-research-brief.v2.collection-status.json) 与 [`w4-research-brief.v2.ledger-response.json`](./w4-research-brief.v2.ledger-response.json)。
 - 文档锚点：Langfuse 自托管页明确显示 Version v4；AgentOps 文档按 v2；OpenTelemetry 原 `opentelemetry-specification` 的 GenAI 页面明确声明内容已迁移到独立的 `semantic-conventions-genai` 仓库；迁移后的 GenAI 文档仍标为 Development，并引用 core semantic conventions v1.44.0、trace API v1.56.0、logs data model v1.55.0；OpenLLMetry 隐私页以 v0.49.2 / JS v0.21.1 为分界。Phoenix 与 Braintrust 页面未显示可供本次核验的产品版本，故只锚定访问日期。[OT-0]
+
+## v2 refresh：正式 collection 结果
+
+v2 collection 状态为 `fresh-collection`，认证模式为 `authenticated`，GitHub core quota 为 `5000`；覆盖 6 个仓库、40 条 canonical Evidence，另有 2 个明确 unknown criteria。brief fingerprint 为 `e2a7c1cf3155001d50ba9e6a12fc373443606f2148846c8344252e0cc6346358`，observedAt 为 `2026-09-02T05:27:22.473Z`。
+
+| 当前 canonical 仓库 | v2 pinned revision | stars / topicMatch |
+|---|---|---:|
+| [`langfuse/langfuse`](https://github.com/langfuse/langfuse) | [`d179469bedeed8ad91dcf932eda7dc7675c30786`](https://github.com/langfuse/langfuse/commit/d179469bedeed8ad91dcf932eda7dc7675c30786) | 34,074 / 15 |
+| [`Arize-ai/phoenix`](https://github.com/Arize-ai/phoenix) | [`a1ad1c5dda9b65d841ed7778765109c8986f9add`](https://github.com/Arize-ai/phoenix/commit/a1ad1c5dda9b65d841ed7778765109c8986f9add) | 11,288 / 10 |
+| [`AgentOps-AI/agentops`](https://github.com/AgentOps-AI/agentops) | [`f8e907b92dabe47232978023fdcb01e2a7d4b752`](https://github.com/AgentOps-AI/agentops/commit/f8e907b92dabe47232978023fdcb01e2a7d4b752) | 5,806 / 10 |
+| [`open-telemetry/opentelemetry-specification`](https://github.com/open-telemetry/opentelemetry-specification) | [`eec6fadba46a5002f55ff88ce4405d58a1aa4aec`](https://github.com/open-telemetry/opentelemetry-specification/commit/eec6fadba46a5002f55ff88ce4405d58a1aa4aec) | 4,334 / 3 |
+| [`traceloop/openllmetry`](https://github.com/traceloop/openllmetry) | [`62e24c2ffde6c1ee04dc290e52d8d5dbda054cff`](https://github.com/traceloop/openllmetry/commit/62e24c2ffde6c1ee04dc290e52d8d5dbda054cff) | 7,410 / 10 |
+| [`braintrustdata/braintrust-sdk-javascript`](https://github.com/braintrustdata/braintrust-sdk-javascript) | [`a3b478ba164ab0dd97681f08e596720608bd654c`](https://github.com/braintrustdata/braintrust-sdk-javascript/commit/a3b478ba164ab0dd97681f08e596720608bd654c) | 27 / 5 |
+
+请求中的 `braintrustdata/braintrust-sdk` 在 collection 时解析为当前 canonical repository `braintrustdata/braintrust-sdk-javascript`；后续引用以 sealed ledger 的 repository identity 为准。
+
+v2 criterion-level Evidence ID 映射如下。它们只封存 GitHub source/revision 事实，不替代本地运行验证；两个 unknown criteria 必须保持 unknown，不能解释成负能力：
+
+| 仓库 | criterion → Evidence ID |
+|---|---|
+| `langfuse/langfuse` | `identity`→`74ab75ac6aac85a7eaf617aa`; `recording-model`→`3e6134b8251d5216f97c2970`; `replay-evaluation`→`fa4da1d10d5ff57c42197836`; `interoperability`→`452d4baa0042d90cda02aea1`; `deployment-license`→`2d7bb8caab154205b2ad273a`; `workbench-ownership`→`77781b12e3d13b2b9c74aaca`; `privacy-cost-performance`→`36622b312c32ccd01f4ec673` |
+| `Arize-ai/phoenix` | `identity`→`ef6c2a3d069d9f83bd64e438`; `recording-model`→`efd6349e5961683107fd5aaa`; `replay-evaluation`→`095f37755f299e284dd939f3`; `interoperability`→`5ae1f7133a0fdd3cb607f444`; `deployment-license`→`e24b604a083701175c15dc56`; `workbench-ownership`→`6b1bb2fda2b95cb28aec4813`; `privacy-cost-performance`→`0b681788d37a9987717ddaec` |
+| `AgentOps-AI/agentops` | `identity`→`bdba1aeaf53bfa4d6f545897`; `recording-model`→`8ff0b4cecb6f63b42c9e485e`; `interoperability`→`a65170e555d0c2e1dc2ceeec`; `workbench-ownership`→`2c1593cb7c6278a35a84491b`; `privacy-cost-performance`→`5c7396452f2111ad8bf34c64`; `deployment-license`→`a9b36b3e070a98571cab006d`; `replay-evaluation`→`6d1e3bce24b88ea9141026da` |
+| `open-telemetry/opentelemetry-specification` | `identity`→`83f96aec0628c4ee0d0e84da`; `interoperability`→`65b0d0976ba0f6499507084`; `workbench-ownership`→`121463b99be3950df65afecf`; `recording-model`→`f38b77374494ac5c717513fb`; `replay-evaluation`→`34689d85f78e58b795533b81`; `deployment-license`→`24b509d9c1cd2c3d55e03a92` |
+| `traceloop/openllmetry` | `identity`→`b0b3cbbfd1383e6712dbd2e1`; `interoperability`→`4fdef4b3eae2aa76c2f2766e`; `recording-model`→`b6fbc227e0088dd98c78b5a1`; `deployment-license`→`2cf1c79685a43568bae50c36`; `workbench-ownership`→`9e286f6a2b096653a4a0bffb`; `privacy-cost-performance`→`3e79ba163d3034e0ca0f6f87`; `replay-evaluation`=`unknown` |
+| `braintrustdata/braintrust-sdk-javascript` | `identity`→`00de6c5fa874243535ea907e`; `recording-model`→`a660144fd992c68de8292a40`; `replay-evaluation`→`a2313d3bfd9759d05daf7fb4`; `interoperability`→`2791ad9c7474e13684a965c8`; `deployment-license`→`bf903227f21a70023f2d1042`; `workbench-ownership`→`5a0982ade11d7c0cdb292825`; `privacy-cost-performance`→`8dc8f1d17f3a2a18b233a819` |
+
+明确 unknown：`open-telemetry/opentelemetry-specification × privacy-cost-performance`、`traceloop/openllmetry × replay-evaluation`。这是本次 collection 未获得足够 canonical evidence，不是已证明不存在。
+
+## 原始 v1 findings（保留）
+
+下方详细能力叙述保留原始 v1 的来源锚点和分析上下文；凡涉及当前 GitHub revision、stars、topicMatch 或 criterion-level Evidence，以上方 v2 sealed ledger 为准。
 
 ## 术语边界
 
@@ -161,7 +193,7 @@
 
 以下不是“没有能力”，而是本轮一手资料范围内未得到可复核证据：
 
-- GitHub stars、topic match、各仓库准确 HEAD/commit、按 commit 的源码差异：fresh sealed ledger被 GitHub 配额阻塞，不能用 mutable `main` 补齐。
+- v2 已封存 GitHub stars、topicMatch、各仓库 immutable revision 和 criterion-level Evidence；这些是同一 collection 时点的仓库快照，不是能力评分或维护承诺。后续新增版本仍需单独 refresh。
 - AgentOps v2 是否有尚未公开/未纳入所读文档的 dataset/experiment/evaluator API；其 v2 文档只足以确认 tracing、read-only trace API、自托管和环境 opt-out。[AO-5][AO-6]
 - Phoenix 当前版本的统一 USD cost price table、细粒度 retention/sampling contract，以及所有 language instrumentation的字段完整度。[PH-1][PH-3][PH-6]
 - Langfuse “session replay”在 UI 之外是否存在可调用的真实执行 replay API；本轮来源只证明 session view/replay和实验 runner，没有证明 replay engine。[LF-3][LF-5]

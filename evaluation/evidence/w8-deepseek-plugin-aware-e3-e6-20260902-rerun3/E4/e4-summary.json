@@ -1,0 +1,147 @@
+{
+  "gate": "E4",
+  "status": "unknown/stop",
+  "scope": "new plugin-aware evidence; plugin behavior and owner-provided parity recorded separately",
+  "checks": {
+    "idempotent_effect_threshold": true,
+    "routing_and_memoir_plugin_behavior": true,
+    "provider_failover_contract": false,
+    "real_provider_staging_observed": true,
+    "replay_threshold": true
+  },
+  "plugin_behavior": {
+    "status": "pass",
+    "evidence": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/behavior-result.json",
+    "routing": {
+      "router_probe_passed": true,
+      "router_deterministic": true,
+      "router_stage_progression_observed": true,
+      "memoir_probe_passed": true,
+      "memoir_bounded": true,
+      "memoir_note_excluded": true
+    },
+    "memoir": {
+      "storePath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/dsh-memoir.json",
+      "entryCount": 3,
+      "selectedCount": 2,
+      "selectedSections": [
+        "actions",
+        "lessons"
+      ],
+      "hotTextA": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+      "hotTextB": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+      "deterministic": true,
+      "estimatedTokens": 62,
+      "hardMaxTokens": 120,
+      "noteExcluded": true,
+      "storeStats": {
+        "revision": 3,
+        "epoch": 6,
+        "loads": 7,
+        "hits": 4,
+        "misses": 3,
+        "hitRate": 0.5714285714285714,
+        "fileReads": 2,
+        "statProbes": 4,
+        "corruptBackups": 0,
+        "renders": 3,
+        "renderComputes": 3,
+        "renderHitRate": 0,
+        "lastLoadMs": 0
+      }
+    }
+  },
+  "owner_idempotency": {
+    "status": "pass",
+    "run_id": "w8-plugin-aware-e4-idempotency",
+    "checks": {
+      "first_claim_executable": true,
+      "duplicate_claim_suppressed": true,
+      "one_physical_write": true,
+      "one_owner_effect": true,
+      "owner_run_completed": true,
+      "owner_correlation_present": true,
+      "case_local_target": true
+    },
+    "observed": {
+      "first_claim": {
+        "status": "claimed",
+        "attempt": 1
+      },
+      "duplicate_claim": {
+        "status": "already_completed",
+        "reason": "idempotent_replay"
+      },
+      "physical_writes": 1,
+      "effect_count": 1,
+      "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/state/composition.sqlite3",
+      "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/idempotency/effects/delivery.json"
+    }
+  },
+  "owner_replay": {
+    "status": "pass",
+    "checks": {
+      "simulated_replay_5_of_5": true,
+      "replay_identity_recorded": true,
+      "unapproved_live_effect_zero": true,
+      "owner_run_completed": true,
+      "provider_identity_explicit": true
+    },
+    "observed": {
+      "simulated_replay_count": 5,
+      "live_replay_metadata": "w8-plugin-aware-e4-replay:live-denied",
+      "owner_replay_count": 6,
+      "effect_count": 0,
+      "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/state/composition.sqlite3",
+      "cassette": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/replay-cassette.json"
+    }
+  },
+  "real_provider_staging": {
+    "status": "pass",
+    "source": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e4-real-ark-20260902/20260902T025444Z-9108/summary.json",
+    "checks": {
+      "schema_is_real_provider_probe": true,
+      "provider_is_volcengine_ark": true,
+      "endpoint_is_fixed_ark_coding": true,
+      "configured_model_is_ark_code_latest": true,
+      "credential_fingerprint_recorded": true,
+      "http_success": true,
+      "one_request": true,
+      "zero_retries": true,
+      "synthetic_fixture_present": true,
+      "raw_request_response_not_persisted": true,
+      "response_model_route_matches": true
+    },
+    "observed": {
+      "provider": "volcengine-ark",
+      "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3/responses",
+      "configured_model": "ark-code-latest",
+      "response_model": "auto",
+      "response_model_interpretation": "Ark response model=auto is recorded as the configured ark-code-latest route per the established provider mapping.",
+      "api_key_fingerprint": "9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451",
+      "http_status": 200,
+      "request_count": 1,
+      "retry_count": 0,
+      "fixture_id": "staging-fixture-001",
+      "response_body_persisted": false,
+      "remote_resource_inventory": "not performed by this one-shot probe"
+    },
+    "non_claims": [
+      "This bridge does not claim Provider failover, a second Provider, or a fallback reason ledger.",
+      "This bridge does not claim that remote tasks, Webhooks, backups, or retention were inventoried.",
+      "No API key or raw request/response body is copied into this result."
+    ]
+  },
+  "provider_failover": {
+    "status": "unknown",
+    "candidate_contract_present": false,
+    "source": "dsh-routing-suite/preset/router-standard/router-core-v34.mjs",
+    "reason": "The pinned router core exposes task/persona/stage routing, not a Provider selection, fallback, degradation, or fallback-reason ledger contract; no evaluator-owned fake router is promoted to candidate evidence."
+  },
+  "interpretation": "The selected plugin behavior and the ZWorkbench owner can demonstrate bounded idempotency/replay controls, but E4 cannot be promoted while the selected routing plugin has no candidate-owned Provider failover/degradation contract.",
+  "non_claims": [
+    "Router/persona classification is not Provider failover.",
+    "Owner replay metadata and cassette replay are composition evidence, not native dsh plugin replay.",
+    "Local plugin behavior probes made no Provider request; any Ark request is separately marked as external staging evidence."
+  ]
+}

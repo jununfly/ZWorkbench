@@ -1,0 +1,176 @@
+{
+  "gate": "E5",
+  "status": "unknown/stop",
+  "checks": {
+    "machine_operations_pass": true,
+    "human_time_gate": false,
+    "resident_services_at_most_three": true,
+    "no_extra_specialist_declared": true,
+    "remote_exit_verified": false
+  },
+  "human_timing": {
+    "status": "unknown",
+    "input_present": false,
+    "template": {
+      "fresh_install": {
+        "minutes": null,
+        "threshold_minutes": 90,
+        "status": "unknown"
+      },
+      "upgrade": {
+        "minutes": null,
+        "threshold_minutes": 30,
+        "status": "unknown"
+      },
+      "backup_restore": {
+        "minutes": null,
+        "threshold_minutes": 30,
+        "status": "unknown"
+      },
+      "fault_diagnosis": {
+        "minutes": null,
+        "threshold_minutes": 30,
+        "status": "unknown"
+      }
+    }
+  },
+  "operations": {
+    "fresh_install": {
+      "scenario": "fresh_install",
+      "status": "pass",
+      "machine_elapsed_seconds": 0.020314,
+      "machine_elapsed_is_not_human_time": true,
+      "human_elapsed_minutes": null,
+      "human_timing_status": "unknown",
+      "threshold_minutes": 90,
+      "error": null,
+      "operation": {
+        "checks": {
+          "case_local_install_root": true,
+          "pinned_entrypoints_copied": true,
+          "adapter_manifest_present": true,
+          "no_registry_install": true,
+          "external_network_zero": true,
+          "real_credentials_false": true,
+          "production_data_false": true
+        },
+        "observed": {
+          "install_root": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/fresh-install/installed/dsh-config-migrate",
+          "entrypoint_sha256": {
+            "host": "06bf723b12f721e4a0cd69860daec290c3bde2913a610d423af00a3d8e66302e",
+            "client": "d1711213e4e6f7bac3feba4f558accebb4e522736cf539a47b67892f547d06ec"
+          },
+          "operation_kind": "prepared_case_local_assembly_not_real_product_install"
+        }
+      }
+    },
+    "upgrade": {
+      "scenario": "upgrade",
+      "status": "pass",
+      "machine_elapsed_seconds": 0.000244,
+      "machine_elapsed_is_not_human_time": true,
+      "human_elapsed_minutes": null,
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "error": null,
+      "operation": {
+        "checks": {
+          "upgrade_changed_identity": true,
+          "rollback_restored_identity": true,
+          "old_plugin_commit_preserved": true,
+          "owner_database_not_overwritten": true
+        },
+        "observed": {
+          "before_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+          "upgraded_sha256": "77ad362af33be5b6dc808ccbd249f7b8ea5b86b1f5d1a4101e69dc22078737b6",
+          "rollback_sha256": "8b9e01e1ae11dd1f929399106ccf0f10620e6584b81d44cf89b1ce47eb3d5f7d",
+          "operation_kind": "case_local_manifest_upgrade_rollback"
+        }
+      }
+    },
+    "backup_restore": {
+      "scenario": "backup_restore",
+      "status": "pass",
+      "machine_elapsed_seconds": 0.007251,
+      "machine_elapsed_is_not_human_time": true,
+      "human_elapsed_minutes": null,
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "error": null,
+      "operation": {
+        "checks": {
+          "backup_files_present": true,
+          "backup_integrity_ok": true,
+          "corrupted_target_replaced": true,
+          "restore_digest_matches": true,
+          "restore_snapshot_has_run": true,
+          "case_local_paths": true
+        },
+        "observed": {
+          "source_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+          "restored_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+          "backup": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/backup",
+          "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/restore/composition.sqlite3",
+          "operation_kind": "composition_owner_backup_restore"
+        }
+      }
+    },
+    "fault_diagnosis": {
+      "scenario": "fault_diagnosis",
+      "status": "pass",
+      "machine_elapsed_seconds": 0.000192,
+      "machine_elapsed_is_not_human_time": true,
+      "human_elapsed_minutes": null,
+      "human_timing_status": "unknown",
+      "threshold_minutes": 30,
+      "error": null,
+      "operation": {
+        "checks": {
+          "fault_correlated": true,
+          "category_present": true,
+          "bounded_action_present": true,
+          "unknown_not_promoted": true,
+          "no_network_or_credentials": true
+        },
+        "observed": {
+          "fault": {
+            "code": "ADAPTER_WRITE_DENY",
+            "request_id": "w8-plugin-aware-e3-write-1",
+            "plugin": "dsh-config-migrate",
+            "run_id": "w8-plugin-aware-e3"
+          },
+          "diagnosis": {
+            "schema": "zworkbench-w8-plugin-aware-diagnosis/v1",
+            "fault_id": "fault-plugin-write-deny-1",
+            "run_id": "w8-plugin-aware-e3",
+            "category": "adapter_policy_denied_write",
+            "recommended_action": "retain evidence; do not retry without an explicit policy change",
+            "unknown_not_promoted": true
+          },
+          "operation_kind": "prepared_case_local_fault"
+        }
+      }
+    }
+  },
+  "uninstall": {
+    "checks": {
+      "local_install_removed": true,
+      "remote_tasks_absent_in_fixture": true,
+      "webhooks_absent_in_fixture": true,
+      "remote_backups_not_claimed": true,
+      "real_credentials_absent": true,
+      "resident_services_at_most_three": true
+    },
+    "observed": {
+      "resident_services": 0,
+      "operation_kind": "case_local_uninstall_only",
+      "remote_exit_status": "not-verified"
+    }
+  },
+  "interpretation": "Local machine fixture operations are observable, but a full candidate install/runbook and real single-operator timing have not been established; remote exit responsibility remains outside this isolated gate.",
+  "non_claims": [
+    "machine_elapsed_seconds is not a human stopwatch measurement",
+    "prepared local assembly is not a real npm/registry product installation",
+    "fixture absence of remote tasks/webhooks/backups is not proof of real remote cleanup"
+  ]
+}

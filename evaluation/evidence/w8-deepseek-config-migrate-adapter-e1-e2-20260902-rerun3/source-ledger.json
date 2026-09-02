@@ -1,0 +1,157 @@
+{
+  "plugin": {
+    "source_dir": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate",
+    "source_dir_present": true,
+    "source_root_under_bundle": true,
+    "expected_commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "actual_head": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+    "commit_matches": true,
+    "tree_object": "24c67f4286ad9de2635f6e4ae8b4360727983261",
+    "worktree_changes": 0,
+    "package_expected": "dsh-config-migrate",
+    "package_actual": "dsh-config-migrate",
+    "package_matches": true,
+    "version_expected": "1.0.0",
+    "version_actual": "1.0.0",
+    "version_matches": true,
+    "license": "MIT",
+    "license_present": true,
+    "metadata_error": null,
+    "declared_dependencies": {
+      "dependencies": [],
+      "optionalDependencies": [],
+      "peerDependencies": [],
+      "devDependencies": []
+    },
+    "declared_lifecycle_scripts": [],
+    "declared_dsh_plugin": {
+      "host": "./host.js",
+      "client": "./client.js"
+    },
+    "declared_dsh_bundle": null,
+    "contract_is_dynamic_plugin": true,
+    "declared_host": "./host.js",
+    "declared_client": "./client.js",
+    "host_entry_path": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate/host.js",
+    "client_entry_path": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate/client.js",
+    "host_entry_under_source": true,
+    "client_entry_under_source": true,
+    "host_entry_present": true,
+    "client_entry_present": true,
+    "host_entry_sha256": "06bf723b12f721e4a0cd69860daec290c3bde2913a610d423af00a3d8e66302e",
+    "client_entry_sha256": "d1711213e4e6f7bac3feba4f558accebb4e522736cf539a47b67892f547d06ec",
+    "artifact_present": false,
+    "artifact_policy": "source-only; do not claim source-to-binary reproducibility"
+  },
+  "entrypoints": {
+    "host": {
+      "path": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate/host.js",
+      "sha256": "06bf723b12f721e4a0cd69860daec290c3bde2913a610d423af00a3d8e66302e",
+      "parse": {
+        "command": [
+          "node",
+          "-e",
+          "const fs = require('fs');\nconst source = fs.readFileSync(0, 'utf8');\nnew Function(source);\nprocess.stdout.write(JSON.stringify({parsed: true}));\n"
+        ],
+        "returncode": 0,
+        "stdout": "{\"parsed\":true}",
+        "stderr": "",
+        "duration_ms": 49,
+        "timed_out": false
+      },
+      "parsed": true,
+      "has_dynamic_return": true,
+      "has_apply_entry": true
+    },
+    "client": {
+      "path": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate/client.js",
+      "sha256": "d1711213e4e6f7bac3feba4f558accebb4e522736cf539a47b67892f547d06ec",
+      "parse": {
+        "command": [
+          "node",
+          "-e",
+          "const fs = require('fs');\nconst source = fs.readFileSync(0, 'utf8');\nnew Function(source);\nprocess.stdout.write(JSON.stringify({parsed: true}));\n"
+        ],
+        "returncode": 0,
+        "stdout": "{\"parsed\":true}",
+        "stderr": "",
+        "duration_ms": 41,
+        "timed_out": false
+      },
+      "parsed": true,
+      "has_dynamic_return": true,
+      "has_apply_entry": true
+    }
+  },
+  "declarations": {
+    "ctx_services": [
+      "fs",
+      "sandboxPolicy",
+      "settings",
+      "slots",
+      "subprocess"
+    ],
+    "fs_operations_observed": [
+      "listDir",
+      "mkdirSync",
+      "readBytes",
+      "readFileSync",
+      "readText",
+      "resolve",
+      "rmSync",
+      "stat",
+      "symlinkSync",
+      "unlinkSync",
+      "writeFileSync",
+      "writeText"
+    ],
+    "embedded_subprocess_fs_operations": [
+      "mkdirSync",
+      "readFileSync",
+      "rmSync",
+      "symlinkSync",
+      "unlinkSync",
+      "writeFileSync"
+    ],
+    "settings_operations_observed": [
+      "prepareDocument"
+    ],
+    "host_bridge_methods": [
+      "defineTool",
+      "handle",
+      "registerTool"
+    ],
+    "client_bridge_methods": [
+      "call",
+      "inject",
+      "insert",
+      "register"
+    ],
+    "policy_modes_observed": [
+      "danger-full-access"
+    ],
+    "plugin_requests_danger_full_access": true,
+    "forbidden_runtime_patterns": {
+      "network_constructor": [],
+      "network_import": [],
+      "environment_read": [],
+      "shell_execution": []
+    },
+    "source_contains_raw_secret_literal": false
+  },
+  "profile": {
+    "path": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/home-full/profiles/headless/package.json",
+    "present": true,
+    "package_dependency_value": "file:/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/dsh-config-migrate",
+    "dependency_declared": true,
+    "dynamic_plugin_in_bundles": false,
+    "bundles": [
+      "@deepseek-ai/dsh-base",
+      "@deepseek-ai/dsh-headless",
+      "@dsh-external/dsh-super-injector",
+      "dsh-context",
+      "dsh-memoir"
+    ],
+    "profile_sha256": "65dd26e8a287137a0c6e8375c826ba29d084a9f61d3245eff7ae43272c800ce0"
+  }
+}

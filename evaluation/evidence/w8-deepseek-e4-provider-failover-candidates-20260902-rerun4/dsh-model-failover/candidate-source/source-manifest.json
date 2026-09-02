@@ -1,0 +1,41 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-candidate-source/v1",
+  "candidate": "dsh-model-failover",
+  "repository": "https://github.com/Letter2025/dsh-model-failover",
+  "commit": "47588d4692a76d64382865e518d2a927eda4891b",
+  "version": "0.1.4",
+  "source_checkout": "/private/tmp/zworkbench-e4-candidates.IUXdiV/dsh-model-failover",
+  "checkout_status": "read-only-input-required",
+  "files": {
+    "package.json": {
+      "present": true,
+      "bytes": 1562,
+      "sha256": "2bf59d5c2c72ea06730c4f6f5f7baed30bb288fc6e5b6266c51d0be36b152bba"
+    },
+    "src/index.ts": {
+      "present": true,
+      "bytes": 12089,
+      "sha256": "7a59c0a450e53d92f9a14780c51065a6868377ff4acf2aaca90c6048e285a805"
+    },
+    "src/circuit.ts": {
+      "present": true,
+      "bytes": 5675,
+      "sha256": "0fa20ea82992f6a6c6bd84b924c543857505a934260efd7ed14d32c2da9c7efc"
+    },
+    "src/types.ts": {
+      "present": true,
+      "bytes": 2521,
+      "sha256": "11b0ee5b276fde3fec68ff2041f23faa10000fb1a3f18a616c9e39d948ec48cb"
+    },
+    "cordis.patch.yml": {
+      "present": true,
+      "bytes": 1714,
+      "sha256": "001032c3264b89b1ae28564396b27c3f41097b345dbf155d60035562ed5a6431"
+    },
+    "LICENSE": {
+      "present": true,
+      "bytes": 1066,
+      "sha256": "18d59820997d14b6d5c29c3dd6fdfd74418087b72850021dd78577bec7fc4782"
+    }
+  }
+}

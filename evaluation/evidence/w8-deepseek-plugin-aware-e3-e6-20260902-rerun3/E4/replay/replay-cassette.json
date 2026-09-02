@@ -1,0 +1,1 @@
+{"events":[{"mode":"spec","provider":"fixture-a","type":"plugin.route"},{"semantic":"fixture-ok","type":"plugin.result"}],"expected":{"effect_count":0,"semantic":"fixture-ok"},"schema":"w8-plugin-aware-cassette/v1"}

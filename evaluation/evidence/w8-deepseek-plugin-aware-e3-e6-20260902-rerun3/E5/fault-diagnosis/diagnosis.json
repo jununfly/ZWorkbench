@@ -1,0 +1,8 @@
+{
+  "schema": "zworkbench-w8-plugin-aware-diagnosis/v1",
+  "fault_id": "fault-plugin-write-deny-1",
+  "run_id": "w8-plugin-aware-e3",
+  "category": "adapter_policy_denied_write",
+  "recommended_action": "retain evidence; do not retry without an explicit policy change",
+  "unknown_not_promoted": true
+}

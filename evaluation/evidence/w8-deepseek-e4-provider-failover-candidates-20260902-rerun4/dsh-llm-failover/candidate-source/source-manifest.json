@@ -1,0 +1,36 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-candidate-source/v1",
+  "candidate": "dsh-llm-failover",
+  "repository": "https://github.com/HB00/dsh-llm-failover",
+  "commit": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+  "version": "0.3.0",
+  "source_checkout": "/private/tmp/zworkbench-e4-candidates.IUXdiV/dsh-llm-failover",
+  "checkout_status": "read-only-input-required",
+  "files": {
+    "package.json": {
+      "present": true,
+      "bytes": 1422,
+      "sha256": "930507f48cb4492e2f9f941756585396809486bea24042fc587b6a200b504d94"
+    },
+    "lib/index.js": {
+      "present": true,
+      "bytes": 10061,
+      "sha256": "b15798cfe8097949ae900a6c651309e139a7125acb4b3cb0d4e17f5338089927"
+    },
+    "lib/client.js": {
+      "present": true,
+      "bytes": 18800,
+      "sha256": "0f850ef4d51345058af5ec7ce8c8ec0ddb1307c9e98d8026239fcf71781ba4d7"
+    },
+    "cordis.patch.yml": {
+      "present": true,
+      "bytes": 144,
+      "sha256": "d916a3ddf2731f1a46397f8e6367881d42678ceba222263913703c183465f142"
+    },
+    "LICENSE": {
+      "present": true,
+      "bytes": 1065,
+      "sha256": "8ea44769ddc058299502ebf71770421749e34797f0bdf7a2a99087fb14c1d339"
+    }
+  }
+}

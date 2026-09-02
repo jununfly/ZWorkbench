@@ -1,0 +1,118 @@
+{
+  "schema": "zj-research-report-ir/v1",
+  "family": "technical-c4/v1",
+  "title": "DeepSeek Harness 插件生态是否足以挑战 Codex 主线",
+  "summary": "前一轮结论把 core-only 的未证明能力过度外推为生态缺口。本轮固定 19 个 DeepSeek 生态相关仓库，证实插件 ABI、市场/雷达、观测、记忆、路由、迁移和跨 Harness bridge 已形成可研究的能力供给；但它们尚未通过 ZWorkbench 的统一安全、状态 owner、回放、版本和小团队运维门槛。因此 DeepSeek plugin-composed bundle 应升级为一等挑战架构，Codex + 单一 composition owner 暂保持生产主线。",
+  "ledgerFingerprint": "832bd1c765c47364d2a4d7e36c1a5da09e5a98e26ad832132c0f1af6e06e581e",
+  "concepts": [
+    {"key":"decision-frame","value":"比较 Codex + owner、DeepSeek core-only、DeepSeek pinned plugin bundle、实时 market 拼盘、外部控制面和从零重写。"},
+    {"key":"plugin-meaning","value":"DeepSeek 把 profile/plugin-bundle 作为装配边界；生态项目可能是 plugin-composed、outer-composed 或 bridge/migration，不能混为 native。"},
+    {"key":"ownership-model","value":"ZWorkbench 继续独占 run/thread/turn/event/effect/result、policy 和 replay canonical truth；插件只能通过明确 adapter 或 projection 接入。"},
+    {"key":"lifecycle-stage","value":"usefulness-validation：先验证可重复的用户价值和总拥有成本，再决定是否进入 dogfood 或替换/并列主 Harness。"}
+  ],
+  "diagrams": [
+    {"kind":"landscape","title":"ZWorkbench 候选架构景观","mermaid":"flowchart LR\n  User[个人开发者] --> Boundary[ZWorkbench 产品边界]\n  Boundary --> Codex[Codex + SQLite owner]\n  Boundary --> DeepSeek[DeepSeek core + pinned plugins]\n  Boundary --> Outer[DeepSeek + outer runtime]\n  Constraints[Provider / workspace / host policy / evidence & exit] -. 跨方案约束 .-> Boundary"},
+    {"kind":"container","title":"DeepSeek 插件组合的责任分层","mermaid":"flowchart LR\n  Core[DSH core / plugin ABI] --> Composed[Plugin-composed capabilities]\n  Composed --> Context[Context / memory / routing / migration]\n  Context --> Owner[ZWorkbench adapter / composition owner]\n  Owner --> Run[Run / effect / policy / replay]\n  External[market / remote / IM / outer runtime] -. 外部风险边界 .-> Owner"}
+  ],
+  "candidates": [
+    {"repository":{"owner":"deepseek-ai","name":"deepseek-harness"},"stars":207792,"topicMatch":40,"role":"core harness / plugin host","evidenceIds":["1692252522188e29a83706e5","6cf9d81a5eee301f6dd20cd0","2cce435d92a1bc0fc1c3119e"]},
+    {"repository":{"owner":"dsh-market","name":"dsh-market"},"stars":3002,"topicMatch":30,"role":"plugin discovery/install/config lifecycle","evidenceIds":["6013e9818a3163108155b3ea","e6433a2533f7d876de709ad2","784f178fdc0ace33fddaab0a"]},
+    {"repository":{"owner":"AdamPlatin123","name":"dsh-plugin-radar"},"stars":1440,"topicMatch":40,"role":"ecosystem discovery and compatibility evidence","evidenceIds":["36645d7aab12f169efd100ac","f99d6d7e1e439410fb8c85ed","b0bf80fc7582a5ab322b512c"]},
+    {"repository":{"owner":"bowenliang123","name":"dsh-context"},"stars":1230,"topicMatch":30,"role":"context observability","evidenceIds":["a0bf3930aa1cec8a6ff3a564","cd9fe4a8353a1fa253b84073","6ab7c99d96caf9f9ba7e6d77"]},
+    {"repository":{"owner":"Qinling-Melon-Farmers","name":"dsh-memoir"},"stars":24,"topicMatch":40,"role":"local project memory","evidenceIds":["c8b174ddc24cd71cbdb0d377","9e6cf3bbb8a325fdb1ae5eff","442fbf41c2484566ecaaacf1"]},
+    {"repository":{"owner":"yjh051108","name":"dsh-routing-suite"},"stars":7021,"topicMatch":40,"role":"runtime injection and reasoning routing","evidenceIds":["edca3f5d1cd863c936e443b0","eaefbb040d25fece91743320","f8e2ef070843a14f6abc9d85"]},
+    {"repository":{"owner":"kol-mm","name":"dsh-config-migrate"},"stars":1,"topicMatch":30,"role":"profile/plugin/config migration","evidenceIds":["00d7f62f8e361f5e0c397c09","4e5c3843a03ae6a01cac8b95","7f03837654c251735293b439"]},
+    {"repository":{"owner":"Nwflower","name":"dsh-chat-import"},"stars":127,"topicMatch":40,"role":"cross-harness transcript migration","evidenceIds":["739a89bf77bea557d3ff5f32","0719b845e6316e2f7fc9985e","82efcce0c3f29fa775de4f86"]},
+    {"repository":{"owner":"weijiafu14","name":"pi2dsh"},"stars":178,"topicMatch":50,"role":"Pi-to-DSH extension bridge","evidenceIds":["d1317baba99da8db4b4bea9e","ed1bc78e752da987968084ec","3703a75c32c40060736f877d"]},
+    {"repository":{"owner":"NanmiCoder","name":"dsh-agent-teams"},"stars":1255,"topicMatch":40,"role":"multi-agent plugin","evidenceIds":["fd87278fcd99541a61c62dd9","e5520f033c1907dae24c4b71","b00c6383125d603d56f77de4"]},
+    {"repository":{"owner":"flymysql","name":"dsh-remote"},"stars":49,"topicMatch":30,"role":"remote workspace plugin","evidenceIds":["8d9bbbb8fcf092fa80530162","6acc038c4ee2a842bcc6ec64","d5a825624a7db250d024408a"]},
+    {"repository":{"owner":"agentrq","name":"agentrq"},"stars":1099,"topicMatch":70,"role":"outer task/control plane","evidenceIds":["da902f3e8e89563b3d7fc845","2170e24da6177ad784ed4978","031fc49ba3f91195bbe4c330"]},
+    {"repository":{"owner":"sandbaseai","name":"sandbase-harness"},"stars":641,"topicMatch":60,"role":"outer runtime/API alternative","evidenceIds":["032f8a88b466c54a9c8f3454","65b3292d9b6897854f842532","31939fe001bead456cd8348f"]},
+    {"repository":{"owner":"yzhangjy","name":"dsh-path-anonymizer"},"stars":0,"topicMatch":10,"role":"privacy/message-redaction support","evidenceIds":["3b4583dec641209d270a1116","0ab6150086e79145c07f3ef7","859da823114c870f0bc33ebe"]},
+    {"repository":{"owner":"Han-1413141","name":"dsh-cost-meter"},"stars":240,"topicMatch":40,"role":"cost and quota observability","evidenceIds":["4892e9e19be3d10ff43c7c67","27cfe101256086b828142153","c08c11d8fb62c0942150a3ee"]},
+    {"repository":{"owner":"cinob","name":"dsh-web-search-multi"},"stars":6,"topicMatch":40,"role":"multi-provider web-search tool","evidenceIds":["efa663d48f1bb839876bb3b6","800ff47ee0e69d04982b5b27","9d0d41cddbd9e8b6ad0ab54c"]},
+    {"repository":{"owner":"xmanrui","name":"dsh-im"},"stars":1051,"topicMatch":40,"role":"remote messaging channels","evidenceIds":["abea9613f886a3e876bb4e90","39fbb8aec89b8eeeed39f156","441dd7a3df71bb0c53a483de"]},
+    {"repository":{"owner":"Jockjrop","name":"dsh-usage-stats"},"stars":1,"topicMatch":0,"role":"session usage projection","evidenceIds":["870b254ef56dd89539bd87c8","2116c4437eaf30de5b766c8c","c08c11d8fb62c0942150a3ee"]},
+    {"repository":{"owner":"AITabby","name":"dockyard-dsh"},"stars":81,"topicMatch":40,"role":"provider-neutral DSH plugin","evidenceIds":["76fed9f2506bca1f5b6b15db","e1af68d7732a83d58faa34a6","1356a54cc163b99241b3c682","61c2fc2b696d9b3643b1f790"]}
+  ],
+  "cards": [
+    {"title":"DeepSeek Harness core","summary":"官方 launcher 使用 profile/plugin-bundle patch layers，证明插件是架构边界；当前报告不把 core-only 的 plugin host 自动等同于 C3-C7 owner。","claimIds":["claim-core"]},
+    {"title":"dsh-market","summary":"提供发现、安装、更新、卸载和插件/profile 配置迁移；实时 registry 与 restart/remote data 责任使它不适合作为首个评估输入。","claimIds":["claim-market"]},
+    {"title":"dsh-plugin-radar","summary":"把插件版本、runner image、snapshot run 和实测/自报来源组合成生态证据目录；它是筛选器，不是 ZWorkbench 的执行 owner。","claimIds":["claim-radar"]},
+    {"title":"dsh-context","summary":"提供 context composition、请求趋势、实际 token/cache 与事件/file activity 观察，最可能降低 C6 观测工作量。","claimIds":["claim-context"]},
+    {"title":"dsh-memoir","summary":"本地跨 session 项目记忆与 provenance 具有个人开发者价值，但必须作为 projection 或独立 memory owner，不能写成 run/effect truth。","claimIds":["claim-memory"]},
+    {"title":"dsh-routing-suite","summary":"运行时插件注入和路由预设可能补齐 Provider/推理选择，但仍需分离模型 failover、工具 fallback 与路由注入语义。","claimIds":["claim-routing"]},
+    {"title":"dsh-config-migrate","summary":"可迁移 profile、插件、preset 与加密凭据，并明确跳过 sessions/storages；它不能替代真实 composition state backup/restore。","claimIds":["claim-config"]},
+    {"title":"dsh-chat-import","summary":"跨 Claude/Codex/Pi 等工具导入、resume 和可选 sync，具备互操作价值，但不自动提供 effect ledger 或确定性 replay。","claimIds":["claim-import"]},
+    {"title":"pi2dsh","summary":"通过 Pi Host ABI 投影到 DSH session/lineage/compaction，并显式记录语义差异，是生态扩张的强证据。","claimIds":["claim-pi2dsh"]},
+    {"title":"dsh-agent-teams","summary":"提供成员 spawn/resume/依赖任务和认证 fail-closed 兼容验证，但带来子任务 identity、预算、失败和版本矩阵。","claimIds":["claim-teams"]},
+    {"title":"dsh-remote","summary":"补远程 SSH/SFTP 工作区、同步和端口转发，但将凭据、网络、远端写入和退出责任纳入范围。","claimIds":["claim-remote"]},
+    {"title":"AgentRQ","summary":"是 self-hosted task/control plane，不是 DSH plugin；可补队列和人机协同，但引入服务、账户和认证成本。","claimIds":["claim-agentrq"]},
+    {"title":"Sandbase Harness","summary":"是另一个带 sessions/files/environments/webhooks/schedules/metrics 的 runtime/API，不应伪装成 DeepSeek 插件补丁。","claimIds":["claim-sandbase"]},
+    {"title":"dsh-path-anonymizer","summary":"只做 user-message path redaction，并明确不是 sandbox；可作为隐私辅助，不能承担 C2。","claimIds":["claim-path"]},
+    {"title":"dsh-cost-meter","summary":"提供 session/daily cost、provider/model 明细和额度查询，是成本可观测 supporting plugin，但会接触凭据和外部 quota endpoint。","claimIds":["claim-cost"]},
+    {"title":"dsh-web-search-multi","summary":"提供多搜索 Provider 与 fallback，但声明 network、workspace-write 和多种 credential，属于显式放行的工具能力。","claimIds":["claim-web-search"]},
+    {"title":"dsh-im","summary":"把九种 IM 渠道接入本地 DSH，适合未来远程入口，但会扩大 webhook、账户和出站消息边界。","claimIds":["claim-im"]},
+    {"title":"dsh-usage-stats","summary":"从 durable session log 聚合 read-only usage projection，并可访问外部 OpenCode usage endpoint；不应成为 owner ledger。","claimIds":["claim-usage"]},
+    {"title":"dockyard-dsh","summary":"以单一 DockyardDshService 提供 provider-neutral adapter 和命令，体现可复用插件内部单一事实源的设计。","claimIds":["claim-dockyard"]}
+  ],
+  "claims": [
+    {"id":"claim-core","text":"DeepSeek 官方 launcher 将 profile/plugin-bundle patch layers 作为统一运行入口，插件 ABI 是需要评估的产品装配面。","critical":true,"evidenceIds":["1692252522188e29a83706e5","6cf9d81a5eee301f6dd20cd0"]},
+    {"id":"claim-market","text":"市场和目录生态已经供应插件发现、安装、更新、卸载及 profile/plugin 配置迁移。","critical":true,"evidenceIds":["e6433a2533f7d876de709ad2","784f178fdc0ace33fddaab0a"]},
+    {"id":"claim-radar","text":"生态雷达把插件版本、运行环境和快照 run 作为兼容证据锚，并区分实测与自报。","critical":true,"evidenceIds":["36645d7aab12f169efd100ac","2414e00499a77f121863aab4","f99d6d7e1e439410fb8c85ed"]},
+    {"id":"claim-context","text":"dsh-context 供应 context composition、Actual Prompt/Output/Cache、趋势和事件/file activity 观察。","critical":true,"evidenceIds":["cd9fe4a8353a1fa253b84073","a0bf3930aa1cec8a6ff3a564"]},
+    {"id":"claim-memory","text":"dsh-memoir 提供本地跨 session project memory、BM25、provenance 和生命周期，且宣称无外部服务。","critical":true,"evidenceIds":["c8b174ddc24cd71cbdb0d377","442fbf41c2484566ecaaacf1"]},
+    {"id":"claim-routing","text":"dsh-routing-suite 通过 injector 运行时注入本地插件并持久化清单，形成路由/插件装配候选，但 capability/security 仍有 ledger unknown。","critical":true,"evidenceIds":["edca3f5d1cd863c936e443b0","eaefbb040d25fece91743320","f8e2ef070843a14f6abc9d85"]},
+    {"id":"claim-config","text":"dsh-config-migrate 迁移 profiles、external plugins、presets 和加密凭据，同时排除 sessions/storages，说明配置迁移不等于运行时 canonical backup。","critical":true,"evidenceIds":["7f03837654c251735293b439","00d7f62f8e361f5e0c397c09"]},
+    {"id":"claim-import","text":"dsh-chat-import 支持跨 Harness 历史导入、resume 和可选双向 sync，但证据未证明 effect ledger 或 deterministic replay。","critical":true,"evidenceIds":["0719b845e6316e2f7fc9985e","739a89bf77bea557d3ff5f32"]},
+    {"id":"claim-pi2dsh","text":"pi2dsh 对 Pi session/branch/compaction 进行 DSH 原生投影，并明确列出 same semantics 与 mapped differences。","critical":true,"evidenceIds":["ed1bc78e752da987968084ec","3703a75c32c40060736f877d","d458c2b7cbf1227ca70f56c1"]},
+    {"id":"claim-teams","text":"dsh-agent-teams 的 Alpha.2 材料证明成员 spawn/resume/依赖任务和认证 fail-closed 验证，但也要求精确 alpha 版本匹配。","critical":true,"evidenceIds":["e5520f033c1907dae24c4b71","b00c6383125d603d56f77de4"]},
+    {"id":"claim-remote","text":"dsh-remote 供应 SSH/SFTP、remote write、sync、forward 和 keychain credentials，能力增量伴随远端副作用边界。","critical":true,"evidenceIds":["6acc038c4ee2a842bcc6ec64","d5a825624a7db250d024408a"]},
+    {"id":"claim-agentrq","text":"AgentRQ 的证据属于 Electron task/control plane 和账户认证，不证明 DSH plugin ABI 兼容。","critical":true,"evidenceIds":["da902f3e8e89563b3d7fc845","2170e24da6177ad784ed4978"]},
+    {"id":"claim-sandbase","text":"Sandbase 的 API matrix 覆盖 sessions、files、environments、webhooks、scheduled deployments、metrics 和 restart，但 custom tool registration 仍是 planned，且它是外部 runtime。","critical":true,"evidenceIds":["65b3292d9b6897854f842532","31939fe001bead456cd8348f","032f8a88b466c54a9c8f3454"]},
+    {"id":"claim-path","text":"dsh-path-anonymizer 只重写 user-message 中的 workspace-external path，并明确不拦 tool call、tool argument、tool result 或 filesystem access。","critical":true,"evidenceIds":["0ab6150086e79145c07f3ef7"]},
+    {"id":"claim-cost","text":"dsh-cost-meter 提供 session/daily cost、provider/model 明细和多家 Coding Plan quota 查询，属于成本投影而非执行 owner。","critical":true,"evidenceIds":["4892e9e19be3d10ff43c7c67","27cfe101256086b828142153","c08c11d8fb62c0942150a3ee"]},
+    {"id":"claim-web-search","text":"dsh-web-search-multi 声明多搜索 Provider auto-fallback，同时需要 network、workspace-write 和外部 API credentials。","critical":true,"evidenceIds":["800ff47ee0e69d04982b5b27","092b2e1d4ca7d0151d60e3df","9d0d41cddbd9e8b6ad0ab54c"]},
+    {"id":"claim-im","text":"dsh-im 把九种 IM 机器人和公网 AI Office Connector 接入本地 DSH，并要求按渠道能力做显式降级与语义基线。","critical":true,"evidenceIds":["39fbb8aec89b8eeeed39f156","3f70b8700dc3a404772ba65e","441dd7a3df71bb0c53a483de"]},
+    {"id":"claim-usage","text":"dsh-usage-stats 聚合 host 上的 durable session log 并提供 read-only usage routes，同时可访问外部 OpenCode usage endpoint。","critical":true,"evidenceIds":["870b254ef56dd89539bd87c8","2116c4437eaf30de5b766c8c","c08c11d8fb62c0942150a3ee"]},
+    {"id":"claim-dockyard","text":"dockyard-dsh 以单一 DockyardDshService 暴露 provider-neutral adapter 和命令，并明确不复制第二 credential/model/quota/account source of truth。","critical":true,"evidenceIds":["76fed9f2506bca1f5b6b15db","e1af68d7732a83d58faa34a6","92f64a8e46018c85152a8f56"]}
+  ],
+  "comparisons": [
+    {"id":"cmp-ecosystem-supply","text":"约束：不能把 core-only 未证明能力当作生态不存在。选项：DeepSeek core + plugin-composed bundle。证据：官方 plugin-bundle ABI 与 context/memory/routing/migration/bridge 项目。权衡：获得复用杠杆，但增加插件版本、依赖和 owner 映射。决定：作为一等挑战架构进入 E1-E6。","claimIds":["claim-core","claim-context","claim-memory","claim-routing","claim-config","claim-pi2dsh"]},
+    {"id":"cmp-state-safety","text":"约束：C2/C4 必须 fail-closed 且单一 owner。选项：让插件或市场直接拥有安全、effect、replay。证据：path-redaction 类插件可明确不是 sandbox，市场/remote 还会引入网络与凭据。权衡：直接拼接很快但不可审计。决定：policy/effect/replay 继续由 ZWorkbench owner 负责。","claimIds":["claim-market","claim-remote","claim-config"]},
+    {"id":"cmp-interoperability","text":"约束：需要复用其它 Harness 能力而不复制第二套运行时。选项：pi2dsh/chat-import。证据：两者都提供 session/历史映射并记录语义差异。权衡：迁移和桥接价值明确，但 version skew 和 replay ownership 仍由 adapter 承担。决定：按一个具体用户场景二选一验证。","claimIds":["claim-import","claim-pi2dsh","claim-teams"]},
+    {"id":"cmp-outer-runtime","text":"约束：个人开发者/小团队常驻服务不超过 3 个且退出清晰。选项：AgentRQ/Sandbase/remote/IM。证据：它们具备 queue/API/webhook/schedule/remote capabilities，但不属于 DSH plugin-composed ABI。权衡：能力面广，责任面也扩大。决定：单列 outer-runtime 决策，首轮不并入。","claimIds":["claim-agentrq","claim-sandbase","claim-remote"]},
+    {"id":"cmp-baseline","text":"约束：必须与已验证基线比较总拥有成本。选项：Codex + SQLite owner。证据：Codex 既有 C1-C7 composition evidence；DeepSeek core-only 只证明部分场景，生态组合尚未通过统一硬门槛。权衡：沿用 Codex 成本可预测，DeepSeek 可能减少自建能力但需插件回归。决定：Codex 保持当前产品主线，不能据此否定 DeepSeek 生态挑战。","claimIds":["claim-core","claim-context","claim-routing","claim-sandbase"]}
+  ],
+  "recommendations": [
+    {"id":"rec-reopen","text":"重开 DeepSeek 的架构评估，但把候选从“DeepSeek core”改为“DeepSeek core + pinned plugin-composed bundle”；前一轮的 core-only unknown 不再作为生态不存在的证据。","comparisonIds":["cmp-ecosystem-supply","cmp-baseline"]},
+    {"id":"rec-owner","text":"保留 ZWorkbench 单一 composition/policy/replay owner。插件可提供 projection、工具、memory 或路由实现，但不得产生第二份 run/effect/replay canonical truth。","comparisonIds":["cmp-state-safety","cmp-interoperability"]},
+    {"id":"rec-minimal","text":"按 core → dsh-context → dsh-routing-suite → dsh-memoir → dsh-config-migrate 的顺序做隔离验证，每次只加入一个 pinned plugin，并保留 core-only 回滚点。","comparisonIds":["cmp-ecosystem-supply","cmp-state-safety"]},
+    {"id":"rec-defer-outer","text":"暂不引入实时 market、remote、IM、AgentRQ 或 Sandbase 作为首个组合；它们要么把供应链变成启动依赖，要么扩大远端数据/服务/账户和退出责任。","comparisonIds":["cmp-outer-runtime","cmp-state-safety"]},
+    {"id":"rec-switch-gate","text":"只有在 E1-E6 全部通过，并出现相对 Codex 的可重复、非重复、足以抵消插件维护成本的用户价值后，才重开替换或并列主 Harness 决策。","comparisonIds":["cmp-baseline","cmp-ecosystem-supply"]}
+  ],
+  "metrics": [
+    {"key":"plugin-compatibility","definition":"每个 pinned core/plugin 组合能在隔离环境 fresh install、build、boot 并拒绝不兼容 alpha","unit":"通过率","method":"固定 commit/lockfile/dshTarget 的矩阵运行","condition":"所有纳入组合均通过且不兼容显式 fail","expected":"100%"},
+    {"key":"provenance-completeness","definition":"插件 source commit、package version、依赖、许可证、安装脚本、网络/凭据声明和卸载方式均可追溯","unit":"字段覆盖率","method":"manifest/tree/lockfile/NOTICE 审计","condition":"缺任一关键字段即 HOLD","expected":"100%"},
+    {"key":"safety-boundary","definition":"插件组合下关键未授权动作被 host/policy 阻断，未知 effect 不自动重试","unit":"拦截/重复次数","method":"C2/C4 负向 fixture + host boundary probe","condition":"关键拦截 100%，未授权执行 0，危险重复 0","expected":"100% / 0 / 0"},
+    {"key":"owner-integrity","definition":"run/thread/turn/event/effect/result 只有一个 canonical owner，插件 projection 不制造第二事实","unit":"owner violation 次数","method":"schema/ledger diff 与跨插件运行审计","condition":"任何重复 owner 或 silent write 即失败","expected":"0"},
+    {"key":"replay-and-routing","definition":"C5 fallback reason 和 C6 replay mode 均可观察、可重现且不产生未批准副作用","unit":"覆盖率/副作用次数","method":"fake Provider、cassette replay、live deny fixture","condition":"fallback reason 100%，simulated replay 5/5，live side effect 0","expected":"100% / 5/5 / 0"},
+    {"key":"small-team-operations","definition":"单人完成安装、升级回滚、backup/restore、故障定位和退出，且没有超出服务预算","unit":"分钟/服务数","method":"human stopwatch + service/process inventory + exit audit","condition":"install ≤90，其他操作各 ≤30，常驻服务 ≤3","expected":"满足全部阈值"}
+  ],
+  "riskRegister": [
+    {"risk":"插件来源和实时 registry 让启动结果随远端内容漂移","trigger":"市场或安装器读取未固定的 catalog、npm latest 或动态依赖","impact":"无法重放、无法归因，恶意或破坏性更新可进入工作台","mitigation":"评估与生产使用 commit-pinned manifest、离线/本地 tarball allowlist、hash lock 和显式更新审批","residualRisk":"仍需维护插件 allowlist 与依赖漏洞回归","owner":"个人负责人/供应链维护者"},
+    {"risk":"插件 projection、memory、migration 与 owner ledger 形成重复 canonical state","trigger":"插件直接写 run/effect/replay 数据或通过自己的数据库保存同一事实","impact":"恢复、回放和故障定位出现互相矛盾的状态","mitigation":"规定单一 SQLite owner；插件只经 adapter 写入受控事件或提供 projection，并在 CI 做 schema/ledger ownership 检查","residualRisk":"跨插件语义映射仍可能丢字段","owner":"composition owner"},
+    {"risk":"插件新增工具、子进程、网络或凭据路径绕过安全边界","trigger":"插件声明 workspace-write/network/credentials，或在 host policy 外启动副作用","impact":"C2/C4 fail-closed 失效，产生未授权或重复外部副作用","mitigation":"插件 capability manifest + host broker allowlist；默认 deny 未声明能力，所有 request→decision→effect/denial 写入证据 ledger","residualRisk":"宿主 native process-tree/approval 仍需真实验证","owner":"policy/host owner"},
+    {"risk":"DeepSeek alpha 与插件发布版本发生 ABI/version skew","trigger":"core、client package、plugin lockfile 或 dshTarget 不同 alpha","impact":"启动失败、静默降级或语义变化，旧 session 可能无法恢复","mitigation":"每个组合固定版本矩阵，构建前做 dshTarget/lockfile 校验，升级先在临时 profile 做双向回滚试验","residualRisk":"社区插件可能滞后于 core release","owner":"adapter/release owner"},
+    {"risk":"远程工作区、IM、市场备份和 Provider 插件扩展远端数据与账户责任","trigger":"启用 SSH/SFTP、Webhook、Gist/WebDAV、在线 registry 或外部额度/搜索 API","impact":"退出、删除、数据保留和凭据撤销无法由本地 owner 完整证明","mitigation":"首轮默认关闭远端插件；逐对象登记 endpoint/account/retention，提供 disable→revoke→delete→verify runbook 后再开放","residualRisk":"第三方服务仍可能保留日志或备份","owner":"账户/数据责任人"},
+    {"risk":"插件数量增长超过个人开发者可维护的验证和排障能力","trigger":"把市场目录中的多个插件一次性纳入产品 bundle","impact":"升级矩阵、故障定位和退出工作量超过收益","mitigation":"单插件递增试验、服务数上限 3、每项 capability 设 CBAM 预算和明确删除条件，未产生非重复收益即回滚","residualRisk":"组合交互仍需有限 pairwise 回归","owner":"个人开发者/产品 owner"}
+  ],
+  "graduationCriteria": [
+    {"condition":"最小 plugin-composed bundle 在固定 DeepSeek alpha 上可安装、构建、启动并能回滚","threshold":"所有纳入插件的 E1 版本/ABI/provenance 检查 100% 通过；不兼容显式 fail","metric":"plugin-compatibility","promoteTo":"usefulness-validation"},
+    {"condition":"插件组合在 W6 C2/C4 负向和故障 fixture 下保持单一安全/effect owner","threshold":"关键拦截 100%，未授权执行 0，危险副作用重复 0，未知 effect 不自动重试","metric":"safety-boundary","promoteTo":"usefulness-validation"},
+    {"condition":"插件观测、路由、记忆和迁移产生相对 Codex 的可测非重复用户价值","threshold":"至少一个固定任务集重复 5 次优于 Codex 基线，且不增加 hard-gate failure","metric":"replay-and-routing","promoteTo":"dogfood"},
+    {"condition":"单一维护者能完成组合的生命周期与退出","threshold":"安装 ≤90 分钟；升级/回滚、backup/restore、故障定位各 ≤30 分钟；常驻服务 ≤3","metric":"small-team-operations","promoteTo":"dogfood"},
+    {"condition":"组合可在无实时 registry、无真实凭据、无生产数据的隔离环境中复现","threshold":"source/package/license/lock/evidence 字段 100% 完整，simulated replay 5/5，live side effect 0","metric":"provenance-completeness","promoteTo":"dogfood"}
+  ],
+  "informationGaps":{"status":"has-gaps","rationale":"主 sealed ledger 的 19 个仓库仍有 9 个 unknownCriteria，且所有生态能力目前主要是固定源码/文档证据；尚未完成同一 DeepSeek alpha 下的 plugin runtime compatibility、host safety、effect/replay 和真人 C7 生命周期验证。"}
+}

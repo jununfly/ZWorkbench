@@ -1,0 +1,27 @@
+{
+  "scenario": "backup_restore",
+  "status": "pass",
+  "machine_elapsed_seconds": 0.007251,
+  "machine_elapsed_is_not_human_time": true,
+  "human_elapsed_minutes": null,
+  "human_timing_status": "unknown",
+  "threshold_minutes": 30,
+  "error": null,
+  "operation": {
+    "checks": {
+      "backup_files_present": true,
+      "backup_integrity_ok": true,
+      "corrupted_target_replaced": true,
+      "restore_digest_matches": true,
+      "restore_snapshot_has_run": true,
+      "case_local_paths": true
+    },
+    "observed": {
+      "source_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+      "restored_state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85",
+      "backup": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/backup",
+      "target": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E5/backup-restore/restore/composition.sqlite3",
+      "operation_kind": "composition_owner_backup_restore"
+    }
+  }
+}

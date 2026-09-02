@@ -1,0 +1,10 @@
+{
+  "format": "dsh-config-migration",
+  "version": 3,
+  "files": {
+    "settings.yaml": {
+      "encoding": "utf8",
+      "content": "profile: changed-by-fixture\n"
+    }
+  }
+}

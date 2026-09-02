@@ -1,0 +1,104 @@
+{
+  "approvals": [],
+  "effect_attempts": [],
+  "effects": [],
+  "events": [
+    {
+      "created_at": "2026-09-02T02:59:09.176+00:00",
+      "event_id": "4f1275b0-1c71-472a-8d12-b26fd1a893e2",
+      "payload": {
+        "task_type": "plugin-aware-lifecycle"
+      },
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "seq": 1,
+      "type": "run.created"
+    },
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "event_id": "c65bc641-b713-49be-8eab-154f2db660f5",
+      "payload": {
+        "from": "created",
+        "to": "running"
+      },
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "seq": 2,
+      "type": "run.started"
+    },
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "event_id": "793347cd-2aef-4ed2-8a3a-a35db6331101",
+      "payload": {
+        "kind": "adapter",
+        "result_id": "c717dc87-1b0f-4acd-99d1-c83f42ea0b9b",
+        "source_id": "adapter"
+      },
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "seq": 3,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "event_id": "61f48048-793a-4777-a52a-0ff4aa09c0ac",
+      "payload": {
+        "kind": "semantic",
+        "result_id": "00103441-a897-4eff-9f02-5e22b3fca1f1",
+        "source_id": "run"
+      },
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "seq": 4,
+      "type": "result.recorded"
+    },
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "event_id": "95a1d15d-cf15-4e29-a82b-c48dd109cfb2",
+      "payload": {
+        "from": "running",
+        "to": "completed"
+      },
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "seq": 5,
+      "type": "run.completed"
+    }
+  ],
+  "exported_at": "2026-09-02T02:59:09.178+00:00",
+  "replays": [],
+  "results": [
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "kind": "semantic",
+      "result_id": "00103441-a897-4eff-9f02-5e22b3fca1f1",
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "source_id": "run",
+      "value": {
+        "status": "healthy"
+      }
+    },
+    {
+      "created_at": "2026-09-02T02:59:09.177+00:00",
+      "kind": "adapter",
+      "result_id": "c717dc87-1b0f-4acd-99d1-c83f42ea0b9b",
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "source_id": "adapter",
+      "value": {
+        "plugin": "dsh-config-migrate",
+        "status": "fixture"
+      }
+    }
+  ],
+  "runs": [
+    {
+      "created_at": "2026-09-02T02:59:09.176+00:00",
+      "input": {
+        "plugin": "dsh-config-migrate"
+      },
+      "metadata": {},
+      "run_id": "w8-plugin-aware-e5-backup-restore",
+      "status": "completed",
+      "task_type": "plugin-aware-lifecycle",
+      "updated_at": "2026-09-02T02:59:09.177+00:00"
+    }
+  ],
+  "schema": "zworkbench-composition-owner/v1",
+  "schema_version": 1,
+  "state_digest": "0a899febdbcdf0591cef87c38f26427ed6499011703d43aa95cbf199c9ae7a85"
+}

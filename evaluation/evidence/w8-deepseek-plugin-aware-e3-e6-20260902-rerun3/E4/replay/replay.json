@@ -1,0 +1,18 @@
+{
+  "status": "pass",
+  "checks": {
+    "simulated_replay_5_of_5": true,
+    "replay_identity_recorded": true,
+    "unapproved_live_effect_zero": true,
+    "owner_run_completed": true,
+    "provider_identity_explicit": true
+  },
+  "observed": {
+    "simulated_replay_count": 5,
+    "live_replay_metadata": "w8-plugin-aware-e4-replay:live-denied",
+    "owner_replay_count": 6,
+    "effect_count": 0,
+    "database": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/state/composition.sqlite3",
+    "cassette": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/replay/replay-cassette.json"
+  }
+}

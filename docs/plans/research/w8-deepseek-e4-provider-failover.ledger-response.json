@@ -1,0 +1,1313 @@
+{
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "result": {
+    "schema": "zj-verified-evidence-ledger/v1",
+    "compilerVersion": "research/v1",
+    "briefFingerprint": "74ef2ca21e11423c68bd5c6921cf8fa3e08d6e731a799a0450b3e9a8279d3948",
+    "policyVersion": "w8-e4-provider-failover-v1",
+    "observedAt": "2026-09-02T03:31:12.155Z",
+    "repositories": [
+      {
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "revision": {
+          "sha": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+          "branch": "main",
+          "url": "https://github.com/HB00/dsh-llm-failover/commit/919272faf9f9eb0d379b70f45c5612c1d5aa47a5"
+        },
+        "tree": [
+          {
+            "path": ".gitignore",
+            "sha": "0ec6aa34d31fcc45e9b72cd036ca3a02afdd6a0b",
+            "type": "blob",
+            "size": 45
+          },
+          {
+            "path": "LICENSE",
+            "sha": "01032f83056793fd6c6182360bf99e4d141d534e",
+            "type": "blob",
+            "size": 1065
+          },
+          {
+            "path": "README.md",
+            "sha": "1b5140121a399c7277cbb057614e0c50595f29ff",
+            "type": "blob",
+            "size": 3260
+          },
+          {
+            "path": "cordis.patch.yml",
+            "sha": "6108d7b3fb7ffa4601b52ae0926c20a9695595b9",
+            "type": "blob",
+            "size": 144
+          },
+          {
+            "path": "lib",
+            "sha": "95c21e2e8577263586068be651f6b41f1361b50e",
+            "type": "tree"
+          },
+          {
+            "path": "lib/client.js",
+            "sha": "e4a5ff8393c8f25c762b82967d816f84f09ab689",
+            "type": "blob",
+            "size": 18800
+          },
+          {
+            "path": "lib/index.js",
+            "sha": "83709c57f35eeb46d54b5f301c771dd064acc967",
+            "type": "blob",
+            "size": 10061
+          },
+          {
+            "path": "package.json",
+            "sha": "953e39e1ae463d4278cf28f789fc8c0ff21219a1",
+            "type": "blob",
+            "size": 1422
+          }
+        ]
+      },
+      {
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": {
+          "sha": "47588d4692a76d64382865e518d2a927eda4891b",
+          "branch": "main",
+          "url": "https://github.com/Letter2025/dsh-model-failover/commit/47588d4692a76d64382865e518d2a927eda4891b"
+        },
+        "tree": [
+          {
+            "path": ".gitignore",
+            "sha": "c91d0b1d699c1678e0008882382582ebae71385a",
+            "type": "blob",
+            "size": 33
+          },
+          {
+            "path": "LICENSE",
+            "sha": "7dc5387b2dd6b3ea7339d98294cf572e6ec8f676",
+            "type": "blob",
+            "size": 1066
+          },
+          {
+            "path": "README.md",
+            "sha": "8d1e439faf10b83cee71139409b1ceb282db7f62",
+            "type": "blob",
+            "size": 6331
+          },
+          {
+            "path": "README.zh.md",
+            "sha": "79786f65fd9d76b35a6003c35cd95fcfd202a294",
+            "type": "blob",
+            "size": 5894
+          },
+          {
+            "path": "cordis.patch.yml",
+            "sha": "03249a3bb0251799849fbd1afd9d1d8ae4594cdb",
+            "type": "blob",
+            "size": 1714
+          },
+          {
+            "path": "package.json",
+            "sha": "5a8977d86ec40cdf64d573658fcef1ae13ac60ee",
+            "type": "blob",
+            "size": 1562
+          },
+          {
+            "path": "skills",
+            "sha": "831127a75988a2cc83fac419146b5f30911e91e1",
+            "type": "tree"
+          },
+          {
+            "path": "skills/configure-model-failover",
+            "sha": "69c47a8ebb3e6147cb2ac3a458367a433ec26f44",
+            "type": "tree"
+          },
+          {
+            "path": "skills/configure-model-failover/SKILL.md",
+            "sha": "e7202d97efdc81b87435309ecd9484406f2f67da",
+            "type": "blob",
+            "size": 4718
+          },
+          {
+            "path": "src",
+            "sha": "92fc3712f418741a906ff32b7ed5fe38f03222ae",
+            "type": "tree"
+          },
+          {
+            "path": "src/circuit.ts",
+            "sha": "519caf42d1adf1ece1a855f648fe2b942dfde56d",
+            "type": "blob",
+            "size": 5675
+          },
+          {
+            "path": "src/index.ts",
+            "sha": "d0815a21d7fe03aa20aa9d3791e857315247bec5",
+            "type": "blob",
+            "size": 12089
+          },
+          {
+            "path": "src/types.ts",
+            "sha": "0933e8245f0c30d2e144f06b373f67004ccc9bb9",
+            "type": "blob",
+            "size": 2521
+          },
+          {
+            "path": "tests",
+            "sha": "7848ae4ae045909379bd1c11e4bc5619499d3626",
+            "type": "tree"
+          },
+          {
+            "path": "tests/circuit.spec.ts",
+            "sha": "4eb10d381ec9647054b2b98162152d55ffa1dc76",
+            "type": "blob",
+            "size": 3495
+          },
+          {
+            "path": "tests/failover.spec.ts",
+            "sha": "45585d5dd9799d9b3f69b7b54bbcbfb1e8c072e0",
+            "type": "blob",
+            "size": 9641
+          },
+          {
+            "path": "tests/loop-integration.spec.ts",
+            "sha": "246ab2d5cc4060e26e2f0fe2aef017befbfcbf2b",
+            "type": "blob",
+            "size": 3829
+          },
+          {
+            "path": "tsconfig.build.json",
+            "sha": "9b1a162ac533abff71aa7aaad1197d417c1e18d0",
+            "type": "blob",
+            "size": 224
+          },
+          {
+            "path": "tsconfig.json",
+            "sha": "83902a20e3257084c3bde4db9eea60f78fcd2f5a",
+            "type": "blob",
+            "size": 1294
+          },
+          {
+            "path": "vitest.config.ts",
+            "sha": "1cd24c7b4a79995562ce4f34a47c2873fb19f861",
+            "type": "blob",
+            "size": 257
+          }
+        ]
+      },
+      {
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "revision": {
+          "sha": "0327cf929e179998ba5469af7d38e66a15d37ffa",
+          "branch": "main",
+          "url": "https://github.com/Walvez/dsh-search-failover/commit/0327cf929e179998ba5469af7d38e66a15d37ffa"
+        },
+        "tree": [
+          {
+            "path": ".github",
+            "sha": "479cfcd842058600c9cefca33af0ad24ef3f7db1",
+            "type": "tree"
+          },
+          {
+            "path": ".github/workflows",
+            "sha": "9846656fab43d3c34f1982c44ffcfd98f65cb641",
+            "type": "tree"
+          },
+          {
+            "path": ".github/workflows/test.yml",
+            "sha": "e4526767693f57e0159ef6b42e11a89112ee83de",
+            "type": "blob",
+            "size": 287
+          },
+          {
+            "path": ".gitignore",
+            "sha": "f9d077c23e11e05e6386360c0e791b63a63ce6b2",
+            "type": "blob",
+            "size": 36
+          },
+          {
+            "path": "LICENSE",
+            "sha": "82c86310063dbc2399f0958b93d83da62b743123",
+            "type": "blob",
+            "size": 1063
+          },
+          {
+            "path": "README.md",
+            "sha": "ba23a7d0ecace5c766896fbb68e88623f71d6e5e",
+            "type": "blob",
+            "size": 14398
+          },
+          {
+            "path": "client",
+            "sha": "f110ccd0d3c5d32f095cd365ba90cd6b81dbbb37",
+            "type": "tree"
+          },
+          {
+            "path": "client/client.js",
+            "sha": "34a8102079b0c4e4a4e6eeb26ef36baccfc4e713",
+            "type": "blob",
+            "size": 32844
+          },
+          {
+            "path": "cordis.patch.yml",
+            "sha": "f3fd3fff5010699005d9a5c4e460b2a1097c63fe",
+            "type": "blob",
+            "size": 399
+          },
+          {
+            "path": "docs",
+            "sha": "514bce66be65d25943d48ed8d3c990b8f5cc1963",
+            "type": "tree"
+          },
+          {
+            "path": "docs/awesome-dsh-plugin-entry.yml",
+            "sha": "30c2ee97396ae6c6167779d0e7d7a30222d742b4",
+            "type": "blob",
+            "size": 906
+          },
+          {
+            "path": "docs/screenshots",
+            "sha": "50129eddc62ecfcbf994b0684acfe7fb841fd49b",
+            "type": "tree"
+          },
+          {
+            "path": "docs/screenshots/settings-panel-overview.png",
+            "sha": "24a95d7a8d9fa30d778cc9487588da6074fdff0b",
+            "type": "blob",
+            "size": 350668
+          },
+          {
+            "path": "docs/screenshots/settings-panel-scrolled.png",
+            "sha": "135ef2194e881693b229338c680a26b2e4834ffb",
+            "type": "blob",
+            "size": 302062
+          },
+          {
+            "path": "lib",
+            "sha": "eacfc2076346a88aff02ba471404fd9a877b72f1",
+            "type": "tree"
+          },
+          {
+            "path": "lib/backends.js",
+            "sha": "57327894ae4b5024bdb51b5b36f26ebac14743d0",
+            "type": "blob",
+            "size": 20086
+          },
+          {
+            "path": "lib/circuit.js",
+            "sha": "d0bcb3f9569ab77b6582cc0b64154c47f2120cf6",
+            "type": "blob",
+            "size": 1865
+          },
+          {
+            "path": "lib/errors.js",
+            "sha": "8b3a1d3da3b73a3f22929920e9b8f86f0cf2e2dd",
+            "type": "blob",
+            "size": 740
+          },
+          {
+            "path": "lib/index.js",
+            "sha": "9b383ce2ebed2309a421465eb3affc991ad9d705",
+            "type": "blob",
+            "size": 8830
+          },
+          {
+            "path": "lib/provider.js",
+            "sha": "e6d3948bb396a275086e47c13b63226c5929c8cc",
+            "type": "blob",
+            "size": 14786
+          },
+          {
+            "path": "lib/routes.js",
+            "sha": "188e24e2c05370a24b1ba65425989d3b4b90a69e",
+            "type": "blob",
+            "size": 11931
+          },
+          {
+            "path": "lib/settings-host.js",
+            "sha": "ef067276dd4c710ef9885105417c6699f5d965d5",
+            "type": "blob",
+            "size": 2341
+          },
+          {
+            "path": "lib/settings.js",
+            "sha": "511052efa9a025bfd1bb6b265cad7e24a259f41d",
+            "type": "blob",
+            "size": 2718
+          },
+          {
+            "path": "package-lock.json",
+            "sha": "9d72169dacd91e26fde8f44ef62b79f21bc03e18",
+            "type": "blob",
+            "size": 6867
+          },
+          {
+            "path": "package.json",
+            "sha": "91828b7c00c63ac6f8a0c947fb8c20fb2824ea69",
+            "type": "blob",
+            "size": 1565
+          },
+          {
+            "path": "scripts",
+            "sha": "316ac4928f128d6c3f45678f3ac257d85414e80e",
+            "type": "tree"
+          },
+          {
+            "path": "scripts/smoke.mjs",
+            "sha": "d7d49f73e10a6be72f8d353655c9eb9477bb49ee",
+            "type": "blob",
+            "size": 1154
+          },
+          {
+            "path": "test",
+            "sha": "724b734c581af0fc7a4f8500656dd4019f930a4b",
+            "type": "tree"
+          },
+          {
+            "path": "test/backends.test.js",
+            "sha": "471936f02b136d0b4b7e4c613c448a889bd65549",
+            "type": "blob",
+            "size": 15201
+          },
+          {
+            "path": "test/provider.test.js",
+            "sha": "8cd46bd52900b9f3ed7e1d29fe72efe20ab57f0e",
+            "type": "blob",
+            "size": 14572
+          },
+          {
+            "path": "test/settings.test.js",
+            "sha": "1d4e9f68dc253a3b0cdff00a673b172db5004f4b",
+            "type": "blob",
+            "size": 6680
+          },
+          {
+            "path": "test/state.test.js",
+            "sha": "693962d38212925f2d00c78772146776a39ff064",
+            "type": "blob",
+            "size": 4260
+          }
+        ]
+      },
+      {
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": {
+          "sha": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+          "branch": "main",
+          "url": "https://github.com/yjh051108/dsh-routing-suite/commit/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30"
+        },
+        "tree": [
+          {
+            "path": ".gitignore",
+            "sha": "d61b461fb6bbf2a471e7e157dfa1933dcd10dde7",
+            "type": "blob",
+            "size": 227
+          },
+          {
+            "path": "LICENSE",
+            "sha": "8e58560be571cd51d4693d91eed04ab328413306",
+            "type": "blob",
+            "size": 1066
+          },
+          {
+            "path": "README.en.md",
+            "sha": "9ba8515322328127d285f85a19dedbd7d4bb0a6b",
+            "type": "blob",
+            "size": 5150
+          },
+          {
+            "path": "README.md",
+            "sha": "37360e1108855f4e68db52f793e1c118bd2a29db",
+            "type": "blob",
+            "size": 5457
+          },
+          {
+            "path": "cordis.patch.yml",
+            "sha": "870cb0801a203ef5f9864838fa9a3ed08e4fda99",
+            "type": "blob",
+            "size": 517
+          },
+          {
+            "path": "docs",
+            "sha": "e66348a77a4702a3c45f365e6bddcf821400ae90",
+            "type": "tree"
+          },
+          {
+            "path": "docs/FLATTEN-MIGRATION.md",
+            "sha": "b587214031a075224ec5d918b1a8cbc26f870e71",
+            "type": "blob",
+            "size": 2257
+          },
+          {
+            "path": "injector",
+            "sha": "9da7e14f788cf2911c7c731ed3f696baa8a3b7a3",
+            "type": "tree"
+          },
+          {
+            "path": "injector/.gitignore",
+            "sha": "16add38552a7b0fe140a0148910d7cfbbb938148",
+            "type": "blob",
+            "size": 39
+          },
+          {
+            "path": "injector/CHANGELOG.md",
+            "sha": "95afabc55d4e1041ff8fa4bbd64646ad1d41128d",
+            "type": "blob",
+            "size": 16598
+          },
+          {
+            "path": "injector/INSTALL.md",
+            "sha": "ce9ff0293d7374500c8c07499320a8dfaf33c1eb",
+            "type": "blob",
+            "size": 9217
+          },
+          {
+            "path": "injector/README.md",
+            "sha": "07f451a872e3abfaf8f95140b5474051d1e4ef4f",
+            "type": "blob",
+            "size": 18749
+          },
+          {
+            "path": "injector/cordis.patch.yml",
+            "sha": "49919777dc9d4601c4f0825e6bc90735c816dcc3",
+            "type": "blob",
+            "size": 267
+          },
+          {
+            "path": "injector/docs",
+            "sha": "b43e4fc49ed8e4c3818eef1368c7fe6a5c085098",
+            "type": "tree"
+          },
+          {
+            "path": "injector/docs/SPEC.md",
+            "sha": "255a139aa69205e62bd63c7e9a63c591f8ae5b89",
+            "type": "blob",
+            "size": 9579
+          },
+          {
+            "path": "injector/package-lock.json",
+            "sha": "4d53bbe2a2c70ecd32c33fd84b1e87a62bb5ce96",
+            "type": "blob",
+            "size": 48710
+          },
+          {
+            "path": "injector/package.json",
+            "sha": "9fece493035cc3b02fef55033bd75e1be03599aa",
+            "type": "blob",
+            "size": 1647
+          },
+          {
+            "path": "injector/scripts",
+            "sha": "acf78367f2b15cd26b6c6168997a77698a38df1a",
+            "type": "tree"
+          },
+          {
+            "path": "injector/scripts/build.sh",
+            "sha": "b78004fb9d0aa71ed16ddf9000c68d9d4680f417",
+            "type": "blob",
+            "size": 2388
+          },
+          {
+            "path": "injector/scripts/fix-patch.mjs",
+            "sha": "f94350a5e0c692a783ea2235cd9d4c86677e0dc3",
+            "type": "blob",
+            "size": 5010
+          },
+          {
+            "path": "injector/scripts/prepare.mjs",
+            "sha": "aca203e41fa72677594521e2a6bec7b317108c38",
+            "type": "blob",
+            "size": 2880
+          },
+          {
+            "path": "injector/src",
+            "sha": "708737124dfbd375862dab5c2f21aa8a5173f996",
+            "type": "tree"
+          },
+          {
+            "path": "injector/src/client",
+            "sha": "c46cecb392091afbc9fb4d84d66f3a6112e2b040",
+            "type": "tree"
+          },
+          {
+            "path": "injector/src/client/index.ts",
+            "sha": "c5c12b5ac5ca74855ea373520d2d7f8a34e1e871",
+            "type": "blob",
+            "size": 8403
+          },
+          {
+            "path": "injector/src/index.ts",
+            "sha": "53e84d06a78a0dd3bd856895a227fb01ff9d12a8",
+            "type": "blob",
+            "size": 174252
+          },
+          {
+            "path": "injector/tsconfig.json",
+            "sha": "df1d7cf7100ae32222df5377117a5e84771c28a8",
+            "type": "blob",
+            "size": 460
+          },
+          {
+            "path": "injector/tsdown.config.ts",
+            "sha": "39c71a917d812191a87576fb483776e5d5c73cc2",
+            "type": "blob",
+            "size": 1837
+          },
+          {
+            "path": "install.ps1",
+            "sha": "2511f1fe15df4618aa6d600659303f590cca48f9",
+            "type": "blob",
+            "size": 3803
+          },
+          {
+            "path": "package.json",
+            "sha": "df92032fff7a779d7e8a63072f4bd92b103c3398",
+            "type": "blob",
+            "size": 1715
+          },
+          {
+            "path": "preset",
+            "sha": "19a2c9f3bb18105a1d8e53867bde6c105d1fb53b",
+            "type": "tree"
+          },
+          {
+            "path": "preset/.gitignore",
+            "sha": "2fd129669f64ff796ac14c57d691be2f8da46a13",
+            "type": "blob",
+            "size": 1501
+          },
+          {
+            "path": "preset/AGENTS.md",
+            "sha": "c7d777f5a4947fe633a619a5a80cb37dde18b8f7",
+            "type": "blob",
+            "size": 6261
+          },
+          {
+            "path": "preset/CHANGELOG.md",
+            "sha": "4486a9308101fc5b4e31bf01c7d49f7f261f67d2",
+            "type": "blob",
+            "size": 25595
+          },
+          {
+            "path": "preset/LICENSE",
+            "sha": "8e58560be571cd51d4693d91eed04ab328413306",
+            "type": "blob",
+            "size": 1066
+          },
+          {
+            "path": "preset/NOTICE",
+            "sha": "898357f7c2d2d06cc1b44b518e335fd34b858949",
+            "type": "blob",
+            "size": 990
+          },
+          {
+            "path": "preset/README.md",
+            "sha": "455307b4308c1b123cfc7c99d3bb6710ee8b87ce",
+            "type": "blob",
+            "size": 14233
+          },
+          {
+            "path": "preset/docs",
+            "sha": "2ea93619c54f49748edf028c5b1b7751108e5aae",
+            "type": "tree"
+          },
+          {
+            "path": "preset/docs/FEEDBACK-v34.md",
+            "sha": "6497454575aa4e2e9826595889e4a8747b868253",
+            "type": "blob",
+            "size": 6472
+          },
+          {
+            "path": "preset/docs/STANDARD-PLAN.md",
+            "sha": "b64a76934ef960a7dbe320354959b79032263104",
+            "type": "blob",
+            "size": 32197
+          },
+          {
+            "path": "preset/docs/apology.md",
+            "sha": "f470e5091328a9b67a78fb8b7a3f9012b76d1f1b",
+            "type": "blob",
+            "size": 5547
+          },
+          {
+            "path": "preset/docs/archive",
+            "sha": "5fde56239c2da91adabf747ea752ce912b854de9",
+            "type": "tree"
+          },
+          {
+            "path": "preset/docs/archive/README.md",
+            "sha": "4ea7371dfee6daf80e5016a0ee4d4576a2510f9b",
+            "type": "blob",
+            "size": 1663
+          },
+          {
+            "path": "preset/docs/archive/router-react",
+            "sha": "11a9da7b4cabd2645beb211ac28ed1b0e0e9ba34",
+            "type": "tree"
+          },
+          {
+            "path": "preset/docs/archive/router-react/router-bootstrap-v1.mjs",
+            "sha": "6eaf1f443fa08c25f9c0df06536edd99ce7866b8",
+            "type": "blob",
+            "size": 13536
+          },
+          {
+            "path": "preset/docs/archive/router-react/router-bootstrap-v5.mjs",
+            "sha": "6a14d29323e422747fc1666a03d9e11d1af1e02c",
+            "type": "blob",
+            "size": 16173
+          },
+          {
+            "path": "preset/docs/archive/router-react/router-bootstrap-v6.mjs",
+            "sha": "e95ae17ed72d9c6b15eabf2cfa1d433202c144fc",
+            "type": "blob",
+            "size": 17683
+          },
+          {
+            "path": "preset/docs/archive/router-react/router-bootstrap-v7.mjs",
+            "sha": "67cf50e2904123c851c3cc5d80dc3194d0bd7799",
+            "type": "blob",
+            "size": 15916
+          },
+          {
+            "path": "preset/docs/archive/router-react/router-bootstrap-v8.mjs",
+            "sha": "3f13159ce1de2f9ea16fb3d163f3fa112aaa73ce",
+            "type": "blob",
+            "size": 11064
+          },
+          {
+            "path": "preset/docs/archive/router-spec",
+            "sha": "7769d1284e5d836ce2d81168c71fc2c78ea42195",
+            "type": "tree"
+          },
+          {
+            "path": "preset/docs/archive/router-spec/router-bootstrap-v1.mjs",
+            "sha": "2ddc227422fbcc492a2378fb422f45dd5a230900",
+            "type": "blob",
+            "size": 17587
+          },
+          {
+            "path": "preset/docs/blog.md",
+            "sha": "871e3fd97280c7ab08dfbe2152e795e90b4292dd",
+            "type": "blob",
+            "size": 12100
+          },
+          {
+            "path": "preset/docs/experiments.md",
+            "sha": "3941272c9b4158981125ff4aa0919e8abd48b578",
+            "type": "blob",
+            "size": 14124
+          },
+          {
+            "path": "preset/docs/index.html",
+            "sha": "20a24c9d8153253c4671e9c504b92bf47c08229f",
+            "type": "blob",
+            "size": 15803
+          },
+          {
+            "path": "preset/docs/paper.md",
+            "sha": "5e34ff4601395e1ae27a3c5d7deb1c598e7a4fb4",
+            "type": "blob",
+            "size": 19083
+          },
+          {
+            "path": "preset/docs/statement.md",
+            "sha": "27b796c7365fab4608d9804271cd9275b34a60ac",
+            "type": "blob",
+            "size": 7012
+          },
+          {
+            "path": "preset/dsh-router-standard-0.3.0.tgz",
+            "sha": "f5b3697c6557963c6b750457ef85fe2621ee25ff",
+            "type": "blob",
+            "size": 62363
+          },
+          {
+            "path": "preset/package.json",
+            "sha": "d897b95cde64d719cd3562776cc2c88a32e2979b",
+            "type": "blob",
+            "size": 1046
+          },
+          {
+            "path": "preset/probe",
+            "sha": "6cd78825ce1ff6efddf1137cb9cda69dbd520a13",
+            "type": "tree"
+          },
+          {
+            "path": "preset/probe/README.md",
+            "sha": "a400fd7bbb55cbc31092a99036968f5a3ee42306",
+            "type": "blob",
+            "size": 2308
+          },
+          {
+            "path": "preset/probe/cot-lexicon.md",
+            "sha": "1f398fee9836101894df21f808cc9ef641f738f8",
+            "type": "blob",
+            "size": 7403
+          },
+          {
+            "path": "preset/router-react",
+            "sha": "87f50ef44fb07fa28fd9e4c838695e68eb302e16",
+            "type": "tree"
+          },
+          {
+            "path": "preset/router-react/agent.cordis.yml",
+            "sha": "52ed046291073bb574e0a3cccd26d9764796216b",
+            "type": "blob",
+            "size": 15171
+          },
+          {
+            "path": "preset/router-react/preset.yml",
+            "sha": "eb7589bdbbebe8fc7a7e30397b3c48b269b95c3e",
+            "type": "blob",
+            "size": 217
+          },
+          {
+            "path": "preset/router-react/router-bootstrap-v17.mjs",
+            "sha": "08cecd7388a552e8fdb46542e4ae08e9e55ce8c6",
+            "type": "blob",
+            "size": 15067
+          },
+          {
+            "path": "preset/router-react/router-bootstrap.mjs",
+            "sha": "fa40b17fc909a7867e14b9403abdd8718f99b902",
+            "type": "blob",
+            "size": 14757
+          },
+          {
+            "path": "preset/router-react/router-core-v17.mjs",
+            "sha": "1f4863fef8db7ba068cad7d7d8e95f435d4bb42c",
+            "type": "blob",
+            "size": 8772
+          },
+          {
+            "path": "preset/router-react/router-core.mjs",
+            "sha": "1f4863fef8db7ba068cad7d7d8e95f435d4bb42c",
+            "type": "blob",
+            "size": 8772
+          },
+          {
+            "path": "preset/router-spec",
+            "sha": "44795854ddce4690fdc4a9b56fe02e4d75b67783",
+            "type": "tree"
+          },
+          {
+            "path": "preset/router-spec/agent.cordis.yml",
+            "sha": "d815bddacd2fd8c05a1060dac4972719f68a2a59",
+            "type": "blob",
+            "size": 15166
+          },
+          {
+            "path": "preset/router-spec/preset.yml",
+            "sha": "31d29bfd3cad2e96276c172616483288ef51abd2",
+            "type": "blob",
+            "size": 238
+          },
+          {
+            "path": "preset/router-spec/router-bootstrap-v10.mjs",
+            "sha": "aaba35cbd3e0aef50ace1dbee25a3c07372d3a8c",
+            "type": "blob",
+            "size": 17890
+          },
+          {
+            "path": "preset/router-spec/router-bootstrap.mjs",
+            "sha": "3467d370491bf8c88856b091e0db05fdd5547392",
+            "type": "blob",
+            "size": 17580
+          },
+          {
+            "path": "preset/router-spec/router-core-v10.mjs",
+            "sha": "a345eb16be0819646416dc4cf210629af1c1cd90",
+            "type": "blob",
+            "size": 9440
+          },
+          {
+            "path": "preset/router-spec/router-core.mjs",
+            "sha": "a345eb16be0819646416dc4cf210629af1c1cd90",
+            "type": "blob",
+            "size": 9440
+          },
+          {
+            "path": "preset/router-standard",
+            "sha": "1865cabd3458abc535cf9b989542fee68d9ac08b",
+            "type": "tree"
+          },
+          {
+            "path": "preset/router-standard/agent.cordis.yml",
+            "sha": "aaefbb7e39ee6346abaec9eeda16eedcc902078d",
+            "type": "blob",
+            "size": 15783
+          },
+          {
+            "path": "preset/router-standard/gitbash-executor.mjs",
+            "sha": "b925ba248329ef9897d27aa07edb7a5d1e97efb4",
+            "type": "blob",
+            "size": 4814
+          },
+          {
+            "path": "preset/router-standard/preset.yml",
+            "sha": "ad1be7ff9a84f5f94170a6735ff3649d62ae7ce9",
+            "type": "blob",
+            "size": 316
+          },
+          {
+            "path": "preset/router-standard/router-bootstrap-v34.mjs",
+            "sha": "a21d215c2e36dd5e086fee6a56d5c13c23e98648",
+            "type": "blob",
+            "size": 84429
+          },
+          {
+            "path": "preset/router-standard/router-bootstrap-v34.selftest.mjs",
+            "sha": "240490a30a70438a7b74662496b134dfaeed3b2f",
+            "type": "blob",
+            "size": 10162
+          },
+          {
+            "path": "preset/router-standard/router-bootstrap.mjs",
+            "sha": "a21d215c2e36dd5e086fee6a56d5c13c23e98648",
+            "type": "blob",
+            "size": 84429
+          },
+          {
+            "path": "preset/router-standard/router-core-v34.mjs",
+            "sha": "5b9d84facdd9793365b4411f0a0a981d6ae0bc53",
+            "type": "blob",
+            "size": 9900
+          },
+          {
+            "path": "preset/router-standard/router-core.mjs",
+            "sha": "5b9d84facdd9793365b4411f0a0a981d6ae0bc53",
+            "type": "blob",
+            "size": 9900
+          },
+          {
+            "path": "preset/router.integration.test.mjs",
+            "sha": "d8849acca4022d4775a3a45cecd3f62dadff6615",
+            "type": "blob",
+            "size": 32738
+          },
+          {
+            "path": "preset/router.test.mjs",
+            "sha": "35827a92d9363cf3a0d476d02e6859f0dbae638a",
+            "type": "blob",
+            "size": 16553
+          },
+          {
+            "path": "preset/scripts",
+            "sha": "3069622ffc1975a71f66535252fbcf43a4ce2fa9",
+            "type": "tree"
+          },
+          {
+            "path": "preset/scripts/build-page.mjs",
+            "sha": "06534db19a9019f2eb8fa34171ffa0f5d8344391",
+            "type": "blob",
+            "size": 4717
+          },
+          {
+            "path": "preset/scripts/sync-preset.cjs",
+            "sha": "e0aa193bebc683e6de700db73a649d9536598f71",
+            "type": "blob",
+            "size": 6690
+          },
+          {
+            "path": "scripts",
+            "sha": "ece342628eaa6661c90eef4228c4a3431e04b0a1",
+            "type": "tree"
+          },
+          {
+            "path": "scripts/install-injector.ps1",
+            "sha": "fc14c0a5988e30096c7d714d50c2ab839d75eeff",
+            "type": "blob",
+            "size": 6953
+          }
+        ]
+      }
+    ],
+    "candidates": [
+      {
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "stars": 1,
+        "topicMatch": 7,
+        "origin": "explicit"
+      },
+      {
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "stars": 3,
+        "topicMatch": 21,
+        "origin": "explicit"
+      },
+      {
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "stars": 3,
+        "topicMatch": 11,
+        "origin": "explicit"
+      },
+      {
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "stars": 7020,
+        "topicMatch": 14,
+        "origin": "explicit"
+      }
+    ],
+    "evidence": [
+      {
+        "id": "8b1b5b96debf89a88c24d1ea",
+        "criterionId": "project_identity",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "revision": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/HB00/dsh-llm-failover/blob/919272faf9f9eb0d379b70f45c5612c1d5aa47a5/package.json",
+        "excerpt": "  \"name\": \"dsh-llm-failover\",\n  \"version\": \"0.3.0\",\n  \"description\": \"Provider failover for DeepSeek Harness: on rate-limit (429) or quota exhaustion, automatically switch between providers with configurable per-provider models, fall back to the last one (e.g. DeepSeek official), and show a visible notice in the UI.\",\n  \"type\": \"module\",\n  \"main\": \"lib/index.js\",\n  \"exports\": {",
+        "kind": "canonical"
+      },
+      {
+        "id": "357f99ac391b5cc690b1b09d",
+        "criterionId": "provider_failover_contract",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "revision": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/HB00/dsh-llm-failover/blob/919272faf9f9eb0d379b70f45c5612c1d5aa47a5/package.json",
+        "excerpt": "{\n  \"name\": \"dsh-llm-failover\",\n  \"version\": \"0.3.0\",\n  \"description\": \"Provider failover for DeepSeek Harness: on rate-limit (429) or quota exhaustion, automatically switch between providers with configurable per-provider models, fall back to the last one (e.g. DeepSeek official), and show a visible notice in the UI.\",\n  \"type\": \"module\",\n  \"main\": \"lib/index.js\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "2ee97892b0450b3cd36fbbfc",
+        "criterionId": "security_and_exit",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "revision": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/HB00/dsh-llm-failover/blob/919272faf9f9eb0d379b70f45c5612c1d5aa47a5/package.json",
+        "excerpt": "  ],\n  \"license\": \"MIT\",\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"git+https://github.com/HB00/dsh-llm-failover.git\"\n  },",
+        "kind": "canonical"
+      },
+      {
+        "id": "f5c217bc4daccba563e261c0",
+        "criterionId": "small_team_maintenance",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "revision": "919272faf9f9eb0d379b70f45c5612c1d5aa47a5",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/HB00/dsh-llm-failover/blob/919272faf9f9eb0d379b70f45c5612c1d5aa47a5/README.md",
+        "excerpt": "- UI notice bar on every switch (auto-dismiss). / 每次切换在输入框上方显示提示条（自动消失）。\n- Configuration card in Settings → Plugins → Plugin configuration. / 设置 → 插件 → 插件配置 页面卡片直接配置。\n\n## Install / 安装\n\n```sh",
+        "kind": "canonical"
+      },
+      {
+        "id": "62a5f880e4a0e4c19e4a4b57",
+        "criterionId": "project_identity",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": "47588d4692a76d64382865e518d2a927eda4891b",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Letter2025/dsh-model-failover/blob/47588d4692a76d64382865e518d2a927eda4891b/package.json",
+        "excerpt": "  \"name\": \"dsh-model-failover\",\n  \"version\": \"0.1.4\",\n  \"description\": \"Two-level model circuit breaker with failover for DeepSeek Harness: trip a model or a whole provider after repeated request failures and route the next request to a configured fallback\",\n  \"author\": \"Letter2025\",\n  \"repository\": {\n    \"type\": \"git\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "c70c560e1a0b9f7606175e9f",
+        "criterionId": "provider_failover_contract",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": "47588d4692a76d64382865e518d2a927eda4891b",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Letter2025/dsh-model-failover/blob/47588d4692a76d64382865e518d2a927eda4891b/package.json",
+        "excerpt": "{\n  \"name\": \"dsh-model-failover\",\n  \"version\": \"0.1.4\",\n  \"description\": \"Two-level model circuit breaker with failover for DeepSeek Harness: trip a model or a whole provider after repeated request failures and route the next request to a configured fallback\",\n  \"author\": \"Letter2025\",\n  \"repository\": {",
+        "kind": "canonical"
+      },
+      {
+        "id": "a785670238d1b9fb67f39a2b",
+        "criterionId": "security_and_exit",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": "47588d4692a76d64382865e518d2a927eda4891b",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Letter2025/dsh-model-failover/blob/47588d4692a76d64382865e518d2a927eda4891b/package.json",
+        "excerpt": "  ],\n  \"license\": \"MIT\",\n  \"dsh\": {\n    \"bundle\": {\n      \"patch\": \"./cordis.patch.yml\"\n    }",
+        "kind": "canonical"
+      },
+      {
+        "id": "ab14a944ca50f5d5fcd6b90b",
+        "criterionId": "failure_reason_ledger",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": "47588d4692a76d64382865e518d2a927eda4891b",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/Letter2025/dsh-model-failover/blob/47588d4692a76d64382865e518d2a927eda4891b/README.md",
+        "excerpt": "| `probeMaxTokens` | `8` | Output cap for probe calls. |\n| `stripReasoningEffort` | `true` | Drop the primary's reasoning effort when failing over (fallbacks may not support it). |\n| `notifyUser` | `true` | Append a user-visible message when a route switches. |\n\n## Events\n",
+        "kind": "canonical"
+      },
+      {
+        "id": "64dfaaadf353bbb28f699d82",
+        "criterionId": "small_team_maintenance",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "revision": "47588d4692a76d64382865e518d2a927eda4891b",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/Letter2025/dsh-model-failover/blob/47588d4692a76d64382865e518d2a927eda4891b/README.md",
+        "excerpt": "\n[![release](https://img.shields.io/npm/v/dsh-model-failover?style=flat&label=release&color=blue)](https://www.npmjs.com/package/dsh-model-failover)\n[![downloads](https://img.shields.io/npm/dt/dsh-model-failover?style=flat&label=downloads&color=blue)](https://www.npmjs.com/package/dsh-model-failover)\n[![stars](https://img.shields.io/github/stars/Letter2025/dsh-model-failover?style=flat&label=stars&color=blue)](https://github.com/Letter2025/dsh-model-failover)\n[![license](https://img.shields.io/github/license/Letter2025/dsh-model-failover?style=flat&label=license&color=blue)](LICENSE)\n[![docs](https://img.shields.io/badge/docs-English%20%7C%20%E4%B8%AD%E6%96%87-0075cc?style=flat&labelColor=555555)](https://github.com/Letter2025/dsh-model-failover/blob/main/README.zh.md)",
+        "kind": "canonical"
+      },
+      {
+        "id": "93e916e34cc1215f16810555",
+        "criterionId": "project_identity",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "revision": "0327cf929e179998ba5469af7d38e66a15d37ffa",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Walvez/dsh-search-failover/blob/0327cf929e179998ba5469af7d38e66a15d37ffa/package.json",
+        "excerpt": "  \"name\": \"dsh-search-failover\",\n  \"version\": \"0.3.11\",\n  \"description\": \"Provider-level web search+fetch pool for DeepSeek Harness: bypass the official LLM search channel (0 model tokens), failover/rotate across Exa/Tavily/Jina/Firecrawl/Serper/SerpApi/SearXNG/DDG/Brave with quota-aware circuit breaking, multi-key rotation, and a GUI settings page.\",\n  \"type\": \"module\",\n  \"main\": \"lib/index.js\",\n  \"exports\": {",
+        "kind": "canonical"
+      },
+      {
+        "id": "94bfb973b4289c764649f5b6",
+        "criterionId": "provider_failover_contract",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "revision": "0327cf929e179998ba5469af7d38e66a15d37ffa",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Walvez/dsh-search-failover/blob/0327cf929e179998ba5469af7d38e66a15d37ffa/package.json",
+        "excerpt": "{\n  \"name\": \"dsh-search-failover\",\n  \"version\": \"0.3.11\",\n  \"description\": \"Provider-level web search+fetch pool for DeepSeek Harness: bypass the official LLM search channel (0 model tokens), failover/rotate across Exa/Tavily/Jina/Firecrawl/Serper/SerpApi/SearXNG/DDG/Brave with quota-aware circuit breaking, multi-key rotation, and a GUI settings page.\",\n  \"type\": \"module\",\n  \"main\": \"lib/index.js\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "fd0e55807bb4e5fb5440f76e",
+        "criterionId": "security_and_exit",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "revision": "0327cf929e179998ba5469af7d38e66a15d37ffa",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/Walvez/dsh-search-failover/blob/0327cf929e179998ba5469af7d38e66a15d37ffa/package.json",
+        "excerpt": "    \"README.md\",\n    \"LICENSE\"\n  ],\n  \"license\": \"MIT\",\n  \"repository\": {\n    \"type\": \"git\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "83ca3bc608e8028818c29efd",
+        "criterionId": "failure_reason_ledger",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "revision": "0327cf929e179998ba5469af7d38e66a15d37ffa",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/Walvez/dsh-search-failover/blob/0327cf929e179998ba5469af7d38e66a15d37ffa/README.md",
+        "excerpt": "  <a href=\"https://www.npmjs.com/package/dsh-search-failover\"><img src=\"https://img.shields.io/npm/v/dsh-search-failover.svg?style=flat-square&color=blue\" alt=\"npm version\"></a>\n  <a href=\"https://github.com/Walvez/dsh-search-failover/actions/workflows/test.yml\"><img src=\"https://img.shields.io/github/actions/workflow/status/Walvez/dsh-search-failover/test.yml?style=flat-square&label=tests\" alt=\"build status\"></a>\n  <a href=\"https://nodejs.org/\"><img src=\"https://img.shields.io/badge/node-%3E%3D22.0.0-brightgreen.svg?style=flat-square\" alt=\"node version\"></a>\n  <a href=\"https://github.com/Walvez/dsh-search-failover/blob/main/LICENSE\"><img src=\"https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square\" alt=\"license\"></a>\n  <a href=\"https://github.com/deepseek-ai/awesome-dsh-plugin\"><img src=\"https://img.shields.io/badge/dsh-awesome--plugin-orange.svg?style=flat-square\" alt=\"awesome plugin\"></a>\n</p>",
+        "kind": "canonical"
+      },
+      {
+        "id": "da4f0b7a531a2ffc177a90c0",
+        "criterionId": "project_identity",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "path": "injector/package.json",
+        "sourceUrl": "https://github.com/yjh051108/dsh-routing-suite/blob/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30/injector/package.json",
+        "excerpt": "  \"name\": \"@dsh-external/dsh-super-injector\",\n  \"version\": \"0.3.3\",\n  \"description\": \"超级模组注入器：运行时注入任意本地 DSH 插件包（junction 链接 + loader.create，不碰 patch/package.json/不重启），热重载全家桶 + 开发侧挂区一键转正 + 一键卸载 + 路由自愈 + 插件管理 UI（设置页：列表/卸载/拖入内化），清单持久化重启自动恢复——DSH 生态的 BepInEx 式模组注入入口\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"main\": \"./lib/index.js\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "13fe27911b6d6f7bf7393ef6",
+        "criterionId": "security_and_exit",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "path": "injector/package.json",
+        "sourceUrl": "https://github.com/yjh051108/dsh-routing-suite/blob/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30/injector/package.json",
+        "excerpt": "  ],\n  \"license\": \"BSD-3-Clause\",\n  \"dsh\": {\n    \"bundle\": {\n      \"patch\": \"./cordis.patch.yml\"\n    },",
+        "kind": "canonical"
+      },
+      {
+        "id": "db6181ddf11abe79f7fae470",
+        "criterionId": "provider_failover_contract",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "path": "package.json",
+        "sourceUrl": "https://github.com/yjh051108/dsh-routing-suite/blob/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30/package.json",
+        "excerpt": "  \"version\": \"0.3.3\",\n  \"description\": \"dsh-routing-suite 分发入口：DSH 超级模组注入器（BepInEx 式运行时注入，免重启）+ router-standard 预设仓库。插件入口为 injector/，预设位于 preset/。\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"main\": \"./injector/lib/index.js\",\n  \"types\": \"./injector/lib/types/index.d.ts\",",
+        "kind": "canonical"
+      },
+      {
+        "id": "ad99a68325bc95b15e56619e",
+        "criterionId": "failure_reason_ledger",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/yjh051108/dsh-routing-suite/blob/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30/README.md",
+        "excerpt": "- **plan-mode 保留**：只替换 persona section，plan 边界不失忆\n- **AI 自优化工具**：`dev_router_status` / `dev_router_mode` / `dev_mode_subagent`\n\n## v0.3.0 变更（真实装配链路修复）\n\n- **首轮路由真实生效**（[#13](https://github.com/yjh051108/dsh-routing-suite/issues/13)）：经 `agent/inbox/claimed` 在装配前捕获首条真实用户消息，首个请求即按任务分类（此前所有会话首轮无条件 weak）",
+        "kind": "canonical"
+      },
+      {
+        "id": "2d1dd832a7ef1df920752995",
+        "criterionId": "small_team_maintenance",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "revision": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+        "path": "README.md",
+        "sourceUrl": "https://github.com/yjh051108/dsh-routing-suite/blob/f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30/README.md",
+        "excerpt": "|---|---|---|---|\n| `injector/` | [dsh-super-injector](https://github.com/yjh051108/dsh-super-injector) | [v0.3.3](https://github.com/yjh051108/dsh-super-injector/releases/tag/v0.3.3) | 运行时注入器：dev_* 工具全家桶（注入/热重载/侧挂转正/卸载/路由自愈）；`github:` 装配由 prepare 钩子自动构建 |\n| `preset/` | [dsh-router-standard](https://github.com/yjh051108/dsh-router-standard) | [v0.3.0 … 主线 v1.19.1/v34](https://github.com/yjh051108/dsh-router-standard/releases/tag/v0.3.0) | 思维模式路由预设：router-standard（分类 persona + 完整 sections）/ router-spec（深度思考优先）。router-pro 为规划中（planned），未随 v0.3.0 发布 |\n\n> 版本号以各组件仓库的 git tag 为准（列内链接直达对应 Release）。\n",
+        "kind": "canonical"
+      }
+    ],
+    "unknownCriteria": [
+      {
+        "criterionId": "failure_reason_ledger",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        }
+      },
+      {
+        "criterionId": "small_team_maintenance",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        }
+      }
+    ],
+    "navigation": [
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "HB00",
+          "name": "dsh-llm-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "Letter2025",
+          "name": "dsh-model-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "Walvez",
+          "name": "dsh-search-failover"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "status": "used"
+      },
+      {
+        "adapter": "heuristic",
+        "repository": {
+          "owner": "yjh051108",
+          "name": "dsh-routing-suite"
+        },
+        "status": "used"
+      }
+    ],
+    "collection": {
+      "filesRead": 10,
+      "sourceBytesRead": 38403,
+      "durationMs": 9409,
+      "cacheHit": false
+    }
+  }
+}

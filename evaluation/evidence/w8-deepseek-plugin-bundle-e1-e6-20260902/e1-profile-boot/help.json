@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/core-alpha4/apps/cli/lib/bin.js",
+    "--profile",
+    "headless",
+    "--help"
+  ],
+  "returncode": 0,
+  "stdout": "Usage: dsh --profile headless [options] [task...]\n\nAnswer one task, stream reasoning to stderr, print the final assistant message,\nand exit.\n\nArguments:\n  task        the task text; multiple words are joined by spaces\n\nOptions:\n  -h, --help  show this help\n\nExamples:\n  dsh --profile headless \"run the tests\"     answer one task and exit\n\n",
+  "stderr": "",
+  "duration_ms": 497,
+  "timed_out": false
+}

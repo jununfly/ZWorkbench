@@ -1,0 +1,55 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-candidate-probe/v1",
+  "candidate": "dsh-llm-failover",
+  "routes": [
+    {
+      "provider": "primary",
+      "model": "model-a",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    },
+    {
+      "provider": "secondary",
+      "model": "model-b",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    },
+    {
+      "provider": "secondary",
+      "model": "model-b",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    },
+    {
+      "provider": "secondary",
+      "model": "model-b",
+      "reasoningEffort": "high",
+      "maxTokens": 256
+    }
+  ],
+  "events": [],
+  "session_messages": [],
+  "logs": [
+    {
+      "level": "log",
+      "message": "[llm-failover] request-error: cooling primary (RATE_LIMIT x1), retry on next"
+    },
+    {
+      "level": "log",
+      "message": "[llm-failover] agent/request: primary -> secondary (model=model-b)"
+    },
+    {
+      "level": "log",
+      "message": "[llm-failover] agent/request: primary -> secondary (model=model-b)"
+    }
+  ],
+  "registrations": {
+    "rpc": 1,
+    "projection": 1
+  },
+  "candidate_owned_durable_records": [],
+  "request_listener_registered": true,
+  "request_error_listener_registered": true,
+  "cleanup_callbacks_invoked": 0,
+  "cleanup_completed": true
+}

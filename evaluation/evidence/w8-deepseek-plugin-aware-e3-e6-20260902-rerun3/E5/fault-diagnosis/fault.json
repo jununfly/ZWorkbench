@@ -1,0 +1,6 @@
+{
+  "code": "ADAPTER_WRITE_DENY",
+  "request_id": "w8-plugin-aware-e3-write-1",
+  "plugin": "dsh-config-migrate",
+  "run_id": "w8-plugin-aware-e3"
+}

@@ -1,0 +1,156 @@
+{
+  "schema": "zworkbench-w8-deepseek-plugin-bundle-fixture/v1",
+  "fixture_id": "w8-deepseek-plugin-bundle",
+  "version": "1",
+  "classification": "acceptance/evaluation",
+  "description": "Pinned, local-only DeepSeek Harness plugin-composition fixture. The requested four-plugin bundle is evaluated fail-closed when a member does not implement the standard dsh.bundle contract.",
+  "runtime": {
+    "profile": "headless",
+    "entrypoint": "apps/cli/lib/bin.js",
+    "node_major_required": 22,
+    "core_version": "0.1.2-alpha.4",
+    "core_commit": "4e84901e6471b79ec0338099867ebb4606d12bb"
+  },
+  "core": {
+    "source_dir": "core-alpha4",
+    "package": "@deepseek-ai/dsh-root",
+    "version": "0.1.2-alpha.4",
+    "commit": "4e84901e6471b79ec0338099867ebb4606d12bb",
+    "archive": "core-alpha4.tar.gz",
+    "archive_sha256": "c5acde3cc3ce7a01ab6daa6cc7fd1f7dc7b8a62d5e8bcc053caaf916f5ca00bb"
+  },
+  "plugins": [
+    {
+      "id": "dsh-context",
+      "source_dir": "dsh-context",
+      "repository": "https://github.com/bowenliang123/dsh-context",
+      "package": "dsh-context",
+      "version": "0.40.1",
+      "commit": "552bb9077f9ec5885bd37e35037c5e0de51d4c6d",
+      "contract": "standard-bundle",
+      "artifact": "npm-packs/dsh-context-0.40.1.tgz",
+      "artifact_sha256": "ae6631f6019b9b4f9f3d5771b48ca0c9371b1839cf7ddce7a2167c1e9e3865f8"
+    },
+    {
+      "id": "dsh-routing-suite",
+      "source_dir": "dsh-routing-suite",
+      "repository": "https://github.com/yjh051108/dsh-routing-suite",
+      "package": "@dsh-external/dsh-super-injector",
+      "version": "0.3.3",
+      "commit": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+      "contract": "standard-bundle",
+      "artifact": "npm-packs2/dsh-external-dsh-super-injector-0.3.3.tgz",
+      "artifact_sha256": "cfa693d2a8c333572472c237d5adc1fd9a2b666a15863797207104d5a5ab6718"
+    },
+    {
+      "id": "dsh-memoir",
+      "source_dir": "dsh-memoir",
+      "repository": "https://github.com/Qinling-Melon-Farmers/dsh-memoir",
+      "package": "dsh-memoir",
+      "version": "0.6.0",
+      "commit": "4416d50ee6d888f12677a81b36c4b4d5954c546a",
+      "contract": "standard-bundle",
+      "metadata_from_git_object": true,
+      "artifact": "npm-packs/dsh-memoir-0.6.0.tgz",
+      "artifact_sha256": "6df6d181a0cad25f16dee55daf28e9ef649a03bed0d0f4f294f28d22847b0073"
+    },
+    {
+      "id": "dsh-config-migrate",
+      "source_dir": "dsh-config-migrate",
+      "repository": "https://github.com/volcengine/dsh-config-migrate",
+      "package": "dsh-config-migrate",
+      "version": "1.0.0",
+      "commit": "24aa64188386181bdaf21f4b46fea02bddf77e71",
+      "contract": "dynamic-plugin",
+      "metadata_from_git_object": false,
+      "artifact": null,
+      "artifact_sha256": null,
+      "reason_not_standard_bundle": "package.json declares dsh.plugin.host/client, not dsh.bundle"
+    }
+  ],
+  "assembly": {
+    "requested_members": [
+      "dsh-context",
+      "dsh-routing-suite",
+      "dsh-memoir",
+      "dsh-config-migrate"
+    ],
+    "standard_partial_members": [
+      "dsh-context",
+      "dsh-routing-suite",
+      "dsh-memoir"
+    ],
+    "profile_home": "home-full",
+    "core_only_profile_home": "home-core-only",
+    "input_policy": "fixed source checkouts plus local tarballs/workspace links; no live registry",
+    "full_bundle_requires_standard_contract": true
+  },
+  "gates": {
+    "E1": {
+      "name": "plugin ABI and version ledger",
+      "thresholds": [
+        "core and every requested plugin commit/version/package identity recorded at 100%",
+        "fresh profile boot/dump is reproducible from the pinned local inputs",
+        "a requested member without dsh.bundle is an explicit fail, never an implicit fallback"
+      ]
+    },
+    "E2": {
+      "name": "provenance and install safety",
+      "thresholds": [
+        "unallowlisted source or package count is 0",
+        "license, dependency, lifecycle-script, credential and network declarations are recorded",
+        "runtime evaluation performs no registry install, external network, real credential or external effect"
+      ]
+    },
+    "E3": {
+      "name": "C2/C4 safety and side-effect parity",
+      "thresholds": [
+        "critical interception 100%",
+        "unauthorized execution 0",
+        "unsafe duplicate effect 0",
+        "unknown effect is safe-stopped and never automatically retried"
+      ]
+    },
+    "E4": {
+      "name": "C3/C5/C6 capability parity",
+      "thresholds": [
+        "valid idempotent effect 1 and duplicate extra effect 0",
+        "silent semantic provider switch 0 and fallback reason recording 100%",
+        "simulated replay 5/5 and unapproved live effect 0"
+      ]
+    },
+    "E5": {
+      "name": "small-team lifecycle and exit",
+      "thresholds": [
+        "fresh install <= 90 minutes",
+        "upgrade, backup/restore and prepared-fault diagnosis each <= 30 minutes",
+        "resident services <= 3 and no extra specialist",
+        "uninstall leaves no hidden remote task, webhook, backup or credential"
+      ]
+    },
+    "E6": {
+      "name": "non-duplicate composition benefit",
+      "thresholds": [
+        "same task set, Provider and owner contract as the Codex comparison",
+        "at least one measurable, reproducible, non-duplicate advantage",
+        "E1-E5 all pass before any replacement or parallel-main decision"
+      ]
+    }
+  },
+  "isolation": {
+    "case_local_dsh_home": true,
+    "loopback_provider_only": true,
+    "real_credentials": false,
+    "production_data": false,
+    "external_network": false,
+    "external_side_effects": false,
+    "remote_tasks_webhooks_backups": false,
+    "single_zworkbench_owner": true
+  },
+  "non_claims": [
+    "A standard bundle or profile dump pass does not prove C2-C7 or product readiness.",
+    "A dynamic-plugin member is not interchangeable with a dsh.bundle member without a separately reviewed adapter.",
+    "A package hash paired with a source commit is not, by itself, source-to-binary reproducible-build provenance.",
+    "This fixture does not evaluate the real Provider, real credentials, remote data retention, or external effects."
+  ]
+}

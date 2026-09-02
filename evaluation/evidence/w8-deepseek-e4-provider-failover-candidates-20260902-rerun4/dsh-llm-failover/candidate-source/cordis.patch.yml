@@ -1,0 +1,4 @@
+# dsh-llm-failover bundle patch: registers the provider-failover host plugin.
+- insert:
+    - id: dsh-llm-failover
+      name: dsh-llm-failover

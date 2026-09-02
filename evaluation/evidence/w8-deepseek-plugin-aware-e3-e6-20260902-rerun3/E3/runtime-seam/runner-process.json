@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/bilibili/anaconda3/bin/python",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_deepseek_config_migrate_runtime_seam.py",
+    "--bundle-root",
+    "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR",
+    "--output",
+    "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/runtime-seam"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"pass\",\n  \"output\": \"/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E3/runtime-seam\",\n  \"runtime_seam\": \"pass\",\n  \"E3-E6\": \"eligible-for-independent-reopen\"\n}\n",
+  "stderr": "",
+  "duration_ms": 352,
+  "timed_out": false
+}

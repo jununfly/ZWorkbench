@@ -1,0 +1,81 @@
+{
+  "schema": "zworkbench-w8-deepseek-e4-provider-failover/v1",
+  "classification": "acceptance/evaluation",
+  "formal_research_collection": {
+    "state": "fresh-collection",
+    "request": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.request.json",
+    "status_sidecar": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.collection-status.json",
+    "sealed_ledger": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.ledger-response.json",
+    "fresh_sealed_ledger_produced": true,
+    "brief_fingerprint": "74ef2ca21e11423c68bd5c6921cf8fa3e08d6e731a799a0450b3e9a8279d3948",
+    "preflight": {
+      "schema": "zj-research-github-preflight/v1",
+      "provider": "github",
+      "authentication": {
+        "mode": "authenticated",
+        "tokenConfigured": true
+      },
+      "rateLimit": {
+        "resource": "core",
+        "limit": 5000,
+        "remaining": 5000,
+        "resetAt": "2026-09-02T04:31:02Z"
+      },
+      "canCollect": true
+    },
+    "ledger_relationship": "fresh-collection",
+    "fallback": {
+      "automatic": false,
+      "oldLedgerUsed": false
+    },
+    "ledger_schema": "zj-verified-evidence-ledger/v1",
+    "ledger_brief_fingerprint_matches": true
+  },
+  "real_provider": false,
+  "real_credentials": false,
+  "external_network": false,
+  "registry_install": false,
+  "production_data": false,
+  "owner_evidence_inherited": false,
+  "runner_sha256": "8b7a42d6531977e1ebfc8463a3ea95015230d4c3acdf418c69d69a8337c6a782",
+  "fixture_manifest_sha256": "b01e5bfa5ce9b5c3ec2111439fbf30ba765327b995a6ea4a6a442dcaab79acc1",
+  "formal_collection": {
+    "state": "fresh-collection",
+    "request": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.request.json",
+    "status_sidecar": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.collection-status.json",
+    "sealed_ledger": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/research/w8-deepseek-e4-provider-failover.ledger-response.json",
+    "fresh_sealed_ledger_produced": true,
+    "brief_fingerprint": "74ef2ca21e11423c68bd5c6921cf8fa3e08d6e731a799a0450b3e9a8279d3948",
+    "preflight": {
+      "schema": "zj-research-github-preflight/v1",
+      "provider": "github",
+      "authentication": {
+        "mode": "authenticated",
+        "tokenConfigured": true
+      },
+      "rateLimit": {
+        "resource": "core",
+        "limit": 5000,
+        "remaining": 5000,
+        "resetAt": "2026-09-02T04:31:02Z"
+      },
+      "canCollect": true
+    },
+    "ledger_relationship": "fresh-collection",
+    "fallback": {
+      "automatic": false,
+      "oldLedgerUsed": false
+    },
+    "ledger_schema": "zj-verified-evidence-ledger/v1",
+    "ledger_brief_fingerprint_matches": true
+  },
+  "thresholds": {
+    "provider_switch_observed": "at least one explicit primary-to-secondary model Provider transition",
+    "failure_classification_observed": "injected RATE_LIMIT is visible in candidate event/log surface",
+    "provider_identity_recorded": "primary and fallback provider/model identity are present in observed route/event data",
+    "all_routes_cooled_no_new_fallback_switch": "when primary and fallback are both cooled, no new fallback route is selected; host-level dispatch/safe-stop remains a separate question",
+    "no_retry_cycle": "bounded route sequence; no unbounded Provider switching loop",
+    "fallback_reason_durable": "candidate-owned durable record contains failure code, from/to route, and degradation state",
+    "e4_decision": "missing candidate-owned durable fallback-reason ledger keeps E4 at unknown/stop"
+  }
+}

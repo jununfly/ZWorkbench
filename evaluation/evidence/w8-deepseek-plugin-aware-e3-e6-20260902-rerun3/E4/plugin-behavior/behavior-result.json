@@ -1,0 +1,144 @@
+{
+  "status": "pass",
+  "process": {
+    "command": [
+      "/opt/homebrew/bin/node",
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w8-deepseek-plugin-bundle/v1/plugin-behavior-probe.mjs",
+      "--case-root=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior",
+      "--router-core=/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/inputs/router-core-v34.mjs",
+      "--memoir-dir=/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/home-full/profiles/headless/node_modules/dsh-memoir/lib"
+    ],
+    "returncode": 0,
+    "duration_ms": 56,
+    "timed_out": false
+  },
+  "parsed": {
+    "schema": "zworkbench-w8-deepseek-plugin-behavior/v1",
+    "isolation": {
+      "caseRoot": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior",
+      "workspace": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/workspace",
+      "memoirStorePath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/dsh-memoir.json",
+      "provider": "none",
+      "externalNetwork": false,
+      "realCredentials": false
+    },
+    "router": {
+      "implementation": "router-core-v34.mjs",
+      "routeA": [
+        {
+          "text": "开始开发一个小型 Python 工具并运行测试",
+          "mode": 1,
+          "band": "react",
+          "core": [
+            "read",
+            "write",
+            "edit"
+          ]
+        },
+        {
+          "text": "修复这个报错并排查回归",
+          "mode": 0,
+          "band": "spec",
+          "core": [
+            "read",
+            "edit",
+            "glob",
+            "grep"
+          ]
+        },
+        {
+          "text": "分析这个问题",
+          "mode": "weak",
+          "band": "weak",
+          "core": [
+            "str_replace_editor"
+          ]
+        }
+      ],
+      "routeB": [
+        {
+          "text": "开始开发一个小型 Python 工具并运行测试",
+          "mode": 1,
+          "band": "react",
+          "core": [
+            "read",
+            "write",
+            "edit"
+          ]
+        },
+        {
+          "text": "修复这个报错并排查回归",
+          "mode": 0,
+          "band": "spec",
+          "core": [
+            "read",
+            "edit",
+            "glob",
+            "grep"
+          ]
+        },
+        {
+          "text": "分析这个问题",
+          "mode": "weak",
+          "band": "weak",
+          "core": [
+            "str_replace_editor"
+          ]
+        }
+      ],
+      "deterministic": true,
+      "stageSequence": [
+        1,
+        2,
+        3
+      ],
+      "providerFailoverContract": "not-provided-by-router-core"
+    },
+    "memoir": {
+      "storePath": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/dsh-memoir.json",
+      "entryCount": 3,
+      "selectedCount": 2,
+      "selectedSections": [
+        "actions",
+        "lessons"
+      ],
+      "hotTextA": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+      "hotTextB": "[Project memory]\nActions:\n- 验证 adapter 边界: 所有动态插件写入都必须经过 owner policy gate。\n\nLessons:\n- 保留 unknown: 没有 Provider failover 合同就不能把同路重试算作切换。",
+      "deterministic": true,
+      "estimatedTokens": 62,
+      "hardMaxTokens": 120,
+      "noteExcluded": true,
+      "storeStats": {
+        "revision": 3,
+        "epoch": 6,
+        "loads": 7,
+        "hits": 4,
+        "misses": 3,
+        "hitRate": 0.5714285714285714,
+        "fileReads": 2,
+        "statProbes": 4,
+        "corruptBackups": 0,
+        "renders": 3,
+        "renderComputes": 3,
+        "renderHitRate": 0,
+        "lastLoadMs": 0
+      }
+    }
+  },
+  "parse_error": null,
+  "source": {
+    "router_commit": "f753bb1cd793a8e74b01d8fa5ad2c3d87a2e3c30",
+    "router_path": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/inputs/router-core-v34.mjs",
+    "router_sha256": "544c12c64cb39f4bf8e40b355c35fbcd5ab5d1cc7b7c41d7f5445cebdae3d61c",
+    "memoir_package_dir": "/private/tmp/zworkbench-deepseek-plugin-bundle.HVvyGR/home-full/profiles/headless/node_modules/dsh-memoir/lib",
+    "memoir_entry_present": true
+  },
+  "paths": {
+    "all_inside_case_root": true,
+    "paths": {
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior": true,
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/workspace": true,
+      "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/E4/plugin-behavior/dsh-memoir.json": true
+    }
+  }
+}
