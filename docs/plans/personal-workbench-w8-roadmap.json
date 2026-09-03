@@ -667,23 +667,116 @@
     "1-9": {
       "id": "1-9",
       "label": "DSH 主 Harness + Codex Worker 混合只读实现",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
-      "children": [],
+      "children": [
+        "1-9-1",
+        "1-9-2",
+        "1-9-3",
+        "1-9-4",
+        "1-9-5",
+        "1-9-6"
+      ],
       "decisions": [
         {
           "q": "混合架构正式开发的第一个节点是什么？",
           "answer": "先完成 Stage 0 合同冻结，再执行 H1-H5 混合只读切片：DSH bootstrap、Worker handshake、隔离只读 coding、生命周期和 evidence/replay。",
           "note": "Product execution；首期不做真实写入、Git push、部署、真实 Provider 默认接入或全量插件市场。Codex-only local_read_only_run 继续作为回退基线；H1-H5 任一 identity、policy、process、replay 或 unknown gate 不通过就 safe-stop。"
+        },
+        {
+          "q": "ZWorkbench 应如何引入和维护 DSH？",
+          "answer": "采用兄弟仓库布局：ZWorkbench 维护 Control Plane、Worker bridge、运行时 manifest、DSH profile 与 first-party integration；独立 ZHarness 维护 DSH 下游源码和上游同步。集成与正式验证使用由固定 source commit/lock 构建的 DSH artifact，artifact 放在用户级 runtime cache 或发布物中，不 vendoring、不作为 ZWorkbench 子模块、不把源码开发路径当作正式运行路径。",
+          "note": "Product execution；当前本机 DSH 下游仓库为 /Users/bilibili/Documents/workspace/github/jununfly/ZHarness，存在用户未提交改动，设计不修改该仓库。开发模式可指向 sibling checkout，H1-H5 与试点必须绑定 artifact digest；manifest、profile、bridge contract 和兼容矩阵进入 ZWorkbench 版本控制。"
+        },
+        {
+          "q": "DSH 下游 checkout 的本地目录名称是什么？",
+          "answer": "使用 /Users/bilibili/Documents/workspace/github/jununfly/ZDSHarness；ZWorkbench 与 ZDSHarness 作为兄弟仓库。当前 Git remote 仍为 git@github.com:jununfly/ZHarness.git，远端仓库改名另行处理。",
+          "note": "本次只完成本地目录重命名，保留 ZDSHarness 的工作树、分支、提交和未提交改动；历史 artifact/source identity 中的 ZHarness 名称不回写。"
+        },
+        {
+          "q": "DSH 下游 GitHub 仓库的正式名称和 remote 是什么？",
+          "answer": "正式仓库为 jununfly/ZDSHarness，SSH remote 为 git@github.com:jununfly/ZDSHarness.git；旧的 jununfly/ZHarness URL 由 GitHub 保留重定向。",
+          "note": "已完成远端仓库重命名和本地 origin 更新；ZDSHarness 工作树未提交改动、分支和提交历史均未改变。历史 artifact/source identity 中的 ZHarness 字样保留，不回写历史证据。"
+        },
+        {
+          "q": "远端改名后，历史 artifact 与研究证据如何同步命名？",
+          "answer": "将指向 jununfly 下游项目的现行展示名称统一为 ZDSHarness；保留 deepseek-ai/deepseek-harness 上游身份、source commit、artifact digest、package identity 和原始证据内容。路线图既有决策作为历史记录保留，以本条更正作为当前命名事实。",
+          "note": "Product execution；研究文档可更新下游项目显示名；不可变 provenance 不回写。旧名只在需要解释历史命名或保留原始证据时出现。"
         }
       ],
+      "notes": "Product execution 已启动。先完成 Stage 0：冻结 DSH profile、最小插件 allowlist、Codex Worker artifact/schema、parent/child identity、wire envelope、capability facade 和 safe-stop 合同；随后按 H1-H5 进入混合只读切片。真实写入、真实 Provider 默认接入、Git push、部署和全量插件市场保持未授权。"
+    },
+    "1-9-1": {
+      "id": "1-9-1",
+      "label": "Stage 0：冻结 Worker contract、identity/schema 与 capability facade",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Stage 0 的第一版 Worker contract 如何冻结？",
+          "answer": "采用 zworkbench.worker.v1 的严格 JSON envelope：固定 message type、parent/child/attempt/DSH/Codex/event/artifact identity、provider/policy/environment/workspace/replay identity 和 worker artifact/schema identity；通过 CapabilityFacade 只允许显式 capability/effect，未知 wire/capability/effect 立即 safe-stop，完成态必须经过完整 identity 校验。",
+          "note": "Product execution；本节点只冻结公共契约与 fail-closed 校验，不启动 DSH/Codex、Provider 或工具，不实现真实 effect。replay mode 与 capability facade 明确禁止 live replay；CompositionOwner 仍是唯一 durable owner。"
+        }
+      ],
+      "notes": "Stage 0 已完成：冻结 zworkbench.worker.v1 envelope、identity/provenance、CapabilityFacade 和 safe-stop 语义；实现与测试见 worker_contract.py 和 test_worker_contract.py。下一步按 H1-H5 逐节点验证。"
+    },
+    "1-9-2": {
+      "id": "1-9-2",
+      "label": "H1 Bootstrap：固定 DSH profile 并启动 parent Run",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "label": "H2 Worker handshake：绑定 DSH/Codex 与 owner identity",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-4": {
+      "id": "1-9-4",
+      "label": "H3 隔离只读 coding：生成可审查 Worker artifact",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-5": {
+      "id": "1-9-5",
+      "label": "H4 中断恢复与进程生命周期：无孤儿 Worker",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-6": {
+      "id": "1-9-6",
+      "label": "H5 Evidence/replay：记录 owner 证据并隔离回放模式",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
       "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-03 16:38:04",
+    "updated": "2026-09-03 19:53:51",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }
