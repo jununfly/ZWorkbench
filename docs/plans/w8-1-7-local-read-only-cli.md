@@ -1,10 +1,13 @@
 # W8 `1-7`：`local_read_only_run` 产品入口与可安装运行闭环
 
-状态：`in_progress` · 路线类型：`Product execution`
+状态：`completed / Codex-only fallback baseline` · 路线类型：`Product execution`
 
 本节点把 `1-5` 已验证的 Python orchestration seam 暴露为一个最小的用户入口。
 它不改变 W8 的运行时组合，也不把隔离 fixture 的通过结果升级为真实 Provider、
 宿主级隔离或 Codex native approval 证明。
+
+`1-7` 是当前可运行的 Codex-only 回退基线；目标 DSH 主 Harness + Codex Worker
+bridge 从路线图 `1-9` 开始，尚未接入本入口。
 
 ## 1. 交付边界
 

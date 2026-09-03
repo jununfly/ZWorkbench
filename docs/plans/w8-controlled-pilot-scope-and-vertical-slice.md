@@ -1,6 +1,6 @@
 # W8 受控个人试点：产品边界与最小纵向切片
 
-状态：`design-baseline` · 路线类型：`Product execution` · 本轮不实现代码
+状态：`target-state-boundary / approved-for-implementation-planning` · 路线类型：`Product execution`
 
 本文件将 W7 的候选评估结论转换成 ZWorkbench 的第一阶段产品边界。它不是
 Codex 的生产采用批准，也不是把 W7 fixture 的通过结果升级成产品能力证明。
@@ -8,13 +8,15 @@ Codex 的生产采用批准，也不是把 W7 fixture 的通过结果升级成�
 ## 1. 试点目标
 
 ZWorkbench 第一阶段服务于一个个人开发者，或一个很小的内部团队，解决一件
-可复核的事情：输入一个本地项目任务，安全地启动一次固定版本 Codex 运行，
+可复核的事情：输入一个本地项目任务，由固定 DSH profile 通过 Codex Coding Worker
+安全地启动一次受控运行，
 留下可关联、可查看、可导出的结果和事件证据，并能从本地 composition state
 备份中恢复。
 
 第一阶段的产品基线固定为：
 
-- 一个主 Harness：Codex `0.139.0`；
+- 一个主 Harness：固定版本 DSH profile 与插件 allowlist；
+- 一个进程外 Coding Worker：Codex `0.139.0` 及其固定 app-server/CLI schema；
 - 一个本地 SQLite composition owner；
 - 一个本地、case-local 的运行目录和 `CODEX_HOME`；
 - loopback/fake Provider；
@@ -28,9 +30,10 @@ ZWorkbench 第一阶段服务于一个个人开发者，或一个很小的内部
 
 | 边界对象 | W8 中负责什么 | 明确不负责什么 |
 |---|---|---|
-| ZWorkbench control plane | 接收任务、生成 `run_id`、执行 preflight、绑定 workspace/config/provider identity、展示状态、导出和停止 | 不复制 Codex agent loop，不把文本结果当作唯一事实 |
+| ZWorkbench control plane | 接收任务、生成 `run_id`、执行 preflight、绑定 workspace/config/provider identity、展示状态、导出和停止 | 不复制 DSH/Codex agent loop，不把文本结果当作唯一事实 |
+| DSH 主 Harness | 顶层 Agent loop、session、插件组合、上下文、任务路由和实验策略 | 不拥有跨 Run durable state，不绕过 owner policy/effect seam |
 | SQLite composition owner | 唯一持有 run、approval、effect、result、event、replay metadata、backup identity 和 state digest | 不执行 shell、模型请求或外部副作用；不接受第二个 truth owner |
-| Codex app-server adapter | 以显式 argv/env 启动固定 Codex，关联 `thread_id`、`turn_id`、事件和结果 | 不绕过 owner，不把 Codex 内部数据库提升为 ZWorkbench composition truth |
+| DSH–Codex Worker bridge | 以显式 argv/env 启动固定 Codex Worker，关联 parent/child run、`thread_id`、`turn_id`、事件和结果 | 不绕过 owner，不把 DSH/Codex 内部数据库提升为 ZWorkbench composition truth |
 | Provider | 负责推理服务、服务端数据处理、任务/Webhook/备份/retention 和账户责任 | ZWorkbench 不创建、管理或承诺清理 Provider 侧资源 |
 | Host / project workspace | 提供本地文件、进程、凭证注入和 OS 隔离边界 | W8 不宣称已经获得宿主级强制隔离；未签核路径必须 safe-stop |
 
@@ -43,7 +46,7 @@ Provider 验证属于按需外部 runbook，不是 W8 核心产品开发或发�
 ### 允许
 
 - 手动提交一个本地项目的只读分析/代码理解任务；
-- 在 case-local 目录中启动固定 Codex app-server；
+- 在 case-local 目录中启动固定 DSH profile 与 Codex Worker bridge；
 - 使用 loopback/fake Provider 完成一次确定性运行；
 - 保存完整的 run/thread/turn/provider/environment/event/result 关联；
 - 查看 `recorded_view`，导出脱敏的 owner state，创建并恢复本地 backup；
@@ -54,7 +57,7 @@ Provider 验证属于按需外部 runbook，不是 W8 核心产品开发或发�
 - 真实火山方舟请求、生产凭证、生产项目和真实远端数据；
 - 写文件、Git push、部署、发送消息、创建任务或其他不可逆副作用；
 - `live_replay`；未有显式授权时只允许 recorded view 或 simulated replay；
-- 常驻 scheduler/cron、自动 retry、Provider gateway 或第二 Harness；
+- 常驻 scheduler/cron、自动 retry、Provider gateway 或第二个顶层 Harness；
 - 多租户、账户共享、对外 SaaS、团队权限模型和远端资源管理；
 - 以 C2 scripted pass 代替宿主级强制边界或 Codex native approval 签核；
 - 为了解决未验证的需求引入 Temporal、LangGraph、LiteLLM、独立观测平台。
@@ -74,7 +77,9 @@ policy preflight
     ↓
 创建并启动 owner run
     ↓
-固定 Codex app-server / thread / turn
+固定 DSH profile / session
+    ↓
+Codex Worker bridge / thread / turn
     ↓
 事件、Provider、环境和结果写入 owner
     ↓
@@ -148,7 +153,7 @@ replay 或 Provider 请求。
    key 值不进入输入、owner state 或 event log。
 2. **创建运行**：owner 创建唯一 `run_id`，写入任务类型、规范化输入摘要、
    config/fixture identity 和开始事件。
-3. **启动执行**：adapter 以无 shell 的显式 argv/env 启动 Codex app-server，
+3. **启动执行**：DSH–Codex bridge 以无 shell 的显式 argv/env 启动固定 Worker，
    使用固定版本、read-only workspace 和 loopback Provider；不继承未声明的
    生产凭证或全局状态。
 4. **关联身份**：成功的 `thread/start`、`turn/start`、事件流和 Provider identity
@@ -193,7 +198,7 @@ Codex native approval、真实 Provider 或商业/许可证审查已经签核。
 
 ## 7. 产品入口（1-7）
 
-`1-5` 已完成 Python orchestration seam；`1-7` 将其暴露为安装后的
+`1-5` 已完成 Python orchestration seam；`1-7` 已将其暴露为安装后的
 `zworkbench run`，具体契约和验收记录见
 [`w8-1-7-local-read-only-cli.md`](./w8-1-7-local-read-only-cli.md)。入口要求显式
 的 case-local root、workspace 和固定 Codex executable，默认使用 loopback/fake
@@ -202,8 +207,10 @@ Provider，并可按需在 case-local 路径生成 owner export、backup 和 sum
 CLI 只做控制面编排：参数与路径边界、preflight、orchestrator 调用、脱敏摘要和
 产物写出；不复制 agent loop、owner 状态、policy 判断或 replay 执行。
 
-实现期间继续遵守：不接真实火山方舟、不读取全局 `CODEX_HOME`、不使用真实
-API key、不执行真实写操作、不引入第二 Harness 或常驻服务。
+当前实现仍是 Codex-only 回退路径；`1-9` 才开始把 DSH 主 Harness 和 Codex
+Worker bridge 接到同一 owner。实现期间继续遵守：不接真实火山方舟、不读取全局
+`CODEX_HOME`、不使用真实 API key、不执行真实写操作、不引入第二个顶层 Harness
+或常驻服务。
 
 ## 8. 后续放行门
 

@@ -14,20 +14,21 @@
 | Gate | 当前决定 | 允许的范围 | 不能推出的结论 |
 |---|---|---|---|
 | B：可恢复写操作 | **`HOLD`** | 继续验证 case-local、reversible fake sink 和 owner contract；保持 `local_read_only_run` | 不能把 composition approval 通过当成宿主级强制边界；不能放行真实文件写入、Git push、部署或外部任务 |
-| W8 第一切片 | **在既定隔离边界内继续** | Codex `0.139.0` + 一个 SQLite composition owner + read-only workspace + loopback/fake Provider | 不代表 Codex native approval、真实写操作或生产 schema migration 已经签核 |
+| W8 第一切片 | **在既定隔离边界内继续** | 目标为 DSH 主 Harness + Codex `0.139.0` Worker + 一个 SQLite composition owner + read-only workspace + loopback/fake Provider；当前代码仍是 Codex-only 回退 | 不代表 Codex native approval、真实写操作或生产 schema migration 已经签核 |
 
 W8 本地写操作的放行条件是：`Gate B ∧ C7/NOTICE 边界仍成立`。任一本地安全硬门
 为 `unknown` 都保持 `HOLD`，不得用综合分或模型输出抵消。路线外 Provider 资料不产生
 新的 W8 roadmap 待办。
 
-### 1.1 仍然采用“单主 Harness + 必要薄层”
+### 1.1 目标组合与当前回退基线
 
-W8 不改变组合选择：Codex `0.139.0` 仍是唯一主 Harness，SQLite
-composition owner 仍是 `run / approval / effect / result / event / backup /
+2026-09-03 的目标组合是 DSH 主 Harness + 进程外 Codex `0.139.0` Coding Worker；
+当前代码中的 Codex-only 路径仅作为可运行回退基线。无论目标 bridge 还是回退路径，
+SQLite composition owner 都是 `run / approval / effect / result / event / backup /
 replay metadata` 的唯一 durable truth。外部 Provider 只在按需 runner 中作为被测
 远端，不新增 W8 核心状态 owner；可恢复写操作只新增明确的 effect boundary 和恢复验证。
 
-本节点不引入第二 Harness、Temporal/LangGraph、LiteLLM、常驻观测平台或新的权限
+本节点不引入第二个顶层 Harness、Temporal/LangGraph、LiteLLM、常驻观测平台或新的权限
 owner。只有当 C2–C7 证明某个组件带来非重复的关键收益，且个人开发者/小团队的服务数、
 升级、排障、备份、许可证和退出成本均在阈值内，才另开节点评估。
 
