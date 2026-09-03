@@ -612,6 +612,7 @@ H1–H6 是首个混合只读切片；H7–H8 不能被首切片默认带入。
 - 固定 DSH core、profile、plugin manifest、source commit 和依赖；
 - 固定 Codex Worker artifact、app-server schema 和启动参数；
 - 固定 parent/child identity、Worker、Provider、artifact 和 effect contract；
+- Worker envelope 的字段、完成语义和 fail-closed 规则见 [Worker contract v1](worker-contract-v1.md)；
 - 将当前 Codex-only local_read_only_run 标记为 fallback baseline；
 - 更新路线图，新增混合架构产品执行节点；DSH E4/E5 挑战评估作为旁路线，不阻塞只读切片。
 

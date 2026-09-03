@@ -5,11 +5,12 @@
 
 这是方案准备阶段的统一入口。它回答“现在应相信哪份材料、哪些结论只是历史评测、开发从哪里开始”，不替代代码、测试或 roadmap JSON。
 
-## 先读这三份
+## 先读这四份
 
 1. [开发前基线](plans/development-baseline.md)：当前目标、已完成准备、未关闭门和正式开发的进入顺序。
 2. [目标系统架构](plans/designs/dsh-codex-hybrid-target-architecture.md)：目标态的分层、ownership、Worker contract、扩展面和 H1–H9 验收矩阵。
-3. [README](../README.md)：当前仓库实际可运行的 Codex-only `local_read_only_run`，不是目标混合架构已经完成的证明。
+3. [DSH 源码/运行时布局设计](plans/designs/dsh-source-runtime-layout-and-maintenance.md)：ZWorkbench 与 ZDSHarness 的目录、artifact、cache、升级和维护边界。
+4. [README](../README.md)：当前仓库实际可运行的 Codex-only `local_read_only_run`，不是目标混合架构已经完成的证明。
 
 ## 当前唯一决策答案
 

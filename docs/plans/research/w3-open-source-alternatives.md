@@ -130,7 +130,7 @@ Temporal 的 retry/replay 是执行可靠性；Langfuse、Phoenix、OpenTelemetr
 - [brief/request v6](./w3-open-source-alternatives.v6.request.json)
 - [sealed ledger response v6](./w3-open-source-alternatives.v6.ledger-response.json)
 - [collection status v6](./w3-open-source-alternatives.v6.collection-status.json)
-- compiler：`zj-research-cli/v1`，artifact lock 指向 `ZHarness@9172aa0674bf7a7cabcd47383407e0d5068de8f2`
+- compiler：`zj-research-cli/v1`，artifact lock 指向 `ZDSHarness@9172aa0674bf7a7cabcd47383407e0d5068de8f2`
 
 ### 官方一手资料入口
 

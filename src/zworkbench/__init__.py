@@ -28,6 +28,23 @@ from .local_run import (
     PreflightViolation,
     preflight,
 )
+from .worker_contract import (
+    KNOWN_EFFECT_CLASSES,
+    KNOWN_MESSAGE_TYPES,
+    REPLAY_MODES,
+    WORKER_CONTRACT_SCHEMA,
+    UNKNOWN,
+    CapabilityDecision,
+    CapabilityFacade,
+    CapabilityRequest,
+    ComponentIdentity,
+    CompletionBlocked,
+    IdentityChain,
+    ProviderIdentity,
+    SafeStopRequired,
+    WorkerContractError,
+    WorkerEnvelope,
+)
 
 __all__ = [
     "ApprovalError",
@@ -52,4 +69,19 @@ __all__ = [
     "PreflightResult",
     "PreflightViolation",
     "preflight",
+    "KNOWN_EFFECT_CLASSES",
+    "KNOWN_MESSAGE_TYPES",
+    "REPLAY_MODES",
+    "WORKER_CONTRACT_SCHEMA",
+    "UNKNOWN",
+    "CapabilityDecision",
+    "CapabilityFacade",
+    "CapabilityRequest",
+    "ComponentIdentity",
+    "CompletionBlocked",
+    "IdentityChain",
+    "ProviderIdentity",
+    "SafeStopRequired",
+    "WorkerContractError",
+    "WorkerEnvelope",
 ]
