@@ -1,9 +1,9 @@
 # 个人工作台：Wayfinder 决策地图
 
-状态：🧭 研究与 W8 `1-7` 产品切片、W8-1 DeepSeek 独立挑战者评估已完成，Codex 保留为唯一主 Harness 条件候选
+状态：🧭 研究与 W8 `1-7` 产品切片、W8-1 DeepSeek 独立挑战者评估已完成；当前目标态为 DSH 主 Harness + Codex Coding Worker
 载体：local-markdown tracker（本文件是唯一地图与票据载体）  
 创建日期：2026-08-30  
-当前基线：W8 `local_read_only_run` 已具备可安装 CLI、SQLite composition owner、Codex adapter、隔离 fixture 与 evidence；真实写操作宿主边界仍 HOLD。
+当前基线：W8 `local_read_only_run` 已具备可安装 CLI、SQLite composition owner、Codex adapter、隔离 fixture 与 evidence；它是 Codex-only 回退基线。目标混合 bridge 尚未实现，真实写操作宿主边界仍 HOLD。
 
 ## Destination
 
@@ -36,6 +36,7 @@
 - W6-0.1 已获 Human 确认并冻结为首轮基线：C1/C5 样本量与通过标准、安全/回放零容忍、C3/C4 恢复语义、个人/小团队运维门槛、`pass-with-composition` 判定和首轮阈值变更纪律均已确定。C1–C7 的候选无关 fixture 证据已形成；候选 C2–C7、C7 真人运维工时和 G0/G7 仍为 unknown，W6 不签最终采用，只条件性交接 W7。
 - W7 已完成采用姿态决策：Codex `0.139.0` + 一个 SQLite composition owner 保留为唯一主 Harness 条件候选；DeepSeek 不作为第二生产 Harness 接入，而作为在同一合同下验证非重复收益的独立挑战者。
 - W8-1 已完成 DeepSeek 固定版本 C1–C7 公平复测：C1 `10/10`，C2 `pass-with-adapter` `6/6`，C3 `15/15 pass-with-composition`；C4 非 approval-required 组合 `24/24` 通过、approval-required `12/12 unknown` 且无 fail；C5/C6 仍分别缺候选原生 failover/replay，C7 为 `unknown-stop`。没有足够的非重复、可测量收益挑战 Codex，因此最终 `no-change`，DeepSeek 不进入生产主线，仅保留为未来受控 adapter 候选；完整报告见 [`w8-deepseek-challenger-evaluation.md`](./w8-deepseek-challenger-evaluation.md)。
+- 2026-09-03 目标态决策已更新：采用 DSH 主 Harness + 进程外 Codex Coding Worker + ZWorkbench CompositionOwner。此前“Codex 唯一主 Harness”的 W7/W8 结论保留为当时的 acceptance/evaluation 和当前回退基线，不再解释为目标混合架构的主 Harness 决策；目标设计和开发前基线见 [`docs/README.md`](../../docs/README.md) 与 [`development-baseline.md`](./development-baseline.md)。
 
 ## Not yet specified
 
@@ -269,7 +270,7 @@ process pass，但真人运维计时为 `0/12`，五个候选的关键 C2–C7 �
 
 ### Resolution
 
-在 W7 的候选证据与 C7 边界审查基础上，采用“一个主 Harness + 一个薄 composition owner/产品层”：Codex `0.139.0` 保留为唯一主 Harness 条件候选，SQLite composition owner 负责跨运行的 durable truth；不引入第二生产 Harness、常驻 scheduler、Provider gateway 或独立观测后端。DeepSeek 只有在独立、同合同、同阈值的 C1–C7 评估中证明可测量且非重复的收益，才重新审视该决策；否则保持 `no-change`，证据不足则 `unknown/stop`。相关实现与证据见 [`personal-workbench-w8-roadmap.md`](./personal-workbench-w8-roadmap.md) 和 [`w7-codex-atam-cbam-adoption-decision.md`](./w7-codex-atam-cbam-adoption-decision.md)。
+在 W7 的候选证据与 C7 边界审查基础上，当时采用“一个主 Harness + 一个薄 composition owner/产品层”：Codex `0.139.0` 保留为唯一主 Harness 条件候选。该结论现在仍保留为 Codex-only 回退基线和 acceptance/evaluation 事实；2026-09-03 的目标态决策改为 DSH 主 Harness + Codex Coding Worker + ZWorkbench CompositionOwner。目标架构不引入第二个 durable owner，仍不默认引入常驻 scheduler、Provider gateway 或独立观测后端。相关目标设计见 [`docs/plans/designs/dsh-codex-hybrid-target-architecture.md`](./designs/dsh-codex-hybrid-target-architecture.md)。
 
 ---
 

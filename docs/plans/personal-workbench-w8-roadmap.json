@@ -17,7 +17,8 @@
         "1-5",
         "1-6",
         "1-7",
-        "1-8"
+        "1-8",
+        "1-9"
       ],
       "decisions": [
         {
@@ -59,9 +60,14 @@
           "q": "W8 下一步应先开 1-7 产品闭环，还是先评估 DeepSeek 挑战者？",
           "answer": "建议先开 1-7：实现并验证可安装、可执行的 local_read_only_run 产品入口；DeepSeek 延后作为独立 acceptance/evaluation 挑战者节点。1-7 只依赖已完成的 1-5，不等待 1-6-3 的真实写操作宿主边界签核；保持 Codex adapter seam，不把产品实现扩展为第二 Harness。1-7 完成后，用同一切片、同一 owner/policy/evidence contract、固定 DeepSeek 版本和预先声明的 ATAM/CBAM 阈值做时间盒评估；只有出现非重复收益且无安全、运维、许可证与退出回归，才重新审视主 Harness。",
           "note": "这是 Product execution 与 acceptance/evaluation 的先后分工：当前优先获得可用基线，避免在没有产品入口时重复做候选 fixture；DeepSeek 不是 W8 核心阻断。"
+        },
+        {
+          "q": "正式开发前的现役目标架构与历史 Codex-only 决策如何解释？",
+          "answer": "目标态采用 DSH 主 Harness + Codex Coding Worker + ZWorkbench CompositionOwner；现有 Codex 0.139.0 local_read_only_run 仅保留为已实现回退基线。",
+          "note": "2026-09-03 文档收口决策：目标架构设计是当前方案权威；W7/W8 中 Codex 唯一主 Harness 的结论保留为当时的 acceptance/evaluation 与 fallback baseline，不再作为混合目标态的主 Harness 结论。1-6-3 与 DSH E4/E5 的关键未知仍保持 HOLD/unknown-stop；仅允许先做混合只读 Stage 0/1 的实现规划。"
         }
       ],
-      "notes": "设计文档：docs/plans/w8-controlled-pilot-scope-and-vertical-slice.md；1-5 已完成，1-6-3 仍 blocked/HOLD（仅影响真实本地写操作）；当前建议下一执行节点为 1-7 产品入口与可安装运行闭环。DeepSeek 保留为 1-7 完成后的独立 acceptance/evaluation 挑战者，不阻断 W8 核心产品开发。"
+      "notes": "目标态已批准进入实现规划：DSH 主 Harness + 进程外 Codex Coding Worker + ZWorkbench CompositionOwner；1-7 已完成并作为 Codex-only 可运行回退基线。1-8-3-1-1 的 DeepSeek E4/E5/E6 acceptance 分支保持 blocked/unknown-stop，暂停循环；当前产品下一节点为 1-9 的 Stage 0 合同冻结与 H1-H5 混合只读切片。1-6-3 宿主/native approval、真实写入、真实 Provider 默认接入、Git push、部署和生产发布仍保持 HOLD/未授权。"
     },
     "1-1": {
       "id": "1-1",
@@ -580,7 +586,7 @@
     "1-8-3-1-1": {
       "id": "1-8-3-1-1",
       "label": "E3-E6 独立重开：plugin-aware adapter evidence",
-      "status": "in_progress",
+      "status": "blocked",
       "mode": "explore",
       "parent": "1-8-3-1",
       "children": [],
@@ -649,14 +655,35 @@
           "q": "正式 GitHub collection 恢复后的 E4 结论是什么？",
           "answer": "正式 collection 已从配额阻断恢复：authenticated、GitHub core quota=5000、4 个 repository、18 条 evidence、2 个 unknown criteria，sealed ledger 与 brief fingerprint 匹配。以 rerun4 为准，两个候选仍在 loopback RATE_LIMIT 下完成 primary→secondary 切换，但均没有 candidate-owned durable fallback/reason/degradation ledger；dsh-llm-failover 在全冷却时仍选已冷却最终 fallback，dsh-model-failover 通过 route-level no-new-fallback。E4 继续 unknown/stop，Codex 主 Harness 决策不变。",
           "note": "正式 GitHub Evidence IDs：dsh-llm identity=8b1b5b96debf89a88c24d1ea、provider contract=357f99ac391b5cc690b1b09d；dsh-model identity=62a5f880e4a0e4c19e4a4b57、provider contract=c70c560e1a0b9f7606175e9f、failure-ledger criterion=ab14a944ca50f5d5fcd6b90b。运行证据：evaluation/evidence/w8-deepseek-e4-provider-failover-candidates-20260902-rerun4/summary.json；状态 sidecar 与 ledger 位于 docs/plans/research。"
+        },
+        {
+          "q": "扩展 E4 候选审查后，是否找到可直接关闭 durable fallback/reason/degradation ledger 与全冷却 fail-closed 的 DSH 插件？",
+          "answer": "没有找到已证明完整满足 E4 的单一 DSH 插件；但 GitHub 确有真实供给。fresh v2 sealed collection 覆盖 17 个固定 commit、128 条 evidence：baochaofan0404/dsh-provider-fallback 提供持久 Provider cooldown/quota snapshot 但没有完整 fallback/reason/degradation decision ledger，且全冷却时只是返回原 route 让错误暴露；force-push/dsh-llm-fallback 提供 durable llm/fallback session event 但没有 cooldown/degradation state；Liyuk/dsh-quota-router 的 ledger 明确是 bounded in-process、不是永久记录；lokic7123-star/dsh-route-resilience 全路由冷却时会 force-revive 最早到期 route。它们均不能单独关闭 E4，评估仍保持 unknown/stop。Codex 当前仍是 Codex + ZWorkbench CompositionOwner + C5 adapter 的 pass-with-composition；不把 evaluator/owner ledger 冒充 Codex 或 DSH 插件原生能力。",
+          "note": "研究文档：docs/plans/w8-deepseek-e4-provider-failover-v2-findings.md；brief/ledger/status：docs/plans/research/w8-deepseek-e4-provider-failover.v2.*。自研/适配成本估算：POC 20–40h，受控个人试点 80–160h，较完整长期维护 160–320h；若目标只是 durable ledger + fail-closed，Codex 单 owner 路线成本更可预测。未修改产品运行时，未接入真实凭据或生产数据。"
         }
       ],
-      "notes": "E4 已加入一次真实火山方舟 Ark staging 子门，并以全新 plugin-aware rerun3 重新封账：evaluation/evidence/w8-deepseek-plugin-aware-e3-e6-20260902-rerun3/summary.json。真实 Ark summary 校验通过：volcengine-ark，https://ark.cn-beijing.volces.com/api/coding/v3/responses，配置 model=ark-code-latest，响应 model=auto 按已确认映射归属该路由，HTTP 200，1 request/0 retry，staging-fixture-001 命中，raw request/response 未持久化；key 仅以既有 SHA-256 fingerprint 关联。E3=pass；E4=unknown/stop：routing/memoir、owner 幂等/模拟回放和真实 Provider staging 通过，但候选仍无 Provider selection/fallback/degradation/fallback-reason ledger；E5=unknown/stop；E6=blocked。真实 staging 不等于 Provider failover，不批准 DeepSeek 替换或并列 Codex。详细 findings：docs/plans/w8-deepseek-plugin-aware-e3-e6-findings.md。"
+      "notes": "E3=pass；E4=unknown/stop（候选 Provider failover 的 durable fallback/reason/degradation ledger 与全冷却安全停止合同未闭合）；E5=unknown/stop；E6=blocked-by-prerequisites。该 acceptance/evaluation 分支暂停，不再作为产品开发当前焦点；保留现有 decisions、fixture 和 evidence 供未来重开。"
+    },
+    "1-9": {
+      "id": "1-9",
+      "label": "DSH 主 Harness + Codex Worker 混合只读实现",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "混合架构正式开发的第一个节点是什么？",
+          "answer": "先完成 Stage 0 合同冻结，再执行 H1-H5 混合只读切片：DSH bootstrap、Worker handshake、隔离只读 coding、生命周期和 evidence/replay。",
+          "note": "Product execution；首期不做真实写入、Git push、部署、真实 Provider 默认接入或全量插件市场。Codex-only local_read_only_run 继续作为回退基线；H1-H5 任一 identity、policy、process、replay 或 unknown gate 不通过就 safe-stop。"
+        }
+      ],
+      "notes": ""
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-02 11:36:08",
+    "updated": "2026-09-03 16:38:04",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }

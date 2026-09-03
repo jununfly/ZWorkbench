@@ -1,6 +1,10 @@
 # W8 DeepSeek ↔ Codex 双向缺口与能力吸收技术决策评审
 
-评审状态：`acceptance/evaluation draft` · 日期：`2026-09-01` · 决策 owner：个人开发者/小团队负责人
+评审状态：`historical-superseded / acceptance-evaluation snapshot` · 日期：`2026-09-01` · 决策 owner：个人开发者/小团队负责人
+
+本文件保留 2026-09-01 的 DeepSeek vs Codex 比较快照。2026-09-03 的目标态决策
+已采用 DSH 主 Harness + 进程外 Codex Coding Worker；本文中“Codex 唯一主 Harness”
+只表示当时的 Codex-only 回退/评测结论，不是当前目标架构。
 
 本文回答两个相反方向的问题：
 

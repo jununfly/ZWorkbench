@@ -1,7 +1,11 @@
 # W8 `1-6-5`：ATAM / CBAM 综合放行复审
 
-状态：`GO-within-scope / external Provider optional / real write HOLD` · 路线类型：
+状态：`historical-superseded / GO-within-scope snapshot / real write HOLD` · 路线类型：
 `Product execution decision review` · 日期：`2026-09-01`
+
+这是 2026-09-01 的 Codex-only W8 决策快照。2026-09-03 已批准的目标态改为
+DSH 主 Harness + 进程外 Codex Coding Worker；本文件保留当时的边界、证据和
+回退基线，不覆盖 [开发前基线](development-baseline.md) 或 [目标架构](designs/dsh-codex-hybrid-target-architecture.md)。
 
 本文把 W8 第一切片、W7 Codex 候选 C2–C7 证据、宿主边界观察和个人开发者/小团队
 约束放到同一个决策包中；Provider 责任只作为明确的路线外边界记录。它的目的不是

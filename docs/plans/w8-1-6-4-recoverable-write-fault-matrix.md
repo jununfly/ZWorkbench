@@ -13,7 +13,7 @@ composition owner 是否已经具备“可声明、可恢复、可回放、可�
 
 | 边界 | 本轮约束 |
 |---|---|
-| 主 Harness | Codex `0.139.0`，唯一主 Harness |
+| 执行基线 | Codex `0.139.0` 回退 Worker；本 fixture 不覆盖尚未实现的 DSH–Codex bridge |
 | durable owner | 一个 SQLite composition owner，持有 run/approval/effect/result/event/replay metadata |
 | Provider | loopback/fake Provider；不读取真实 API key，不访问真实 Ark endpoint |
 | sink | case-local reversible fake sink；不触碰 ZWorkbench 工作区真实文件 |
@@ -179,7 +179,7 @@ policy/approval、tool/effect/result 和 next action 均可从隔离目录复核
 
 当前保留的增量路线是：
 
-`Codex 唯一主 Harness → 一个 composition owner → case-local reversible sink → 证据闭环`
+`Codex-only 回退 Worker → 一个 composition owner → case-local reversible sink → 证据闭环`
 
 只有在 B1/B2/B8 关闭后，真实本地写入的收益才值得纳入下一轮 CBAM。此时仍需比较
 “继续薄层”与“引入 helper broker/容器/第二 Harness”的净收益，至少量化服务数、人工

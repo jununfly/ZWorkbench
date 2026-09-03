@@ -246,8 +246,10 @@ runner summary 的 `candidate-pass` 仅表示 12 个隔离 case 达到 fixture �
 
 ### 当前决策
 
-维持“Codex 唯一主 Harness + 一个 composition owner”，先完成候选级 L2/L3 证据。
-在此之前不引入第二 Harness，也不把 sandbox/helper broker 当成已经存在的产品能力。
+对 Codex-only 回退路径，仍由一个 composition owner 约束 Worker；目标路径则由
+DSH 主 Harness 通过 Codex Worker bridge 接入同一 owner。两条路径都必须先完成候选级
+L2/L3 证据。在此之前不引入第二个顶层 Harness，也不把 sandbox/helper broker 当成
+已经存在的产品能力。
 如果 L3 只能通过新增常驻 broker 才可成立，必须重新打开 CBAM，并把服务数、升级、
 备份、排障和退出成本纳入门槛。
 

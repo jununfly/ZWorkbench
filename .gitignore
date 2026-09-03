@@ -7,3 +7,21 @@ evaluation/runs/**/codex-home/
 
 # Local composition owner state is runtime data, not source or evaluation evidence.
 .zworkbench/
+
+# Generated evaluation output is local review evidence. Commit only a small,
+# explicitly selected summary or fixture when a decision requires it.
+evaluation/evidence/
+evaluation/runs/
+
+# Research compiler output is reproducible/generated; curated Markdown and
+# intentionally selected small metadata remain trackable.
+docs/plans/research/*.ledger-response.json
+docs/plans/research/*.request.json
+docs/plans/research/*.html
+docs/plans/research/*-src/
+docs/plans/research/*-src-v2/
+docs/plans/research/*-map/
+docs/plans/research/*-map-v2/
+
+# Finder metadata is never project content.
+.DS_Store

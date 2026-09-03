@@ -1,8 +1,11 @@
 # W8 DeepSeek 独立挑战者评估
 
-状态：已完成 acceptance/evaluation · 最终姿态：`unknown-stop / no-change`
+状态：`historical-superseded / acceptance-evaluation snapshot` · 日期：`2026-09-02` · 最终姿态：`unknown-stop / no-change`
 
-本报告只评估固定版本的 DeepSeek Harness 是否足以挑战当前 Codex 唯一主 Harness。它不修改 ZWorkbench 生产代码、不新增生产 Harness、不接入真实 Provider/API Key，也不把通用 composition fixture 的结果冒充为 DeepSeek 原生能力。
+本报告只评估固定版本的 DeepSeek Harness 是否足以挑战当时的 Codex-only 主 Harness。
+2026-09-03 已批准 DSH 主 Harness + Codex Coding Worker 目标态；本报告仍用于保留
+DeepSeek 公平评测证据，不修改 ZWorkbench 生产代码、不新增生产 Harness、不接入真实
+Provider/API Key，也不把通用 composition fixture 的结果冒充为 DeepSeek 原生能力。
 
 ## 1. 固定对象与边界
 
@@ -15,7 +18,7 @@
 | 运行入口 | `apps/cli/lib/bin.js`，profile `headless` / `acp` |
 | 共同 fixture | [`evaluation/fixtures/w6-0.1`](../../evaluation/fixtures/w6-0.1) |
 | Provider | loopback fake-a / fake-b；无真实凭证、外网、生产数据或外部副作用 |
-| 路线角色 | acceptance/evaluation；W8 产品主线仍为 Codex 0.139.0 + SQLite composition owner |
+| 路线角色 | acceptance/evaluation；当时的 W8 产品主线为 Codex 0.139.0 + SQLite composition owner |
 
 候选源码在隔离 checkout 中完成 `pnpm install --frozen-lockfile` 与 `pnpm run build:lib`。C1–C6 的原始 ACP/session 过程保留在临时目录；仓库只提交精简 summary，避免把大型 `evaluation/runs` 历史目录纳入版本库。
 

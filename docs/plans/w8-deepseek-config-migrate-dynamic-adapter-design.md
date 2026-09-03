@@ -1,7 +1,7 @@
 # W8：`dsh-config-migrate` dynamic-plugin adapter 设计审查
 
 路线：`1-8-3` · 类型：`acceptance/evaluation` · 日期：2026-09-02
-证据：[E1/E2 runner](/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/runner/run_deepseek_config_migrate_adapter.py) · [fixture manifest](/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/fixtures/w8-deepseek-config-migrate-adapter/v1/manifest.json) · [首轮四插件结论](./w8-deepseek-plugin-bundle-e1-e6-findings.md)
+证据：[E1/E2 runner](../../evaluation/runner/run_deepseek_config_migrate_adapter.py) · [fixture manifest](../../evaluation/fixtures/w8-deepseek-config-migrate-adapter/v1/manifest.json) · [首轮四插件结论](./w8-deepseek-plugin-bundle-e1-e6-findings.md)
 
 ## One-page overview
 
@@ -65,7 +65,7 @@ Non-goals：
 
 约束：个人开发者/小团队可维护；常驻服务不增加；所有未知权限、未知 effect、
 路径逃逸和未验证子进程都必须 fail-closed。验收基线和阈值来自 [W8 首轮
-fixture](../evaluation/fixtures/w8-deepseek-plugin-bundle/v1/manifest.json)。
+fixture](../../evaluation/fixtures/w8-deepseek-plugin-bundle/v1/manifest.json)。
 
 ## Design
 
@@ -119,7 +119,7 @@ dependency reference 作为输入，但 dynamic plugin 的存在必须在 adapte
 - dispose 后 RPC/tool/UI/style 注册数从 `4/1/2/1` 归零；owner 记录 7 个 adapter
   request/result，run 完成且 effect 数为 0。
 
-证据：[runtime seam summary](/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/summary.json)。这只证明
+证据：[runtime seam summary](../../evaluation/evidence/w8-deepseek-config-migrate-runtime-seam-20260902-rerun4/summary.json)。这只证明
 case-local runtime seam 的候选边界；真实 DSH_HOME 写入、宿主级 OS sandbox 继承和
 产品 adapter 仍未签核。
 
@@ -259,7 +259,7 @@ capability facade → owner/policy/OS boundary；任何边界缺证据都保持 
 | E5 | 未来个人开发者 install/upgrade/backup/restore/diagnosis/exit | 服务数、人工时间、卸载责任 | 安装≤90 分钟；其余各≤30 分钟；常驻服务≤3 | 当前 not reopened |
 | E6 | 未来同 task/provider/owner 对比 Codex | 至少一个非重复、可复现收益 | E1–E5 全 pass 后才允许判断 | 当前 not reopened |
 
-E1/E2 的最终证据路径：[evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun3/summary.json](/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun3/summary.json)。
+E1/E2 的最终证据路径：[evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun3/summary.json](../../evaluation/evidence/w8-deepseek-config-migrate-adapter-e1-e2-20260902-rerun3/summary.json)。
 
 ## Open decisions
 
