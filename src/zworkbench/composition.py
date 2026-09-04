@@ -138,8 +138,11 @@ class CompositionOwner:
 
         self._require_text(run_id, "run_id")
         self._require_text(task_type, "task_type")
+        self._reject_raw_credentials(input_value, "input")
+        metadata_value = dict(metadata or {})
+        self._reject_raw_credentials(metadata_value, "metadata")
         input_json = self._canonical_json(input_value)
-        metadata_json = self._canonical_json(dict(metadata or {}))
+        metadata_json = self._canonical_json(metadata_value)
         timestamp = self._now()
         with self._transaction() as connection:
             try:
@@ -215,6 +218,26 @@ class CompositionOwner:
             row = self._run_row(connection, run_id)
             if row["status"] != "safe_stopped":
                 self._set_run_status(connection, row, "safe_stopped", "run.safe_stopped", {"reason": reason})
+        return self.get_run(run_id)
+
+    def begin_recovery(self, run_id: str, reason: str) -> Dict[str, Any]:
+        """Move a running Run into explicit owner-controlled recovery."""
+
+        self._require_text(reason, "reason")
+        with self._transaction() as connection:
+            row = self._run_row(connection, run_id)
+            unresolved = connection.execute(
+                """
+                SELECT COUNT(*) AS count FROM effects
+                WHERE run_id = ? AND status IN ('claimed', 'uncertain', 'unknown')
+                """,
+                (run_id,),
+            ).fetchone()["count"]
+            if unresolved:
+                raise InvalidTransition(f"run {run_id} cannot recover with unresolved effect(s)")
+            if row["status"] == "recovering":
+                return self.get_run(run_id)
+            self._set_run_status(connection, row, "recovering", "run.recovering", {"reason": reason})
         return self.get_run(run_id)
 
     def get_run(self, run_id: str) -> Dict[str, Any]:
@@ -618,6 +641,7 @@ class CompositionOwner:
         """Append a durable semantic or adapter result."""
 
         self._require_text(kind, "kind")
+        self._reject_raw_credentials(value, "value")
         with self._transaction() as connection:
             self._run_row(connection, run_id)
             return self._record_result_tx(connection, run_id, kind, value, source_id)
@@ -693,8 +717,16 @@ class CompositionOwner:
         if mode not in REPLAY_MODES:
             raise ValueError(f"unsupported replay mode: {mode}")
         timestamp = self._now()
-        provider_json = self._canonical_json(dict(provider_identity))
-        metadata_json = self._canonical_json(dict(metadata or {}))
+        if not isinstance(provider_identity, Mapping):
+            raise ValueError("provider_identity must be an object")
+        if metadata is not None and not isinstance(metadata, Mapping):
+            raise ValueError("metadata must be an object")
+        provider_value = dict(provider_identity)
+        metadata_value = dict(metadata or {})
+        self._reject_raw_credentials(provider_value, "provider_identity")
+        self._reject_raw_credentials(metadata_value, "metadata")
+        provider_json = self._canonical_json(provider_value)
+        metadata_json = self._canonical_json(metadata_value)
         with self._transaction() as connection:
             self._run_row(connection, run_id)
             existing = connection.execute("SELECT * FROM replays WHERE replay_id = ?", (replay_id,)).fetchone()
@@ -1050,13 +1082,14 @@ class CompositionOwner:
         """Reject obvious credential fields before they enter owner evidence."""
 
         sensitive = {"api_key", "apikey", "authorization", "cookie", "password", "secret", "token", "key"}
+        safe_field_names = {"idempotency_key"}
         safe_suffixes = ("_ref", "_reference", "_fingerprint", "_digest", "_id")
 
         def visit(current: Any, path: str) -> None:
             if isinstance(current, Mapping):
                 for key, item in current.items():
                     normalized = str(key).lower().replace("-", "_")
-                    if not normalized.endswith(safe_suffixes):
+                    if normalized not in safe_field_names and not normalized.endswith(safe_suffixes):
                         parts = set(normalized.split("_"))
                         if normalized in sensitive or parts & sensitive:
                             raise ValueError(f"{field_name} contains raw credential field {path}.{key}")
@@ -1117,6 +1150,7 @@ class CompositionOwner:
         payload: Mapping[str, Any],
         event_id: Optional[str] = None,
     ) -> str:
+        self._reject_raw_credentials(payload, "event payload")
         event_id = event_id or self._new_id()
         connection.execute(
             "INSERT INTO events(event_id, run_id, type, payload_json, created_at) VALUES (?, ?, ?, ?, ?)",
@@ -1132,6 +1166,7 @@ class CompositionOwner:
         value: Any,
         source_id: Optional[str],
     ) -> Dict[str, Any]:
+        self._reject_raw_credentials(value, "value")
         if source_id is not None:
             existing = connection.execute(
                 "SELECT * FROM results WHERE run_id = ? AND kind = ? AND source_id = ?",

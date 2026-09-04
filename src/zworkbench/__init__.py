@@ -64,6 +64,14 @@ from .worker_bridge import (
     WorkerCodingResult,
     WorkerHandshakeResult,
 )
+from .replay import (
+    CASSETTE_SCHEMA,
+    CassetteIdentity,
+    OwnerBackedReplayService,
+    REPLAY_SERVICE_SCHEMA,
+    ReplayError,
+    ReplayIdentity,
+)
 
 __all__ = [
     "ApprovalError",
@@ -118,4 +126,10 @@ __all__ = [
     "WorkerBridgeError",
     "WorkerCodingResult",
     "WorkerHandshakeResult",
+    "CASSETTE_SCHEMA",
+    "CassetteIdentity",
+    "OwnerBackedReplayService",
+    "REPLAY_SERVICE_SCHEMA",
+    "ReplayError",
+    "ReplayIdentity",
 ]

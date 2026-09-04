@@ -140,7 +140,7 @@ class WorkerBridgeTests(unittest.TestCase):
             ("provenance-mismatch", "handshake_provenance_mismatch"),
             ("unknown-message", "handshake_message_unknown"),
             ("unknown-field", "handshake_field_unknown"),
-            ("crash", "handshake_response_missing"),
+            ("crash", "worker_exit_nonzero"),
         )
         for scenario, expected_code in scenarios:
             with self.subTest(scenario=scenario):

@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-04 18:03:16
+> 数据文件: `personal-workbench-w8-roadmap.json` | 最后更新: 2026-09-05 00:34:49
 
 [~][X+] 1. W8 受控个人试点产品边界与最小纵向切片
 ├── [x][Y+] 1-1. 冻结受控个人试点的产品边界与责任地图
@@ -28,7 +28,7 @@
     ├── [x][Y+] 1-9-2. H1 Bootstrap：固定 DSH profile 并启动 parent Run
     ├── [x][Y+] 1-9-3. H2 Worker handshake：绑定 DSH/Codex 与 owner identity
     ├── [x][Y+] 1-9-4. H3 隔离只读 coding：生成可审查 Worker artifact
-    ├── [ ][Y+] 1-9-5. H4 中断恢复与进程生命周期：无孤儿 Worker
-    ├── [ ][Y+] 1-9-6. H5 Evidence/replay：记录 owner 证据并隔离回放模式
+    ├── [x][Y+] 1-9-5. H4 中断恢复与进程生命周期：无孤儿 Worker
+    ├── [x][Y+] 1-9-6. H5 Evidence/replay：记录 owner 证据并隔离回放模式
     └── [~][X+] 1-9-7. 真实远程 Provider 兼容性：隔离 staging 与 owner-facing contract
 <!-- ROADMAP_SECTION_END -->

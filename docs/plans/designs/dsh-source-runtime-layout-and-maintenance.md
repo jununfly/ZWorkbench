@@ -1,6 +1,6 @@
 # DSH 源码、运行时与 ZWorkbench 布局维护设计
 
-状态：`product execution / target-state approved / H1-H3 bounded validation verified`
+状态：`product execution / target-state approved / H1-H4 bounded validation verified`
 
 本文确定 ZWorkbench 与 DSH 下游项目的磁盘布局、仓库边界、运行时引入方式和长期维护方式。
 目标用户是个人开发者或小团队；设计优先保证可追溯、可回滚、可退出和低维护负担。
@@ -57,8 +57,8 @@ artifact digest，而不是依赖另一个开发者的绝对路径。
 
 ### Current baseline
 
-当前 ZWorkbench 已有 Codex-only `local_read_only_run` 和 CompositionOwner，并已形成 H1–H3 的受控
-owner-backed DSH–Codex bridge seams；H4–H5 尚未实现。DSH 下游代码已经存在于独立的 `ZDSHarness`
+当前 ZWorkbench 已有 Codex-only `local_read_only_run` 和 CompositionOwner，并已形成 H1–H4 的受控
+owner-backed DSH–Codex bridge seams；H5 尚未实现。DSH 下游代码已经存在于独立的 `ZDSHarness`
 仓库，其 README 提供源码运行方式和开发预览期兼容性提示；
 其 `package.json` 固定 pnpm 与 Node engine，并提供 `build`、artifact gate 和 release 脚本。
 
@@ -455,5 +455,5 @@ case workspace/Provider。DSH plugin、profile 和 Codex Worker 都视为可能�
 
 当前决策是 `approve`：ZWorkbench 与 ZDSHarness 使用兄弟仓库；正式运行使用 pinned DSH artifact；
 source mode 只用于开发。H1 clean artifact receipt、digest 校验和 bootstrap integration 已验证；
-H2 owner-backed fixture handshake 与 H3 fixture/real-Codex-runtime + loopback Provider 已验证；H4–H5、
-真实 Provider 兼容性与回滚证据仍未完成，下一验证动作是执行 H4 生命周期/恢复。
+H2 owner-backed fixture handshake、H3 fixture/real-Codex-runtime + loopback Provider 与 H4
+fixture-composed lifecycle/recovery 已验证；H5、真实 Provider 兼容性与回滚证据仍未完成，下一验证动作是执行 H5。

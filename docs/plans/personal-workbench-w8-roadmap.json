@@ -830,22 +830,49 @@
     "1-9-5": {
       "id": "1-9-5",
       "label": "H4 中断恢复与进程生命周期：无孤儿 Worker",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "H4 生命周期合同是什么？",
+          "answer": "WorkerBridge 负责单次进程与进程组的可控生命周期；CompositionOwner 继续唯一持有 parent/child Run 的 durable 状态。cancel、timeout、child crash、parent stop 都必须写入结构化 exit receipt，并将无法确认的运行安全停止。",
+          "note": "进程句柄是运行时资源，不升级为第二个 durable owner；未知结果不能伪造成功。"
+        },
+        {
+          "q": "H4 如何恢复或重启？",
+          "answer": "只有 owner-backed orchestration 才能从 recovering 创建新的 attempt/child Run；旧 attempt 保留原始 exit receipt 和状态，新 attempt 使用新的 identity。未确认的 effect 或未知 wire 状态禁止自动 retry。",
+          "note": "恢复是显式、可追溯的新 attempt，不覆盖旧事实。"
+        },
+        {
+          "q": "H4 如何证明无孤儿 Worker？",
+          "answer": "Worker 以独立 process group 启动；停止时先对全组 SIGTERM，超时后 SIGKILL，并轮询确认 leader/group 已退出。每次停止记录 signal、exit code、group-cleanup 状态和 stderr/argv 摘要；cleanup 未确认则 safe-stop。",
+          "note": "验收阈值：孤儿 Worker 0、状态丢失 0、未授权 effect 0。"
+        },
+        {
+          "q": "H4 验收结论是什么？",
+          "answer": "owner-backed + fixture-composed verified：H4 runner 6/6 场景通过，覆盖 cancel、timeout、child crash、parent stop、descendant process-group cleanup 和 recovery；orphan_processes_zero、status_loss_zero、unauthorized_effects_zero 均为 true。",
+          "note": "本机 process-group 与 CompositionOwner 生命周期已验证；H5 replay/evidence、OS host sandbox、真实 Provider compatibility 和 Provider-side exit 仍不声称。"
+        }
+      ],
+      "notes": "H4 completed: Worker lifecycle/recovery implementation, 6/6 fixture scenarios, 102/102 product tests, H2 regression 11/11, compileall, diff-check and roadmap validate passed."
     },
     "1-9-6": {
       "id": "1-9-6",
       "label": "H5 Evidence/replay：记录 owner 证据并隔离回放模式",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "H5 Evidence/replay 的最小实现路线是什么？",
+          "answer": "实现 owner-backed Evidence/Replay seam：recorded_view 只读 CompositionOwner 已保存事实，simulated_replay 仅消费封存 cassette/fixture，live_replay 默认 deny；三种入口显式分离，缺少 owner schema、运行环境、Provider/Worker/tool/policy/workspace/cassette 等关键 identity 时保持 unknown/safe-stop，并记录 provenance 与阻断原因。",
+          "note": "H5 证据只证明组合式 owner-backed seam，不升级为 DSH 原生、真实 Codex runtime 或真实 Provider 兼容性通过。"
+        }
+      ],
+      "notes": "H5 已完成：新增 OwnerBackedReplayService，三种模式为显式独立入口；recorded_view 仅读 CompositionOwner facts，simulated_replay 仅消费 sealed + digest 绑定 cassette，live_replay 默认 deny；缺失 identity、owner source、cassette 或 digest 不匹配均 unknown/safe-stop。新增 w8 H5 fixture/runner，7/7 场景通过；全量测试 111/111、H2 runner 11/11、H4 runner 6/6、compileall、git diff --check 和 roadmap validate 均通过。证据等级为 owner-backed + fixture-composed，不升级为 DSH 原生、真实 Codex replay 或真实远程 Provider compatibility。"
     },
     "1-9-7": {
       "id": "1-9-7",
@@ -948,6 +975,11 @@
           "q": "真实 Ark failover 与 Provider-side exit 本轮如何继续？",
           "answer": "真实 Ark 采用一次性、case-local、只读的受控负向控制：同一 Ark cn-beijing Coding endpoint 上，primary 使用明确无效 model 产生可预期拒绝，fallback 使用 ark-code-latest；最多两次独立请求、无自动 retry，并由 CompositionOwner 持久化 HTTP status、failure class、cooldown、fallback reason/target 和最终语义。Provider-side exit 不由 Agent 直接执行删除/停用/注销；新增账户 owner wizard 与脱敏 receipt，收集远端资源、数据 retention、key、订阅、账单和账户状态，unknown 保持 safe-stop。",
           "note": "不重新配置 Provider、不把同一 endpoint 负向控制升级为独立第二 Provider/生产 outage failover；不把人工提交删除或注销升级为远端零残留证明。"
+        },
+        {
+          "q": "本轮如何开始而不重新进入 Provider API key/后台循环？",
+          "answer": "只做无远端请求的证据审计与隔离契约重验：重跑双 loopback failover、验证 Provider-side exit receipt 的 inventory-only 脱敏入口，并复核既有真实 Ark summary。真实 Ark 401 与账户级 exit inventory 缺失继续保持 unknown/stop、HOLD/delegated；不读取或重新配置 API key，不执行远端删除、停用、注销或自动重试。",
+          "note": "Acceptance/evaluation 路线；本轮目标是收紧证据边界，不把局部组合证据升级为真实远程 Provider compatibility。"
         }
       ],
       "notes": "当前结论：本地 owner-backed + loopback-composed failover 已 pass-with-composition；真实 Codex + Ark 只读 staging 已通过，但真实 Ark fallback 因两路 HTTP 401 保持 unknown/stop，Provider-side exit 因无控制台登录会话保持 HOLD/delegated。两个外部事实门已显式 blocked；不发起新远程请求，不执行 Provider 删除/停用/注销，不重复要求 API key 配置。"
@@ -990,9 +1022,44 @@
           "q": "Provider-side exit 的账户事实门如何收口？",
           "answer": "保持 HOLD/delegated：只读控制台检查没有现成登录会话并被重定向到登录页，因此当前无法核实 task/run/queue、Webhook/integration、backup/retention、data、key lifecycle、subscription、billing、account closure 或远端零残留。Agent 不绕过登录、不执行删除/停用/注销；账户 owner 只需在已有控制台会话中交接脱敏 receipt，未知字段继续 safe-stop。",
           "note": "不要求重新生成 API key，也不把历史用户口述或公共条款当成账户级删除证据。"
+        },
+        {
+          "q": "本轮如何在不重新配置 Provider 的前提下推进？",
+          "answer": "只验证并收紧本地脱敏 receipt 契约、输入边界和可重跑证据；不伪造真实账户 inventory，不读取或重新生成 API key，不执行 Provider 侧任务/Webhook/备份/数据/账户删除、停用或注销。缺少账户 owner 脱敏 receipt 的字段继续保持 unknown/safe-stop，节点不标记 completed。",
+          "note": "继续遵守此前 HOLD/delegated 决策；验证产物与真实远端账户事实分开。"
+        },
+        {
+          "q": "如何取得账户 owner 的真实脱敏 inventory/retention/退出 receipt，而不重走 API key 配置？",
+          "answer": "复用现有 scripts/optional-provider-exit.sh：账户 owner 在已有 Ark 控制台会话中人工核实 task/Webhook/backup/data/key/billing/subscription/account 状态和 retention，脚本只收集枚举状态与 SHA-256 fingerprint，不接触 API key、不调用 Provider API、不执行远端删除/注销。账户 owner 完成后仅交接 receipt.json 的路径或脱敏 JSON；在 receipt 到达前节点继续 blocked/HOLD。",
+          "note": "这是唯一需要 Human/account owner 的外部事实门；不把控制台未显示推断为 none，也不要求重新生成或粘贴凭证。"
+        },
+        {
+          "q": "如何消除 Provider exit wizard 的误触发/误导风险？",
+          "answer": "将 scripts/optional-provider-exit.sh 固定为只读 inventory/retention receipt 流程：移除人工 Provider-side action 阶段、删除/停用/退订/注销引导、相关官方操作入口和 exit_mode/action_status 交互；脚本固定以 inventory-only + not-performed 记录。现有 recorder 仅用于接收外部已产生的脱敏结果，不执行任何远端动作。",
+          "note": "账户保持 active 完全可行；此节点验收的是责任/证据边界，不授权账号注销或服务删除。通过源代码安全断言、bash -n、receipt 测试和全量测试复核。"
+        },
+        {
+          "q": "如何记录成熟 Provider 产品的正常控制台表现和不可暴露的逐请求数据面？",
+          "answer": "在只读 receipt 中新增 provider_console_observation 与 provider_request_response_surface：账户 owner 可记录 no-visible-error 和 not-exposed-by-provider。它们分别表示控制台无用户可见错误、产品不提供逐请求 request/response；这两项可作为有效的产品可观测性证据，但不升级 provider_remote_zero_residue，后者继续为 unknown/delegated。receipt 不要求调试 API、不要求抓取请求/响应内容、不要求注销账号。",
+          "note": "把产品正常性、可观测性边界和远端 retention/zero-residue 分开建模；visible-error 或 unknown 仍安全停止。"
+        },
+        {
+          "q": "账户 owner 已观察到的 Provider 产品事实是什么？",
+          "answer": "账户 owner 确认：这是成熟云产品而非逐请求 API 调试场景；用户控制台没有报错或异常，产品不直接向用户暴露每次接口的 request/response。该事实记录为 provider_console_observation=no-visible-error 与 provider_request_response_surface=not-exposed-by-provider，不要求调试接口、抓取请求/响应或注销账号。",
+          "note": "这是 human-reported 的产品可观测性事实；它不证明 Provider 后台 retention、缓存、备份或审计副本不存在，provider_remote_zero_residue 继续为 unknown/delegated。"
+        },
+        {
+          "q": "如何安全地处理 Provider 未暴露任务/备份/retention 详情的情况？",
+          "answer": "采用分层实施：把账户 owner 已确认的 no-visible-error 与 not-exposed-by-provider 作为产品可观测性证据；为 task、backup、retention 增加 visible-with-status、not-exposed-by-provider、unknown 三态可见性记录。not-exposed 是已知产品边界，不推断为 none；unknown 仍 safe-stop。只读 receipt/wizard 不执行 Provider 动作，provider_remote_zero_residue 继续 unknown/delegated。",
+          "note": "先扩展本地 receipt 合同和隔离测试，再由 roadmap 决定是否把产品可观测性子门标记 pass-with-owner-attestation；权威 Provider 退出/零残留不在本地伪造关闭。"
+        },
+        {
+          "q": "分层 Provider 可观测性 receipt 实施结果是什么？",
+          "answer": "已完成本地 receipt v2 与只读 wizard：新增 task_or_run、backup_or_snapshot、retention_policy 的 visible-with-status/not-exposed-by-provider/unknown 资源面记录；not-exposed 不转换为 none-observed，unknown/visible-error 继续 safe-stop；产品可观测性通过时记录 provider_observability_status=pass-with-owner-attestation，provider_remote_zero_residue 仍为 unknown/delegated。",
+          "note": "临时三资源面 not-exposed 场景通过；receipt 定向测试 11/11、全量测试 119/119、bash -n、py_compile、git diff --check、roadmap validate 均通过。未访问 Provider、未调用网络、未执行账户或服务变更。"
         }
       ],
-      "notes": "HOLD/delegated：只读控制台检查无现成登录会话并被重定向到登录页。未核实 task/run/queue、Webhook/integration、backup/retention、data、key lifecycle、subscription、billing、account closure 或远端零残留；不执行删除、停用、注销，不要求重新生成 API key。账户 owner 后续仅需交接脱敏 receipt，未知字段保持 unknown/safe-stop。"
+      "notes": "HOLD/delegated：只读控制台检查无现成登录会话并被重定向到登录页。未核实 task/run/queue、Webhook/integration、backup/retention、data、key lifecycle、subscription、billing、account closure 或远端零残留；不执行删除、停用、注销，不要求重新生成 API key。2026-09-04 本地收口：record_provider_exit_receipt.py 的 account_scope 收紧为脱敏类别 personal/team/organization/service-account/unknown，exit_mode 增加库级枚举校验；新增负向测试。验证：PYTHONPATH=src python3 -m unittest discover -s tests -p 'test*.py' -> 113/113 OK；receipt/provider staging 定向测试 -> 16/16 OK；临时 inventory-only receipt -> unknown/safe-stop、provider_remote_zero_residue=unknown/delegated、credential_scan=clean；原始邮箱 account_scope -> rejected；git diff --check -> OK。2026-09-04 交接检查：未找到 evaluation/evidence/provider-exit/**/receipt.json；复用 scripts/optional-provider-exit.sh 的账户 owner 流程，bash -n 通过，未端到端运行、未访问 Provider、未接触 API key。等待账户 owner 在已有 Ark 控制台会话中完成实际 inventory/retention/退出核实并仅交接 receipt.json 路径或脱敏 JSON；在 receipt 到达前节点继续 blocked/HOLD。2026-09-05 安全修复：optional-provider-exit.sh 固定为只读 inventory/retention receipt，移除 Provider-side action 阶段、人工删除/停用/退订/注销引导、相关确认和 exit_mode/action_status 交互；脚本固定 inventory-only + not-performed。新增源代码安全断言；recorder 仍只记录外部已观察到的脱敏结果，不执行远端动作。验证：bash -n 通过；Provider receipt 定向测试 6/6 OK；受限沙箱全量测试因 loopback socket 权限失败，沙箱外重跑 114/114 OK；roadmap validate 通过。账户 owner 可保持账号 active，不能为了节点通过而执行注销或删除；真实 receipt 未到达前继续 blocked/HOLD。"
     },
     "1-9-7-2-3": {
       "id": "1-9-7-2-3",
@@ -1023,7 +1090,7 @@
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-04 18:03:16",
+    "updated": "2026-09-05 00:34:49",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }

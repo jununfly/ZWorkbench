@@ -159,9 +159,9 @@ finish() {
   printf '\n'
 }
 
-# STAGES — redacted inventory and receipt only; no remote deletion command.
+# STAGES — read-only redacted inventory and receipt only; no remote action path.
 
-TOTAL_STAGES=6
+TOTAL_STAGES=5
 ENV_FILE=/dev/null
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
@@ -172,19 +172,23 @@ PROJECT_FINGERPRINT="${ZWB_ARK_PROJECT_FINGERPRINT:-}"
 INVENTORY_FINGERPRINT="${ZWB_ARK_EXIT_INVENTORY_FINGERPRINT:-}"
 EVIDENCE_FINGERPRINT="${ZWB_ARK_EXIT_EVIDENCE_FINGERPRINT:-}"
 LOCAL_STATE_FINGERPRINT="${ZWB_LOCAL_OWNER_STATE_FINGERPRINT:-unknown}"
+PROVIDER_CONSOLE_OBSERVATION="${ZWB_PROVIDER_CONSOLE_OBSERVATION:-}"
+PROVIDER_REQUEST_RESPONSE_SURFACE="${ZWB_PROVIDER_REQUEST_RESPONSE_SURFACE:-}"
+TASK_SURFACE_OBSERVATION="${ZWB_PROVIDER_TASK_SURFACE_OBSERVATION:-}"
+BACKUP_SURFACE_OBSERVATION="${ZWB_PROVIDER_BACKUP_SURFACE_OBSERVATION:-}"
+RETENTION_SURFACE_OBSERVATION="${ZWB_PROVIDER_RETENTION_SURFACE_OBSERVATION:-}"
 
-banner "Provider-side exit inventory and receipt"
+banner "Provider-side read-only inventory and receipt"
 
-stage "Scope — account owner and irreversible boundary"
-say "This wizard records Provider-side facts; it does not call APIs, disable keys, delete resources, or close an account."
+stage "Scope — read-only account inventory"
+say "This wizard ONLY records Provider-side facts. It cannot call Provider APIs, change keys, delete resources, change billing, or close an account."
 open_url "https://console.volcengine.com/"
-open_url "https://www.volcengine.com/docs/6256/64928?lang=zh"
-step "You are the account/project owner. Exact console labels may vary; if a resource or policy cannot be located, record unknown."
-step "Provider-side exit is separate from local ZWorkbench cleanup; final remote zero residue remains unknown/delegated."
-if ! confirm "Proceed with a redacted inventory before any irreversible action?"; then exit 0; fi
+step "You are the account/project owner. Read the current account/project state only; if a resource or policy cannot be located, record unknown."
+step "This run has no Provider-side action stage or action confirmation. It records the current state, including an active account, without changing it."
+if ! confirm "Proceed with a read-only redacted inventory?"; then exit 0; fi
 
 stage "Local boundary — stop new work and record owner state"
-step "Stop new ZWorkbench runs, retries, schedules, and Webhook delivery for this case. Do not delete the existing historical evidence."
+step "Select the current local case status; this wizard will not stop, delete, or modify local work."
 step "If you have a local CompositionOwner state digest, keep only its SHA-256 fingerprint; never paste a database, prompt, code, or credential."
 step "Allowed local status: not-reviewed | stopped-and-cleaned | retained-for-evidence | unknown"
 ask LOCAL_STATUS "Local case stop/cleanup status:"
@@ -195,46 +199,74 @@ else
 fi
 
 stage "Inventory — Coding data and remote resources"
-say "In the Ark console/support path, inspect only the account/project scope used by this case. Enter status words exactly."
-step "Allowed task status: none-observed | identified-stopped | identified-pending | unknown"
-ask TASK_STATUS "Coding task/run/queue status:"
+say "In the Ark console/support path, inspect only the account/project scope used by this case. Enter status words exactly. Do not debug or capture individual API requests."
+step "Allowed Provider console observation: no-visible-error | visible-error | unknown"
+if [[ -z "$PROVIDER_CONSOLE_OBSERVATION" ]]; then
+  ask PROVIDER_CONSOLE_OBSERVATION "Provider console observation:"
+else
+  note "Using existing ZWB_PROVIDER_CONSOLE_OBSERVATION value; it will not be displayed."
+fi
+step "Allowed request/response surface: not-exposed-by-provider | exposed | unknown"
+if [[ -z "$PROVIDER_REQUEST_RESPONSE_SURFACE" ]]; then
+  ask PROVIDER_REQUEST_RESPONSE_SURFACE "Per-request request/response surface:"
+else
+  note "Using existing ZWB_PROVIDER_REQUEST_RESPONSE_SURFACE value; it will not be displayed."
+fi
+step "Allowed task surface: visible-with-status | not-exposed-by-provider | unknown"
+if [[ -z "$TASK_SURFACE_OBSERVATION" ]]; then
+  ask TASK_SURFACE_OBSERVATION "Coding task/run/queue surface:"
+else
+  note "Using existing ZWB_PROVIDER_TASK_SURFACE_OBSERVATION value; it will not be displayed."
+fi
+if [[ "$TASK_SURFACE_OBSERVATION" == "visible-with-status" ]]; then
+  step "Allowed task status: none-observed | identified-stopped | identified-pending"
+  ask TASK_STATUS "Coding task/run/queue status:"
+else
+  TASK_STATUS="unknown"
+fi
 step "Allowed Webhook status: none-observed | disabled | identified-active | unknown"
 ask WEBHOOK_STATUS "Webhook/integration status:"
-step "Allowed backup status: none-observed | exported | deletion-requested | retained-by-policy | unknown"
-ask BACKUP_STATUS "Backup/snapshot status:"
-step "Allowed data status: not-requested | requested | confirmed | retained-by-policy | unknown"
-ask DATA_STATUS "Prompt/output/log/telemetry data exit status:"
-if [[ "$TASK_STATUS" == "unknown" || "$WEBHOOK_STATUS" == "unknown" || "$BACKUP_STATUS" == "unknown" || "$DATA_STATUS" == "unknown" ]]; then
+step "Allowed backup surface: visible-with-status | not-exposed-by-provider | unknown"
+if [[ -z "$BACKUP_SURFACE_OBSERVATION" ]]; then
+  ask BACKUP_SURFACE_OBSERVATION "Backup/snapshot surface:"
+else
+  note "Using existing ZWB_PROVIDER_BACKUP_SURFACE_OBSERVATION value; it will not be displayed."
+fi
+if [[ "$BACKUP_SURFACE_OBSERVATION" == "visible-with-status" ]]; then
+  step "Allowed backup status: none-observed | exported | deletion-requested | retained-by-policy"
+  ask BACKUP_STATUS "Backup/snapshot status:"
+else
+  BACKUP_STATUS="unknown"
+fi
+step "Allowed retention/data surface: visible-with-status | not-exposed-by-provider | unknown"
+if [[ -z "$RETENTION_SURFACE_OBSERVATION" ]]; then
+  ask RETENTION_SURFACE_OBSERVATION "Prompt/output/log/telemetry retention surface:"
+else
+  note "Using existing ZWB_PROVIDER_RETENTION_SURFACE_OBSERVATION value; it will not be displayed."
+fi
+if [[ "$RETENTION_SURFACE_OBSERVATION" == "visible-with-status" ]]; then
+  step "Allowed data status: not-requested | requested | confirmed | retained-by-policy"
+  ask DATA_STATUS "Prompt/output/log/telemetry data status:"
+else
+  DATA_STATUS="unknown"
+fi
+if [[ "$TASK_SURFACE_OBSERVATION" == "unknown" || "$WEBHOOK_STATUS" == "unknown" || "$BACKUP_SURFACE_OBSERVATION" == "unknown" || "$RETENTION_SURFACE_OBSERVATION" == "unknown" ]]; then
   warn "At least one Provider data/resource field is unknown; the receipt will remain safe-stopped."
 fi
 
 stage "Inventory — key, subscription, billing and account"
-open_url "https://www.volcengine.com/docs/82379/1361424?lang=zh"
-step "Do not paste an API key. Record only its lifecycle status: not-touched | disabled | deleted | unknown."
+step "Read the current account/project state only. Do not paste an API key; record only its lifecycle status: not-touched | disabled | deleted | unknown."
 ask KEY_STATUS "API key lifecycle status:"
 ask BILLING_STATUS "Billing/invoice status [not-reviewed | settled | pending | unknown]:"
 ask SUBSCRIPTION_STATUS "Coding subscription status [active | cancelled | unknown]:"
 ask ACCOUNT_STATUS "Account status [active | closure-submitted | closed | unknown]:"
-step "If account closure is selected, remember the official 45-day silent period and legal/tax retention exceptions."
-if ! confirm "Have you reviewed the account/project scope without copying any raw key, resource ID, email, prompt, or response?"; then exit 1; fi
+if ! confirm "Have you reviewed the current account/project state without copying any raw key, resource ID, email, prompt, or response?"; then exit 1; fi
 
-stage "Exit action — optional human-performed operation"
-step "Choose inventory-only to record facts without changing Provider state. Choose authorized-manual-exit only if you, as account owner, have a separate decision to act now."
-ask EXIT_MODE "Exit mode [inventory-only | authorized-manual-exit]:"
-if [[ "$EXIT_MODE" == "authorized-manual-exit" ]]; then
-  open_url "https://www.volcengine.com/docs/82379/1361424?lang=zh"
-  open_url "https://www.volcengine.com/docs/6256/157919?lang=zh"
-  warn "The next actions are irreversible or difficult to reverse: stop/delete resources, disable/delete the key, cancel subscription, or submit account closure."
-  if ! confirm "I understand the target scope and authorize myself to perform the selected Provider-side exit actions manually?"; then
-    EXIT_MODE="inventory-only"
-  else
-    pause "Perform only the exact actions you have separately authorized, then return here."
-  fi
-else
-  EXIT_MODE="inventory-only"
-fi
-step "No deletion command is run by this wizard. A submitted request is not a completion proof."
-ask ACTION_STATUS "Exit action status [not-performed | submitted | confirmed | unknown]:"
+# This wizard can only produce a non-mutating inventory receipt.  A receipt for
+# an externally performed Provider action, if one exists, must be recorded by
+# a separately controlled evidence workflow; this script never performs it.
+EXIT_MODE="inventory-only"
+ACTION_STATUS="not-performed"
 
 stage "Receipt — redacted evidence handoff"
 if [[ -z "$PROJECT_FINGERPRINT" ]]; then ask PROJECT_FINGERPRINT "Ark Project/billing SHA-256 fingerprint [64 hex]:"; fi
@@ -259,6 +291,11 @@ if ! python3 "$RECORDER" \
   --evidence-fingerprint "$EVIDENCE_FINGERPRINT" \
   --local-state-fingerprint "$LOCAL_STATE_FINGERPRINT" \
   --exit-mode "$EXIT_MODE" \
+  --provider-console-observation "$PROVIDER_CONSOLE_OBSERVATION" \
+  --provider-request-response-surface "$PROVIDER_REQUEST_RESPONSE_SURFACE" \
+  --task-surface-observation "$TASK_SURFACE_OBSERVATION" \
+  --backup-surface-observation "$BACKUP_SURFACE_OBSERVATION" \
+  --retention-surface-observation "$RETENTION_SURFACE_OBSERVATION" \
   --task-status "$TASK_STATUS" \
   --webhook-status "$WEBHOOK_STATUS" \
   --backup-status "$BACKUP_STATUS" \
@@ -271,6 +308,6 @@ if ! python3 "$RECORDER" \
   --action-status "$ACTION_STATUS"; then
   warn "Receipt validation failed; inspect only the error text, not any raw Provider data."
 fi
-say "Share only $EVIDENCE_DIR/receipt.json. It records statuses and fingerprints, never raw keys or remote payloads."
+say "Share only $EVIDENCE_DIR/receipt.json. It records current statuses and fingerprints, never raw keys or remote payloads. No Provider-side action was performed by this wizard."
 
 finish

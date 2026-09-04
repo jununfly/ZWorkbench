@@ -6,23 +6,49 @@
 签核。当前目标账户是用户报告的火山方舟个人账户；所有未确认字段保留为
 `unknown`，不能用“控制台没看到”填成 `none`。
 
-## 0. 使用脱敏 receipt wizard
+## 0. 使用只读脱敏 receipt wizard
 
-需要由账户 owner 盘点或执行退出时，运行：
+需要由账户 owner 盘点当前 Provider 状态时，运行：
 
 ```bash
 ./scripts/optional-provider-exit.sh
 ```
 
-该 wizard 只打开官方控制台/文档、收集状态和 SHA-256 fingerprint，并生成
-`evaluation/evidence/provider-exit/<timestamp>-<pid>/receipt.json`。它不读取 API key、
-不调用 Provider API、不执行删除/停用/注销；若状态未知，receipt 保留
-`unknown/safe-stop`。即使人工完成了删除或注销，receipt 仍把最终远端零残留记为
+该 wizard 只打开官方控制台、收集当前状态和 SHA-256 fingerprint，并生成
+`evaluation/evidence/provider-exit/<timestamp>-<pid>/receipt.json`。它是只读流程：不读取
+API key、不调用 Provider API、不执行删除/停用/退订/注销，也没有 Provider-side action
+阶段或 action 确认。账户保持 `active` 完全可以；若状态未知，receipt 保留
+`unknown/safe-stop`。
+
+重要安全边界：本 wizard 不负责执行任何真实 Provider 退出。若账户 owner 在官方控制台
+另行完成了某项操作，必须由受控的独立证据流程提供脱敏结果；本地 recorder 只记录已观察
+到的结果，不会执行该操作。即使人工完成了删除或注销，receipt 仍把最终远端零残留记为
 `unknown/delegated`，不能把本地记录当作 Provider 证明。
+
+### 产品可观测性字段
+
+receipt 另外记录两个不涉及凭证或请求正文的观察值：
+
+- `provider_console_observation=no-visible-error`：账户 owner 看到的控制台没有用户可见报错或异常；
+- `provider_request_response_surface=not-exposed-by-provider`：该产品不向用户暴露逐次 request/response。
+
+这两个值可以完整表达成熟云产品的用户侧观察结果，不要求调试 API，也不要求抓取请求或响应。
+它们不等价于 Provider 后台没有日志、缓存、备份或 retention，因此
+`provider_remote_zero_residue` 仍保持 `unknown/delegated`。
+
+receipt 还按资源面记录 `surface_observations`：`task_or_run`、`backup_or_snapshot` 和
+`retention_policy` 各自只能是 `visible-with-status`、`not-exposed-by-provider` 或
+`unknown`。当某个资源面确实不由产品暴露时，对应状态会写成
+`not-exposed-by-provider`；这不是 `none-observed`，也不是远端资源不存在的证明。
+只有 `visible-with-status` 才要求继续填写该资源的实际状态；`unknown` 会保持
+`unknown/safe-stop`。
 
 对应的无交互校验器是
 [`scripts/record_provider_exit_receipt.py`](../../scripts/record_provider_exit_receipt.py)，
-只接受脱敏 fingerprint 和枚举状态，不接受原始资源 ID、Key、Prompt 或响应正文。
+只接受脱敏 fingerprint、预定义的账户范围类别和枚举状态，不接受原始账户标识、资源
+ID、Key、Prompt 或响应正文。`account_scope` 只能是 `personal`、`team`、
+`organization`、`service-account` 或 `unknown`；它不是邮箱、Project ID、组织 ID
+或其他账户标识的替代字段。
 
 ## 1. 填写规则
 
@@ -88,25 +114,20 @@
 | API key / project permission | 只填 key fingerprint | 账户 owner | unknown | project/scope 待确认 | 禁用/删除 key | 不等于数据删除 | 账户 owner | `official-key-lifecycle / target-unverified` |
 | Billing / subscription / invoice | 待填写脱敏标识 | 账户 owner | unknown | 账单/税务范围 | 退订/注销前结清 | 法律/税务留存 unknown | 账单 owner | `official-account-exit / target-unverified` |
 
-## 5. 退出操作顺序（只在账户 owner 授权后执行）
+## 5. 真实退出与本 wizard 的边界
 
-下面是人工 runbook 的顺序，不是现在执行的命令：
+本仓库不提供 Provider-side 删除、停用、退订或注销命令，也不把这些动作嵌入 inventory
+wizard。以下只定义责任边界，不构成一键操作流程：
 
-1. 冻结 ZWorkbench 新 run、retry、schedule delivery 和 Webhook 触发；记录本地最后请求
-   时间、run ID 和 owner state digest。
-2. 在 Provider 控制台确认账户、region、project、套餐和账单；填写第 2 节 profile。
-3. 逐项填写第 3/4 节数据和资源清单；任何范围不明时停止。
-4. 在删除/注销前导出最小必要的账单、审计和恢复材料，并记录保存责任人；不导出 key
-   或私有 Prompt/代码到仓库。
-5. 先停用未来触发、取消/删除仍在运行的任务和 Webhook；保存脱敏结果/响应 ID。
-6. 按官方流程提交数据/文件/备份删除或 retention 请求；记录提交时间、工单/响应 ID和
-   预计完成时间；不把“已提交”写成“已清除”。
-7. 确认没有必要的恢复/支持操作后，禁用/删除 API Key、解绑集成并复核账单；Key 删除
-   只证明不能继续鉴权，不证明历史数据已删除。
-8. 最后清理本地 case workspace、CODEX_HOME、composition owner export/backup 和 key
-   引用，检查本地残留；本地零残留不等于 Provider 远端零残留。
-9. 到达 Provider retention/静默期后复核延迟删除、备份和法定留存；若无法观察，保留
-   `unknown / delegated`，由责任人签字，不由 Agent 猜测。
+1. 用本节第 0 节的 wizard 只读记录当前 task/Webhook/backup/data/key/billing/
+   subscription/account 状态和 retention 证据 fingerprint；不执行任何改变状态的动作。
+2. 如果账户 owner 另行决定在 Provider 官方控制台操作，应只在 Provider 自己的范围和
+   二次确认界面中完成；该操作不由 ZWorkbench 发起，也不由本 wizard 确认或代办。
+3. 操作结果只能以账户 owner 交接的脱敏官方 receipt、工单或控制台证据作为输入；本地
+   recorder 只写入状态和 fingerprint。提交请求不等于清除完成，最终远端零残留仍是
+   `unknown/delegated`。
+4. 账户不注销、订阅不取消、Key 不撤销时，分别记录实际状态（例如 `active`、
+   `not-touched`、`not-performed`），不得为了让节点通过而执行这些动作。
 
 ## 6. Gate A 当前结果
 
