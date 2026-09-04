@@ -107,6 +107,17 @@ class CompositionOwnerTests(unittest.TestCase):
         self.assertEqual(self.owner.get_run("run-1")["status"], "safe_stopped")
         self.assertEqual(self.owner.get_run("run-1")["effects"][0]["physical_effect_count"], 1)
 
+    def test_begin_recovery_is_explicit_and_rejects_unresolved_effects(self) -> None:
+        self._run()
+        recovering = self.owner.begin_recovery("run-1", "worker timeout")
+        self.assertEqual(recovering["status"], "recovering")
+        self.assertEqual(self.owner.start_run("run-1")["status"], "running")
+
+        claim = self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
+        self.owner.mark_effect_uncertain(claim.effect_id, "worker interrupted")
+        with self.assertRaises(InvalidTransition):
+            self.owner.begin_recovery("run-1", "retry worker")
+
     def test_effect_operation_cannot_cross_run(self) -> None:
         self._run("run-1")
         self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
@@ -183,6 +194,21 @@ class CompositionOwnerTests(unittest.TestCase):
         self.assertEqual(first["replay_id"], second["replay_id"])
         with self.assertRaises(ValueError):
             self.owner.record_replay_metadata("run-1", "replay-2", "implicit-live", "events-sha", "env-sha", {"provider": "fake"})
+
+    def test_owner_evidence_writers_reject_raw_credentials(self) -> None:
+        with self.assertRaises(ValueError):
+            self.owner.create_run("credential-run", "unit-test", {"api_key": "secret"})
+        with self.assertRaises(ValueError):
+            self.owner.record_result("run-1", "adapter", {"authorization": "Bearer secret"})
+        with self.assertRaises(ValueError):
+            self.owner.record_replay_metadata(
+                "run-1",
+                "credential-replay",
+                "recorded_view",
+                "events-sha",
+                "env-sha",
+                {"provider": "fake", "api_key": "secret"},
+            )
 
 
 if __name__ == "__main__":

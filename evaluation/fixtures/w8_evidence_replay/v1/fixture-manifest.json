@@ -1,0 +1,28 @@
+{
+  "schema": "zworkbench-w8-h5-evidence-replay-fixture/v1",
+  "fixture_id": "w8-h5-evidence-replay",
+  "version": "1",
+  "cassette_schema": "zworkbench.replay-cassette/v1",
+  "network": "not-used",
+  "real_credentials": false,
+  "production_data": false,
+  "irreversible_side_effects": false,
+  "required_modes": [
+    "recorded_view",
+    "simulated_replay",
+    "live_replay"
+  ],
+  "required_identity": [
+    "harness_identity",
+    "plugin_identities",
+    "worker_identity",
+    "provider_identity",
+    "tool_schema_digest",
+    "policy_digest",
+    "workspace_digest",
+    "environment_digest",
+    "owner_schema",
+    "source_event_digest",
+    "cassette_identity"
+  ]
+}

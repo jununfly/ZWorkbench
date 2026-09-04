@@ -41,7 +41,7 @@ EXPECTED_FAILURE_CODES = {
     "unknown-message": "handshake_message_unknown",
     "unknown-field": "handshake_field_unknown",
     "nonzero": "worker_exit_nonzero",
-    "crash": "handshake_response_missing",
+    "crash": "worker_exit_nonzero",
     "hang": "worker_timeout",
     "malformed": "handshake_invalid_json",
 }

@@ -1,6 +1,6 @@
 # ZWorkbench 开发前基线
 
-状态：`knowledge-baseline / target-state-approved / H1-H3 bounded bridge verified`<br>
+状态：`knowledge-baseline / target-state-approved / H1-H5 bounded bridge verified`<br>
 日期：2026-09-04<br>
 适用对象：个人开发者或小团队
 
@@ -37,8 +37,8 @@ DSH 主 Harness
 | durable state | 已有本地 SQLite CompositionOwner | 继续唯一持有 parent/child run、effect、result、replay 和 backup truth |
 | Provider | 第一切片默认 fake/loopback；真实 Provider 仅有按需 staging 证据 | Provider profile、能力、attempt、fallback、降级原因由 ZWorkbench owner 记录 |
 | Workspace/effect | 第一切片只读；真实写入和 host/native approval 仍 HOLD | 先隔离 worktree 生成 diff，再经 policy/approval/claim/reconcile 才能 apply |
-| Replay | 已有 recorded view 和 cassette-only simulated replay 合同 | recorded/simulated/live 三种模式必须是不同入口，live 默认拒绝 |
-| DSH bridge | H1–H2 owner-backed/fixture 与 H3 bounded read-only coding 已验证；H4–H5 pending | 继续验证生命周期和 evidence/replay；H3 的真实 runtime 范围仅为 Codex + loopback Provider |
+| Replay | H5 已有 owner-backed recorded view、sealed cassette-only simulated replay 和 default-deny live replay | 真实 DSH/Codex/Provider replay、宿主强制边界和不可逆 effect 仍 HOLD |
+| DSH bridge | H1–H4 owner-backed/fixture 与 H5 evidence/replay 已验证 | H5 仅为 owner-backed + fixture-composed；H3 的真实 runtime 范围仅为 Codex + loopback Provider，真实远程 Provider 和 host enforcement 仍 HOLD |
 | Scheduler | 未作为第一切片产品能力实现 | 后续由 ZWorkbench durable owner 持有 schedule/trigger/missed trigger/幂等 |
 | 插件 | 已有隔离的 DSH plugin 研究和 adapter fixture，不代表默认 bundle 已采用 | allowlist、固定 source/version/commit/digest、权限声明和 dispose/rollback |
 
@@ -125,11 +125,11 @@ H1–H5 的共同硬门是：父子 identity 完整率 100%、未授权 effect �
 | 当前代码 | `verified-current` | [`README.md`](../../README.md)、`src/zworkbench/`、产品测试 |
 | 当前运行态 | `pending / not-applicable` | 本地 CLI 有隔离 smoke；没有部署/live production surface |
 | 研究结论 | `verified-current`（以固定来源/commit 为限） | W2–W8 findings 与 research metadata |
-| DSH 混合 bridge | `H1–H3 bounded verified / H4–H5 pending` | H1 clean pinned artifact、H2 owner-backed handshake、H3 fixture 与 real-Codex-runtime + loopback Provider 已运行；真实远程 Provider、生命周期和 evidence/replay 仍未通过 |
+| DSH 混合 bridge | `H1–H5 bounded verified` | H1 clean pinned artifact、H2 owner-backed handshake、H3 fixture 与 real-Codex-runtime + loopback Provider、H4 本机 process-group lifecycle/recovery、H5 owner-backed + fixture-composed evidence/replay 已运行；真实远程 Provider、host enforcement 和不可逆写入仍 HOLD |
 | 宿主强制写入 | `HOLD / unknown` | `1-6-3` |
 | 真实 Provider 远端退出 | `externally-delegated / signoff-open` | C7 remote exit responsibility |
 | 机器生成 evidence | `generated-read-only / local evidence` | `evaluation/evidence`、`evaluation/runs` |
 | 长期记忆 | `not-applicable` | 本次不写 Codex/其他 Agent 生成记忆 |
 
-本基线完成的是知识收口，不是产品完成。下一次产品开发任务应从 H4 生命周期/恢复的最小
+本基线完成的是知识收口，不是产品完成。下一次产品开发任务应从 H5 Evidence/replay 的最小
 bridge contract 开始，并首先重新读取 [目标架构设计](designs/dsh-codex-hybrid-target-architecture.md) 与本文件。

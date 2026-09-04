@@ -28,7 +28,8 @@ DSH 主 Harness
 - Codex 只负责代码理解、修改、测试、构建和可审查 diff；
 - ZWorkbench 持有 run、attempt、event、effect、result、approval、Provider 尝试、回放、备份、恢复和退出记录；
 - DSH、插件、Codex session、Provider 日志和观测投影都不是第二个事实源；
-- 当前代码中的 Codex-only 路径保留为回退基线；H1–H3 已有受控的 owner-backed bridge seam，H4–H5 仍未完成。
+- 当前代码中的 Codex-only 路径保留为回退基线；H1–H5 已有受控的 owner-backed bridge seam；
+  H5 仅为组合式 evidence/replay 证据，不代表 DSH 原生或真实 Provider replay 已通过。
 
 目标架构已获准进入实现规划；真实写入、真实 Provider 默认接入、Git push、部署、Webhook、全量插件市场和生产发布仍未获准。
 
@@ -48,6 +49,8 @@ DSH 主 Harness
 | [`plans/w8-h1-bootstrap-findings.md`](plans/w8-h1-bootstrap-findings.md) | H1 runtime seam 的 fixture 证据与正式 artifact 资格边界 | fixture 与 clean maintainer-pinned artifact 已验证；可进入 H2 |
 | [`plans/w8-h2-worker-handshake-findings.md`](plans/w8-h2-worker-handshake-findings.md) | H2 Worker handshake 的 owner correlation、严格 wire 和 safe-stop 证据 | owner-backed + fixture-composed 已验证；真实 Provider/H4-H5 仍未声称 |
 | [`plans/w8-h3-worker-coding-findings.md`](plans/w8-h3-worker-coding-findings.md) | H3 只读 coding、真实 Codex runtime + loopback Provider 和 artifact receipt 证据 | fixture 与 real-Codex-runtime + loopback 已验证；真实远程 Provider/H4-H5 仍 HOLD |
+| [`plans/w8-h4-worker-lifecycle-findings.md`](plans/w8-h4-worker-lifecycle-findings.md) | H4 Worker cancel、timeout、crash、parent stop、process-tree cleanup 和 recovery | 6/6 owner-backed + fixture-composed 场景通过；H5、host sandbox 和真实 Provider 仍 HOLD |
+| [`plans/w8-h5-evidence-replay-findings.md`](plans/w8-h5-evidence-replay-findings.md) | H5 owner-backed recorded view、sealed cassette simulated replay、live replay deny 和 provenance gate | 7/7 场景通过；仅为 owner-backed + fixture-composed，真实 Codex/Provider replay 仍 HOLD |
 | [`plans/w8-real-provider-compatibility-findings.md`](plans/w8-real-provider-compatibility-findings.md) | 真实远程 Provider 的分层兼容性、人工授权门和脱敏 staging 合同 | HTTP 与授权 Codex read-only staging 已 pass；loopback composition 已 pass；真实 Ark fallback 与退出仍按需/HOLD |
 | [`references/optional-real-codex-provider-staging.md`](references/optional-real-codex-provider-staging.md) | 真实 Codex 0.139.0 + Ark 的 case-local 一次性只读 turn 入口与证据边界 | 最新授权 staging 已 pass；完整 Provider 兼容性仍 HOLD |
 | [`plans/research/`](plans/research/) | 一手来源、固定 commit、collection status 和研究 ledger | 研究支撑；raw ledger 是生成证据 |

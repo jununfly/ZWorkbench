@@ -1,0 +1,29 @@
+{
+  "schema": "zworkbench.replay-cassette/v1",
+  "sealed": true,
+  "cassette_id": "h5-cassette-template",
+  "source_run_id": "source-run",
+  "source_event_digest": "sha256:bound-by-runner",
+  "environment_digest": "sha256:h5-environment",
+  "provider_identity": {
+    "provider": "fake-loopback",
+    "model": "fixture-model",
+    "endpoint": "http://127.0.0.1:11434",
+    "transport": "loopback-only",
+    "metadata": {}
+  },
+  "interactions": [
+    {
+      "request": {
+        "prompt": "fixture"
+      },
+      "response": {
+        "answer": "fixture-ok"
+      }
+    }
+  ],
+  "tool_results": [],
+  "expected_semantic_result": {
+    "answer": "fixture-ok"
+  }
+}

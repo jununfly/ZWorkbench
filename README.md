@@ -25,7 +25,9 @@ CLI 会输出脱敏 JSON，并可用 `--export`、`--backup`、`--summary` 生�
 
 路线图事实源是 [`docs/plans/personal-workbench-w8-roadmap.json`](docs/plans/personal-workbench-w8-roadmap.json)，
 渲染视图是 [`docs/plans/personal-workbench-w8-roadmap.md`](docs/plans/personal-workbench-w8-roadmap.md)。
-该路线图包含历史评测与当前决策记录；目标混合架构尚未实现，Codex-only 仍是回退基线。
+该路线图包含历史评测与当前决策记录；目标混合架构尚未完整实现，Codex-only 仍是回退基线。
+H1–H5 的受控 owner-backed seam 已有本地验证，其中 H5 仅证明组合式 evidence/replay 边界，
+不代表 DSH 原生、真实 Codex replay 或真实远程 Provider compatibility 已通过。
 真实 Provider 的账户、凭证、远端数据和退出责任是路线外、按需的人工验证；核心开发不等待它们。
 当前 Ark 已有授权只读 HTTP staging 的 5/5 证据，以及一次真实 Codex `0.139.0` + Ark
 case-local 只读 staging 通过证据；完整兼容性仍 HOLD。需要验证 HTTP
