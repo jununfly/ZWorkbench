@@ -65,6 +65,11 @@
           "q": "正式开发前的现役目标架构与历史 Codex-only 决策如何解释？",
           "answer": "目标态采用 DSH 主 Harness + Codex Coding Worker + ZWorkbench CompositionOwner；现有 Codex 0.139.0 local_read_only_run 仅保留为已实现回退基线。",
           "note": "2026-09-03 文档收口决策：目标架构设计是当前方案权威；W7/W8 中 Codex 唯一主 Harness 的结论保留为当时的 acceptance/evaluation 与 fallback baseline，不再作为混合目标态的主 Harness 结论。1-6-3 与 DSH E4/E5 的关键未知仍保持 HOLD/unknown-stop；仅允许先做混合只读 Stage 0/1 的实现规划。"
+        },
+        {
+          "q": "当前阻塞点如何分层解决，而不重启真实 Provider/API key 循环？",
+          "answer": "采用分层收口：1-6-3 只通过新的可观察边界解决，不把 DNS gaierror 或普通进程树观察升级为 host enforcement；后续以 case-local broker 作为唯一 network/DNS/effect 边界，记录显式 DNS request deny、非 loopback egress deny、凭证/子进程拒绝和 Codex→broker ancestry，Codex native approval 仍独立验证，缺少真实 request/decision 继续 unknown。1-9-7-2-2/3 是账户 owner/Provider 外部事实门：不重新生成、粘贴、轮换或撤销 API key，不执行远端删除/注销；没有脱敏账户 receipt 或有效凭证路径就保持 blocked/delegated，不能用控制台无报错推断零残留。1-8-3-1-1 只有在出现具备 candidate-owned durable fallback/reason/degradation ledger 的新 pinned plugin 后才重开，否则保持 acceptance 分支暂停。W8 产品继续只读，不因验收 blocker 开放真实写入。",
+          "note": "这是 Product execution 主线与 acceptance/evaluation 外部证据的分离决策：本地 broker/fixture 可以继续实现，但不改变默认产品权限；Provider 真实账户事实由账户 owner 负责；任何关键 unknown 继续 unknown/stop/HOLD。"
         }
       ],
       "notes": "目标态已批准进入实现规划：DSH 主 Harness + 进程外 Codex Coding Worker + ZWorkbench CompositionOwner；1-7 已完成并作为 Codex-only 可运行回退基线。1-8-3-1-1 的 DeepSeek E4/E5/E6 acceptance 分支保持 blocked/unknown-stop，暂停循环；当前产品下一节点为 1-9 的 Stage 0 合同冻结与 H1-H5 混合只读切片。1-6-3 宿主/native approval、真实写入、真实 Provider 默认接入、Git push、部署和生产发布仍保持 HOLD/未授权。"
@@ -272,7 +277,10 @@
       "status": "blocked",
       "mode": "explore",
       "parent": "1-6",
-      "children": [],
+      "children": [
+        "1-6-3-1",
+        "1-6-3-2"
+      ],
       "decisions": [
         {
           "q": "1-6-3 如何区分 adapter fail-closed 与宿主级强制边界？",
@@ -313,9 +321,14 @@
           "q": "修正后的 host/broker 首轮 evidence 是否收敛了本节点？",
           "answer": "修正后的 runner 在绝对输出目录下完成 12/12 candidate-pass，broker allow/deny 各 3/3、独立 host deny/workspace allow 各 3/3；summary 明确 event/audit linkage=observed、process-tree integration=unobserved、native approval=unknown。它收敛了证据表述但没有闭合 1-6-3，因此节点置为 blocked/HOLD。",
           "note": "正式证据：evaluation/runs/w8-host-broker-corrected-20260831T181403-6NZ/；全量 unittest 37/37。"
+        },
+        {
+          "q": "在不接触真实 Provider/凭证的前提下，1-6-3 下一步推进什么本地证据面？",
+          "answer": "新增隔离 acceptance/evaluation 子任务，覆盖 case-local 假凭证读取阻断、非 loopback 网络与 DNS 阻断、未声明子进程阻断，以及 Codex app-server→broker 的进程树可观察性；仅记录可观察拒绝链路与未知边界，不把独立机制探针升级为产品通过。",
+          "note": "路线角色为 acceptance/evaluation；目标 artifact 是新的 case-local fixture/runner/evidence，不修改 ZWorkbench 产品代码、不使用真实 Provider/API key、不执行真实写操作；任一拒绝链路或 Codex ancestry 不可观察即 unknown/stop。"
         }
       ],
-      "notes": "1-6-3 已完成候选 host/broker 首轮验证和证据语义修正；12/12 fixture candidate-pass，但 Codex process-tree integration=unobserved、Codex native approval=unknown，真实 Provider/真实写操作继续 HOLD。正式 evidence: evaluation/runs/w8-host-broker-corrected-20260831T181403-6NZ/。后续需更换可观察的 Codex host/native approval 接入面，或由人工批准新的隔离验证方案。"
+      "notes": "HOLD 继续：L3 的假凭证、非 loopback 网络、未声明子进程和普通 Codex process-tree observation 已有 candidate evidence；DNS host denial 与 Codex process-tree→host-profile 联合继承仍 unknown，L2 native approval 仍 unknown。真实写操作继续禁止。"
     },
     "1-6-4": {
       "id": "1-6-4",
@@ -1086,11 +1099,68 @@
         }
       ],
       "notes": "unknown/stop：既有本地凭证引用的两次受控请求中，primary 无效 model 与 fallback ark-code-latest 均 HTTP 401 AuthenticationError/Unauthorized；未证明 MODEL_REJECTED 或真实 fallback。owner=safe_stopped、retry=0、effect=0、脱敏扫描=0。按 Human 边界不重新配置、轮换、撤销 Key，不自动重试；只有新的明确授权有效凭证路径才可继续。"
+    },
+    "1-6-3-1": {
+      "id": "1-6-3-1",
+      "label": "L3 凭证网络 DNS 子进程与进程树最小权限负向证据",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "本轮 L3 最小权限与 Codex 进程树补充证据的结果是什么？",
+          "answer": "候选证据已形成：case-local 假凭证读取 3/3、非 loopback 网络 3/3、未声明子进程 3/3 均观察到明确 PermissionError；Codex 0.139.0 暂停 probe 的 ancestry 3/3 包含 live app-server PID。DNS 3/3 只有系统 resolver 的 gaierror，没有 host denial，继续 unknown；host profile 仍未应用到 Codex，native approval 未被验证。",
+          "note": "证据摘要：evaluation/runs/w8-host-boundary-min-permissions-20260905/summary.json。所有样本无真实 Provider、无真实凭证、无真实项目写入；原始 stdout/stderr 不落盘，raw_secret_matches=0。该结果是 acceptance/evaluation candidate evidence，不关闭 1-6-3 产品写入 HOLD。"
+        },
+        {
+          "q": "小安全收紧后的最终 rerun 以哪份 evidence 为准？",
+          "answer": "以 evaluation/runs/w8-host-boundary-min-permissions-20260905-rerun2/summary.json 为准：直接宿主面 12 次中假凭证读取、非 loopback 网络、未声明子进程各 3/3 明确 PermissionError，DNS 3/3 只有 gaierror；Codex process-tree 3/3 observed。总状态仍 unknown/stop。",
+          "note": "secret marker 扫描 0；real Provider、real credentials、real project write 均为 false。该 rerun 只更新 candidate evidence，不关闭 1-6-3 的 DNS、host-profile inheritance、native approval 或真实写入门。"
+        }
+      ],
+      "notes": "最终候选证据摘要：evaluation/runs/w8-host-boundary-min-permissions-20260905-rerun2/summary.json。直接宿主面 12 次中凭证读取、非 loopback 网络、未声明子进程各 3/3 明确 PermissionError；DNS 3/3 仅 gaierror、host denial 未观察。Codex 0.139.0 process-tree 3/3 observed。raw secret marker=0，real Provider/credentials/project write=false；不关闭 1-6-3 产品写入 HOLD。"
+    },
+    "1-6-3-2": {
+      "id": "1-6-3-2",
+      "label": "DNS 宿主拒绝与 Codex host profile 联合继承",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-6-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "broker 化可观察边界采用什么 interface？",
+          "answer": "新增 acceptance/evaluation 专用 case-local CapabilityBroker interface：request 只包含 operation、resource class、target、request_id 和固定 policy identity；broker 先持久化 policy decision，再执行允许的 case-local effect，并返回 decision/reason/policy_sha256/effect_status/physical_effect_count/external_io_count。DNS 使用 broker 内静态 allowlist，不调用系统 resolver；非 loopback network、credential.read、未声明 process.spawn 和 workspace 外 write 必须在 broker 内显式 deny。该 interface 不进入 src/zworkbench 默认产品运行时，不接触真实 Provider/API key，不证明 Codex host profile inheritance 或 native approval。",
+          "note": "这是 acceptance/evaluation 的新可观察 seam：用显式 broker receipt 解决 system resolver gaierror 无法作为 host denial 的问题；未知协议/未知 operation/缺少 identity 一律 deny/unknown，Codex→host profile 联合继承仍单独 HOLD。"
+        },
+        {
+          "q": "CapabilityBroker candidate evidence 是否关闭 1-6-3-2？",
+          "answer": "不关闭。case-local broker 已在 9 个场景、每场景 3 次中达到 27/27 candidate-pass，并提供 request→policy digest→decision→effect receipt；但这不证明 Codex host profile 联合继承，也不产生 Codex native approval request/decision。继续保持 1-6-3-2 为 blocked/HOLD，真实写入禁止。",
+          "note": "正式证据：evaluation/runs/w8-capability-broker-20260905-rerun2/summary.json；real_provider、real_credentials、real_project_write 均为 false；默认产品运行时未改动。"
+        },
+        {
+          "q": "本轮如何验证 Codex host-profile 继承与 native approval？",
+          "answer": "新增 acceptance/evaluation 专用 external-sandbox Codex runner：固定 Codex 0.139.0 在 macOS sandbox-exec targeted profile 内启动，turn/start 使用官方 v2 sandboxPolicy.type=externalSandbox；loopback fake Responses Provider 只发 case-local direct_write 命令。host-profile 通过必须同时满足 commandExecution started/completed、子进程 ancestry 含 Codex PID、越界写返回 PermissionError/预期退出码且哨兵未改变，以及 workspace allow 控制成功。native approval 通过必须观察真实 item/commandExecution/requestApproval，记录 request 的 thread/turn/item identity，客户端返回 decline 或精确 accept，随后观察 serverRequest/resolved 与 item/completed；缺 request/decision/identity 继续 unknown。",
+          "note": "不改 src/zworkbench，不使用真实 Provider/凭证/工作区；所有外部网络仅 loopback fake Provider，所有写入仅 case-local。正式结果按 host inheritance 与 native approval 分开计分，不以 protocol schema、approvalPolicy 字段或目标未变化替代事件证据。"
+        },
+        {
+          "q": "external-sandbox 联合继承与 native approval 重跑结果是什么？",
+          "answer": "固定 Codex 0.139.0 在 macOS sandbox-exec targeted profile 内，使用显式 w8-loopback Responses provider、case-local ready/release probe 与 v2 turn/start.sandboxPolicy.type=externalSandbox 完成 12 case（4 场景×3 次）：host-profile 越界拒绝和工作区允许均 3/3，Codex PID 到 direct child ancestry 与 commandExecution started/completed 可观察，合计 6/6 candidate-pass；native approval decline/accept 合计 0/6 request，Codex 进入 waitingOnApproval 但未向 stdio client 发出 item/commandExecution/requestApproval，因此 request→decision→serverRequest/resolved→item/completed 链仍 unknown/stop。节点保持 in_progress/HOLD，真实写入不放行。",
+          "note": "正式摘要为 evaluation/runs/w8-external-sandbox-native-approval-20260905-final1/summary.json；修复了绝对 fixture 路径、临时 loopback 端口、显式 provider 配置和 ready/release terminal 观察窗口。仅 acceptance/evaluation，src/zworkbench 默认 runtime、真实 Provider、真实凭证和真实项目均未使用。"
+        },
+        {
+          "q": "final2 正式摘要路径纠正",
+          "answer": "正式摘要路径为 evaluation/runs/w8-external-sandbox-native-approval-20260905-final2/summary.json；该路径对应 12 case、6/12 pass、6/12 unknown/stop，host-profile 6/6 candidate-pass，native request 0/6 且 waitingOnApproval 6/6。",
+          "note": "上一条决策的路径文本曾被 shell 特殊字符吞掉；本条使用纯文本路径。"
+        }
+      ],
+      "notes": "最终 external-sandbox acceptance/evaluation 摘要 final2：host-profile candidate 子面 6/6 pass；native approval 0/6 request，6/6 真实进入 waitingOnApproval，request→decision→resolved→completed 链缺失，L2 unknown/stop。runner receipt 显式记录 approval_wait_observed 与 wait kind；节点保持 HOLD，真实写操作禁止。下一步仅查明固定 runtime/transport 的 native request 可观察性，不修改默认产品 runtime。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-05 00:34:49",
+    "updated": "2026-09-05 02:15:32",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }
