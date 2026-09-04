@@ -431,19 +431,34 @@ def load_real_provider_summary(path: Path | None) -> dict[str, Any]:
         }
     credential = value.get("credential") if isinstance(value.get("credential"), dict) else {}
     response = value.get("response") if isinstance(value.get("response"), dict) else {}
+    attempts = value.get("attempts") if isinstance(value.get("attempts"), list) else []
     fingerprint = credential.get("api_key_fingerprint")
+    requested_count = value.get("requested_count")
+    repeated_request_shape = requested_count == 5 and value.get("request_count") == 5
+    single_http_success = isinstance(value.get("http_status"), int) and 200 <= value["http_status"] < 300
+    repeated_http_success = repeated_request_shape and len(attempts) == 5 and all(
+        isinstance(item, dict)
+        and item.get("outcome") == "http_success"
+        and isinstance(item.get("http_status"), int)
+        and 200 <= item["http_status"] < 300
+        for item in attempts
+    )
+    http_success = value.get("outcome") == "http_success" and (single_http_success or repeated_http_success)
+    response_models = response.get("response_models") if isinstance(response.get("response_models"), list) else []
     checks = {
         "schema_is_real_provider_probe": value.get("schema") == REAL_PROVIDER_SCHEMA,
         "provider_is_volcengine_ark": value.get("provider") == "volcengine-ark",
         "endpoint_is_fixed_ark_coding": value.get("endpoint") == ARK_ENDPOINT,
         "configured_model_is_ark_code_latest": value.get("model") == ARK_MODEL,
         "credential_fingerprint_recorded": isinstance(fingerprint, str) and len(fingerprint) == 64 and all(character in "0123456789abcdef" for character in fingerprint.lower()),
-        "http_success": value.get("outcome") == "http_success" and isinstance(value.get("http_status"), int) and 200 <= value["http_status"] < 300,
-        "one_request": value.get("request_count") == 1,
+        "http_success": http_success,
+        "one_request_or_five_explicit": value.get("request_count") == 1 or repeated_request_shape,
         "zero_retries": value.get("retry_count") == 0,
-        "synthetic_fixture_present": response.get("fixture_token_present") is True,
+        "synthetic_fixture_present": response.get("fixture_token_present") is True or response.get("all_semantic_fixture_exact") is True,
         "raw_request_response_not_persisted": value.get("raw_request_or_response_persisted") is False,
-        "response_model_route_matches": response.get("response_model") in {"auto", ARK_MODEL},
+        "response_model_route_matches": response.get("response_model") in {"auto", ARK_MODEL} or bool(response_models) and all(model in {"auto", ARK_MODEL} for model in response_models),
+        "preflight_verified_or_legacy": "preflight" not in value or isinstance(value.get("preflight"), dict) and value["preflight"].get("status") == "verified",
+        "verified_compatibility_or_legacy": requested_count != 5 or value.get("compatibility_status") == "verified-for-authorized-read-only-staging",
     }
     result = {
         "status": "pass" if all(checks.values()) else "fail",
@@ -453,11 +468,12 @@ def load_real_provider_summary(path: Path | None) -> dict[str, Any]:
             "provider": value.get("provider"),
             "endpoint": value.get("endpoint"),
             "configured_model": value.get("model"),
-            "response_model": response.get("response_model"),
+            "response_model": response.get("response_model") or response_models,
             "response_model_interpretation": "Ark response model=auto is recorded as the configured ark-code-latest route per the established provider mapping.",
             "api_key_fingerprint": fingerprint,
             "http_status": value.get("http_status"),
             "request_count": value.get("request_count"),
+            "requested_count": requested_count,
             "retry_count": value.get("retry_count"),
             "fixture_id": value.get("synthetic_fixture", {}).get("id") if isinstance(value.get("synthetic_fixture"), dict) else None,
             "response_body_persisted": value.get("raw_request_or_response_persisted"),

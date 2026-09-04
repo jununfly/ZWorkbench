@@ -1,0 +1,10 @@
+{
+  "schema": "zworkbench-dsh-build-receipt/v1",
+  "runtime_name": "zworkbench-dsh-bootstrap-fixture",
+  "runtime_version": "1.0.0",
+  "source_commit": "1111111111111111111111111111111111111111",
+  "dependency_lock_digest": "sha256:ee48b3a77ba1f40f0fe2f1625ae0caf3c4d6f2f9e4804cf2adce6b26f07a521f",
+  "artifact_digest": "sha256:b86371d7807ccd78e0a65476c89f97e525ada959e14c29bd5777103ab34d5eb6",
+  "platform": "any",
+  "architecture": "any"
+}

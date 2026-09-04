@@ -6,6 +6,24 @@
 签核。当前目标账户是用户报告的火山方舟个人账户；所有未确认字段保留为
 `unknown`，不能用“控制台没看到”填成 `none`。
 
+## 0. 使用脱敏 receipt wizard
+
+需要由账户 owner 盘点或执行退出时，运行：
+
+```bash
+./scripts/optional-provider-exit.sh
+```
+
+该 wizard 只打开官方控制台/文档、收集状态和 SHA-256 fingerprint，并生成
+`evaluation/evidence/provider-exit/<timestamp>-<pid>/receipt.json`。它不读取 API key、
+不调用 Provider API、不执行删除/停用/注销；若状态未知，receipt 保留
+`unknown/safe-stop`。即使人工完成了删除或注销，receipt 仍把最终远端零残留记为
+`unknown/delegated`，不能把本地记录当作 Provider 证明。
+
+对应的无交互校验器是
+[`scripts/record_provider_exit_receipt.py`](../../scripts/record_provider_exit_receipt.py)，
+只接受脱敏 fingerprint 和枚举状态，不接受原始资源 ID、Key、Prompt 或响应正文。
+
 ## 1. 填写规则
 
 - 只记录 Provider、产品、endpoint、region、model、项目的脱敏标识、resource ID
@@ -24,10 +42,10 @@
 | Provider | 火山引擎/火山方舟（Ark） | Human 提供 | `human-reported` |
 | 产品/套餐 | Coding Plan（待账户 owner 确认） | Human + 官方 Coding Plan 资料 | `partial` |
 | OpenAI-compatible endpoint | `https://ark.cn-beijing.volces.com/api/coding/v3` | Human；官方 Coding Plan Base URL 页面交叉核对 | `official-verified / actual-account-unverified` |
-| region | endpoint 含 `cn-beijing`；实际账户/数据区待确认 | endpoint 字符串不能代替账户/数据区证明 | `unknown` |
+| region | `cn-beijing` | Human 已确认；仍以账户/数据区实际配置为准 | `human-confirmed / staging-used` |
 | model / Model ID | `ark-code-latest` | Human 提供，2026-09-01 | `human-reported / actual-account-unverified` |
 | account scope | 个人 | Human 提供；官方资料仅说明个人版产品范围 | `human-reported / scope-limited` |
-| project / billing | 待填写脱敏标识 | 账户 owner | `unknown` |
+| project / billing | `9f5179ed9b7d69e37fa3a1fa5c5563f3a7f67fdf514647ebd5ef07f2c4196add`（SHA-256 fingerprint） | Human 提供；原始 Project/billing ID 未记录 | `human-confirmed / staging-used` |
 | authentication path | Provider API Key | Human + 官方 API Key 资料 | `official-verified / target-key-unverified` |
 | key fingerprint | `9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451`（SHA-256） | Human 提供，生成于 2026-09-01；未记录 Key 原文 | `human-reported / target-key-unverified` |
 | ZWorkbench ownership | 不创建、不管理、不删除 Provider 侧资源 | W8 产品边界 | `product-boundary` |
@@ -98,18 +116,20 @@ authentication: partial
 data_scope_and_retention: unknown
 remote_resource_inventory: unknown
 remote_exit_and_deletion: unknown / not-performed
-real_provider_read_only_staging: not-authorized
-Gate A: HOLD / UNKNOWN
+real_provider_read_only_staging: authorized-read-only-staging-passed
+real_ark_failover: unknown/stop; existing local credential returned 401 on both bounded routes
+remote_exit_and_deletion: unknown / not-performed
+Gate A: HOLD / UNKNOWN (no existing Provider console session; remote exit remains delegated)
 ```
 
-进入可选真实 Provider staging 前至少需要账户 owner 补齐：实际 model/project、key fingerprint、数据
-类别、适用条款/生效日期、任务/Webhook/backup 的脱敏 ID、删除/停用入口、retention
+进入新的真实 Provider staging 或执行退出前，账户 owner 仍需确认：本次授权、数据类别、
+适用条款/生效日期、任务/Webhook/backup 的脱敏 fingerprint、删除/停用入口、retention
 或到期规则、账单责任人和退出验证证据。这里不要求把 key 值交给 ZWorkbench。
 
 ## 7. 与 1-6 和 W8 的关系
 
 - 本清单是外部 Provider 试验的证据 baseline，不是 W8 产品开发节点，也不是 Gate A 自动放行。
-- 在 Gate A 未闭合前，继续使用 loopback/fake Provider；不得读取真实 key 或执行真实
-  Provider 业务请求。
+- 默认产品路径继续使用 loopback/fake Provider；已完成的真实只读 staging 是单独的
+  owner-authorized evidence，不会自动成为默认路由或退出授权。
 - 可恢复写操作仍受 Gate B 独立约束；Provider 资料完整也不能放行本地写 effect。
 - 本地写操作另受 [`w8-1-6-recoverable-write-and-runtime-boundary.md`](../plans/w8-1-6-recoverable-write-and-runtime-boundary.md) 的独立 Gate B 约束。

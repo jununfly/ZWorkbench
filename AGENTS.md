@@ -97,6 +97,10 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 | 修改 Codex app-server/CLI 接入 | [codex_adapter.py](src/zworkbench/codex_adapter.py)；[local_run.py](src/zworkbench/local_run.py) |
 | 开发 DSH 主 Harness 或插件 facade | [目标架构设计](docs/plans/designs/dsh-codex-hybrid-target-architecture.md)；[DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[DSH 插件生态研究](docs/plans/research/w8-deepseek-plugin-ecosystem-findings.md) |
 | 构建、引入、升级或回滚 DSH runtime | [DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[Worker contract v1](docs/plans/designs/worker-contract-v1.md) |
+| H1 DSH bootstrap runtime seam | [H1 findings](docs/plans/w8-h1-bootstrap-findings.md)；[DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
+| H2 Worker handshake | [H2 findings](docs/plans/w8-h2-worker-handshake-findings.md)；[Worker contract v1](docs/plans/designs/worker-contract-v1.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
+| H3 Worker read-only coding | [H3 findings](docs/plans/w8-h3-worker-coding-findings.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py)；[worker coding runner](evaluation/runner/run_w8_worker_coding.py) |
+| 真实远程 Provider 兼容性 | [Provider findings](docs/plans/w8-real-provider-compatibility-findings.md)；[HTTP staging runbook](docs/references/optional-real-provider-staging.md)；[Codex runtime staging runbook](docs/references/optional-real-codex-provider-staging.md)；对应 scripts |
 | 开发 DSH–Codex Worker bridge | [Worker contract v1](docs/plans/designs/worker-contract-v1.md)；目标架构的 Worker/Bridge 章节；codex_adapter.py；对应 H1–H5 验证 |
 | Provider profile、路由、retry、fallback、降级 | 目标架构 Provider 章节；[DeepSeek E4 Provider findings](docs/plans/w8-deepseek-e4-provider-failover-v2-findings.md)；[真实 Provider staging](docs/references/optional-real-provider-staging.md) |
 | scheduler、幂等和中断恢复 | 目标架构 Scheduler/状态章节；[W6 C3](docs/plans/w6-c3-idempotency-findings.md)；[W6 C4](docs/plans/w6-c4-recovery-findings.md) |

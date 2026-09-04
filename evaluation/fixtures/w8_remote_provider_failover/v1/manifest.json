@@ -1,0 +1,29 @@
+{
+  "schema": "zworkbench-w8-remote-provider-failover-fixture/v1",
+  "fixture_id": "w8-remote-provider-failover",
+  "classification": "acceptance/evaluation",
+  "description": "Case-local deterministic dual-provider failover fixture with owner-backed cooldown and fallback decision evidence.",
+  "routes": [
+    {"provider": "fake-a", "model": "fixture-model-a", "endpoint": "http://127.0.0.1:41001/v1/responses"},
+    {"provider": "fake-b", "model": "fixture-model-b", "endpoint": "http://127.0.0.1:41002/v1/responses"}
+  ],
+  "thresholds": {
+    "fallback_reason_and_target": "100%",
+    "provider_identity_complete": "100%",
+    "all_routes_cooled": "safe-stop with no new Provider selection",
+    "durable_owner_ledger": "survives CompositionOwner reopen",
+    "retry_cycle": 0,
+    "effects": 0
+  },
+  "isolation": {
+    "loopback_only": true,
+    "real_credentials": false,
+    "external_network": false,
+    "external_side_effects": false
+  },
+  "non_claims": [
+    "This fixture does not prove real Ark or any other remote Provider failover.",
+    "This fixture does not prove default ZWorkbench Provider routing or production availability.",
+    "Provider-side task, data, backup, retention and account exit remain delegated and unverified."
+  ]
+}

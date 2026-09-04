@@ -1,0 +1,229 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "fresh-collection",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "W8 challenge v2: DeepSeek Harness plugin ecosystem and composable capability supply",
+    "criteria": [
+      {
+        "id": "project_identity",
+        "question": "What is each project's exact repository identity, owner, purpose, target users, and relationship to DeepSeek Harness; distinguish official DeepSeek components from independent integrations and unrelated projects?",
+        "critical": true,
+        "keywords": [
+          "DeepSeek",
+          "Harness",
+          "plugin",
+          "extension",
+          "integration",
+          "official"
+        ]
+      },
+      {
+        "id": "plugin_contract",
+        "question": "What first-party source or documentation proves a plugin, extension, package, MCP, ACP, hook, skill, provider, or protocol contract; how are discovery, loading, configuration, versioning, and lifecycle handled?",
+        "critical": true,
+        "keywords": [
+          "plugin",
+          "extension",
+          "package",
+          "MCP",
+          "ACP",
+          "hook",
+          "registry",
+          "lifecycle"
+        ]
+      },
+      {
+        "id": "capability_supply",
+        "question": "Which ZWorkbench capability does the project supply or extend: automation/scheduling, durable state, interruption/recovery, provider routing/failover, observability/replay/evaluation, sandbox/approval, code workflow, or operations/exit?",
+        "critical": true,
+        "keywords": [
+          "scheduler",
+          "cron",
+          "durable",
+          "resume",
+          "retry",
+          "provider",
+          "fallback",
+          "replay",
+          "sandbox",
+          "approval",
+          "evaluation"
+        ]
+      },
+      {
+        "id": "semantic_contract",
+        "question": "What state, identity, event, effect, retry, approval, replay, and failure semantics are actually implemented; can the supplied capability be mapped to the W6 C1-C7 contract without inventing missing ownership?",
+        "critical": true,
+        "keywords": [
+          "state",
+          "session",
+          "run",
+          "turn",
+          "event",
+          "effect",
+          "idempotent",
+          "recovery",
+          "replay",
+          "permission"
+        ]
+      },
+      {
+        "id": "integration_seam",
+        "question": "What integration seam exists for an outer composition owner: API/CLI/ACP/MCP/event stream/database/SDK; what translation, duplicate state, or single-owner conflict would integration create?",
+        "critical": true,
+        "keywords": [
+          "API",
+          "CLI",
+          "ACP",
+          "MCP",
+          "event",
+          "database",
+          "SDK",
+          "adapter",
+          "integration"
+        ]
+      },
+      {
+        "id": "security_and_remote_boundary",
+        "question": "What security, sandbox, credentials, network, external side effect, remote data, webhook, deployment, backup, and exit assumptions are disclosed; which boundaries remain unknown?",
+        "critical": true,
+        "keywords": [
+          "security",
+          "sandbox",
+          "credential",
+          "network",
+          "webhook",
+          "remote",
+          "backup",
+          "delete",
+          "exit"
+        ]
+      },
+      {
+        "id": "maintenance_and_license",
+        "question": "What license, governance, release/version, dependency, compatibility, maintenance, and source-to-binary provenance signals exist; keep stars/popularity separate from capability evidence?",
+        "critical": true,
+        "keywords": [
+          "LICENSE",
+          "NOTICE",
+          "release",
+          "version",
+          "compatibility",
+          "maintenance",
+          "provenance",
+          "stars"
+        ]
+      },
+      {
+        "id": "small_team_cost",
+        "question": "What ownership responsibilities, permanent services, upgrade matrix, migration, troubleshooting, and exit work would a personal developer or small team inherit when composing this project with DeepSeek Harness?",
+        "critical": true,
+        "keywords": [
+          "deployment",
+          "operations",
+          "upgrade",
+          "migration",
+          "troubleshooting",
+          "support",
+          "exit",
+          "self-hosted"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "deepseek-ai",
+        "name": "deepseek-harness"
+      },
+      {
+        "owner": "dsh-market",
+        "name": "dsh-market"
+      },
+      {
+        "owner": "AdamPlatin123",
+        "name": "dsh-plugin-radar"
+      },
+      {
+        "owner": "bowenliang123",
+        "name": "dsh-context"
+      },
+      {
+        "owner": "Qinling-Melon-Farmers",
+        "name": "dsh-memoir"
+      },
+      {
+        "owner": "weijiafu14",
+        "name": "pi2dsh"
+      },
+      {
+        "owner": "agentrq",
+        "name": "agentrq"
+      },
+      {
+        "owner": "sandbaseai",
+        "name": "sandbase-harness"
+      },
+      {
+        "owner": "yjh051108",
+        "name": "dsh-routing-suite"
+      },
+      {
+        "owner": "Nwflower",
+        "name": "dsh-chat-import"
+      },
+      {
+        "owner": "kol-mm",
+        "name": "dsh-config-migrate"
+      }
+    ],
+    "discovery": {
+      "query": "DeepSeek Harness plugin extension integration agent scheduler replay provider MCP ACP",
+      "limit": 30,
+      "topicKeywords": [
+        "DeepSeek",
+        "harness",
+        "plugin",
+        "extension",
+        "agent",
+        "MCP",
+        "ACP",
+        "scheduler",
+        "replay",
+        "provider"
+      ]
+    },
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 260,
+      "maxBytes": 10000000,
+      "deadlineMs": 300000
+    }
+  },
+  "briefFingerprint": "1756cb07e67ce4c8a6e8b6604fbae38eec1f4badf34045fe1eb1f283a21176a3",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "authenticated",
+      "tokenConfigured": true
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 5000,
+      "remaining": 5000,
+      "resetAt": "2026-09-01T17:12:06Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "fresh-collection",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  }
+}

@@ -26,6 +26,20 @@ CLI 会输出脱敏 JSON，并可用 `--export`、`--backup`、`--summary` 生�
 路线图事实源是 [`docs/plans/personal-workbench-w8-roadmap.json`](docs/plans/personal-workbench-w8-roadmap.json)，
 渲染视图是 [`docs/plans/personal-workbench-w8-roadmap.md`](docs/plans/personal-workbench-w8-roadmap.md)。
 该路线图包含历史评测与当前决策记录；目标混合架构尚未实现，Codex-only 仍是回退基线。
-真实 Provider 的账户、凭证、远端数据和退出责任是路线外、按需的人工验证；核心开发不等待它们。需要
-验证时，只在本机运行 [`scripts/optional-real-provider-staging.sh`](scripts/optional-real-provider-staging.sh)，
-API Key 通过隐藏输入传给本地 helper，不进入聊天、仓库、日志或 Agent 输出。
+真实 Provider 的账户、凭证、远端数据和退出责任是路线外、按需的人工验证；核心开发不等待它们。
+当前 Ark 已有授权只读 HTTP staging 的 5/5 证据，以及一次真实 Codex `0.139.0` + Ark
+case-local 只读 staging 通过证据；完整兼容性仍 HOLD。需要验证 HTTP
+边界时，只在本机运行
+[`scripts/optional-real-provider-staging.sh`](scripts/optional-real-provider-staging.sh)，
+先完成 S1–S6 人工门；API Key 通过隐藏输入传给本地 helper，不进入聊天、仓库、日志或 Agent 输出。
+需要验证真实 Codex runtime 时，使用独立的
+[`scripts/optional-real-codex-provider-staging.sh`](scripts/optional-real-codex-provider-staging.sh)
+及其 [runbook](docs/references/optional-real-codex-provider-staging.md)；它只执行一个
+case-local、只读、无插件/无工具的 Codex app-server turn。
+Codex HOME 仅存在于 evidence 目录外的私有临时目录，结束后清理。
+需要验证真实 Ark 的受控 route fallback 时，使用
+[`scripts/optional-real-ark-failover.sh`](scripts/optional-real-ark-failover.sh)；它以一个
+明确无效 model 作为 primary 负向控制，再以 `ark-code-latest` 完成第二次合成请求，
+不代表独立第二 Provider 或自然故障恢复。需要盘点 Provider-side exit 时，使用
+[`scripts/optional-provider-exit.sh`](scripts/optional-provider-exit.sh)；它只生成脱敏
+receipt，不执行远端删除、停用或注销。

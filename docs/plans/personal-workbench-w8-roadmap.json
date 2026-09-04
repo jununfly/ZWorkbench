@@ -676,7 +676,8 @@
         "1-9-3",
         "1-9-4",
         "1-9-5",
-        "1-9-6"
+        "1-9-6",
+        "1-9-7"
       ],
       "decisions": [
         {
@@ -726,32 +727,105 @@
     "1-9-2": {
       "id": "1-9-2",
       "label": "H1 Bootstrap：固定 DSH profile 并启动 parent Run",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "1-9-2 的 H1 实现边界、artifact 来源和失败语义是什么？",
+          "answer": "Product execution；ZWorkbench 实现 owner-backed H1 bootstrap seam，只接受固定 artifact mode 的 DSH manifest/profile，启动前校验 source commit、版本、artifact digest、profile digest、workspace/policy/provider/environment identity，并以无 shell 的显式 argv/env 启动外部 DSH。启动 parent Run 后只消费受限 bootstrap 事件；未知 wire message、未知状态、启动失败、退出码异常或关键 identity 缺失都写入 owner 并 safe-stop。H1 不实现 Worker handshake、Codex coding 或真实 Provider；测试使用 case-local deterministic DSH fixture，ZDSHarness sibling checkout 不修改。",
+          "note": "当前 ZDSHarness 工作树有用户未提交改动，不能把它直接当作正式 artifact；正式 H1 证据必须来自干净 pinned commit 构建的 artifact receipt。"
+        },
+        {
+          "q": "H1 bootstrap wire 与 owner event 的最小合同是什么？",
+          "answer": "DSH bootstrap 仅接受 zworkbench.dsh.bootstrap/v1，固定顶层字段 schema、message_type、identity、payload；只允许 bootstrap.started 与 bootstrap.ready 两类消息，未知 schema、字段、消息类型、状态、JSONL 或 identity 直接 safe-stop。CompositionOwner 通过 record_event(run_id, event_type, payload) 追加结构化事件，adapter 不直接访问 SQLite；DSH wire identity 作为脱敏 payload 记录，owner 生成 canonical event identity。",
+          "note": "H1 不承载 Worker handshake、Codex coding、Provider 请求或副作用；进程退出码和 exit receipt 由 adapter 单独记录。"
+        },
+        {
+          "q": "H1 manifest 如何绑定 artifact、profile、lock、receipt 和运行身份？",
+          "answer": "manifest 使用 zworkbench-dsh-runtime-manifest/v1 的 artifact mode；artifact、dependency lock、build receipt、profile 都是带 path 与 sha256 digest 的固定本地文件，build receipt 还必须声明 source commit、版本和 artifact/lock digest。manifest 同时声明 schema、policy、workspace、provider 与 environment identity；启动前对所有摘要、路径边界、loopback Provider 和实际环境做 fail-closed 校验。",
+          "note": "source mode、未锁定 tag、npx、实时市场和 sibling checkout 不得进入 H1 正式启动路径；缺字段或摘要不一致时创建 safe-stopped parent Run，但不得启动外部进程。"
+        },
+        {
+          "q": "正式 artifact provenance probe 如何在不污染 ZDSHarness 工作树的情况下执行？",
+          "answer": "只读读取 ZDSHarness HEAD 与锁文件，通过 git archive 解包到独立临时目录，在临时目录执行 frozen-lockfile 安装和受控 build/artifact gate；只保存脱敏的 source commit、lock digest、artifact digest、构建命令结果和阻塞原因，不把临时 node_modules、lib、tarball 或运行产物放入任一仓库。",
+          "note": "clean archive/build 只证明 artifact provenance；若真实 DSH CLI 不输出 zworkbench.dsh.bootstrap/v1，仍不能闭合 H1 wire、parent/session/exit 关联，不能将 H1 标为 completed。"
+        },
+        {
+          "q": "如何让真实 ZDSHarness 闭合 H1 bootstrap wire 而不污染普通 headless 输出？",
+          "answer": "在 ZDSHarness 增加独立的 @deepseek-ai/dsh-zworkbench-bootstrap bundle，并新增 zworkbench-bootstrap shipped profile。该 bundle 只在明确 profile 下输出严格的 zworkbench.dsh.bootstrap/v1 JSONL：启动事件携带 ZWORKBENCH_RUN_ID 和一次性 DSH session identity，等待 Loader settle 后输出 ready，再通过 appExit 有界退出；普通 headless profile 和用户任务 stdout 保持不变。ZWorkbench 继续只通过 artifact/profile manifest 启动和校验，不直接访问 DSH session 存储。",
+          "note": "这是 DSH–ZWorkbench 的显式 bridge seam；不新增第二个 Agent loop 或 durable owner。先在 ZDSHarness source plane 验证，再构建隔离 artifact；未形成 maintainer pinned commit 前仍不得宣称正式 release provenance 已闭合。"
+        },
+        {
+          "q": "source-plane integration 如何固定真实 DSH artifact 证据？",
+          "answer": "新增一个只写临时输出的 integration runner：从已构建的 ZDSHarness apps/cli/lib 和 apps/cli/node_modules closure 组成隔离 artifact staging，以 dsh --profile zworkbench-bootstrap 运行 DshRuntimeAdapter，并输出脱敏 owner/event/exit 摘要；source worktree dirty 或缺 maintainer receipt 时明确保持 formal H1 HOLD，不把 staging/node_modules/evidence bulk 提交。",
+          "note": "这条 runner 只证明当前 source/build plane 可被 ZWorkbench adapter 消费；正式 H1 仍要求 clean pinned commit、artifact digest、profile digest 和 build receipt。"
+        },
+        {
+          "q": "如何在不污染当前 dirty checkout 的情况下闭合 clean maintainer-pinned artifact receipt？",
+          "answer": "在 ZDSHarness 建立独立 codex/h1-bootstrap-pinned worktree，从当前 HEAD 只带入 H1 bootstrap 相关 tracked/untracked 改动并形成一个 clean local pinned commit；在该 commit 上执行 frozen install、build:lib、artifact gate，使用该构建产物生成正式 manifest/receipt，并由 ZWorkbench DshRuntimeAdapter 复跑 parent Run、DSH session、bootstrap wire 与 exit receipt。当前工作树和无关改动保持原样，不 push。",
+          "note": "该 commit 是本次明确请求所授权的最小提交；receipt 只接受 commit、lock、artifact、profile 的实际 digest，不以 dirty checkout 或临时 snapshot 代替。"
+        },
+        {
+          "q": "正式 H1 如何判定 clean maintainer-pinned artifact receipt 已闭合？",
+          "answer": "仅在完整 pinned commit 参数与 ZDSHarness HEAD 精确匹配、checkout clean、frozen install/build/artifact gate 通过，并由同一组 artifact/lock/profile/build-receipt digest 生成 receipt 后，才将 H1 formal status 置为 completed；未满足任一条件保持 HOLD/unknown-stop。",
+          "note": "本轮 pinned commit=c37c8483ce167a5019aeb65a196a09b5b67ccc01；正式 runner status=pass，owner Run completed，bootstrap started→ready，exit=0，stderr/network/credentials/effects=0。"
+        }
+      ],
+      "notes": "H1 formal closed. ZWorkbench DshRuntimeAdapter + CompositionOwner seam verified with artifact-mode manifest, shell=false, strict zworkbench.dsh.bootstrap/v1 wire, owner event/exit receipts and fail-closed paths. ZDSHarness clean pinned worktree codex/h1-bootstrap-pinned at c37c8483ce167a5019aeb65a196a09b5b67ccc01; frozen install, build:lib and check:ci:artifacts 5/5 passed. Formal receipt: /tmp/zworkbench-h1-formal-final.lzXpXK/maintainer-pinned-artifact-receipt.json, digest sha256:170173b527e57e5d17adaafb01da7473b126186e65558a17cc8117afcc8a56cb. Artifact digest sha256:c0226687bb20f45c603ec6fe50f3de16d1c3510c3a803304ec575ef9bc366c62; lock digest sha256:a55c665bbc62bc0bf96b49bd1853ab2997022ad65dfed96992516ec98f9c12d4; profile digest sha256:2f8bf241bbed1c12f8fb0257179c9c829b816eb6818921f730e97d8d0d3e05be; build receipt digest sha256:99d6ccc53188c066b5e4610a03e85f8615b62e879316d82691a4ff7fff4e1788. Formal runner pass: owner completed, DSH session present, started->ready, exit 0, stderr 0, session persistence present, network/credentials/effects 0. Fixture 3/3, H1 tests 7/7, full product tests 68/68, unknown-wire regression 20/20. H2 1-9-3 may start; H2-H8 and signed public release remain unclaimed."
     },
     "1-9-3": {
       "id": "1-9-3",
       "label": "H2 Worker handshake：绑定 DSH/Codex 与 owner identity",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "H2 Worker handshake 的实现边界是什么？",
+          "answer": "Product execution；在 ZWorkbench 增加窄的进程外 WorkerBridge，使用 zworkbench.worker.v1 严格 JSONL handshake.request/handshake.response，校验固定 Worker artifact/schema、Provider/policy/environment/workspace digest 和 parent/child/attempt/DSH/Codex identity。首期只用 case-local deterministic Worker fixture，不调用真实 Provider、工具或副作用；不复制 DSH/Codex Agent loop。",
+          "note": "H2 证据标为 owner-backed + fixture-composed，不能升级为真实 Codex runtime 原生通过。"
+        },
+        {
+          "q": "H2 的 parent/child owner 状态如何收口？",
+          "answer": "CompositionOwner 是唯一 durable owner；Bridge 为 parent 创建 child Worker handshake run，并在 owner metadata/events/results 中保存 parent_run_id、child_run_id、attempt_id、DSH session/turn、Worker/Codex thread/turn 及 artifact/schema/provider/policy/environment/workspace identity。握手 child 可完成，但 parent 不因握手完成自动完成，必须由后续 H3/H4 流程显式收口。",
+          "note": "未知或不一致的关联直接双侧 safe-stop，不把 Worker session 文件当作 owner state。"
+        },
+        {
+          "q": "H2 handshake 的失败与验收语义是什么？",
+          "answer": "handshake response 必须是已知 schema/type、完整 identity 且与 request/manifest 精确一致；unknown wire、unknown identity、artifact/schema/provider/policy/environment/workspace mismatch、超时、进程崩溃或非零退出均记录 owner error/exit receipt，child 与 parent safe-stop，绝不产生 semantic success。成功门为 identity completeness 100%、owner correlation 100%、未授权 effect/network/credentials 0、Worker 进程树 0 孤儿。",
+          "note": "H2 只证明 bridge contract 和 owner correlation，不宣称 H3 coding、H4 recovery 或真实 Codex Provider 兼容。"
+        }
+      ],
+      "notes": "H2 completed with owner-backed + fixture-composed evidence. WorkerBridge uses strict zworkbench.worker.v1 JSONL handshake.request/handshake.response over a shell-free external process in a case-local workspace, records child request/response/error/exit receipts and parent correlation in CompositionOwner, completes child while parent remains running, and safe-stops both sides for unknown identity/wire, schema or provenance mismatch, malformed JSONL, crash, nonzero exit, and timeout. Verification: targeted tests 5/5, H2 fixture runner 11/11, full product tests 73/73, git diff --check and Python compile check passed. Real Codex Worker/app-server compatibility, H3-H5, host sandbox, and real Provider remain unclaimed."
     },
     "1-9-4": {
       "id": "1-9-4",
       "label": "H3 隔离只读 coding：生成可审查 Worker artifact",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "H3 本轮的产品实现和证据边界是什么？",
+          "answer": "Product execution；先实现最小 owner-backed read_only_coding seam：case-local isolated workspace、显式 Worker capability/result contract、真实 Codex app-server 0.139.0 可选 staging 与 fake/loopback Provider 两条证据路径分开；Worker 只生成可审查 artifact，不应用主工作区修改。真实 Provider 兼容性不在默认 H3 运行中宣称。",
+          "note": "H3 证据按 real-Codex+loopback、fixture-composed、以及 real-Provider staging 分级；任何未测项保持 unknown/HOLD。"
+        },
+        {
+          "q": "H3 Worker coding wire 如何扩展 H2 handshake？",
+          "answer": "复用 WorkerBridge 的外部进程与 owner correlation：handshake.response 后只接受严格的 result 消息和固定 read_only_coding payload；event/unknown capability/unknown field/mismatch/非零/超时均 fail-closed。Worker 不能直接写 CompositionOwner；artifact 只落在 case-local evidence root，由 owner 记录 digest/identity。",
+          "note": "H2 单 response 合同保持不变；H3 使用独立 coding 方法和响应序列，避免把 H2 成功语义放宽。"
+        },
+        {
+          "q": "H3 的只读安全门和验收阈值是什么？",
+          "answer": "Codex 使用固定 executable、case-local CODEX_HOME、显式 app-server stdio、sandbox=read-only、approval_policy=never、loopback Provider；workspace 前后快照必须一致，真实 effect=0，artifact digest 和 parent/child/attempt/DSH/Codex identity 100% 完整，Worker 及其子进程退出后为 0 孤儿。",
+          "note": "H3 通过不代表 H4 recovery、H5 replay 或真实 Provider compatibility 通过。"
+        }
+      ],
+      "notes": "H3 已完成：WorkerBridge.read_only_coding 严格消费 handshake.response→result，绑定 parent/child/attempt/DSH/Codex/Provider/Worker/schema identity，校验 case-local workspace 不变、四类 artifact digest、effect=0 和进程退出。fixture-composed 与真实 Codex app-server 0.139.0 + fake loopback Provider 分开验证，runner 2/2 pass，全量产品测试 76/76 pass。真实远程 Provider 兼容性、H4 生命周期/恢复和 H5 evidence/replay 仍保持 HOLD/未声称。"
     },
     "1-9-5": {
       "id": "1-9-5",
@@ -772,11 +846,184 @@
       "children": [],
       "decisions": [],
       "notes": ""
+    },
+    "1-9-7": {
+      "id": "1-9-7",
+      "label": "真实远程 Provider 兼容性：隔离 staging 与 owner-facing contract",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [
+        "1-9-7-1",
+        "1-9-7-2"
+      ],
+      "decisions": [
+        {
+          "q": "真实远程 Provider 本轮的路线角色与产品边界是什么？",
+          "answer": "Mixed：产品侧只增加显式 opt-in、case-local、只读 staging 的 owner-facing contract 与脱敏 summary validator；真实 Provider 默认关闭，不接入主工作区、scheduler、live replay、任务/Webhook/备份或自动 retry。外部账户/数据/退出责任仍由 Provider 与账户 owner 负责。",
+          "note": "明确把本地产品 seam 与远程账户验证分开，避免一次真实请求升级为生产兼容性或安全通过。"
+        },
+        {
+          "q": "“兼容性”本轮按哪些层验收？",
+          "answer": "分层验收 transport、Provider/model/region/project identity、请求/响应语义、Codex/adapter owner correlation、只读/effect=0、脱敏与退出证据；每层独立记录 pass/unknown。只有获得明确一次性授权且 S1–S6 闭合，才允许真实请求；当前无新授权时保持 HOLD。",
+          "note": "单次 endpoint 成功只能关闭 reachability 子门，不能证明 failover、durable fallback ledger、远端资源退出或生产适用性。"
+        },
+        {
+          "q": "真实凭证和远端资源如何处理？",
+          "answer": "仅由账户 owner 在本机隐藏输入；Key 不进入聊天、argv、prompt、owner、日志、backup、artifact 或 git。真实 staging 固定合成数据、请求上限和无工具/无回调约束；未知数据范围、远端对象、请求完成状态或退出结果立即 safe-stop，不自动 retry。",
+          "note": "继续复用 optional-real-provider-staging.sh；Agent 只消费脱敏 summary，不接收 Key 原文。"
+        },
+        {
+          "q": "真实 Provider staging 的人工字段如何自解释并避免 region/project fingerprint 混淆？",
+          "answer": "固定 Ark staging endpoint 的本次人工确认值使用 region=cn-beijing；wizard 明确说明这是账户/数据区域而非 URL 猜测，并把 project_fingerprint 定义为实际 Ark Project ID 或 billing scope ID 的 SHA-256，不是 ZWorkbench 名称、项目名称、model 或 API Key。字段提示必须同时给出用途、来源、排除项和本地计算命令；历史 summary 保持不可改写，纠正输入后重新生成证据。",
+          "note": "本次修复属于 acceptance/evaluation 的 owner-facing staging contract；只改 wizard、相关说明和验证，不把远程 staging 通过升级为 Codex runtime、远端退出或生产兼容性通过。"
+        },
+        {
+          "q": "最新账户 owner staging 是否关闭远程 Provider 的 transport、identity 和 semantic 子门？",
+          "answer": "是：2026-09-04 最新脱敏 summary 记录固定 Ark endpoint、region=cn-beijing、独立合成请求 5/5 HTTP 200、5/5 semantic_fixture_exact、retry_count=0，project_fingerprint 与 api_key_fingerprint 不同，且 raw request/response 未持久化；记为 pass for authorized read-only staging。",
+          "note": "证据：evaluation/evidence/optional-real-provider/20260904T063832Z-32230/summary.json。该结果不升级为 Codex runtime、failover/degradation、Provider-side exit 或生产兼容性通过；one-shot probe 未执行远端资源删除/退出。"
+        }
+      ],
+      "notes": "最新 2026-09-04 账户 owner 脱敏 staging summary（evaluation/evidence/optional-real-provider/20260904T063832Z-32230/summary.json）已记录固定 Ark endpoint、region=cn-beijing、5 次独立合成只读请求 5/5 HTTP 200、5/5 semantic_fixture_exact、retry_count=0、project_fingerprint 与 api_key_fingerprint 不同、raw request/response 未持久化；transport/reachability、Provider identity、semantic compatibility 关闭为 pass for authorized read-only staging。wizard/contract 已强化自解释字段和 region/project 防混淆校验。仍不声明真实 Codex runtime、failover/degradation、Provider-side exit 或生产兼容性；one-shot probe 未执行远端资源盘点/删除/退出，相关项继续 HOLD/delegated。"
+    },
+    "1-9-7-1": {
+      "id": "1-9-7-1",
+      "label": "真实 Codex app-server 通过 Ark 完成 case-local 只读 turn",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9-7",
+      "children": [],
+      "decisions": [
+        {
+          "q": "真实 Codex runtime 如何接入 Ark 而不污染默认产品路径？",
+          "answer": "新增 acceptance/evaluation 专用 owner-facing staging runner/wizard：使用固定 Codex 0.139.0 app-server、case-local CODEX_HOME/workspace/CompositionOwner、只读 sandbox、approvalPolicy=never、禁用 plugins/apps；Ark API key 仅由账户 owner 本机隐藏输入，经 stdin/短生命周期环境注入 Codex 子进程，不进入 Worker envelope、owner、argv、日志、artifact 或 summary。provider/base URL、model、region=cn-beijing、project fingerprint 和 runtime/thread/turn/owner identity 分开记录。",
+          "note": "本轮不放宽 local_read_only 的 loopback-only preflight，不实现远程 Provider 默认路由、failover、H4/H5 或 Provider-side exit；remote staging 只保存脱敏事件摘要和结果 digest，失败立即 safe-stop。"
+        },
+        {
+          "q": "H3 真实 Codex 偶发 worker_timeout 的事件边界如何修复？",
+          "answer": "Codex app-server 异步通知必须先进入有序消息缓冲，再由 wait_turn 同时检查已缓冲与后续消息；turn/completed 不能因早于 turn/start RPC response 到达而丢失。补一个可确定重现的 fake Codex 回归 fixture，保持一次 turn、无 retry、现有 safe-stop。",
+          "note": "这只修复 acceptance/evaluation 的真实 runtime transport seam，不改变默认产品 Provider 路由或 H4/H5 声明。"
+        },
+        {
+          "q": "真实 Ark Codex runtime staging 前的本地基线是否稳定？",
+          "answer": "已修复 app-server JSONL 二次缓冲导致的 turn/completed 丢失：H3 runner 连续 5 次 real Codex 0.139.0 + loopback Provider 通过，产品 CodexAppServerAdapter 同边界 smoke 通过，全量测试 85/85 pass；真实 Ark Codex turn 仍保持 HOLD，待账户 owner 运行一次性 wizard 产生 remote evidence。",
+          "note": "H3 只读、无 effect、workspace unchanged、Worker 退出均已验证；不升级为 H4/H5、failover 或生产兼容性。"
+        },
+        {
+          "q": "首次真实 Codex + Ark staging 是否通过？",
+          "answer": "不能通过，保持 unknown/stop：Codex 0.139.0 完成 thread/turn，owner completed、workspace unchanged、effect=0、进程退出，但 Codex shell snapshot 将 API Key 原文写入 evidence 目录，且最终 agentMessage 没有 delta，导致 raw_credential_persisted=true、fixture_exact=false。runner 已改为 evidence 外私有临时 CODEX_HOME 并在退出后清理，adapter 已消费 item/completed 的最终 agentMessage；需轮换/撤销本次 Key 后重新执行一次 staging。",
+          "note": "首次运行 summary：evaluation/evidence/remote-codex-provider/20260904T075000Z-44499/summary.json。旧 evidence 不得共享或覆盖成通过；真实 runtime 仍不升级为 H4/H5、failover 或生产兼容性。"
+        },
+        {
+          "q": "真实远程 Provider 验证是否继续要求人工后台操作？",
+          "answer": "暂停。按 Human 明确边界，不再要求重新进入 Provider 后台、生成/轮换 API Key 或重复执行复杂配置；保留当前真实 Codex + Ark 结果为 unknown/stop，不将其升级为兼容性通过。后续只推进不依赖真实凭证的本地 adapter、fixture、loopback 和证据边界工作。",
+          "note": "当前已暴露 Key/evidence 不做撤销、轮换或清理处理；仅保留事实记录，避免形成重复人工操作循环。"
+        },
+        {
+          "q": "已暴露的 API key/evidence 不处置时，真实 Ark 验证如何继续？",
+          "answer": "继续使用当前已完成的本地配置和现有凭证注入路径执行真实 Ark case-local 只读 staging；不撤销、轮换或清理既有暴露，也不重新要求 Provider 后台操作。新运行必须使用 evidence 外私有 CODEX_HOME、脱敏摘要和独立 run identity；结果仍按实际 gate 判定，不能覆盖旧 unknown/stop。",
+          "note": "Human 明确要求继续验证，但明确不处理本次暴露；若当前本地凭证路径不可用，应报告缺失，不发起新的后台配置循环。"
+        }
+      ],
+      "notes": "2026-09-04 latest authorized real Codex + Ark staging passed: evaluation/evidence/remote-codex-provider/20260904T083602Z-50607/summary.json. Codex 0.139.0 via ark-real-staging completed exactly one synthetic case-local read-only turn; owner run completed; thread/turn correlated; fixture_exact=true; workspace_unchanged=true; effect_count=0; worker_or_codex_process_absent=true; ephemeral_runtime_home_cleaned=true; raw_credential_persisted=false; retry_count=0. This closes only the authorized read-only Codex staging sub-gate. It does not claim H4/H5, failover/degradation, Provider-side exit, production compatibility, or remediation of the earlier exposed evidence."
+    },
+    "1-9-7-2": {
+      "id": "1-9-7-2",
+      "label": "真实远程 Provider failover、降级与 Provider-side 退出证据",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-9-7",
+      "children": [
+        "1-9-7-2-1",
+        "1-9-7-2-2",
+        "1-9-7-2-3"
+      ],
+      "decisions": [
+        {
+          "q": "本节点如何在不把单次 Ark staging 外推为完整兼容性的前提下推进？",
+          "answer": "拆成两个独立证据面：先在隔离 case-local 双 loopback Provider fixture 中验证有界 failover/degradation、fallback target/reason、cooldown 与 durable owner-facing ledger；Provider-side exit 单独要求账户/Provider owner 的资源 inventory、停用/删除/retention 结果和责任记录。真实 Ark 单次只读 staging 不证明 failover；本轮不发起新的远端请求、不执行远端删除/退出、不重新配置凭证。",
+          "note": "路线角色为 acceptance/evaluation；fixture/runner/evidence 与默认产品 Provider 路由分离。任一真实远端资源或请求状态未知，保持 HOLD/unknown-stop。"
+        },
+        {
+          "q": "真实 Ark failover 与 Provider-side exit 本轮如何继续？",
+          "answer": "真实 Ark 采用一次性、case-local、只读的受控负向控制：同一 Ark cn-beijing Coding endpoint 上，primary 使用明确无效 model 产生可预期拒绝，fallback 使用 ark-code-latest；最多两次独立请求、无自动 retry，并由 CompositionOwner 持久化 HTTP status、failure class、cooldown、fallback reason/target 和最终语义。Provider-side exit 不由 Agent 直接执行删除/停用/注销；新增账户 owner wizard 与脱敏 receipt，收集远端资源、数据 retention、key、订阅、账单和账户状态，unknown 保持 safe-stop。",
+          "note": "不重新配置 Provider、不把同一 endpoint 负向控制升级为独立第二 Provider/生产 outage failover；不把人工提交删除或注销升级为远端零残留证明。"
+        }
+      ],
+      "notes": "当前结论：本地 owner-backed + loopback-composed failover 已 pass-with-composition；真实 Codex + Ark 只读 staging 已通过，但真实 Ark fallback 因两路 HTTP 401 保持 unknown/stop，Provider-side exit 因无控制台登录会话保持 HOLD/delegated。两个外部事实门已显式 blocked；不发起新远程请求，不执行 Provider 删除/停用/注销，不重复要求 API key 配置。"
+    },
+    "1-9-7-2-1": {
+      "id": "1-9-7-2-1",
+      "label": "隔离双 Provider failover、降级与 durable reason ledger 验证",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-9-7-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Provider failover 与 cooldown 的唯一 durable owner 是谁？",
+          "answer": "router 只保留可重建的运行时选择投影；CompositionOwner 通过事件和 result API 持有 canonical attempt、failure class、cooldown-before/after、fallback from/to、degradation reason、最终语义与 safe-stop 证据。fixture 必须验证 owner DB 重开后仍能重建 cooldown 判断；全路由冷却时不得选择新 fallback、不得无界 retry，并进入 owner safe-stop。",
+          "note": "本轮为 acceptance/evaluation 的 loopback composition evidence，不证明真实 Ark 的 failover 或 Provider-side lifecycle；不修改产品默认 Provider 路由，不发起远程请求。"
+        },
+        {
+          "q": "隔离双 Provider failover、降级与 durable reason ledger 的验收结果是什么？",
+          "answer": "完成 owner-backed + loopback-composed 验收：两个临时 127.0.0.1 HTTP Provider 场景 2/2 通过；primary RATE_LIMIT 后有界切换到 secondary 并记录 fallback reason/target、cooldown 与 Provider identity；CompositionOwner 重开后重建两个 route 的 cooldown，全冷却时直接 safe-stop 且无新 Provider 调用；effect=0、真实凭证=0、raw credential matches=0。",
+          "note": "证据：evaluation/evidence/w8-remote-provider-failover-20260904/summary.json；runner schema=zworkbench-w8-remote-provider-failover-runner/v1。该结果仅为隔离组合证据，不证明真实 Ark/远程 Provider failover、默认产品路由、生产可用性或 Provider-side exit。"
+        }
+      ],
+      "notes": "2026-09-04 完成隔离双 loopback Provider failover/degradation 验收：fallback 与 all-cooled-after-reopen 两场景 2/2 通过；CompositionOwner 持久化 attempt、failure reason、fallback from/to、cooldown 与 safe-stop，owner 重开后可重建全路由 cooldown；all-cooled 无新 Provider dispatch；effect=0、凭证扫描 0。证据：evaluation/evidence/w8-remote-provider-failover-20260904/summary.json。仅标记 pass-with-composition，不升级真实 Ark/远程 Provider 兼容性或 Provider-side exit。"
+    },
+    "1-9-7-2-2": {
+      "id": "1-9-7-2-2",
+      "label": "Provider-side 远端任务数据备份账户退出 inventory 与结果证据",
+      "status": "blocked",
+      "mode": "explore",
+      "parent": "1-9-7-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Provider-side exit 当前能否宣称完成？",
+          "answer": "不能。已完成可重跑的账户 owner inventory/receipt 入口与脱敏校验；receipt 会记录 task/Webhook/backup/data/key/subscription/billing/account/local 状态和 fingerprint，unknown 保持 unknown/safe-stop，即使人工提交删除/注销也保留 provider_remote_zero_residue=unknown/delegated。实际账户 inventory、停用/删除/注销和 retention 复核仍由账户 owner 执行并提供脱敏 receipt。",
+          "note": "入口：scripts/optional-provider-exit.sh；记录器：scripts/record_provider_exit_receipt.py。Agent 不执行远端删除、停用、注销，不读取 API key 或原始资源 ID。"
+        },
+        {
+          "q": "Provider-side exit 的账户事实门如何收口？",
+          "answer": "保持 HOLD/delegated：只读控制台检查没有现成登录会话并被重定向到登录页，因此当前无法核实 task/run/queue、Webhook/integration、backup/retention、data、key lifecycle、subscription、billing、account closure 或远端零残留。Agent 不绕过登录、不执行删除/停用/注销；账户 owner 只需在已有控制台会话中交接脱敏 receipt，未知字段继续 safe-stop。",
+          "note": "不要求重新生成 API key，也不把历史用户口述或公共条款当成账户级删除证据。"
+        }
+      ],
+      "notes": "HOLD/delegated：只读控制台检查无现成登录会话并被重定向到登录页。未核实 task/run/queue、Webhook/integration、backup/retention、data、key lifecycle、subscription、billing、account closure 或远端零残留；不执行删除、停用、注销，不要求重新生成 API key。账户 owner 后续仅需交接脱敏 receipt，未知字段保持 unknown/safe-stop。"
+    },
+    "1-9-7-2-3": {
+      "id": "1-9-7-2-3",
+      "label": "真实 Ark 受控负向 fallback staging 验证",
+      "status": "blocked",
+      "mode": "exploit",
+      "parent": "1-9-7-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "真实 Ark 受控负向 fallback 的证据边界是什么？",
+          "answer": "使用现有 cn-beijing Ark endpoint 和本机隐藏凭证，primary 以明确无效 model 触发 MODEL_REJECTED，fallback 以 ark-code-latest 返回合成 fixture；仅记录脱敏 HTTP status/body digest/语义布尔值、provider/model/endpoint/region/project fingerprint、owner event/result/state digest。通过时只标记 verified-for-authorized-real-ark-negative-control-fallback，不证明自然 outage、独立第二 Provider、默认产品路由或生产可用性。",
+          "note": "入口：scripts/optional-real-ark-failover.sh；runner：scripts/run_real_ark_failover.py。Agent 本轮不发起真实请求，待账户 owner 本机执行并只交接 summary。"
+        },
+        {
+          "q": "复用现有本地凭证执行真实 Ark fallback probe 的结果是什么？",
+          "answer": "保持 unknown/stop：复用本机已有 AICODING_API_KEY 环境引用和已有 project_fingerprint=9f5179ed9b7d69e37fa3a1fa5c5563f3a7f67fdf514647ebd5ef07f2c4196add，严格执行两次请求（primary 无效 model、fallback ark-code-latest），两次均返回 HTTP 401 AuthenticationError/Unauthorized；未观察到无效 model 拒绝或 fallback 成功，owner=safe_stopped、retry=0、effect=0、脱敏扫描=0。",
+          "note": "证据：evaluation/evidence/real-ark-failover/20260904T0955Z-existing-local-credential-rerun/case/summary.json。未重新生成/配置/轮换/撤销 Key，不再自动重试；该结果不推断凭证具体原因。"
+        },
+        {
+          "q": "现有本地 Ark 凭证返回 401 后如何处理？",
+          "answer": "保持 unknown/stop：同一固定 cn-beijing endpoint 的 primary 无效 model 与 fallback ark-code-latest 都返回 HTTP 401 AuthenticationError/Unauthorized，不能证明 primary 的 MODEL_REJECTED 或真实 fallback。既不推断凭证具体原因，也不自动重试、轮换、撤销或要求重新配置；后续只有在 Human 已提供新的、明确授权的有效凭证路径时，才可重新运行一次性 probe。",
+          "note": "本轮不重新发起远程请求；已有 summary 保持不可覆盖，owner=safe_stopped、retry=0、effect=0、脱敏扫描=0。"
+        }
+      ],
+      "notes": "unknown/stop：既有本地凭证引用的两次受控请求中，primary 无效 model 与 fallback ark-code-latest 均 HTTP 401 AuthenticationError/Unauthorized；未证明 MODEL_REJECTED 或真实 fallback。owner=safe_stopped、retry=0、effect=0、脱敏扫描=0。按 Human 边界不重新配置、轮换、撤销 Key，不自动重试；只有新的明确授权有效凭证路径才可继续。"
     }
   },
   "metadata": {
     "created": "2026-08-31 21:34:09",
-    "updated": "2026-09-03 19:53:51",
+    "updated": "2026-09-04 18:03:16",
     "md_file": "docs/plans/personal-workbench-w8-roadmap.md"
   }
 }

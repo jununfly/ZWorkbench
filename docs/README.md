@@ -28,7 +28,7 @@ DSH 主 Harness
 - Codex 只负责代码理解、修改、测试、构建和可审查 diff；
 - ZWorkbench 持有 run、attempt、event、effect、result、approval、Provider 尝试、回放、备份、恢复和退出记录；
 - DSH、插件、Codex session、Provider 日志和观测投影都不是第二个事实源；
-- 当前代码中的 Codex-only 路径保留为回退基线，混合 bridge 尚未实现。
+- 当前代码中的 Codex-only 路径保留为回退基线；H1–H3 已有受控的 owner-backed bridge seam，H4–H5 仍未完成。
 
 目标架构已获准进入实现规划；真实写入、真实 Provider 默认接入、Git push、部署、Webhook、全量插件市场和生产发布仍未获准。
 
@@ -45,6 +45,11 @@ DSH 主 Harness
 | [`plans/w6-*`](plans/) | ATAM、CBAM、持续评估、C1–C7 合同和首轮基线 | acceptance/evaluation，不等于产品已实现 |
 | [`plans/w7-*`](plans/) | Codex 候选的固定版本、组合式证据和 C7 审计 | 历史评测/回退基线；未知项仍有效 |
 | [`plans/w8-*`](plans/) | 受控试点、`local_read_only_run`、DeepSeek 挑战者和目标边界 | 按文档头部状态区分 product execution 与 acceptance/evaluation |
+| [`plans/w8-h1-bootstrap-findings.md`](plans/w8-h1-bootstrap-findings.md) | H1 runtime seam 的 fixture 证据与正式 artifact 资格边界 | fixture 与 clean maintainer-pinned artifact 已验证；可进入 H2 |
+| [`plans/w8-h2-worker-handshake-findings.md`](plans/w8-h2-worker-handshake-findings.md) | H2 Worker handshake 的 owner correlation、严格 wire 和 safe-stop 证据 | owner-backed + fixture-composed 已验证；真实 Provider/H4-H5 仍未声称 |
+| [`plans/w8-h3-worker-coding-findings.md`](plans/w8-h3-worker-coding-findings.md) | H3 只读 coding、真实 Codex runtime + loopback Provider 和 artifact receipt 证据 | fixture 与 real-Codex-runtime + loopback 已验证；真实远程 Provider/H4-H5 仍 HOLD |
+| [`plans/w8-real-provider-compatibility-findings.md`](plans/w8-real-provider-compatibility-findings.md) | 真实远程 Provider 的分层兼容性、人工授权门和脱敏 staging 合同 | HTTP 与授权 Codex read-only staging 已 pass；loopback composition 已 pass；真实 Ark fallback 与退出仍按需/HOLD |
+| [`references/optional-real-codex-provider-staging.md`](references/optional-real-codex-provider-staging.md) | 真实 Codex 0.139.0 + Ark 的 case-local 一次性只读 turn 入口与证据边界 | 最新授权 staging 已 pass；完整 Provider 兼容性仍 HOLD |
 | [`plans/research/`](plans/research/) | 一手来源、固定 commit、collection status 和研究 ledger | 研究支撑；raw ledger 是生成证据 |
 | [`references/`](references/) | 真实 Provider 和远端退出的按需人工材料 | 路线外，不阻塞本地开发 |
 | [`../evaluation/fixtures/`](../evaluation/fixtures/) | 可重复的隔离输入和假服务 | 可复用测试资产 |
@@ -80,7 +85,7 @@ DSH 主 Harness
 - `1-6-3` 的宿主强制边界与 Codex native approval；
 - 真实本地写入、apply、Git push、部署和其他不可逆 effect；
 - DSH 候选插件的 durable Provider fallback/degradation ledger；
-- 真实 Provider 的远端数据、任务、Webhook、备份、retention、账单和账户退出；
+- 真实 Provider 的自然故障 failover、远端数据、任务、Webhook、备份、retention、账单和账户退出；
 - 混合架构的人工安装、升级、备份/恢复、排障和退出计时。
 
 任何关键 identity、permission、effect、process、Provider 或 replay 状态不能确认时，结果必须是 `unknown` / `safe-stop`，不能用最终文本或旧评测证据补齐。

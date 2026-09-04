@@ -178,15 +178,16 @@ finish() {
   printf '\n'
 }
 
-# STAGES — one deliberate, one-shot, read-only Provider probe.
+# STAGES — one deliberate, bounded, read-only Provider probe.
 
-TOTAL_STAGES=4
+TOTAL_STAGES=5
 ENV_FILE=/dev/null
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "$SCRIPT_DIR/.." && pwd)
 PROBE="${SCRIPT_DIR}/run_optional_provider_probe.py"
 ENDPOINT="https://ark.cn-beijing.volces.com/api/coding/v3/responses"
 MODEL="ark-code-latest"
+DEFAULT_REGION="cn-beijing"
 EVIDENCE_ROOT="${ZWB_PROVIDER_EVIDENCE_DIR:-${REPO_ROOT}/evaluation/evidence/optional-real-provider}"
 ARK_API_KEY=""
 EVIDENCE_DIR=""
@@ -195,12 +196,65 @@ banner "Optional Ark read-only staging probe"
 
 stage "Preflight — fixed scope"
 say "This is an optional external validation, not a ZWorkbench product gate."
-step "The probe sends exactly one synthetic request to: $ENDPOINT"
-step "Model: $MODEL; no tools, files, project workspace, callbacks, tasks, backups, or retries."
+step "The probe sends 1 or 5 explicitly requested synthetic requests to: $ENDPOINT"
+step "Model: $MODEL; no tools, files, project workspace, callbacks, tasks, backups, or automatic retries."
 step "The key will be entered hidden, sent to the local helper through stdin, and never written to disk."
-if ! confirm "Proceed to the hidden-key stage?"; then
+if ! confirm "Proceed to the account and safety checks before any key is requested?"; then
   say "Stopped before any credential was requested or network access occurred."
   exit 0
+fi
+
+stage "Preflight — account and exit gates"
+say "Complete these checks as the account owner before any key is requested. Choose No for any unknown item."
+step "This helper is pinned to the Ark cn-beijing Coding endpoint. Confirm the account/data region in Ark first; the URL alone is not proof."
+step "For this run, enter cn-beijing exactly. A different real region needs a separately reviewed endpoint; do not translate or abbreviate it."
+ask REGION "Ark account/data region [default: ${DEFAULT_REGION}]:"
+[[ -z "$REGION" ]] && REGION="$DEFAULT_REGION"
+if [[ ! "$REGION" =~ ^[A-Za-z0-9._:-]{1,64}$ ]]; then
+  warn "Region must be a short non-secret value. Stopping before credential input."
+  exit 1
+fi
+if [[ "$REGION" != "$DEFAULT_REGION" ]]; then
+  warn "This helper only accepts region=${DEFAULT_REGION}; a different region requires a separately reviewed endpoint. Stopping before credential input."
+  exit 1
+fi
+step "Project fingerprint = SHA-256 of the actual Ark Project ID or billing-scope ID that owns this request."
+step "Do not use ZWorkbench, a local workspace/project name, model ID, region, endpoint, API Key, or API Key fingerprint."
+note 'Generate it locally (replace the variable name with your existing local project/billing-ID variable):'
+note '  printf %s "$ARK_PROJECT_ID" | shasum -a 256 | awk '\''{print $1}'\'''
+ask PROJECT_FINGERPRINT "Ark Project/billing ID fingerprint [64 hex characters]:"
+if [[ ! "$PROJECT_FINGERPRINT" =~ ^[0-9A-Fa-f]{64}$ ]]; then
+  warn "Project fingerprint must be exactly 64 hexadecimal characters. Stopping before credential input."
+  exit 1
+fi
+ask REPEAT_COUNT "Synthetic request count [5 = compatibility sequence; 1 = reachability only]:"
+if [[ "$REPEAT_COUNT" != "1" && "$REPEAT_COUNT" != "5" ]]; then
+  warn "Request count must be 1 or 5. Stopping before credential input."
+  exit 1
+fi
+if ! confirm "Have you confirmed the actual Provider/model/project identity and region for this account?"; then
+  warn "S1 identity is not confirmed; stopping before credential input."
+  exit 1
+fi
+if ! confirm "Have you confirmed the API key scope and its disable/delete/revocation path?"; then
+  warn "S2 authentication lifecycle is not confirmed; stopping before credential input."
+  exit 1
+fi
+if ! confirm "Have you confirmed the Coding endpoint data categories, retention, and deletion basis?"; then
+  warn "S3 data/retention scope is not confirmed; stopping before credential input."
+  exit 1
+fi
+if ! confirm "Have you inventoried task/run/queue, scheduler, Webhook, backup, file, and response resources?"; then
+  warn "S4 remote resource inventory is not confirmed; stopping before credential input."
+  exit 1
+fi
+if ! confirm "Have you confirmed the stop, cleanup, and Provider-side exit owner/path for this request?"; then
+  warn "S5 exit path is not confirmed; stopping before credential input."
+  exit 1
+fi
+if ! confirm "Do you authorize exactly $REPEAT_COUNT independent synthetic, read-only request(s) now, with a 30-second total limit and no retries?"; then
+  warn "S6 one-time authorization was not granted; stopping before credential input."
+  exit 1
 fi
 
 stage "Credential — hidden and ephemeral"
@@ -213,7 +267,7 @@ if [[ -z "$ARK_API_KEY" ]]; then
 fi
 say "A local SHA-256 credential fingerprint will be included in the redacted summary."
 
-stage "Probe — one real request"
+stage "Probe — bounded real request(s)"
 stamp=$(date -u +%Y%m%dT%H%M%SZ)
 EVIDENCE_DIR="${EVIDENCE_ROOT}/${stamp}-$$"
 mkdir -m 700 -p "$EVIDENCE_DIR"
@@ -222,7 +276,17 @@ say "The helper rejects redirects, bypasses configured proxies, times out after 
 if ! printf '%s' "$ARK_API_KEY" | python3 "$PROBE" \
   --output "$EVIDENCE_DIR" \
   --endpoint "$ENDPOINT" \
-  --model "$MODEL"; then
+  --model "$MODEL" \
+  --region "$REGION" \
+  --project-fingerprint "$PROJECT_FINGERPRINT" \
+  --budget-requests "$REPEAT_COUNT" \
+  --max-duration-seconds 30 \
+  --repeats "$REPEAT_COUNT" \
+  --key-scope-confirmed \
+  --data-retention-confirmed \
+  --remote-inventory-confirmed \
+  --exit-path-confirmed \
+  --one-time-authorization-confirmed; then
   warn "The request did not complete successfully. Keep the redacted summary for diagnosis; do not retry automatically."
 fi
 

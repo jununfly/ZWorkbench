@@ -103,8 +103,9 @@ class CodexAppServerAdapter:
         self.client_name = self._require_text(client_name, "client_name")
         self.client_version = self._require_text(client_version, "client_version")
         self.extra_environment = dict(extra_environment or {})
-        self.process: Optional[subprocess.Popen[str]] = None
+        self.process: Optional[subprocess.Popen[bytes]] = None
         self.selector = selectors.DefaultSelector()
+        self.stdout_buffer = bytearray()
         self.messages: list[Dict[str, Any]] = []
         self.next_id = 1
         self.active_run_id: Optional[str] = None
@@ -132,8 +133,7 @@ class CodexAppServerAdapter:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
+                bufsize=0,
                 start_new_session=True,
             )
             if self.process.stdout is None:
@@ -180,14 +180,22 @@ class CodexAppServerAdapter:
     def read_one(self, timeout: float = 0.5) -> Optional[Dict[str, Any]]:
         if self.process is None or self.process.stdout is None:
             raise CodexAdapterError("Codex app-server is not running")
-        ready = self.selector.select(timeout)
-        if not ready:
-            return None
-        line = self.process.stdout.readline()
-        if not line:
-            return None
+        deadline = time.monotonic() + timeout
+        line = None
+        while line is None:
+            if b"\n" in self.stdout_buffer:
+                line, _, remainder = self.stdout_buffer.partition(b"\n")
+                self.stdout_buffer = bytearray(remainder)
+                break
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not self.selector.select(remaining):
+                return None
+            data = os.read(self.process.stdout.fileno(), 64 * 1024)
+            if not data:
+                return None
+            self.stdout_buffer.extend(data)
         try:
-            item = json.loads(line)
+            item = json.loads(line.decode("utf-8"))
         except json.JSONDecodeError as exc:
             raise CodexProtocolError(f"invalid app-server JSON: {line!r}") from exc
         if not isinstance(item, dict):
@@ -201,7 +209,36 @@ class CodexAppServerAdapter:
             turn_id = params.get("turnId")
             if turn_id:
                 self._agent_text[turn_id] = self._agent_text.get(turn_id, "") + str(params.get("delta", ""))
+        if item.get("method") == "item/completed":
+            self._record_completed_agent_message(item)
         return item
+
+    def _record_completed_agent_message(self, item: Mapping[str, Any]) -> None:
+        """Capture a final agent message when the server omits text deltas.
+
+        Some real Provider/app-server combinations complete an agentMessage
+        item without emitting item/agentMessage/delta notifications.  The
+        completed item is the authoritative final text and must not be lost.
+        """
+
+        params = item.get("params") or {}
+        message = params.get("item") or {}
+        if not isinstance(message, Mapping) or message.get("type") != "agentMessage":
+            return
+        turn_id = params.get("turnId")
+        if not isinstance(turn_id, str) or not turn_id:
+            return
+        text = message.get("text")
+        if not isinstance(text, str):
+            content = message.get("content")
+            if isinstance(content, list):
+                text = "".join(
+                    part.get("text", "")
+                    for part in content
+                    if isinstance(part, Mapping) and isinstance(part.get("text"), str)
+                )
+        if isinstance(text, str) and text:
+            self._agent_text[turn_id] = text
 
     def wait_for(self, predicate, timeout: float = 30.0) -> Dict[str, Any]:
         for item in self.messages:
@@ -218,7 +255,7 @@ class CodexAppServerAdapter:
         if self.process is None or self.process.stdin is None or self.process.poll() is not None:
             raise CodexAdapterError("Codex app-server is not running")
         self._append_event({"direction": "outbound", "message": dict(message)})
-        self.process.stdin.write(json.dumps(message, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+        self.process.stdin.write((json.dumps(message, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8"))
         self.process.stdin.flush()
 
     def _handle_server_request(self, item: Mapping[str, Any]) -> None:
@@ -439,7 +476,8 @@ class CodexAppServerAdapter:
                     except ProcessLookupError:
                         pass
                     process.wait(timeout=6)
-            stderr = process.stderr.read() if process.stderr else ""
+            stderr_bytes = process.stderr.read() if process.stderr else b""
+            stderr = stderr_bytes.decode("utf-8", errors="replace") if isinstance(stderr_bytes, bytes) else stderr_bytes
             stderr_path = self.event_log.with_name("codex-stderr.log")
             stderr_path.write_text(stderr, encoding="utf-8")
         finally:

@@ -622,6 +622,50 @@ class CompositionOwner:
             self._run_row(connection, run_id)
             return self._record_result_tx(connection, run_id, kind, value, source_id)
 
+    def record_event(
+        self,
+        run_id: str,
+        event_type: str,
+        payload: Mapping[str, Any],
+        event_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Append one structured adapter event without exposing SQLite.
+
+        Adapter messages are evidence, not a second source of truth.  The
+        owner therefore assigns the canonical event row and keeps the public
+        seam deliberately smaller than the underlying table.  A caller may
+        provide a stable event id when retrying an already-recorded message;
+        a conflicting reuse is rejected instead of being silently merged.
+        """
+
+        self._require_text(event_type, "event_type")
+        if not isinstance(payload, Mapping):
+            raise ValueError("payload must be an object")
+        payload_value = dict(payload)
+        self._reject_raw_credentials(payload_value, "payload")
+        if event_id is not None:
+            self._require_text(event_id, "event_id")
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            if event_id is not None:
+                existing = connection.execute(
+                    "SELECT * FROM events WHERE event_id = ?", (event_id,)
+                ).fetchone()
+                if existing is not None:
+                    same = (
+                        existing["run_id"] == run_id
+                        and existing["type"] == event_type
+                        and existing["payload_json"] == self._canonical_json(payload_value)
+                    )
+                    if not same:
+                        raise CompositionError("event_id is already bound to different event data")
+                    return self._decode_row(existing, {"payload_json": "payload"})
+            assigned_id = self._append_event(connection, run_id, event_type, payload_value, event_id)
+            return self._decode_row(
+                connection.execute("SELECT * FROM events WHERE event_id = ?", (assigned_id,)).fetchone(),
+                {"payload_json": "payload"},
+            )
+
     def record_replay_metadata(
         self,
         run_id: str,
@@ -1001,6 +1045,28 @@ class CompositionOwner:
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{name} must be a non-empty string")
 
+    @staticmethod
+    def _reject_raw_credentials(value: Any, field_name: str) -> None:
+        """Reject obvious credential fields before they enter owner evidence."""
+
+        sensitive = {"api_key", "apikey", "authorization", "cookie", "password", "secret", "token", "key"}
+        safe_suffixes = ("_ref", "_reference", "_fingerprint", "_digest", "_id")
+
+        def visit(current: Any, path: str) -> None:
+            if isinstance(current, Mapping):
+                for key, item in current.items():
+                    normalized = str(key).lower().replace("-", "_")
+                    if not normalized.endswith(safe_suffixes):
+                        parts = set(normalized.split("_"))
+                        if normalized in sensitive or parts & sensitive:
+                            raise ValueError(f"{field_name} contains raw credential field {path}.{key}")
+                    visit(item, f"{path}.{key}")
+            elif isinstance(current, (list, tuple)):
+                for index, item in enumerate(current):
+                    visit(item, f"{path}[{index}]")
+
+        visit(value, field_name)
+
     def _run_row(self, connection: sqlite3.Connection, run_id: str) -> sqlite3.Row:
         row = connection.execute("SELECT * FROM runs WHERE run_id = ?", (run_id,)).fetchone()
         if row is None:
@@ -1043,8 +1109,15 @@ class CompositionOwner:
         event_payload.update(dict(payload or {}))
         self._append_event(connection, row["run_id"], event_type, event_payload)
 
-    def _append_event(self, connection: sqlite3.Connection, run_id: str, event_type: str, payload: Mapping[str, Any]) -> str:
-        event_id = self._new_id()
+    def _append_event(
+        self,
+        connection: sqlite3.Connection,
+        run_id: str,
+        event_type: str,
+        payload: Mapping[str, Any],
+        event_id: Optional[str] = None,
+    ) -> str:
+        event_id = event_id or self._new_id()
         connection.execute(
             "INSERT INTO events(event_id, run_id, type, payload_json, created_at) VALUES (?, ?, ?, ?, ?)",
             (event_id, run_id, event_type, self._canonical_json(dict(payload)), self._now()),
