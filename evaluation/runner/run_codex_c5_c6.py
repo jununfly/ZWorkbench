@@ -30,10 +30,10 @@ CODEX_DEFAULT = shutil.which("codex")
 CODEX_VERSION = "codex-cli 0.139.0"
 ADAPTER_VERSION = "w7-codex-c5-c6-composition-adapter/v1"
 SCHEMA = "zworkbench-w7-codex-c56/v1"
+C5_PROVIDER = "c5-loopback"
 REPEATS = 3
 NORMAL_REPEATS = 5
 C6_REPEATS = 5
-ROUTER_PORT = 11434
 
 C5_CASES = (
     {"case_type": "normal-a", "primary": "fake-a", "fault": None},
@@ -132,11 +132,12 @@ class Ledger:
 
 
 class CodexClient:
-    def __init__(self, case_dir: Path, ledger: Ledger, sandbox: str, approval_policy: str):
+    def __init__(self, case_dir: Path, ledger: Ledger, sandbox: str, approval_policy: str, provider_endpoint: str):
         self.case_dir = case_dir
         self.ledger = ledger
         self.sandbox = sandbox
         self.approval_policy = approval_policy
+        self.provider_endpoint = provider_endpoint.rstrip("/")
         self.process = None
         self.selector = selectors.DefaultSelector()
         self.messages = []
@@ -150,22 +151,7 @@ class CodexClient:
         environment = os.environ.copy()
         environment["CODEX_HOME"] = str(code_home)
         environment["CODEX_CI"] = "1"
-        command = [
-            shutil.which("codex") or "codex",
-            "app-server",
-            "--listen",
-            "stdio://",
-            "-c",
-            'oss_provider="ollama"',
-            "-c",
-            'model_provider="ollama"',
-            "-c",
-            'model="fake-model"',
-            "--disable",
-            "plugins",
-            "--disable",
-            "apps",
-        ]
+        command = self.command()
         self.process = subprocess.Popen(
             command,
             cwd=REPO_ROOT,
@@ -182,6 +168,28 @@ class CodexClient:
         if "result" not in response:
             raise RuntimeError(f"initialize failed: {response}")
         self.notify("initialized", {})
+
+    def command(self):
+        return [
+            shutil.which("codex") or "codex",
+            "app-server",
+            "--listen",
+            "stdio://",
+            "-c",
+            f'model_provider="{C5_PROVIDER}"',
+            "-c",
+            'model="fake-model"',
+            "-c",
+            f'model_providers.{C5_PROVIDER}.name="C5 Loopback"',
+            "-c",
+            f'model_providers.{C5_PROVIDER}.wire_api="responses"',
+            "-c",
+            f'model_providers.{C5_PROVIDER}.base_url="{self.provider_endpoint}/v1"',
+            "--disable",
+            "plugins",
+            "--disable",
+            "apps",
+        ]
 
     def notify(self, method, params):
         if not self.process or not self.process.stdin:
@@ -231,7 +239,7 @@ class CodexClient:
         response = self.request("thread/start", {
             "cwd": str(cwd),
             "model": "fake-model",
-            "modelProvider": "ollama",
+            "modelProvider": C5_PROVIDER,
             "sandbox": self.sandbox,
             "approvalPolicy": self.approval_policy,
             "ephemeral": False,
@@ -345,7 +353,7 @@ def start_router(case_dir: Path, config):
         "--host",
         "127.0.0.1",
         "--port",
-        str(ROUTER_PORT),
+        "0",
         "--config",
         str(config_path),
         "--event-log",
@@ -353,8 +361,14 @@ def start_router(case_dir: Path, config):
         "--ready-file",
         str(ready),
     ], stdout=subprocess.DEVNULL, stderr=stderr, start_new_session=True)
-    wait_ready(ready, process)
-    return {"process": process, "event_path": event_log, "stderr": stderr}
+    info = wait_ready(ready, process)
+    return {
+        "process": process,
+        "event_path": event_log,
+        "stderr": stderr,
+        "port": info["port"],
+        "endpoint": f"http://127.0.0.1:{info['port']}",
+    }
 
 
 def stop_component(component):
@@ -378,10 +392,10 @@ def get_json(url):
         return json.loads(response.read().decode("utf-8"))
 
 
-def run_codex_turn(case_dir: Path, ledger: Ledger, prompt: str, sandbox="read-only", approval_policy="never"):
+def run_codex_turn(case_dir: Path, ledger: Ledger, prompt: str, provider_endpoint: str, sandbox="read-only", approval_policy="never"):
     workspace = case_dir / "codex-workspace"
     workspace.mkdir(parents=True, exist_ok=True)
-    client = CodexClient(case_dir, ledger, sandbox, approval_policy)
+    client = CodexClient(case_dir, ledger, sandbox, approval_policy, provider_endpoint)
     try:
         client.start()
         thread_id = client.thread_start(workspace)
@@ -451,7 +465,7 @@ def c5_case(output_dir: Path, spec, repeat: int):
             "candidate": "Codex Harness",
             "candidate_version": CODEX_VERSION,
             "adapter_version": ADAPTER_VERSION,
-            "provider_router": "case-local loopback 127.0.0.1:11434",
+            "provider_router": router["endpoint"],
             "primary": primary,
             "fallback": fallback,
             "fault": spec.get("fault"),
@@ -464,7 +478,7 @@ def c5_case(output_dir: Path, spec, repeat: int):
         if degradation_records:
             for record in degradation_records:
                 append_jsonl(case_dir / "degradation-ledger.jsonl", record)
-        execution = run_codex_turn(case_dir, ledger, "C5_PROVIDER_TASK Return exactly fixture-ok.")
+        execution = run_codex_turn(case_dir, ledger, "C5_PROVIDER_TASK Return exactly fixture-ok.", router["endpoint"])
         router_events = read_jsonl(router["event_path"])
         attempt_events = [event for event in router_events if event.get("type") == "provider.attempt"]
         logical_attempts = [event for event in attempt_events if event.get("status") == "started"]
@@ -566,7 +580,7 @@ def c6_event(run_id, sequence, event_type, source, **payload):
     return {"schema": SCHEMA, "event_id": f"{run_id}:event:{sequence:04d}", "run_id": run_id, "type": event_type, "logical_time": sequence, "source": source, **payload}
 
 
-def build_c6_recording(case_dir: Path, run_id: str, execution, provider, before_guard):
+def build_c6_recording(case_dir: Path, run_id: str, execution, provider, provider_endpoint: str, before_guard):
     recording = case_dir / "recording"
     recording.mkdir(parents=True, exist_ok=True)
     raw_events = execution["raw_events"]
@@ -578,12 +592,13 @@ def build_c6_recording(case_dir: Path, run_id: str, execution, provider, before_
         sequence += 1
         events.append(c6_event(run_id, sequence, event_type, source, **payload))
     add("run.started", "adapter", candidate="Codex Harness", candidate_version=CODEX_VERSION)
-    add("environment.snapshot", "adapter", sandbox="workspace-write", approval_policy="never", provider_id=provider["id"], model="fake-model", endpoint="http://127.0.0.1:11434/v1/responses")
+    endpoint = provider_endpoint.rstrip("/") + "/v1/responses"
+    add("environment.snapshot", "adapter", sandbox="workspace-write", approval_policy="never", provider_id=provider["id"], model="fake-model", endpoint=endpoint)
     for record in provider_records:
         if record.get("kind") == "responses_request":
-            add("provider.request", "provider", provider_id=record.get("provider_id"), model=record.get("model") or "fake-model", endpoint="http://127.0.0.1:11434/v1/responses", request_number=record.get("request_number"))
+            add("provider.request", "provider", provider_id=record.get("provider_id"), model=record.get("model") or "fake-model", endpoint=endpoint, request_number=record.get("request_number"))
         elif record.get("kind") == "responses_result":
-            add("provider.response", "provider", provider_id=record.get("provider_id"), model="fake-model", endpoint="http://127.0.0.1:11434/v1/responses", status=record.get("status"), response_kind=record.get("response_kind"))
+            add("provider.response", "provider", provider_id=record.get("provider_id"), model="fake-model", endpoint=endpoint, status=record.get("status"), response_kind=record.get("response_kind"))
     add("policy.decision", "adapter", decision="allow", approval_policy="never", sandbox="workspace-write", scope="case-local-read-only-command")
     for raw in raw_events:
         method = raw.get("method")
@@ -610,7 +625,7 @@ def build_c6_recording(case_dir: Path, run_id: str, execution, provider, before_
         "approval_policy": "never",
         "provider": provider["id"],
         "model": "fake-model",
-        "endpoint": "http://127.0.0.1:11434/v1/responses",
+        "endpoint": endpoint,
         "thread_id": execution["thread_id"],
         "turn_id": execution["turn_id"],
     }
@@ -619,7 +634,7 @@ def build_c6_recording(case_dir: Path, run_id: str, execution, provider, before_
     write_json(recording / "expected-output.json", expected)
     ledger_hash = digest(recording / "event-ledger.jsonl")
     environment_hash = digest(recording / "environment-manifest.json")
-    cassette = {"schema": SCHEMA, "run_id": run_id, "replay_mode": "cassette-source", "event_ledger_sha256": ledger_hash, "environment_sha256": environment_hash, "expected_output": expected, "provider": provider["id"], "model": "fake-model", "endpoint": "http://127.0.0.1:11434/v1/responses"}
+    cassette = {"schema": SCHEMA, "run_id": run_id, "replay_mode": "cassette-source", "event_ledger_sha256": ledger_hash, "environment_sha256": environment_hash, "expected_output": expected, "provider": provider["id"], "model": "fake-model", "endpoint": endpoint}
     write_json(recording / "replay-cassette.json", cassette)
     after_guard = workspace_snapshot(case_dir / "codex-workspace")
     write_json(case_dir / "effect-guard.json", {"before": before_guard, "after": after_guard, "unchanged": before_guard == after_guard, "external_effect_count": 0})
@@ -641,9 +656,9 @@ def c6_capture(output_dir: Path, repeat: int):
         workspace = case_dir / "codex-workspace"
         workspace.mkdir(parents=True, exist_ok=True)
         before_guard = workspace_snapshot(workspace)
-        provider = start_provider(case_dir, "w7-fake-codex-c6", "normal", ["tool_calls", "streaming", "structured_output"], emit_tool=True, command="printf fixture-ok", port=ROUTER_PORT)
-        execution = run_codex_turn(case_dir, ledger, "C6_CAPTURE Execute the provided read-only command and report fixture-ok.", sandbox="workspace-write", approval_policy="never")
-        recording = build_c6_recording(case_dir, run_id, execution, provider, before_guard)
+        provider = start_provider(case_dir, "w7-fake-codex-c6", "normal", ["tool_calls", "streaming", "structured_output"], emit_tool=True, command="printf fixture-ok", port=0)
+        execution = run_codex_turn(case_dir, ledger, "C6_CAPTURE Execute the provided read-only command and report fixture-ok.", provider["endpoint"], sandbox="workspace-write", approval_policy="never")
+        recording = build_c6_recording(case_dir, run_id, execution, provider, provider["endpoint"], before_guard)
         raw_event_complete = all(
             isinstance(event, dict)
             and (("method" in event and isinstance(event.get("method"), str)) or ("id" in event))

@@ -1,0 +1,63 @@
+{
+  "schema": "zworkbench-dsh-runtime-manifest/v1",
+  "mode": "artifact",
+  "runtime": {
+    "name": "zworkbench-dsh-bootstrap-fixture",
+    "version": "1.0.0",
+    "source_commit": "1111111111111111111111111111111111111111"
+  },
+  "artifact": {
+    "name": "zworkbench-dsh-bootstrap-fixture",
+    "version": "1.0.0",
+    "path": "dsh_bootstrap_fixture.py",
+    "digest": "sha256:b86371d7807ccd78e0a65476c89f97e525ada959e14c29bd5777103ab34d5eb6"
+  },
+  "dependency_lock": {
+    "path": "dependency-lock.txt",
+    "digest": "sha256:ee48b3a77ba1f40f0fe2f1625ae0caf3c4d6f2f9e4804cf2adce6b26f07a521f"
+  },
+  "build_receipt": {
+    "path": "build-receipt.json",
+    "digest": "sha256:d8dce527baa3ca0584f2f38f6979b1183fae867e70185aec297735e6c9394847"
+  },
+  "profile": {
+    "id": "fixture-headless-bootstrap",
+    "version": "1",
+    "path": "profile.json",
+    "digest": "sha256:9112687ea31d569e415f060b6574f7d0532e83151afebee66b874017e3578a3c"
+  },
+  "schema_identity": {
+    "name": "zworkbench.dsh.bootstrap",
+    "version": "v1",
+    "digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "policy_identity": {
+    "id": "zworkbench-h1-read-only",
+    "version": "1",
+    "digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "mode": "read-only"
+  },
+  "provider_identity": {
+    "provider": "fake-loopback",
+    "model": "fixture-model",
+    "endpoint": "http://127.0.0.1:11434",
+    "transport": "loopback-only"
+  },
+  "environment_identity": {
+    "platform": "any",
+    "architecture": "any",
+    "runtime": "python3"
+  },
+  "workspace": {
+    "path": "workspace",
+    "kind": "case-local"
+  },
+  "dsh_home": {
+    "path": "dsh-home",
+    "kind": "case-local"
+  },
+  "launch": {
+    "args": ["--scenario", "success"],
+    "environment": {}
+  }
+}

@@ -1,6 +1,6 @@
 # DSH 源码、运行时与 ZWorkbench 布局维护设计
 
-状态：`product execution / target-state approved / H1 artifact validation pending`
+状态：`product execution / target-state approved / H1-H3 bounded validation verified`
 
 本文确定 ZWorkbench 与 DSH 下游项目的磁盘布局、仓库边界、运行时引入方式和长期维护方式。
 目标用户是个人开发者或小团队；设计优先保证可追溯、可回滚、可退出和低维护负担。
@@ -9,8 +9,8 @@
 
 ### Decision
 
-Decision: approve 采用“兄弟仓库 + pinned artifact + 外部进程”方案；未完成的 DSH artifact 构建、
-H1 Bootstrap 和跨平台验证属于 blocking findings，具体 release 版本、打包格式和签名策略属于
+Decision: approve 采用“兄弟仓库 + pinned artifact + 外部进程”方案；跨平台、H4–H5、真实 Provider
+兼容性和回滚验证属于 blocking findings，具体 release 版本、打包格式和签名策略属于
 non-blocking open decisions。
 
 ### Summary
@@ -57,8 +57,9 @@ artifact digest，而不是依赖另一个开发者的绝对路径。
 
 ### Current baseline
 
-当前 ZWorkbench 已有 Codex-only `local_read_only_run` 和 CompositionOwner，但 DSH bridge 尚未实现。
-DSH 下游代码已经存在于独立的 `ZDSHarness` 仓库，其 README 提供源码运行方式和开发预览期兼容性提示；
+当前 ZWorkbench 已有 Codex-only `local_read_only_run` 和 CompositionOwner，并已形成 H1–H3 的受控
+owner-backed DSH–Codex bridge seams；H4–H5 尚未实现。DSH 下游代码已经存在于独立的 `ZDSHarness`
+仓库，其 README 提供源码运行方式和开发预览期兼容性提示；
 其 `package.json` 固定 pnpm 与 Node engine，并提供 `build`、artifact gate 和 release 脚本。
 
 ### Goals
@@ -300,7 +301,7 @@ profile 和 H1–H5 证据共同演进。只有在 plugin 拥有独立用户、�
 build clean ZDSHarness commit
   → verify receipt + artifact digest
   → install inactive runtime directory
-  → run version/help + H1/H2 smoke
+  → run version/help + H1–H3 smoke
   → activate manifest pointer
   → run H3–H5 regression
   → retain last-known-good pointer
@@ -434,7 +435,7 @@ case workspace/Provider。DSH plugin、profile 和 Codex Worker 都视为可能�
 
 | Question | Evidence needed | Owner | Due/exit condition |
 |---|---|---|---|
-| 首个 H1 使用哪个 DSH source commit/release？ | clean build receipt、artifact digest、ZDSHarness tests | ZDSHarness maintainer | H1 启动前固定 |
+| 首个 H1 使用哪个 DSH source commit/release？ | clean build receipt、artifact digest、ZDSHarness tests | ZDSHarness maintainer | 已固定为 `c37c8483ce167a5019aeb65a196a09b5b67ccc01`；H1 receipt 已验证 |
 | artifact 采用 packed package、standalone executable 还是两者？ | 安装、启动、升级、回滚和跨平台测试 | runtime owner | 选择一种作为正式路径；另一种可保持 development-only |
 | `upstream` remote 和下游同步策略是否落地？ | remote、sync branch、变更清单和 license 检查 | ZDSHarness maintainer | 首次上游同步前 |
 | DSH profile 是否需要持久 session？ | session resume、backup/restore 和 owner correlation fixture | ZWorkbench maintainer | H2/H5 前；默认 case-local |
@@ -446,13 +447,13 @@ case workspace/Provider。DSH plugin、profile 和 Codex Worker 都视为可能�
 
 | Reviewer | Date | Concern | Response / decision | Remaining risk |
 |---|---|---|---|---|
-| Human + Codex design review | 2026-09-03 | DSH 源码、artifact 和产品仓库是否应合并？ | 采用兄弟仓库；ZDSHarness 独立维护，ZWorkbench 只绑定 artifact/manifest | 首个 artifact 尚未构建 |
+| Human + Codex design review | 2026-09-03 | DSH 源码、artifact 和产品仓库是否应合并？ | 采用兄弟仓库；ZDSHarness 独立维护，ZWorkbench 只绑定 artifact/manifest | H1 首个 clean artifact 已于 2026-09-04 在本地 pinned commit 上验证；正式发布签名仍未要求 |
 | Human + Codex design review | 2026-09-03 | 源码开发路径是否可作为正式集成路径？ | 保留 source mode 供调试，但 H1–H5 和试点只认 artifact mode | 需实现 mode 标记和 preflight |
 | Human + Codex design review | 2026-09-03 | 目录改名是否影响历史证据？ | 下游展示名统一为 ZDSHarness；upstream、commit、digest、package identity 保留 | 旧历史记录需要按命名规则逐项整理 |
 
 ### Short-read acceptance
 
 当前决策是 `approve`：ZWorkbench 与 ZDSHarness 使用兄弟仓库；正式运行使用 pinned DSH artifact；
-source mode 只用于开发。当前 blocking findings 是首个 clean artifact receipt、digest 校验、H1–H5
-和回滚证据尚未完成；下一验证动作是由 ZDSHarness maintainer 在 clean commit 上构建 artifact，产出
-receipt 后执行 H1 Bootstrap。
+source mode 只用于开发。H1 clean artifact receipt、digest 校验和 bootstrap integration 已验证；
+H2 owner-backed fixture handshake 与 H3 fixture/real-Codex-runtime + loopback Provider 已验证；H4–H5、
+真实 Provider 兼容性与回滚证据仍未完成，下一验证动作是执行 H4 生命周期/恢复。

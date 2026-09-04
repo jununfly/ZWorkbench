@@ -3,7 +3,7 @@
 状态：🧭 研究与 W8 `1-7` 产品切片、W8-1 DeepSeek 独立挑战者评估已完成；当前目标态为 DSH 主 Harness + Codex Coding Worker
 载体：local-markdown tracker（本文件是唯一地图与票据载体）  
 创建日期：2026-08-30  
-当前基线：W8 `local_read_only_run` 已具备可安装 CLI、SQLite composition owner、Codex adapter、隔离 fixture 与 evidence；它是 Codex-only 回退基线。目标混合 bridge 尚未实现，真实写操作宿主边界仍 HOLD。
+当前基线：W8 `local_read_only_run` 已具备可安装 CLI、SQLite composition owner、Codex adapter、隔离 fixture 与 evidence；它仍是 Codex-only 回退基线。目标混合 bridge 已完成 H1–H3 的受控 owner-backed seam，H4–H5、真实 Provider 和真实写操作宿主边界仍 HOLD。
 
 ## Destination
 

@@ -1,0 +1,7 @@
+{
+  "schema": "zworkbench-dsh-profile/v1",
+  "id": "fixture-headless-bootstrap",
+  "version": "1",
+  "mode": "headless-bootstrap",
+  "plugins": []
+}

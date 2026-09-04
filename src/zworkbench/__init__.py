@@ -45,6 +45,25 @@ from .worker_contract import (
     WorkerContractError,
     WorkerEnvelope,
 )
+from .dsh_runtime import (
+    BOOTSTRAP_SCHEMA,
+    DshBootstrapExecution,
+    DshBootstrapProtocolError,
+    DshManifestError,
+    DshProcessError,
+    DshRuntimeAdapter,
+    DshRuntimeError,
+    DshRuntimeManifest,
+    RUNTIME_ADAPTER_SCHEMA,
+    RUNTIME_MANIFEST_SCHEMA,
+)
+from .worker_bridge import (
+    WORKER_BRIDGE_SCHEMA,
+    WorkerBridge,
+    WorkerBridgeError,
+    WorkerCodingResult,
+    WorkerHandshakeResult,
+)
 
 __all__ = [
     "ApprovalError",
@@ -84,4 +103,19 @@ __all__ = [
     "SafeStopRequired",
     "WorkerContractError",
     "WorkerEnvelope",
+    "BOOTSTRAP_SCHEMA",
+    "DshBootstrapExecution",
+    "DshBootstrapProtocolError",
+    "DshManifestError",
+    "DshProcessError",
+    "DshRuntimeAdapter",
+    "DshRuntimeError",
+    "DshRuntimeManifest",
+    "RUNTIME_ADAPTER_SCHEMA",
+    "RUNTIME_MANIFEST_SCHEMA",
+    "WORKER_BRIDGE_SCHEMA",
+    "WorkerBridge",
+    "WorkerBridgeError",
+    "WorkerCodingResult",
+    "WorkerHandshakeResult",
 ]
