@@ -459,7 +459,7 @@ class AppServer:
             pass
 
 
-def start_provider(case_dir: Path, mode: str, command: str, retry_command: str):
+def start_provider(case_dir: Path, mode: str, command: str, retry_command: str, port: int = 11434, provider_id: str = "w7-fake-codex"):
     ready = case_dir / "provider-ready.json"
     request_log = case_dir / "provider-requests.jsonl"
     provider_log = (case_dir / "provider.log").open("w", encoding="utf-8")
@@ -470,9 +470,9 @@ def start_provider(case_dir: Path, mode: str, command: str, retry_command: str):
             "--host",
             "127.0.0.1",
             "--port",
-            "11434",
+            str(port),
             "--provider-id",
-            "w7-fake-codex",
+            provider_id,
             "--mode",
             mode,
             "--command",
