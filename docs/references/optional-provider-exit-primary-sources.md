@@ -1,16 +1,18 @@
+---
+doc-kind: reference
+authority: external
+---
+
 # 参考：火山方舟 Provider 退出与责任一手来源
 
-状态：`reference-only / on-demand / out-of-roadmap` · 核查日期：`2026-09-01`
-（Asia/Shanghai）
-
-本记录仅供账户 owner 在明确触发真实 Provider 验证时查阅，用于核对火山引擎/火山方舟
+本记录供账户 owner 在明确触发真实 Provider 验证时查阅，用于核对火山引擎/火山方舟
 （Ark）及其 Coding API 的 endpoint、认证、远端对象、数据处理、保留、账户/账单
 和退出责任。它只使用火山引擎/火山方舟官方文档、官方政策/条款和官方控制台/API
 说明作为外部来源；不执行认证业务 API、不读取或使用凭证、不执行控制台删除或停用；
-本轮另记录了一次未携带凭证的 endpoint 根路径边界观察，详见第 12 节，
-也不构成推荐、法律意见、隐私/DPA 意见或 Provider 侧删除证明。
+未携带凭证的 endpoint 根路径边界观察见第 12 节，也不构成推荐、法律意见、隐私/DPA
+意见或 Provider 侧删除证明。
 
-本记录不属于 ZWorkbench 目标树、W8 主线或发布门；不创建 roadmap 子节点，也不把
+本记录不属于默认产品路径或发布门；不创建实现待办，也不把
 其中的 unknown 转化为核心开发待办。本轮结论只描述证据和责任边界，不把任何
 `official-unknown` 自动解释成“没有能力”。
 
@@ -176,7 +178,7 @@ Webhook、备份或账单记录。[ARK-KEY-MGMT]
 
 **Finding `ARK-CODING-OBJECT-BOUNDARY-01` — `official-unknown`。**
 
-本轮找到的 `callback_url` 只位于标准视频生成任务页面；未找到官方 Coding Plan 页面
+`callback_url` 只位于标准视频生成任务页面；未找到官方 Coding Plan 页面
 证明 `/api/coding/v3` 暴露通用任务、Webhook 注册/停用/删除、任务队列导出或远端
 备份管理接口。故当前只能记录：
 
@@ -253,7 +255,7 @@ Ark 数据面、所有 Coding API 调用、某个具体账户的历史数据，�
 
 **Finding `ARK-RETENTION-UNKNOWN-01` — `official-unknown`。**
 
-本轮未找到一份同时明确绑定到
+未找到一份同时明确绑定到
 `https://ark.cn-beijing.volces.com/api/coding/v3` 的官方页面，能给出以下每项的
 具体期限、对象清单和最终删除证明：
 
@@ -341,7 +343,7 @@ ZWorkbench 观察到零残留。
 | 套餐订阅/自动续费 | 费用中心退订；自动续费至少提前 7 天取消 | 订阅/账单 owner | `official-verified`; 未执行 |
 | 账单/发票/税务 | 账号注销页面要求注销前导出；注销协议允许法律/税务留存 | 账单 owner、账户 owner 和 Provider 按留存规则处理 | `official-verified`; 具体期限 unknown |
 | 账号注销 | 永久操作、45 天静默期、注销前需处理欠费/资源并导出备份；静默期不恢复数据 | 账户所有者/组织管理员 | `official-verified`; 未执行 |
-| ZWorkbench local owner | W8 产品边界中只负责本地 run、停止新请求、凭证不落盘和本地 evidence；不创建/管理/删除 Ark 侧资源 | ZWorkbench composition owner/维护者 | `human-reported / product-boundary` |
+| ZWorkbench local owner | 产品边界中只负责本地 run、停止新请求、凭证不落盘和本地 evidence；不创建/管理/删除 Ark 侧资源 | ZWorkbench composition owner/维护者 | `human-reported / product-boundary` |
 | Provider 侧最终零残留 | 官方政策包含法律留存、此前处理不受撤回影响、备份请求例外 | Provider/账户 owner；不可由本地 fixture 证明 | `official-unknown / not-verified` |
 
 ## 9. 当前 unknown register
@@ -401,7 +403,7 @@ ZWorkbench 观察到零残留。
 - 目标个人账户中确实存在的资源、数据范围、组织/项目和账单状态；
 - Provider 侧最终零残留和可复核删除完成证明。
 
-当前本记录的退出责任结论是：ZWorkbench 可记录并约束自己的本地调用边界，但不
+本记录的退出责任结论是：ZWorkbench 可记录并约束自己的本地调用边界，但不
 应宣称拥有 Ark 侧任务、Webhook、备份、账号或云资源；这些对象的真实清单、停用、
 删除、保留和账单收尾属于 Provider/账户/项目责任人的外部操作。该产品边界是
 `delegated-to-provider/account-owner`，Provider 侧删除状态是

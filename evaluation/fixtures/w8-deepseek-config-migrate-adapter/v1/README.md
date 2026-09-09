@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # `dsh-config-migrate` dynamic-plugin adapter fixture
 
 这是 acceptance/evaluation fixture，不是 ZWorkbench 产品运行时。它为

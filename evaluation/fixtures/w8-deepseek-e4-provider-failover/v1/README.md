@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # DeepSeek E4 Provider failover candidate fixture
 
 This is an acceptance/evaluation fixture, not ZWorkbench product code.

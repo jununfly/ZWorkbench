@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W7 Codex C3/C4 隔离 composition fixture
 
 这是 acceptance/evaluation 资产，不是 ZWorkbench 产品代码。它只在每个

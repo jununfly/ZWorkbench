@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 external-sandbox and native-approval fixture
 
 This fixture is acceptance/evaluation infrastructure only. It runs the fixed

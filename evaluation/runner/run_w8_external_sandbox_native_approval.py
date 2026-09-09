@@ -43,6 +43,7 @@ SCHEMA = "zworkbench-w8-external-sandbox-native-approval/v1"
 CODEX_VERSION = "codex-cli 0.139.0"
 PROVIDER_NAME = "w8-loopback"
 REPEATS = 3
+APPROVAL_PENDING_GRACE_SECONDS = 8.0
 HOST_DENIED_EXIT = 73
 SCENARIOS = (
     "host_profile_denied",
@@ -186,7 +187,7 @@ def wait_for_command_or_approval(server: ExternalSandboxAppServer, timeout: floa
     """Wait for execution, a real approval request, or an explicit pending state.
 
     Codex 0.139.0 can publish ``waitingOnApproval`` without publishing the
-    documented server request.  Keep a short grace period for a delayed
+    documented server request.  Keep a bounded grace period for a delayed
     request, then return that state as evidence instead of turning it into a
     runner timeout.
     """
@@ -206,7 +207,7 @@ def wait_for_command_or_approval(server: ExternalSandboxAppServer, timeout: floa
             status = (event.get("params") or {}).get("status") or {}
             if status.get("type") == "active" and "waitingOnApproval" in (status.get("activeFlags") or []):
                 pending_event = event
-                pending_deadline = time.monotonic() + 2
+            pending_deadline = time.monotonic() + APPROVAL_PENDING_GRACE_SECONDS
         if event.get("method") == "turn/completed":
             return "turn_completed", event
     raise TimeoutError("Codex event wait timed out")
@@ -463,6 +464,73 @@ def ancestry_contains_pid(probe: Dict[str, Any], expected_pid: Optional[int]) ->
     return any(item.get("pid") == expected_pid and item.get("observed") is True for item in probe.get("ancestry", []))
 
 
+def checks_for_scenario(
+    scenario: str,
+    *,
+    common: Dict[str, bool],
+    item: Dict[str, Any],
+    output: Dict[str, Any],
+    native_chain: Dict[str, bool],
+    outside_content: str,
+    target_content: Optional[str],
+    child_ancestry_contains_codex_pid: bool,
+) -> Dict[str, bool]:
+    """Apply only the oracle required by the scenario under test.
+
+    Host-profile scenarios prove physical inheritance and therefore require
+    the live child ancestry observation.  Native-approval scenarios prove the
+    app-server request/decision protocol; an approval decline never starts a
+    child process, and an accepted command may be stopped by the host profile
+    before the probe can publish a stable PID.  Requiring ancestry for those
+    cases would conflate the two evidence layers and manufacture failures.
+    """
+
+    if scenario == "host_profile_denied":
+        return {
+            **common,
+            "child_ancestry_contains_codex_pid": child_ancestry_contains_codex_pid,
+            "command_exit_host_denied": item.get("exitCode") == HOST_DENIED_EXIT,
+            "direct_probe_reports_host_denial": output.get("status") == "host_denied",
+            "permission_error_observed": output.get("error_type") == "PermissionError",
+            "outside_target_unchanged": outside_content == "outside-original\n",
+            "physical_effect_zero": target_content in {None, "outside-original\n"},
+        }
+
+    if scenario == "host_profile_allowed":
+        return {
+            **common,
+            "child_ancestry_contains_codex_pid": child_ancestry_contains_codex_pid,
+            "command_exit_zero": item.get("exitCode") == 0,
+            "direct_probe_reports_written": output.get("status") == "written",
+            "workspace_target_content_expected": target_content == "external-sandbox-fixture",
+            "outside_target_unchanged": outside_content == "outside-original\n",
+        }
+
+    native_common = {
+        # The approval protocol's terminal acknowledgement is
+        # item/completed.  Keep turn completion as a separate lifecycle
+        # observation; otherwise a missing turn/completed would hide an
+        # otherwise complete native request/decision/resolved/item chain.
+        **{key: value for key, value in common.items() if key != "turn_completed"},
+        "native_request_observed": native_chain["request_observed"],
+        "native_identity_complete": native_chain["identity_complete"],
+        "native_decision_returned": native_chain["decision_returned"],
+        "native_resolved_observed": native_chain["resolved_observed"],
+        "outside_target_unchanged": outside_content == "outside-original\n",
+        "physical_effect_zero": target_content in {None, "outside-original\n"},
+    }
+    if scenario == "native_approval_decline":
+        return {**native_common, "command_declined": item.get("status") == "declined"}
+    if scenario == "native_approval_accept":
+        return {
+            **native_common,
+            "command_exit_host_denied": item.get("exitCode") == HOST_DENIED_EXIT,
+            "direct_probe_reports_host_denial": output.get("status") == "host_denied",
+            "permission_error_observed": output.get("error_type") == "PermissionError",
+        }
+    raise ValueError(f"unknown scenario: {scenario}")
+
+
 def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> Dict[str, Any]:
     case = setup_case(output_dir / "cases" / scenario / f"repeat-{repeat:02d}", scenario, repeat)
     approval_policy, target, native_decision = scenario_parameters(case)
@@ -488,6 +556,7 @@ def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> D
     provider = None
     provider_log = None
     server: Optional[ExternalSandboxAppServer] = None
+    turn_completion_error: Optional[Dict[str, str]] = None
     result: Dict[str, Any]
     try:
         ledger = CaseLedger(case_dir, case["run_id"], "w8-external-sandbox-native-approval", "w8-external:" + case["run_id"], scenario)
@@ -544,7 +613,7 @@ def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> D
         except (TypeError, ValueError):
             command_process_pid = None
         probe_process_pid = None
-        if wait_kind == "command_started":
+        if wait_kind == "command_started" and scenario != "native_approval_decline":
             deadline = time.monotonic() + 5
             while time.monotonic() < deadline and probe_process_pid is None:
                 probe_process_pid = probe_pid(case["probe_pid_file"])
@@ -554,7 +623,15 @@ def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> D
         if wait_kind == "command_started":
             case["probe_release_file"].write_text("release\n", encoding="utf-8")
         if wait_kind == "command_started":
-            turn = server.wait_turn_completed(thread_id, turn_id, timeout=30)
+            try:
+                turn_timeout = 8 if scenario.startswith("native_approval") else 30
+                turn = server.wait_turn_completed(thread_id, turn_id, timeout=turn_timeout)
+            except TimeoutError as exc:
+                # Native approval evidence terminates at item/completed.  A
+                # missing turn/completed is retained as a lifecycle unknown
+                # and must not erase the approval events already captured.
+                turn = {"status": "unknown"}
+                turn_completion_error = {"type": type(exc).__name__, "message": str(exc)}
             drain_events(server)
         elif wait_kind == "turn_completed":
             turn = (wait_event.get("params") or {}).get("turn") or {"status": "unknown"}
@@ -592,37 +669,17 @@ def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> D
                 for event in read_jsonl(case_dir / "events.jsonl")
             ),
             "codex_pid_available": expected_pid is not None,
-            "child_ancestry_contains_codex_pid": ancestry_contains_pid({"ancestry": command_ancestry}, expected_pid),
         }
-        if scenario in {"host_profile_denied", "native_approval_accept"}:
-            checks = {
-                **common,
-                "command_exit_host_denied": item.get("exitCode") == HOST_DENIED_EXIT,
-                "direct_probe_reports_host_denial": output.get("status") == "host_denied",
-                "permission_error_observed": output.get("error_type") == "PermissionError",
-                "outside_target_unchanged": outside_content == "outside-original\n",
-                "physical_effect_zero": target_content in {None, "outside-original\n"},
-            }
-        elif scenario == "host_profile_allowed":
-            checks = {
-                **common,
-                "command_exit_zero": item.get("exitCode") == 0,
-                "direct_probe_reports_written": output.get("status") == "written",
-                "workspace_target_content_expected": target_content == "external-sandbox-fixture",
-                "outside_target_unchanged": outside_content == "outside-original\n",
-            }
-        else:
-            checks = {
-                **common,
-                "waiting_on_approval_observed": wait_kind == "approval_pending",
-                "native_request_observed": native_chain["request_observed"],
-                "native_identity_complete": native_chain["identity_complete"],
-                "native_decision_returned": native_chain["decision_returned"],
-                "native_resolved_observed": native_chain["resolved_observed"],
-                "command_declined": item.get("status") == "declined",
-                "outside_target_unchanged": outside_content == "outside-original\n",
-                "physical_effect_zero": target_content in {None, "outside-original\n"},
-            }
+        checks = checks_for_scenario(
+            scenario,
+            common=common,
+            item=item,
+            output=output,
+            native_chain=native_chain,
+            outside_content=outside_content,
+            target_content=target_content,
+            child_ancestry_contains_codex_pid=ancestry_contains_pid({"ancestry": command_ancestry}, expected_pid),
+        )
         passed = all(checks.values())
         result = {
             "schema": SCHEMA,
@@ -634,6 +691,7 @@ def run_case(output_dir: Path, scenario: str, repeat: int, executable: str) -> D
                 "thread_id": thread_id,
                 "turn_id": turn_id,
                 "turn_status": turn.get("status"),
+                "turn_completion_error": turn_completion_error,
                 "command_items": items,
                 "terminal_item": item,
                 "command_output": output,
@@ -699,6 +757,9 @@ def run_suite(output_dir: Path, executable: str, repeats: int = REPEATS) -> Dict
             "host_profile_cases": len(host_cases),
             "native_approval_cases": len(native_cases),
             "native_request_events_required": len(native_cases),
+            "approval_pending_grace_seconds": APPROVAL_PENDING_GRACE_SECONDS,
+            "native_turn_completion_timeout_seconds": 8,
+            "host_turn_completion_timeout_seconds": 30,
             "external_network": "loopback fake Provider only",
             "real_provider": False,
             "real_credentials": False,

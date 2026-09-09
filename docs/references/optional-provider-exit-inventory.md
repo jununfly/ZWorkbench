@@ -1,9 +1,12 @@
+---
+doc-kind: reference
+authority: external
+---
+
 # 可选：Provider 与远端退出 inventory
 
-状态：`reference-only / on-demand / out-of-roadmap`
-
-本文是给一次具体 Provider 账户填写的脱敏清单，不是 W8 产品目标节点、远端删除脚本，也不是法律/隐私
-签核。当前目标账户是用户报告的火山方舟个人账户；所有未确认字段保留为
+本文是由 Provider 账户 owner 填写的脱敏清单，不是产品目标节点、远端删除脚本，也不是法律/隐私
+签核。它适用于用户报告的火山方舟个人账户；所有未确认字段保留为
 `unknown`，不能用“控制台没看到”填成 `none`。
 
 ## 0. 使用只读脱敏 receipt wizard
@@ -14,7 +17,7 @@
 ./scripts/optional-provider-exit.sh
 ```
 
-该 wizard 只打开官方控制台、收集当前状态和 SHA-256 fingerprint，并生成
+该 wizard 只打开官方控制台、收集账户状态和 SHA-256 fingerprint，并生成
 `evaluation/evidence/provider-exit/<timestamp>-<pid>/receipt.json`。它是只读流程：不读取
 API key、不调用 Provider API、不执行删除/停用/退订/注销，也没有 Provider-side action
 阶段或 action 确认。账户保持 `active` 完全可以；若状态未知，receipt 保留
@@ -74,7 +77,7 @@ ID、Key、Prompt 或响应正文。`account_scope` 只能是 `personal`、`team
 | project / billing | `9f5179ed9b7d69e37fa3a1fa5c5563f3a7f67fdf514647ebd5ef07f2c4196add`（SHA-256 fingerprint） | Human 提供；原始 Project/billing ID 未记录 | `human-confirmed / staging-used` |
 | authentication path | Provider API Key | Human + 官方 API Key 资料 | `official-verified / target-key-unverified` |
 | key fingerprint | `9c9020b16cb136d1f0cb71989fe3b81e0fc756742f6b7d2eb335ba2a84683451`（SHA-256） | Human 提供，生成于 2026-09-01；未记录 Key 原文 | `human-reported / target-key-unverified` |
-| ZWorkbench ownership | 不创建、不管理、不删除 Provider 侧资源 | W8 产品边界 | `product-boundary` |
+| ZWorkbench ownership | 不创建、不管理、不删除 Provider 侧资源 | 产品边界 | `product-boundary` |
 
 官方来源索引见 [`optional-provider-exit-primary-sources.md`](./optional-provider-exit-primary-sources.md)，
 包括 Coding Plan endpoint、API Key 管理、数据授权、隐私、服务条款、账号注销和
@@ -102,7 +105,7 @@ ID、Key、Prompt 或响应正文。`account_scope` 只能是 `personal`、`team
 
 ## 4. 远端资源 inventory
 
-当前只登记“存在性线索”，不假设资源属于哪个 Ark 产品，也不假设由 ZWorkbench 创建。
+本清单只登记“存在性线索”，不假设资源属于哪个 Ark 产品，也不假设由 ZWorkbench 创建。
 
 | 资源类别 | 脱敏 resource ID/fingerprint | 创建来源 | 当前状态 | 数据范围/目标 | 停止/删除入口 | retention/到期 | 责任人 | 证据状态 |
 |---|---|---|---|---|---|---|---|---|
@@ -147,10 +150,10 @@ Gate A: HOLD / UNKNOWN (no existing Provider console session; remote exit remain
 适用条款/生效日期、任务/Webhook/backup 的脱敏 fingerprint、删除/停用入口、retention
 或到期规则、账单责任人和退出验证证据。这里不要求把 key 值交给 ZWorkbench。
 
-## 7. 与 1-6 和 W8 的关系
+## 7. 与产品边界的关系
 
-- 本清单是外部 Provider 试验的证据 baseline，不是 W8 产品开发节点，也不是 Gate A 自动放行。
+- 本清单说明外部 Provider 试验的责任边界，不是默认产品路径，也不是自动放行条件。
 - 默认产品路径继续使用 loopback/fake Provider；已完成的真实只读 staging 是单独的
   owner-authorized evidence，不会自动成为默认路由或退出授权。
 - 可恢复写操作仍受 Gate B 独立约束；Provider 资料完整也不能放行本地写 effect。
-- 本地写操作另受 [`w8-1-6-recoverable-write-and-runtime-boundary.md`](../plans/w8-1-6-recoverable-write-and-runtime-boundary.md) 的独立 Gate B 约束。
+- 本地写操作仍受 [架构规则](../architecture/README.md) 中 owner policy、approval、effect claim 与 reconcile 边界约束。

@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W6-0.1 隔离评估 Fixture
 
 这是候选 Harness 首轮比较使用的无真实副作用 fixture。它只允许访问本地临时目录和 loopback 假服务，不使用真实凭证、生产项目、外部消息或不可逆部署。

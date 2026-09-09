@@ -1,12 +1,14 @@
-# 可选：真实 Provider 只读 staging 验证 runbook
+---
+doc-kind: reference
+authority: external
+---
 
-状态：`out-of-roadmap / authorized-read-only-staging-passed / real-Ark-failover-on-demand / exit-HOLD` · 路线类型：`Acceptance / evaluation` · 核查日期：`2026-09-04`
+# 可选：真实 Provider 只读 staging 验证 runbook
 
 本文把“真实 Provider 只读 staging”说成 Human 可以执行和签核的步骤。它不是
 Provider adapter 实现，也不是授权申请，更不是把一次真实请求当成生产可用性证明。
-它已从 W8 产品目标树移出，不是 ZWorkbench 核心开发的阻断节点；只有账户 owner
-明确希望做一次真实 Provider 验证时才按需使用。
-当前目标 Provider 是用户报告的火山方舟 Coding API：
+它不是 ZWorkbench 核心开发的阻断节点；只有账户 owner 明确希望做一次真实 Provider
+验证时才按需使用。目标 Provider 是用户报告的火山方舟 Coding API：
 `https://ark.cn-beijing.volces.com/api/coding/v3`；本 helper 的本次 staging region 固定为
 `cn-beijing`。如果账户/数据实际区域不同，应停下并单独评审对应 endpoint，不能把其他
 区域名称翻译后填入本 run。
@@ -68,7 +70,7 @@ Webhook、备份或删除合同。
 | S4 远端资源 | task/run/queue、Webhook、backup 等资源的脱敏 ID、owner、停止/删除入口 | `blocked`：inventory 未闭合 |
 | S5 退出路径 | 停止请求、撤销 key、停用触发器、删除/导出请求、响应或工单 ID | `blocked`：退出验证未执行 |
 | S6 人工授权 | 账户 owner 明确授权一次 staging 请求、预算上限和停止条件 | `blocked`：本批次尚无一次性授权记录 |
-| S7 本地隔离 | 合成 Prompt、非敏感 workspace、case-local state、无 effect/scheduler/Webhook | `ready by design`：沿用 W8 第一切片约束 |
+| S7 本地隔离 | 合成 Prompt、非敏感 workspace、case-local state、无 effect/scheduler/Webhook | `ready by design`：遵守本地只读产品约束 |
 
 任一 S1–S6 为 `unknown` 时，该次运行就是 `HOLD / safe-stop`，不能用 S7 或 fake
 Provider 的通过结果抵消。最新一次账户 owner 的 S1–S6 已由脱敏 summary 记录为
@@ -248,5 +250,5 @@ case-local turn；脱敏 summary 分别位于 `evaluation/evidence/optional-real
 相关事实源：
 
 - [`optional-provider-exit-inventory.md`](./optional-provider-exit-inventory.md)
-- [`w8-1-6-recoverable-write-and-runtime-boundary.md`](../plans/w8-1-6-recoverable-write-and-runtime-boundary.md)
+- [架构规则](../architecture/README.md)
 - [`optional-provider-exit-primary-sources.md`](./optional-provider-exit-primary-sources.md)

@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 case-local capability broker
 
 This fixture is acceptance/evaluation infrastructure, not a production

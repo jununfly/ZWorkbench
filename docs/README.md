@@ -1,100 +1,80 @@
+---
+doc-kind: architecture-map
+authority: supporting
+---
+
 # ZWorkbench 文档地图
 
-状态：`knowledge-baseline / target-state-approved-for-implementation-planning`<br>
-日期：2026-09-03
+## 文档组织原则
 
-这是方案准备阶段的统一入口。它回答“现在应相信哪份材料、哪些结论只是历史评测、开发从哪里开始”，不替代代码、测试或 roadmap JSON。
+本仓库文档按「ontology/wiki」组织：长期文档只保留无状态的实体、连接、事实、规则，不含过程标签（里程碑/提交/日期）。导航优先级：领域语言 → 方法论 → 设计/架构 → ADR。
 
-## 先读这四份
+## 阅读顺序
 
-1. [开发前基线](plans/development-baseline.md)：当前目标、已完成准备、未关闭门和正式开发的进入顺序。
-2. [目标系统架构](plans/designs/dsh-codex-hybrid-target-architecture.md)：目标态的分层、ownership、Worker contract、扩展面和 H1–H9 验收矩阵。
-3. [DSH 源码/运行时布局设计](plans/designs/dsh-source-runtime-layout-and-maintenance.md)：ZWorkbench 与 ZDSHarness 的目录、artifact、cache、升级和维护边界。
-4. [README](../README.md)：当前仓库实际可运行的 Codex-only `local_read_only_run`，不是目标混合架构已经完成的证明。
+1. [领域语言](../ZJ-CONTEXT.md)：定义 Workbench、Harness、Run、Provider、effect、unknown 与 replay。
+2. [方法论](methods/README.md)：定义证据层级、评测边界、失败语义与架构决策方法。
+3. 设计与架构：见下方“架构手册”。
+4. [ADR](zj-adr/README.md)：记录会长期约束系统结构的决策及其后果。
 
-## 当前唯一决策答案
+## 架构手册
 
-目标架构是：
+- [系统概览](architecture/README.md) — 系统边界、主要组成与读者路由；authority-id: architecture.overview
+- [分层与依赖](architecture/ta-layers.md) — DSH、Worker、Control Plane 与 Owner 的允许依赖；authority-id: architecture.layers.core
+- [DSH runtime 集成](architecture/ta-dsh-runtime-integration.md) — 固定 artifact、manifest、启动与回滚边界；authority-id: architecture.subsystem.dsh-runtime-integration
+- [Codex Worker bridge](architecture/ta-codex-worker-bridge.md) — Worker envelope、identity、失败关闭与进程生命周期；authority-id: architecture.subsystem.codex-worker-bridge
+- [CompositionOwner](architecture/ta-composition-owner.md) — durable state、effect、approval、reconcile 与 backup/restore；authority-id: architecture.subsystem.composition-owner
+- [本地只读运行流](architecture/ta-local-read-only-flow.md) — 从 preflight 到 owner-backed result 的触发、序列与退出；authority-id: architecture.flow.local-read-only-run
+- [可恢复写入边界](architecture/ta-reversible-write-boundary.md) — write effect 的 HOLD、approval、host enforcement 与放行门；authority-id: architecture.cross-cutting.reversible-write-boundary
 
-```text
-DSH 主 Harness
-  └─ Codex Coding Worker（首期进程外 bridge）
-       └─ ZWorkbench CompositionOwner（唯一 durable owner）
-```
+## 长期页面
 
-这意味着：
+- [方法论](methods/README.md) — 证据分层、失败语义与评测边界；authority-id: method.evidence-and-safety
+- [ADR 0001：CompositionOwner 是唯一 durable owner](zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) — 唯一 durable owner 的长期决定；authority-id: adr.composition-owner.unique-durable-owner
 
-- DSH 持有顶层 Agent loop、插件组合、上下文、任务路由和个性化实验；
-- Codex 只负责代码理解、修改、测试、构建和可审查 diff；
-- ZWorkbench 持有 run、attempt、event、effect、result、approval、Provider 尝试、回放、备份、恢复和退出记录；
-- DSH、插件、Codex session、Provider 日志和观测投影都不是第二个事实源；
-- 当前代码中的 Codex-only 路径保留为回退基线；H1–H5 已有受控的 owner-backed bridge seam；
-  H5 仅为组合式 evidence/replay 证据，不代表 DSH 原生或真实 Provider replay 已通过。
+## Fixture documentation
 
-目标架构已获准进入实现规划；真实写入、真实 Provider 默认接入、Git push、部署、Webhook、全量插件市场和生产发布仍未获准。
+- [Fixture 文档索引](../evaluation/fixtures/README.md) — 隔离输入、oracle、版本与安全约束；fixture documentation，不是产品或架构权威
 
-## 文档分层与使用方式
+这一顺序优先回答“对象是什么、如何判断、如何连接、为何这样选择”，而不是复述某次
+评测、路线节点或实现过程。
 
-| 目录/文件 | 作用 | 状态解释 |
-|---|---|---|
-| [`AGENTS.md`](../AGENTS.md) | Agent 执行规则、导航和长期硬约束 | 每次任务先读 |
-| [`ZJ-CONTEXT.md`](../ZJ-CONTEXT.md) | 领域词汇、unknown、replay 和 Provider 责任边界 | 稳定语义 |
-| [`plans/designs/`](plans/designs/) | 目标态和技术设计 | 当前目标以目标架构文档为准 |
-| [`plans/development-baseline.md`](plans/development-baseline.md) | 准备阶段收口和开发入口 | 当前准备阶段权威摘要 |
-| [`plans/personal-workbench-w8-roadmap.json`](plans/personal-workbench-w8-roadmap.json) | 节点、状态和决策历史事实源 | 只用 roadmap CLI 读写 |
-| [`plans/personal-workbench-w8-roadmap.md`](plans/personal-workbench-w8-roadmap.md) | roadmap 的生成视图 | 不手工编辑路线图区块 |
-| [`plans/w6-*`](plans/) | ATAM、CBAM、持续评估、C1–C7 合同和首轮基线 | acceptance/evaluation，不等于产品已实现 |
-| [`plans/w7-*`](plans/) | Codex 候选的固定版本、组合式证据和 C7 审计 | 历史评测/回退基线；未知项仍有效 |
-| [`plans/w8-*`](plans/) | 受控试点、`local_read_only_run`、DeepSeek 挑战者和目标边界 | 按文档头部状态区分 product execution 与 acceptance/evaluation |
-| [`plans/w8-h1-bootstrap-findings.md`](plans/w8-h1-bootstrap-findings.md) | H1 runtime seam 的 fixture 证据与正式 artifact 资格边界 | fixture 与 clean maintainer-pinned artifact 已验证；可进入 H2 |
-| [`plans/w8-h2-worker-handshake-findings.md`](plans/w8-h2-worker-handshake-findings.md) | H2 Worker handshake 的 owner correlation、严格 wire 和 safe-stop 证据 | owner-backed + fixture-composed 已验证；真实 Provider/H4-H5 仍未声称 |
-| [`plans/w8-h3-worker-coding-findings.md`](plans/w8-h3-worker-coding-findings.md) | H3 只读 coding、真实 Codex runtime + loopback Provider 和 artifact receipt 证据 | fixture 与 real-Codex-runtime + loopback 已验证；真实远程 Provider/H4-H5 仍 HOLD |
-| [`plans/w8-h4-worker-lifecycle-findings.md`](plans/w8-h4-worker-lifecycle-findings.md) | H4 Worker cancel、timeout、crash、parent stop、process-tree cleanup 和 recovery | 6/6 owner-backed + fixture-composed 场景通过；H5、host sandbox 和真实 Provider 仍 HOLD |
-| [`plans/w8-h5-evidence-replay-findings.md`](plans/w8-h5-evidence-replay-findings.md) | H5 owner-backed recorded view、sealed cassette simulated replay、live replay deny 和 provenance gate | 7/7 场景通过；仅为 owner-backed + fixture-composed，真实 Codex/Provider replay 仍 HOLD |
-| [`plans/w8-real-provider-compatibility-findings.md`](plans/w8-real-provider-compatibility-findings.md) | 真实远程 Provider 的分层兼容性、人工授权门和脱敏 staging 合同 | HTTP 与授权 Codex read-only staging 已 pass；loopback composition 已 pass；真实 Ark fallback 与退出仍按需/HOLD |
-| [`references/optional-real-codex-provider-staging.md`](references/optional-real-codex-provider-staging.md) | 真实 Codex 0.139.0 + Ark 的 case-local 一次性只读 turn 入口与证据边界 | 最新授权 staging 已 pass；完整 Provider 兼容性仍 HOLD |
-| [`plans/research/`](plans/research/) | 一手来源、固定 commit、collection status 和研究 ledger | 研究支撑；raw ledger 是生成证据 |
-| [`references/`](references/) | 真实 Provider 和远端退出的按需人工材料 | 路线外，不阻塞本地开发 |
-| [`../evaluation/fixtures/`](../evaluation/fixtures/) | 可重复的隔离输入和假服务 | 可复用测试资产 |
-| [`../evaluation/evidence/`](../evaluation/evidence/) / [`../evaluation/runs/`](../evaluation/runs/) | 机器生成的运行证据和历史现场 | 默认本地保留，不批量提交或删除 |
+## 文档类型
 
-## 现役答案与历史快照
+| 类型 | 位置 | 允许内容 | 不承担的角色 |
+|---|---|---|---|
+| Wiki | `ZJ-CONTEXT.md`、`docs/methods/`、`docs/architecture/`、`docs/zj-adr/` | 实体、关系、事实、规则、稳定决策 | 单次运行结果或进度面板 |
+| References | [docs/references/](references/README.md) | 外部合同、账户 owner 操作边界、受控 runbook | 默认产品配置或自动授权 |
+| Fixture documentation | `evaluation/fixtures/**/README.md` | 隔离输入、oracle、版本和安全约束 | 产品使用或架构权威 |
 
-当前目标架构、开发入口和硬约束只以 [目标系统架构](plans/designs/dsh-codex-hybrid-target-architecture.md)、
-[开发前基线](plans/development-baseline.md)、本文件和根目录 [AGENTS.md](../AGENTS.md) 为准。
-`w6-*`、`w7-*`、早期 `w8-*` 的评测/决策文档保留当时的证据、阈值和回退基线；
-如果其中仍出现“Codex 唯一主 Harness”，应按文档头部的历史状态理解，不覆盖
-2026-09-03 已批准的 DSH 主 Harness + Codex Coding Worker 目标态。路线图的事实状态
-仍只读写 [`personal-workbench-w8-roadmap.json`](plans/personal-workbench-w8-roadmap.json)，
-其 Markdown 是 CLI 生成视图。
+文档中的目标和规则与代码/测试表达的是不同维度：代码、测试和运行产物证明当前实现事实，
+文档权威页表达目标约束与稳定语义。发生差异时必须标记 target / implemented / unknown，
+不能以一方静默替代另一方；稳定规则只回写一个 wiki 权威页。
 
-## 研究准备阶段结论
+## 系统边界
 
-| 阶段 | 已沉淀的结论 | 读取入口 |
-|---|---|---|
-| W2 | 核实 DeepSeek Harness、Pi 和 Codex 的对象身份与能力形状 | [W2 named harnesses](plans/research/w2-named-harnesses.md) |
-| W3 | 区分执行型 Harness、代码专长执行器、编排、调度、Provider、观测和评测层 | [W3 alternatives](plans/research/w3-open-source-alternatives.md) |
-| W4 | 观测/评测后端可以复用，但执行回放、副作用隔离、环境快照和 artifact lock 仍属 ZWorkbench | [W4 observability/replay](plans/research/w4-observability-replay-evaluation.md) |
-| W6 | 用 ATAM 识别敏感点和权衡，用 CBAM 记收益/成本，并以自动化持续评估形成硬门 | [W6 matrix](plans/w6-evaluation-matrix.md) · [ATAM](plans/w6-atam-template.md) · [CBAM](plans/w6-cbam-template.md) |
-| W7 | Codex + CompositionOwner 的组合式证据最多，保留为回退；原生 scheduler、approval、host sandbox 等不能过度推断 | [W7 adoption](plans/w7-codex-atam-cbam-adoption-decision.md) |
-| W8 | DeepSeek 插件生态有真实供给，但 E4 durable fallback ledger、全冷却安全停止、E5 人工生命周期和 E6 前置条件仍未闭合 | [plugin findings](plans/research/w8-deepseek-plugin-ecosystem-findings.md) · [E4 findings](plans/w8-deepseek-e4-provider-failover-v2-findings.md) |
+ZWorkbench 的目标组合由 DSH 主 Harness、进程外 Codex Coding Worker 与唯一的
+CompositionOwner 构成。CompositionOwner 是跨 Run 的 run、attempt、event、effect、result、
+approval、replay metadata 与 backup/restore 的唯一 durable owner。DSH、Codex、Provider 与
+观测系统都只能提供输入、执行能力或 evidence，不能形成第二个 canonical state。
 
-## 开发入口与停止条件
+仓库中的可安装入口执行受控的本地只读任务；任何可产生副作用的动作都必须经过
+`request → policy → decision → claim → execute → complete/reconcile`。未知 identity、permission、
+effect、Provider 或 replay 状态必须 safe-stop。真实 Provider、真实写入、Git push、部署和 live
+replay 只属于显式、受控的后续验证，不会由文档或历史 evidence 自动授权。
 
-正式产品开发从目标架构的 Stage 0/1 开始：冻结 DSH profile、插件 allowlist、Codex Worker artifact、wire/schema、parent/child identity 和 capability facade；随后只做 case-local、fake/loopback Provider、只读或隔离 worktree 的 H1–H5。
+## 维护规则
 
-以下事项继续保持 `HOLD` / `unknown-stop`，不会被文档收口升级为通过：
+- 新增稳定概念时，先更新领域语言、方法论、架构或 ADR 中的一个权威页；不要把同一规则复制到
+  临时实现说明或评测结论。
+- 不在仓库文档中保留实施过程、评测结论、研究 ledger 或路线状态；需要核对时以代码、测试、运行产物
+  和 Git 历史为准。
+- 外部 Provider、凭证、账户、数据留存和退出的操作说明只放在 `docs/references/`；不记录 secret、
+  原始资源标识、Prompt 或响应正文。
+- 文档不以“已完成”“本轮”“日期”“commit”定义长期真相。需要 provenance 时，以 artifact receipt
+  或 Git 历史为准，不复制到 wiki。
 
-- `1-6-3` 的宿主强制边界与 Codex native approval；
-- 真实本地写入、apply、Git push、部署和其他不可逆 effect；
-- DSH 候选插件的 durable Provider fallback/degradation ledger；
-- 真实 Provider 的自然故障 failover、远端数据、任务、Webhook、备份、retention、账单和账户退出；
-- 混合架构的人工安装、升级、备份/恢复、排障和退出计时。
+## 运行入口
 
-任何关键 identity、permission、effect、process、Provider 或 replay 状态不能确认时，结果必须是 `unknown` / `safe-stop`，不能用最终文本或旧评测证据补齐。
-
-## 工作区证据纪律
-
-- 评测输出、`evaluation/runs` 和大体量 raw research ledger 是复核现场，不是默认源代码提交物；提交时只选择最小、脱敏、与变更直接相关的 fixture 或摘要。
-- 不能通过删除历史证据来制造“clean”。本次只做文档和 ignore 收口；删除、移动、重命名历史文件须另行确认。
-- 真实 API key、token、cookie、生产数据和原始 Provider 响应不得进入文档、日志、owner、backup、artifact 或 git。
+- [References index](references/README.md) 提供真实 Provider 与账户 owner 的按需、只读入口。
+- [Repository README](../README.md) 提供本地只读 CLI 的使用方式。
+- [Agent instructions](../AGENTS.md) 定义协作时的执行、事实源和安全约束。

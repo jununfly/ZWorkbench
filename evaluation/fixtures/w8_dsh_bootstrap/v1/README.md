@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 DSH bootstrap fixture
 
 This is a deterministic, case-local H1 seam fixture. It emits two JSONL

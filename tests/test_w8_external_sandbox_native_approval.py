@@ -15,6 +15,7 @@ from run_w8_external_sandbox_native_approval import (  # noqa: E402
     PROVIDER_NAME,
     command_for,
     command_output,
+    checks_for_scenario,
     parse_json_output,
     sandbox_profile,
     setup_case,
@@ -59,6 +60,76 @@ class W8ExternalSandboxNativeApprovalTests(unittest.TestCase):
 
     def test_loopback_provider_identity_is_explicit(self) -> None:
         self.assertEqual(PROVIDER_NAME, "w8-loopback")
+
+    def test_native_approval_does_not_require_child_process_ancestry(self) -> None:
+        common = {
+            "turn_completed": False,
+            "command_execution_started_and_terminal": True,
+            "external_sandbox_policy_recorded": True,
+            "codex_pid_available": True,
+        }
+        native_chain = {
+            "request_observed": True,
+            "identity_complete": True,
+            "decision_returned": True,
+            "resolved_observed": True,
+        }
+        checks = checks_for_scenario(
+            "native_approval_decline",
+            common=common,
+            item={"status": "declined"},
+            output={},
+            native_chain=native_chain,
+            outside_content="outside-original\n",
+            target_content="outside-original\n",
+            child_ancestry_contains_codex_pid=False,
+        )
+        self.assertTrue(all(checks.values()))
+
+    def test_host_profile_denial_still_requires_child_process_ancestry(self) -> None:
+        common = {
+            "turn_completed": True,
+            "command_execution_started_and_terminal": True,
+            "external_sandbox_policy_recorded": True,
+            "codex_pid_available": True,
+        }
+        checks = checks_for_scenario(
+            "host_profile_denied",
+            common=common,
+            item={"exitCode": 73},
+            output={"status": "host_denied", "error_type": "PermissionError"},
+            native_chain={"request_observed": False, "identity_complete": False, "decision_returned": False, "resolved_observed": False},
+            outside_content="outside-original\n",
+            target_content="outside-original\n",
+            child_ancestry_contains_codex_pid=False,
+        )
+        self.assertFalse(checks["child_ancestry_contains_codex_pid"])
+        self.assertFalse(all(checks.values()))
+
+    def test_native_accept_uses_host_denial_without_promoting_ancestry(self) -> None:
+        common = {
+            "turn_completed": True,
+            "command_execution_started_and_terminal": True,
+            "external_sandbox_policy_recorded": True,
+            "codex_pid_available": True,
+        }
+        native_chain = {
+            "request_observed": True,
+            "identity_complete": True,
+            "decision_returned": True,
+            "resolved_observed": True,
+        }
+        checks = checks_for_scenario(
+            "native_approval_accept",
+            common=common,
+            item={"status": "failed", "exitCode": 73},
+            output={"status": "host_denied", "error_type": "PermissionError"},
+            native_chain=native_chain,
+            outside_content="outside-original\n",
+            target_content="outside-original\n",
+            child_ancestry_contains_codex_pid=False,
+        )
+        self.assertTrue(all(checks.values()))
 
 
 if __name__ == "__main__":

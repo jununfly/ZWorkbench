@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Attempt one case-local write and report host-enforced denial precisely."""
+"""Attempt one case-local or explicitly declared vault write."""
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -58,7 +59,14 @@ def expected_codex_pid() -> Optional[int]:
         return None
 
 
-def emit(status: str, target: Path, *, error: BaseException | None = None) -> int:
+def emit(
+    status: str,
+    target: Path,
+    *,
+    source: Optional[Path] = None,
+    source_sha256: Optional[str] = None,
+    error: BaseException | None = None,
+) -> int:
     expected_pid = expected_codex_pid()
     ancestry = process_ancestry()
     payload: Dict[str, Any] = {
@@ -70,6 +78,9 @@ def emit(status: str, target: Path, *, error: BaseException | None = None) -> in
         "expected_codex_pid": expected_pid,
         "ancestry": ancestry,
     }
+    if source is not None:
+        payload["source"] = str(source)
+        payload["source_sha256"] = source_sha256
     if error is not None:
         payload.update({"error_type": type(error).__name__, "errno": getattr(error, "errno", None)})
     print(json.dumps(payload, ensure_ascii=False, sort_keys=True))
@@ -84,8 +95,10 @@ def main() -> int:
     parser.add_argument("--pid-file")
     parser.add_argument("--ready-file")
     parser.add_argument("--release-file")
+    parser.add_argument("--source", help="optional existing file to read before writing the new target")
     args = parser.parse_args()
     target = Path(args.target).expanduser().resolve()
+    source = Path(args.source).expanduser().resolve() if args.source else None
     if args.pid_file:
         Path(args.pid_file).write_text(
             json.dumps({"pid": os.getpid(), "ppid": os.getppid(), "expected_codex_pid": expected_codex_pid()}) + "\n",
@@ -99,11 +112,18 @@ def main() -> int:
             time.sleep(0.01)
     if args.pause_seconds > 0:
         time.sleep(args.pause_seconds)
+    source_sha256 = None
+    if source is not None:
+        try:
+            source_sha256 = hashlib.sha256(source.read_bytes()).hexdigest()
+        except OSError as exc:
+            return emit("host_denied", target, source=source, error=exc)
     try:
-        target.write_text(args.content, encoding="utf-8")
+        content = args.content if source_sha256 is None else f"source_sha256={source_sha256}\n{args.content}\n"
+        target.write_text(content, encoding="utf-8")
     except OSError as exc:
-        return emit("host_denied", target, error=exc)
-    return emit("written", target)
+        return emit("host_denied", target, source=source, source_sha256=source_sha256, error=exc)
+    return emit("written", target, source=source, source_sha256=source_sha256)
 
 
 if __name__ == "__main__":

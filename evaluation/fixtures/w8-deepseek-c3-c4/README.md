@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 DeepSeek C3/C4 fixture
 
 This directory contains the loopback-only Chat Completions provider used by

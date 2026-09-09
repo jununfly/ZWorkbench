@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 local read-only fixture v1
 
 This fixture validates the `LocalReadOnlyRunOrchestrator` seam with the real

@@ -1,5 +1,7 @@
 # ZWorkbench Agent Instructions
 
+docs-map: docs/README.md
+
 ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。目标架构是：
 
 > DSH 主 Harness + Codex Coding Worker + ZWorkbench CompositionOwner。
@@ -16,7 +18,7 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 - CompositionOwner 是唯一 durable source of truth：负责 run、attempt、event、effect、result、approval、replay metadata、backup/restore 和 safe-stop。
 - DSH session、插件存储、Codex session/rollout、Provider 日志和观测投影都只能作为输入或 evidence，不能成为第二个 canonical owner。
 
-当前代码和用户入口仍可能是 Codex-only 的 local_read_only_run。它是可运行回退基线，不代表目标混合架构已经实现。目标架构设计见 [dsh-codex-hybrid-target-architecture.md](docs/plans/designs/dsh-codex-hybrid-target-architecture.md)。
+当前代码和用户入口仍可能是 Codex-only 的 local_read_only_run。它是可运行回退基线，不代表目标混合架构已经实现。目标架构的长期权威摘要见 [docs/architecture/](docs/architecture/README.md)。
 
 ### Decision hierarchy
 
@@ -25,12 +27,14 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 1. 用户当前明确的范围和安全授权；
 2. 本文件的长期硬约束；
 3. [ZJ-CONTEXT.md](ZJ-CONTEXT.md) 的领域词汇和共享语义；
-4. [docs/plans/designs/](docs/plans/designs/) 中已确认的目标设计；
-5. roadmap JSON 的事实源和已记录决策；
-6. 代码、配置、测试和运行产物；
-7. 旧报告、临时评测目录和对话中的未落盘判断。
+4. [docs/architecture/](docs/architecture/README.md) 中已确认的目标设计；
+5. 代码、配置、测试和运行产物；
+6. Git 历史、旧报告、临时评测目录和对话中的未落盘判断。
 
-代码和环境是真实状态；本文件只补充环境不直接表达的长期规则，不复制易变的版本和命令。
+以上顺序用于解释目标、规则和长期选择，不覆盖当前运行事实：代码、配置、测试和运行产物
+负责证明当前实现状态；若其与目标设计不一致，必须明确标记为 target / implemented /
+unknown，而不是把实现状态误写成目标已实现。本文件只补充环境不直接表达的长期规则，
+不复制易变的版本和命令。
 
 ## 2. Execution protocol
 
@@ -44,19 +48,17 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 - Acceptance/evaluation：任务是评测 Harness、插件、fixture、研究或 legacy 能力；默认只修改评测资产和证据，不修改产品代码。
 - Mixed/unclear：先把产品实现和评测验证拆成两个范围；在范围明确前不修改共享代码、依赖或生产配置。
 
-任何 roadmap 节点开始前，先确认它的路线角色。评测通过不等于产品能力已实现；source capability、plugin-composed、outer-composed 和 owner-backed 证据必须分开标记。
+评测通过不等于产品能力已实现；source capability、plugin-composed、outer-composed 和 owner-backed 证据必须分开标记。
 
 ### Step 2 — Navigate before editing
 
 先读取本文件，再根据下方导航索引找到最小相关材料：
 
 1. 检查 git status，保留用户已有改动，不覆盖、不重置、不清理无关文件；
-2. 查看 README、相关设计/路线图和现有测试；
+2. 查看 README、相关长期设计与现有测试；
 3. 确定修改边界、事实源、受影响的验证和回滚方式；
-4. 若方向性决策尚未落盘，先通过 roadmap CLI 记录决策并 render 视图；
+4. 若方向性决策需要长期约束系统结构，先以 `zj-grill-with-docs` 形成并接受 ADR；
 5. 只有完成 scope、owner、failure behavior 和 acceptance threshold 的检查后才编辑代码。
-
-路线图的 JSON 是事实源，Markdown 是生成视图。禁止手工编辑 roadmap JSON 或其生成的 roadmap Markdown；使用 zj-roadmap-driven 的 roadmap_cli.py 执行 decide、update 和 render。
 
 ### Step 3 — Implement a narrow seam
 
@@ -77,7 +79,7 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 
 - 相关测试、fixture 或评测命令通过；
 - 失败路径和默认拒绝路径已验证；
-- 受影响的文档、导航和 roadmap 状态已同步；
+- 受影响的文档与导航已同步；
 - 版本、依赖、权限、Provider、artifact 和 evidence identity 可复核；
 - git diff --check 通过；
 - 没有凭证、API key、生产数据或大型历史 runs 被加入变更；
@@ -88,25 +90,24 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 
 | 任务 | 先读 |
 |---|---|
-| 方案准备阶段、当前目标态和文档分类 | [docs 文档地图](docs/README.md)；[开发前基线](docs/plans/development-baseline.md) |
-| 理解目标架构和模块 ownership | [目标架构设计](docs/plans/designs/dsh-codex-hybrid-target-architecture.md) |
+| 方案准备阶段、当前目标态和文档分类 | [docs 文档地图](docs/README.md)；[方法论](docs/methods/README.md)；[架构 wiki](docs/architecture/README.md) |
+| 理解目标架构和模块 ownership | [架构 wiki](docs/architecture/README.md)；[ADR](docs/zj-adr/README.md) |
 | 理解领域词汇、unknown 和 replay 语义 | [ZJ-CONTEXT.md](ZJ-CONTEXT.md) |
-| 查看路线、当前焦点和已落盘决策 | [roadmap JSON](docs/plans/personal-workbench-w8-roadmap.json)；使用 roadmap CLI 的 tree、focus、decisions、path、render |
-| 了解当前用户入口和 Codex-only 回退基线 | [README.md](README.md)；[local_read_only CLI 设计](docs/plans/w8-1-7-local-read-only-cli.md) |
-| 修改 durable state、approval、effect、reconcile、backup/restore | [composition.py](src/zworkbench/composition.py)；[CompositionOwner 设计](docs/plans/w7-composition-owner-design.md) |
+| 了解当前用户入口和 Codex-only 回退基线 | [README.md](README.md)；[local_run.py](src/zworkbench/local_run.py) |
+| 修改 durable state、approval、effect、reconcile、backup/restore | [composition.py](src/zworkbench/composition.py)；[架构 wiki](docs/architecture/README.md) |
 | 修改 Codex app-server/CLI 接入 | [codex_adapter.py](src/zworkbench/codex_adapter.py)；[local_run.py](src/zworkbench/local_run.py) |
-| 开发 DSH 主 Harness 或插件 facade | [目标架构设计](docs/plans/designs/dsh-codex-hybrid-target-architecture.md)；[DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[DSH 插件生态研究](docs/plans/research/w8-deepseek-plugin-ecosystem-findings.md) |
-| 构建、引入、升级或回滚 DSH runtime | [DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[Worker contract v1](docs/plans/designs/worker-contract-v1.md) |
-| H1 DSH bootstrap runtime seam | [H1 findings](docs/plans/w8-h1-bootstrap-findings.md)；[DSH 源码/运行时布局设计](docs/plans/designs/dsh-source-runtime-layout-and-maintenance.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
-| H2 Worker handshake | [H2 findings](docs/plans/w8-h2-worker-handshake-findings.md)；[Worker contract v1](docs/plans/designs/worker-contract-v1.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
-| H3 Worker read-only coding | [H3 findings](docs/plans/w8-h3-worker-coding-findings.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py)；[worker coding runner](evaluation/runner/run_w8_worker_coding.py) |
-| 真实远程 Provider 兼容性 | [Provider findings](docs/plans/w8-real-provider-compatibility-findings.md)；[HTTP staging runbook](docs/references/optional-real-provider-staging.md)；[Codex runtime staging runbook](docs/references/optional-real-codex-provider-staging.md)；对应 scripts |
-| 开发 DSH–Codex Worker bridge | [Worker contract v1](docs/plans/designs/worker-contract-v1.md)；目标架构的 Worker/Bridge 章节；codex_adapter.py；对应 H1–H5 验证 |
-| Provider profile、路由、retry、fallback、降级 | 目标架构 Provider 章节；[DeepSeek E4 Provider findings](docs/plans/w8-deepseek-e4-provider-failover-v2-findings.md)；[真实 Provider staging](docs/references/optional-real-provider-staging.md) |
-| scheduler、幂等和中断恢复 | 目标架构 Scheduler/状态章节；[W6 C3](docs/plans/w6-c3-idempotency-findings.md)；[W6 C4](docs/plans/w6-c4-recovery-findings.md) |
-| 记录、诊断和回放 | 目标架构 Evidence/Replay 章节；[W6 C6](docs/plans/w6-c6-replay-findings.md) |
-| 评测 fixture、阈值和证据 | [W6 evaluation matrix](docs/plans/w6-evaluation-matrix.md)；[fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
-| 安装、升级、许可证和退出 | [W6 C7](docs/plans/w6-c7-operations-findings.md)；[optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
+| 开发 DSH 主 Harness 或插件 facade | [架构 wiki](docs/architecture/README.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
+| 构建、引入、升级或回滚 DSH runtime | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
+| H1 DSH bootstrap runtime seam | [架构 wiki](docs/architecture/README.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
+| H2 Worker handshake | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
+| H3 Worker read-only coding | [worker_bridge.py](src/zworkbench/worker_bridge.py)；[worker coding runner](evaluation/runner/run_w8_worker_coding.py) |
+| 真实远程 Provider 兼容性 | [HTTP staging runbook](docs/references/optional-real-provider-staging.md)；[Codex runtime staging runbook](docs/references/optional-real-codex-provider-staging.md)；对应 scripts |
+| 开发 DSH–Codex Worker bridge | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py)；对应 H1–H5 验证 |
+| Provider profile、路由、retry、fallback、降级 | [架构 wiki](docs/architecture/README.md)；[真实 Provider staging](docs/references/optional-real-provider-staging.md) |
+| scheduler、幂等和中断恢复 | [架构 wiki](docs/architecture/README.md)；[composition.py](src/zworkbench/composition.py) |
+| 记录、诊断和回放 | [架构 wiki](docs/architecture/README.md)；[composition.py](src/zworkbench/composition.py) |
+| 评测 fixture、阈值和证据 | [fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
+| 安装、升级、许可证和退出 | [optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
 | Python 包入口和命令 | [pyproject.toml](pyproject.toml)；[README.md](README.md)；代码中的 --help 输出是命令事实源 |
 
 ### Source map
@@ -128,11 +129,6 @@ evaluation/
   evidence/              generated evidence; normally local-only
   runs/                  historical/generated runs; never bulk-commit
 
-docs/plans/
-  designs/              target and technical design documents
-  research/             cited research and sealed ledgers
-  personal-workbench-*  roadmap facts and generated view
-  w6/w7/w8-*            scoped decisions, contracts and findings
 ~~~
 
 ## 4. Long-lived hard constraints
@@ -211,7 +207,7 @@ docs/plans/
 | Replay/evidence | mode 隔离、事件完整性、脱敏、artifact identity | recorded/simulated/live counters；未批准外部执行 0 |
 | CLI/user entry | preflight、可读错误、JSON 脱敏、退出清理 | CLI tests + case-local smoke + --help |
 | 评测 fixture/研究文档 | 与产品实现分开，固定 source/evidence/status，unknown 不升级 | runner、summary、evidence provenance 和对应阈值 |
-| roadmap/docs | 事实源唯一，决策可追溯，生成视图同步 | roadmap CLI validate + render；文档链接检查 |
+| wiki/docs | 权威页唯一，过程不与长期规则混杂 | 文档链接检查 |
 
 ## 6. Definition of done
 
@@ -221,7 +217,7 @@ docs/plans/
 - 代码位于正确的 extension seam，没有新增第二个 Agent loop 或 durable owner；
 - 正常路径、失败路径、取消/恢复路径和安全负向路径有对应测试；
 - 新增的 DSH/Codex/Provider 边界有版本、schema、权限和身份记录；
-- 相关 docs、AGENTS 导航、roadmap decision/status 已同步；
+- 相关 docs 与 AGENTS 导航已同步；
 - 运行产物脱敏，凭证和生产数据未落盘；
 - 受影响的 C1–C7/H1–H8 验证已运行并报告实际命令与结果；
 - git diff --check 通过，工作树中无无关文件被覆盖；

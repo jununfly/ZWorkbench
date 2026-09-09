@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W7 Codex C4 composition-owned approval fixture
 
 这是 `acceptance/evaluation` 资产，不是 ZWorkbench 产品权限模块。它把固定 Codex

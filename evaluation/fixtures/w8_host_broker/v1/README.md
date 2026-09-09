@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 host/broker rejection fixture
 
 This fixture is acceptance/evaluation infrastructure, not product code. It
