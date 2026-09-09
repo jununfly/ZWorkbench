@@ -12,12 +12,18 @@
 
 **组合路线（Composition route）**：由一个主 Harness 与一个或多个编排、调度、Provider、观测或评测组件协同提供能力的采用方式。组合路线不是把多个组件的功能清单简单相加，必须有明确的状态、权限和责任边界。
 
+**CompositionOwner**：ZWorkbench 跨 Run 的唯一 durable owner，持有 run、attempt、event、effect、result、approval、replay metadata 与 backup/restore 的 canonical state。
+_Avoid_: 第二 durable owner
+
+**Canonical state**：由其唯一 durable owner 持有、可用于恢复、审计与解释跨 Run 事实的状态；外部 session、缓存、日志或投影不能覆盖它。
+_Avoid_: 辅助运行时状态
+
 **Provider**：提供模型推理或模型 API 的服务、运行时或适配方；Provider 身份、模型和能力不能被静默替换。
 
 **路线外 Provider 验证**：真实 Provider 的认证、数据保留、远端任务/Webhook/备份和账户退出不属于
 ZWorkbench 主路线的开发待办。核心开发默认使用 loopback/fake Provider；只有 Human 明确要求时，才在
 本机运行独立的安全 wizard，并把脱敏 summary 作为可选证据。缺少真实 Provider 资料时，Agent 继续推进
-本地路线，不创建重复的 Provider gate、roadmap 子节点或 API Key 交接循环。
+本地路线，不创建重复的 Provider gate 或 API Key 交接循环。
 
 ## 评估语言
 
@@ -29,8 +35,22 @@ ZWorkbench 主路线的开发待办。核心开发默认使用 loopback/fake Pro
 
 **未知（Unknown）**：现有证据或实测不足以判断能力。未知不是失败，也不是通过；关键门槛处的未知保持待验证。
 
+**安全停止（safe-stop）**：关键 identity、effect 或外部结果不确定时拒绝继续执行的保护状态；它不推断成功，也不自动重试不可安全的 effect。
+_Avoid_: 不确定即成功
+
 **记录回放（Recorded view）**：重新查看已保存的运行事件、工具结果和状态关系，不重新执行模型或工具。
 
 **模拟回放（Simulated replay）**：使用已封存的模型、工具、网络或环境 cassette/fixture 重新驱动流程，不访问真实副作用目标。
 
 **实时回放（Live replay）**：重新访问真实 Provider 或外部工具并可能产生副作用的执行方式；默认禁止，必须经过显式授权和额外安全策略。
+
+## 文档决策语言
+
+**ADR（Architecture Decision Record）**：用于提出或记录长期约束系统结构之选择的简短文档；只有经 Human 明确确认的 ADR 才是 accepted。它保留稳定的决定及其理由，而不是讨论过程。
+_Avoid_: ARD
+
+**决策前沿（Decision Frontier）**：在一个 grilling 轮次中，所有前提已经明确、能够同时回答的决策问题集合。
+_Avoid_: 零散问题集
+
+**Supersession**：一条新的 accepted ADR 对既有 ADR 的实质替代关系；新旧 ADR 都显式指向对方，使历史决定与现行决定可以区分。
+_Avoid_: 改写历史 ADR

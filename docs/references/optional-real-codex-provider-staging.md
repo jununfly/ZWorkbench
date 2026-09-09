@@ -1,8 +1,11 @@
+---
+doc-kind: reference
+authority: external
+---
+
 # 可选：真实 Codex runtime + Ark 只读 staging
 
-状态：`out-of-roadmap / on-demand / authorized-read-only-staging-passed / broader-compatibility-HOLD` · 路线类型：`Acceptance / evaluation` · 核查日期：`2026-09-04`
-
-本文用于验证一条受控的真实 runtime 边界：固定的 Codex app-server 是否能在
+本文定义受控的真实 runtime 边界：固定的 Codex app-server 能否在
 case-local、只读环境中，通过火山方舟 Ark 完成一个合成 turn，并把 thread/turn
 关联到 ZWorkbench CompositionOwner。它不是默认产品路径，也不是生产兼容性证明。
 Codex 的运行时 HOME 是一次性的私有临时目录，不会作为 evidence 交接；case-local

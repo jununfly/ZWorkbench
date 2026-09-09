@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 H5 Evidence/replay fixture v1
 
 This fixture is product-execution evidence for the owner-backed replay seam.

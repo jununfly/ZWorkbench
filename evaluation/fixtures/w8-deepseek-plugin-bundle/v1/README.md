@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 DeepSeek plugin-composed bundle fixture
 
 这是 acceptance/evaluation fixture，不是 ZWorkbench 产品运行时。它固定

@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W8 L3 minimum-permission fixture
 
 This fixture is acceptance/evaluation infrastructure, not a product sandbox or

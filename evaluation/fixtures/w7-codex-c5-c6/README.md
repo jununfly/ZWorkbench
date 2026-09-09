@@ -1,3 +1,8 @@
+---
+doc-kind: fixture-documentation
+authority: supporting
+---
+
 # W7 Codex C5/C6 隔离 composition fixture
 
 这是 `acceptance/evaluation` 资产，不是 ZWorkbench 产品代码。它固定 Codex
