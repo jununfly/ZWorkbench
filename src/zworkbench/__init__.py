@@ -28,6 +28,28 @@ from .local_run import (
     PreflightViolation,
     preflight,
 )
+from .ui_ref import (
+    UI_REF_SCHEMA,
+    SourceAnchor,
+    UiRefDeclaration,
+    UiRefError,
+    UiRefRegistry,
+    UiRefValidationError,
+    resolve as resolve_ui_ref,
+)
+from .ui_manifest import (
+    RECEIPT_SCHEMA,
+    build_receipt,
+    load_manifest,
+    locate_source,
+    write_manifest,
+)
+from .ui_runtime import (
+    ReviewSession,
+    UnregisteredReference,
+    audit_rendered_html,
+    render_attributes,
+)
 from .worker_contract import (
     KNOWN_EFFECT_CLASSES,
     KNOWN_MESSAGE_TYPES,
@@ -111,6 +133,22 @@ __all__ = [
     "SafeStopRequired",
     "WorkerContractError",
     "WorkerEnvelope",
+    "UI_REF_SCHEMA",
+    "SourceAnchor",
+    "UiRefDeclaration",
+    "UiRefError",
+    "UiRefRegistry",
+    "UiRefValidationError",
+    "resolve_ui_ref",
+    "ReviewSession",
+    "UnregisteredReference",
+    "audit_rendered_html",
+    "render_attributes",
+    "RECEIPT_SCHEMA",
+    "build_receipt",
+    "load_manifest",
+    "locate_source",
+    "write_manifest",
     "BOOTSTRAP_SCHEMA",
     "DshBootstrapExecution",
     "DshBootstrapProtocolError",
