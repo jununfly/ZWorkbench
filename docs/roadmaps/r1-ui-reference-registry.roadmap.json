@@ -268,7 +268,7 @@
     "1-6": {
       "id": "1-6",
       "label": "评审标注模式 UI、交互与退出",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -284,15 +284,36 @@
           "q": "评审面板如何选择业务按钮？",
           "answer": "面板内锁定目标按钮，绝不向业务元素派发点击",
           "note": "锁定不得触发业务动作；普通点击只执行一次"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：新增 src/zworkbench/ui_review.py 评审模式状态机",
+          "note": "PRD 第 64 行是交互与退出合同；面板锁定模型已在 1-1-2 定为自建"
+        },
+        {
+          "q": "是否引入浏览器自动化（playwright 等）来解决 4 项 unknown？",
+          "answer": "不引入。改为把交互合同下沉为可测状态机，真实浏览器行为保持 unknown 并显式登记",
+          "note": "playwright 未安装且需 ~130MB 浏览器二进制 + license/升级/退出责任，违反 pyproject dependencies=[] 零依赖基线；状态机通过不得冒充浏览器验证"
+        },
+        {
+          "q": "unknown 如何切分才算诚实？",
+          "answer": "每项交互面拆成「逻辑合同」与「宿主行为」两半：逻辑半自动验证，宿主半（CSS pointer-events 实际生效、浏览器原生焦点顺序、真实剪贴板 API 拒绝）保持 unknown",
+          "note": "禁止因状态机变绿就把整项标为通过；unknown 项移交 1-8 记录为待人工/宿主验证"
+        },
+        {
+          "q": "REVIEW_ENTRY_REF 是否需要进 manifest？",
+          "answer": "暂不进。它是评审模式自身的控件，不是业务界面语义单元；作为常量 review.entry 保留",
+          "note": "若 1-8 覆盖矩阵要求评审入口也可被引用，再补声明；现记为待定"
         }
       ],
-      "notes": "",
+      "notes": "新增 src/zworkbench/ui_review.py（ReviewMode 状态机）+ tests/test_ui_review.py（39 测试）；ui_runtime 补 mounted_handles/ref_of/unlock 公开方法 + 6 测试，消除跨模块私有属性访问。验证：PYTHONPATH=src python3 -m unittest discover -s tests -t tests → Ran 350 tests OK（提权）。四条 exit criteria 实测：50 轮启停残留 0；锁定执行 0 次/点击 1 次；键盘覆盖 select/lock/copy/clear；复制失败 visible 且写入器仅 1 次。遗留：4 项宿主交互面仍 unknown（verified_by=pending-host），移交 1-8",
       "exit_criteria": [
         "反复启停后 overlay/监听器/后台任务残留 0",
         "锁定不执行按钮；普通点击只执行一次",
         "键盘路径可完成选择/锁定/复制/清除",
         "复制失败可见且不自动重试"
-      ]
+      ],
+      "rounds": 1
     },
     "1-7": {
       "id": "1-7",
@@ -969,27 +990,40 @@
     "1-6-1": {
       "id": "1-6-1",
       "label": "评审模式默认关闭，仅本地显式开启；关闭/卸载零残留",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "零残留如何可验证？",
+          "answer": "resources() 公开当前持有的 overlay/listener；disable() 后必须为空元组，且 session handle 全部 expired",
+          "note": "enable() 幂等，双开不泄露第二套 overlay；实测 50 轮启停后 resources=0 handles=0 locked=None"
+        }
+      ],
+      "notes": "默认关闭；enable(focused_ref=) 显式本地开启。disable() 释放 overlay+2 listener 并 close() session，handle 跨重启为 expired。禁用态调用面板操作抛 ReviewModeError",
+      "rounds": 1
     },
     "1-6-2": {
       "id": "1-6-2",
       "label": "高亮层不接收指针事件；普通点击/Enter/Space 保留业务行为",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "如何在无浏览器条件下测「不吞点击」？",
+          "answer": "activate() 注入 host action callable，断言恰好被调用 1 次且返回 review=not-consumed",
+          "note": "只证明状态机不重复/不吞掉派发；CSS pointer-events 是否真生效仍为 unknown"
+        }
+      ],
+      "notes": "overlay_descriptor() 声明 pointer-events=none、role=presentation。click/Enter/Space 业务动作恰好执行 1 次；hover/focus 仅 preview 不选中。宿主半保持 unknown"
     },
     "1-6-3": {
       "id": "1-6-3",
       "label": "独立评审面板：目标列表、锁定、复制、清除，全键盘可达且焦点可见",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
@@ -998,39 +1032,62 @@
           "q": "面板列表条目字段？",
           "answer": "ref + semantic_zh + instance + mark（仅重复结构项有短暂标记）；不含 entity_key",
           "note": "1-1-2 测试断言面板不暴露业务键"
+        },
+        {
+          "q": "重复项的 mark 如何避免变成第二身份？",
+          "answer": "每次 panel_entries() 读取都重新生成 mark，且仅重复结构项有 mark",
+          "note": "测试断言两次读取 mark 不同且 mark != handle；单例项 mark=None"
         }
       ],
-      "notes": ""
+      "notes": "面板条目严格 4 字段 ref/semantic_zh/instance/mark。断言 entity_key（RUN-9f3c1a 等）零出现。keyboard_plan() 覆盖全部 5 个 PANEL_ACTIONS"
     },
     "1-6-4": {
       "id": "1-6-4",
       "label": "Escape 仅在面板持有焦点时清除锁定，不拦截业务弹窗",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "Escape 的消费条件？",
+          "answer": "仅当面板持有焦点 且 无业务弹窗打开时消费；其余一律 not-consumed 交还业务",
+          "note": "业务弹窗优先级高于面板焦点，防止评审模式抢走业务 dismiss"
+        }
+      ],
+      "notes": "handle_key('Escape') 四种组合全覆盖：面板聚焦→consumed 并清除锁定；未聚焦/弹窗打开/聚焦+弹窗→not-consumed 且锁定保留"
     },
     "1-6-5": {
       "id": "1-6-5",
       "label": "复制由用户发起；失败可见且保留本地选择，不自动重试剪贴板",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "复制失败如何回报？",
+          "answer": "返回 copy-failed + visible=True + retry=user-initiated-only，保留锁定，不 echo 宿主错误文本",
+          "note": "写入器只被调用 1 次，无自动重试；无手势→refused，无锁定→no-target"
+        }
+      ],
+      "notes": "copy(writer, user_gesture=) 五种结果域 copied/refused/no-target/copy-failed。载荷是可 parse_token 的合法 token。宿主异常文本不进入返回值"
     },
     "1-6-6": {
       "id": "1-6-6",
       "label": "关闭面板的焦点恢复合同（原目标存在则恢复，否则回评审入口）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "焦点恢复的判据？",
+          "answer": "开启前记录的 focused_ref 仍在 mounted_refs 中→restored；否则→fallback 到 review.entry",
+          "note": "close_panel 不关闭评审模式，两件事分离"
+        }
+      ],
+      "notes": "close_panel(mounted_refs=) 返回 restored/fallback。原目标消失或从未记录焦点均 fallback 到 REVIEW_ENTRY_REF。关闭面板后 enabled 仍为 True"
     },
     "1-7-1": {
       "id": "1-7-1",
@@ -1165,7 +1222,7 @@
   },
   "metadata": {
     "created": "2026-09-10 21:12:47",
-    "updated": "2026-09-11 00:52:12",
+    "updated": "2026-09-11 01:51:27",
     "md_file": "docs/roadmaps/ZJ_ROADMAP_r1-ui-reference-registry.md"
   }
 }
