@@ -1,0 +1,1171 @@
+{
+  "title": "R1 界面引用注册表与本地评审标注模式",
+  "description": "按 docs/prds/r1-ui-reference-registry.md 编排；spec 状态 target/pending",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "label": "R1 界面引用注册表与本地评审标注模式",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8",
+        "1-9"
+      ],
+      "decisions": [
+        {
+          "q": "本次任务范围是什么？",
+          "answer": "Product execution 的规划阶段：只做 roadmap 编排，不改产品代码",
+          "note": "PRD 状态 target/pending；本轮不写 src/、不改测试，只新增 roadmap 事实源与视图"
+        },
+        {
+          "q": "编排依据的事实源是哪一份？",
+          "answer": "docs/prds/r1-ui-reference-registry.md（authority: supporting, status: target）",
+          "note": "补充 docs/prds/issue-1-workbench-ui.md 为主规格；冲突时以 AGENTS.md 硬约束优先"
+        },
+        {
+          "q": "顶层为什么按合同分层而不按页面分层？",
+          "answer": "按 声明→构建→运行时→token→切片→UI→生命周期→矩阵→收尾 分层",
+          "note": "PRD 的验收表和实现决策都是按合同面组织的；按页面切会把同一合同分散到三处"
+        },
+        {
+          "q": "整个 roadmap 完成是否等于 R1 完成？",
+          "answer": "不等于",
+          "note": "R1 还须独立通过 issue-1-workbench-ui.md 主规格验收；本 roadmap 只覆盖引用注册表与评审标注"
+        }
+      ],
+      "notes": "",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "label": "前置未决项收敛（宿主/依赖/接口形态）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4"
+      ],
+      "decisions": [
+        {
+          "q": "为什么把未决项收敛设为独立前置节点？",
+          "answer": "前端宿主、helper API、manifest 查询命令与 fixture 组织在 PRD 中仍为待细化",
+          "note": "1-2 起的所有节点都依赖宿主形态；不定则实现无法验证，验收命令也无法落位"
+        },
+        {
+          "q": "第三方 picker/highlighter 是否已选定？",
+          "answer": "unknown，未选定",
+          "note": "PRD 明确复用性为 unknown；优先评估小型本地能力，引入前须 pin 版本、许可证、依赖与退出路径"
+        }
+      ],
+      "notes": "四项子节点全部完成。宿主=stdlib HTTP+SSR+原生 ESM；picker=自建；API/CLI 签名定稿；测试分层与运行命令落位。产品代码仍零改动，PRD 保持 target/pending。遗留 unknown 已显式移交：交互面自动验证→1-6。",
+      "budget": {
+        "max_children": 4,
+        "max_rounds": 3
+      },
+      "exit_criteria": [
+        "前端宿主已选定且证据落盘（含被否选项与理由）",
+        "picker/highlighter 结论为“自建”或“已 pin 的依赖 + 退出路径”",
+        "helper API 与本地 manifest 查询命令签名定稿",
+        "fixture 目录与验收命令可实际执行"
+      ],
+      "rounds": 1
+    },
+    "1-2": {
+      "id": "1-2",
+      "label": "声明层与构建合同（ui_ref → manifest → receipt）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [
+        {
+          "q": "manifest 是不是第二份注册表？",
+          "answer": "不是，是代码声明的派生产物",
+          "note": "用户已取消 docs 元素映射表；manifest 只拥有界面引用元数据，不挑战 CompositionOwner"
+        },
+        {
+          "q": "声明唯一性与动态实例重复是同一规则吗？",
+          "answer": "不是，两条独立规则",
+          "note": "一个列表项声明可渲染多实例，不能以此关闭声明重复检测"
+        },
+        {
+          "q": "本节点的 scope 分类？",
+          "answer": "Product execution：允许在 src/zworkbench/ 新增 ui_ref 模块与 tests/ 产品测试",
+          "note": "1-1 已完成前置收敛；本节点按 1-1-3 定稿的签名实现，不再重新选型"
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "UiRefRegistry 公开合同 + build_manifest() + resolve()；不测私有 helper、不断言内部数据结构",
+          "note": "沿用 1-1-3 探针验证过的形态；/tmp 探针测试按 slice 逐条提升，不整体搬运"
+        }
+      ],
+      "notes": "构建合同完成：ui_ref.py（声明+manifest）+ ui_manifest.py（receipt+artifact+源码定位）+ cli.py ui-ref 子命令。新增测试 61 个（30+21+10）。全套 246 tests：沙箱内 3 失败（既有 socket 限制），提权后 246/246 OK。",
+      "exit_criteria": [
+        "相同输入生成一致 manifest（确定性）",
+        "全部无效 fixture 被拒绝且错误可分类",
+        "receipt 覆盖未提交修改，不含本机绝对路径",
+        "本地查询在不启动业务 Run 的前提下可用"
+      ],
+      "rounds": 1
+    },
+    "1-3": {
+      "id": "1-3",
+      "label": "运行时渲染与实例定位（DOM ↔ manifest）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3",
+        "1-3-4",
+        "1-3-5"
+      ],
+      "decisions": [
+        {
+          "q": "instance handle 可否从 Run ID/标题/索引派生？",
+          "answer": "禁止，必须随机且仅内存关联",
+          "note": "避免业务标识进入反馈通道；handle 不是凭证也不是 durable entity"
+        },
+        {
+          "q": "重复结构且无 handle 时怎么解析？",
+          "answer": "返回 ambiguous，不默认取首项",
+          "note": "错误定位阈值为 0，猜测性回退不可接受"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：在 src/zworkbench/ 新增渲染层与实例定位模块",
+          "note": "1-1 前置已收敛、1-2 声明层已落地；本节点解开 1-2-3 的渲染层依赖"
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "两个：render_element/render_attributes（渲染层）与 ReviewSession（实例定位）；均不测私有 helper",
+          "note": ""
+        },
+        {
+          "q": "/tmp picker 测试如何处理？",
+          "answer": "按 slice 逐条提升为产品测试并对齐 manifest 校验，不整体搬运",
+          "note": "1-1-2 的 11 个探针测试当时无 manifest 可核对；提升时补上未登记节点拒绝"
+        }
+      ],
+      "notes": "运行时渲染与实例定位完成：src/zworkbench/ui_runtime.py（178 行）+ tests/test_ui_runtime.py（287 行，32 测试）。全套 215 tests：沙箱内 3 失败（既有 socket 限制），提权后 215/215 OK。对 CompositionOwner 零耦合（ui_runtime 仅 import secrets/typing/.ui_ref）。",
+      "exit_criteria": [
+        "矩阵内语义单元的真实 DOM 引用与 manifest 100% 一致",
+        "同会话已选且挂载实例定位率 100%，重排/重渲染仍命中",
+        "卸载=unavailable、跨会话=expired、无 handle 重复=ambiguous，错误定位 0"
+      ],
+      "rounds": 1
+    },
+    "1-4": {
+      "id": "1-4",
+      "label": "Token v1 与深链接合同",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4",
+        "1-4-5"
+      ],
+      "decisions": [
+        {
+          "q": "token 是否可作为执行或授权入口？",
+          "answer": "不可以",
+          "note": "token/link 只定位界面语义；state 字段不是 Owner 状态的授权或恢复指令"
+        },
+        {
+          "q": "context 是否允许自由格式？",
+          "answer": "不允许，只用固定白名单字段",
+          "note": "不抽取页面文本推断上下文；序列化后 ≤1024 字节"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：新增 src/zworkbench/ui_token.py",
+          "note": ""
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "build_token / parse_token / build_deep_link / parse_deep_link 四个公开函数",
+          "note": "不测私有校验器；错误以结构化返回或异常表达"
+        },
+        {
+          "q": "重复键如何检测？",
+          "answer": "json.loads 会静默保留最后一个重复键，因此必须用 object_pairs_hook 自行检测",
+          "note": "PRD 明令拒绝重复键；标准解析器默认行为不满足合同"
+        },
+        {
+          "q": "token 与实例定位如何衔接？",
+          "answer": "parse_token 只返回字段；结构解析走 ui_ref.resolve，实例解析走 ReviewSession.resolve_instance",
+          "note": "端到端测试覆盖 found/expired/ambiguous/unavailable/incompatible 五种结局"
+        }
+      ],
+      "notes": "Token v1 与深链接完成：src/zworkbench/ui_token.py + tests/test_ui_token.py（45 测试）。全套 291 tests：沙箱内 3 失败（既有 socket 限制），提权后 291/291 OK。真实端到端：token 295/1024 字节，link 解析 valid，零泄露。",
+      "exit_criteria": [
+        "1024 字节边界与超限、重复/未知键、非法枚举、未知版本全部结构化拒绝",
+        "无猜测性回退",
+        "深链接不执行任何业务动作",
+        "污染测试下泄露 0"
+      ],
+      "rounds": 1
+    },
+    "1-5": {
+      "id": "1-5",
+      "label": "最小纵向切片闭环（声明→manifest→DOM→token→代码定位）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4"
+      ],
+      "decisions": [
+        {
+          "q": "为什么把纵向切片放在完整矩阵之前？",
+          "answer": "先用 tracer-bullet 证明协议链条成立，再铺全矩阵",
+          "note": "符合 AGENTS 的 narrow seam 执行协议；避免在未验证协议上批量写 fixture"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：新增 src/zworkbench/ui_home.py 首页视图切片",
+          "note": "1-2~1-4 已备齐所有零件；本节点是首次把它们组装成真实渲染视图"
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "render_home(view_model) 的公开合同：输入脱敏 view model，输出 HTML 与 manifest",
+          "note": "不测内部 HTML 拼接细节，只断言引用存在性、实例数与链条闭合"
+        }
+      ],
+      "notes": "tracer-bullet 闭环。验证命令：PYTHONPATH=src python3 -m unittest discover -s tests -t tests → Ran 305 tests OK（提权环境；沙箱内 3 个既有 socket 相关失败与本变更无关）。git diff --check 通过。exit criteria 三项全部满足",
+      "exit_criteria": [
+        "静态区域 + 动态列表 + 业务按钮三类目标各跑通完整链条",
+        "390px 与 1280px 均通过",
+        "结论明确写为“协议成立，不代表功能完成”"
+      ],
+      "rounds": 1
+    },
+    "1-6": {
+      "id": "1-6",
+      "label": "评审标注模式 UI、交互与退出",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3",
+        "1-6-4",
+        "1-6-5",
+        "1-6-6"
+      ],
+      "decisions": [
+        {
+          "q": "评审面板如何选择业务按钮？",
+          "answer": "面板内锁定目标按钮，绝不向业务元素派发点击",
+          "note": "锁定不得触发业务动作；普通点击只执行一次"
+        }
+      ],
+      "notes": "",
+      "exit_criteria": [
+        "反复启停后 overlay/监听器/后台任务残留 0",
+        "锁定不执行按钮；普通点击只执行一次",
+        "键盘路径可完成选择/锁定/复制/清除",
+        "复制失败可见且不自动重试"
+      ]
+    },
+    "1-7": {
+      "id": "1-7",
+      "label": "引用生命周期与映射版本兼容",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-7-1",
+        "1-7-2",
+        "1-7-3",
+        "1-7-4"
+      ],
+      "decisions": [
+        {
+          "q": "兼容窗口有多宽？",
+          "answer": "仅保证紧邻上一发布映射版本，更早返回 incompatible",
+          "note": "初版用合成上一版本 fixture 验证；禁止静默复用已废弃身份"
+        }
+      ],
+      "notes": "",
+      "exit_criteria": [
+        "未改语义的 ref 在文案/布局/顺序变更后保持不变",
+        "旧 ref 不静默指向新语义",
+        "migrated/retired/incompatible/source-mismatch 各有测试",
+        "alias 冲突与循环在构建时被拒绝"
+      ]
+    },
+    "1-8": {
+      "id": "1-8",
+      "label": "固定语义覆盖矩阵与安全负向验收",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5",
+        "1-8-6"
+      ],
+      "decisions": [
+        {
+          "q": "覆盖率能否用已注册元素做分母？",
+          "answer": "不能",
+          "note": "必须独立断言各语义单元存在；缺失实现不得标为 not-applicable"
+        },
+        {
+          "q": "覆盖矩阵的交互面如何验收？",
+          "answer": "结构面用 stdlib html.parser 自动断言；4 项交互面在浏览器自动化选定前保持 unknown，不得标为 not-applicable 或通过",
+          "note": "来自 1-1-4 的 coverage_capability 合同"
+        }
+      ],
+      "notes": "",
+      "exit_criteria": [
+        "三视图 × 必测场景 × 两视口 × 两模式全部执行并记录实际命令",
+        "远端请求/遥测计数 0",
+        "无新增 Run/effect/approval，无 Worker/Provider 执行",
+        "正常模式行为合同未变"
+      ]
+    },
+    "1-9": {
+      "id": "1-9",
+      "label": "收尾：文档/导航同步与 skill 抽取判定",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-9-1",
+        "1-9-2",
+        "1-9-3"
+      ],
+      "decisions": [
+        {
+          "q": "何时抽取 skill？",
+          "answer": "产品切片跑通并完成两三轮真实反馈之后，默认本轮不抽取",
+          "note": "skill 负责校验/定位/协作流程，不实现另一套浏览器运行时"
+        }
+      ],
+      "notes": "",
+      "exit_criteria": [
+        "docs 与 AGENTS 导航同步且实现状态如实标注",
+        "git diff --check 通过，无凭证/大型 runs 入库",
+        "未完成项显式标为 pending/unknown/HOLD"
+      ]
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "label": "选定前端宿主并记录证据（不选型不得进入 1-2）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "前端宿主选什么？",
+          "answer": "Python stdlib 本地 HTTP 服务 + 服务端渲染 HTML + 原生 ES module，零第三方运行时依赖",
+          "note": "仓库现状为 dependencies=[]、requires-python>=3.9、unittest；引入 Node/框架会新增整条工具链与退出责任，与 R1 的本地优先只读定位不匹配"
+        },
+        {
+          "q": "为什么不选 React/Vue + Vite？",
+          "answer": "否选：构建链、node_modules 与 CI 成本超过 R1 只读界面的收益",
+          "note": "PRD 要求 manifest 由构建确定性生成；SSR + 声明表可以直接产出 manifest，无需 bundler 插件"
+        },
+        {
+          "q": "为什么不选 Tauri/Electron 桌面壳？",
+          "answer": "否选：R1 出于范围外（无桌面打包、无多平台分发需求），且新增签名/升级/退出负担",
+          "note": "本地优先不等于必须桌面壳；loopback 浏览器页面已满足三视图与评审标注"
+        },
+        {
+          "q": "为什么不选纯静态 HTML 文件（file://）？",
+          "answer": "否选：file:// 下剪贴板、模块加载与 manifest 查询受限，且无法承载 façade 只读投影",
+          "note": "需要一个进程把 Owner 只读 DTO 投影出来；stdlib HTTP 是最小可行载体"
+        },
+        {
+          "q": "manifest 由谁生成、何时生成？",
+          "answer": "由声明表在构建/启动时确定性生成，随 UI artifact 落盘，并提供 loopback 只读查询端点",
+          "note": "探针已验证同输入 ui_map 稳定；查询不启动业务 Run"
+        },
+        {
+          "q": "Python 版本基线定在哪？",
+          "answer": "3.9（跟随 pyproject requires-python）；不因 UI 引入更高版本要求",
+          "note": "探针在系统自带 3.9.6 上通过；注意 roadmap CLI 自身需要 3.10+，那是工具而非产品依赖"
+        },
+        {
+          "q": "浏览器端脚本如何组织？",
+          "answer": "原生 ES module，无打包器、无框架、无 CDN；评审标注模式为独立可卸载模块",
+          "note": "满足零远端请求与卸载零残留要求"
+        },
+        {
+          "q": "端到端 DOM 断言用什么跑？",
+          "answer": "unknown / HOLD：本轮不选定浏览器自动化方案",
+          "note": "沙箱内无 Playwright 且无浏览器缓存；此项移交 1-1-4 决定（候选：stdlib HTML 解析做结构断言 + 人工核对交互，或后续单独评估 Playwright 的 pin/许可证/退出）"
+        }
+      ],
+      "notes": "宿主已定：stdlib HTTP + SSR HTML + 原生 ESM，零第三方依赖，Python 3.9 基线。证据：/tmp/zwb-host-probe/probe.py 探针（loopback 绑定成功、4 条声明、ui_map 确定性 True、DOM 5 处 data-ui-ref、未登记引用 0、单声明双实例、重复声明被拒）。遗留 unknown：浏览器自动化方案未选定，移交 1-1-4。注意沙箱默认禁止 bind loopback，需提权运行。",
+      "rounds": 1
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "label": "第三方 picker/highlighter 复用评估：版本 pin/许可证/退出路径",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "第三方 picker/highlighter 是否采用？",
+          "answer": "不采用，自建。结论从 unknown 收敛为已决",
+          "note": "PRD 的面板锁定模型（绝不向业务元素派发点击）根本不需要 picker 的核心能力——坐标命中拾取；而真正的难点是 found/unavailable/expired/ambiguous 语义，没有库提供"
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "ReviewTargetSelection：ReviewSession 的公开合同（mount/remount/unmount/reorder/lock/panel_entries/resolve_structural/resolve_instance/close）",
+          "note": "纯逻辑、无浏览器、无 DOM，可在 stdlib unittest 下测；实例语义与渲染层解耦"
+        },
+        {
+          "q": "自建成本实测是多少？",
+          "answer": "实现 112 行、测试 116 行，零第三方 import（仅 secrets/typing）",
+          "note": "TDD 五个 slice 跑出 11 个绿测试；成本远低于引入依赖的 pin/许可证/漏洞/退出维护责任"
+        },
+        {
+          "q": "为什么 picker 库在此场景反而是负担？",
+          "answer": "库以坐标/selector 命中为中心，而 PRD 明确禁止从截图坐标、CSS class 或 DOM tree order 创造身份",
+          "note": "采用库会引入一条与 spec 冲突的身份来源，且 hover 拾取会与「高亮层不接收指针事件」冲突"
+        },
+        {
+          "q": "highlighter 视觉高亮是否需要库？",
+          "answer": "不需要，纯 CSS outline + 不接收指针事件的覆盖层",
+          "note": "无动画、无布局计算需求；1-1-1 已定原生 ESM，无打包器可用"
+        },
+        {
+          "q": "该结论是否可逆？",
+          "answer": "可逆但需新证据：若 1-6 的键盘可达性或高亮层实现出现自建无法解决的问题，重开本节点（max_rounds=3 尚余额度）",
+          "note": "unknown 已收敛为决策，不是永久封闭"
+        }
+      ],
+      "notes": "结论：自建，不引入第三方 picker/highlighter。证据：/tmp/zwb-picker-tdd/（TDD 五 slice，11 绿测试，实现 112 行 + 测试 116 行，零第三方依赖）。覆盖 found/unavailable/expired/ambiguous 四语义、重排不跟随位置、remount 恢复关联、handle 32 位 hex 且跨会话不复用、面板列表不暴露 entity_key、锁定不派发业务事件。测试位于 /tmp 隔离 fixture，未进入 tests/；提升为产品测试属于 1-3 节点范围。",
+      "rounds": 1
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "label": "helper API 与本地 manifest 查询命令形态定稿",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "helper API 的声明形态是什么？",
+          "answer": "UiRefRegistry.declare(UiRefDeclaration) -> str，返回 ref 字符串供渲染层直接内联到 data-ui-ref",
+          "note": "沿用仓库既有风格：frozen dataclass + __post_init__ 校验 + to_dict()；declare 返回值让「声明」与「渲染」共用同一常量，杜绝手写字符串漂移"
+        },
+        {
+          "q": "声明的字段集合定为哪些？",
+          "answer": "ref / semantic_zh / kind / view / source(SourceAnchor) / parent / states / accessible_name / replaces / retired",
+          "note": "机器 ref、中文语义名、无障碍名三者分离，满足 PRD user story 18；states 用于覆盖矩阵断言"
+        },
+        {
+          "q": "代码来源如何表达？",
+          "answer": "SourceAnchor(repo_path, symbol, content_digest)：仓库相对路径 + 声明符号 + 源码内容 sha256",
+          "note": "绝对路径与非法 digest 在构造时即拒绝（探针验证）；不用行号作为唯一定位依据"
+        },
+        {
+          "q": "ui_map 是否包含 build receipt？",
+          "answer": "不包含。build 作为 manifest 字段存在，但排除在 ui_map 计算之外",
+          "note": "coupling_probe 实测：含 build 时任何无关源码改动都会翻转 ui_map，导致所有历史 token 立即 incompatible；排除后语义改动仍能正确翻转 ui_map"
+        },
+        {
+          "q": "解析 API 如何分层？",
+          "answer": "resolve() 只返回结构/代码来源结果；DOM 实例解析是另一个入口，两者结果不合并",
+          "note": "PRD 明确要求分别返回；避免用结构命中掩盖实例 unavailable/expired/ambiguous"
+        },
+        {
+          "q": "解析结果域定为哪些？",
+          "answer": "found / not-found / migrated（带 replaced_by 与「替代元素」说明）/ retired / incompatible / manifest-missing / source-mismatch",
+          "note": "探针验证 found、not-found、incompatible、migrated 四条路径；migrated 明确标注非同一身份"
+        },
+        {
+          "q": "manifest 查询命令的形态？",
+          "answer": "zworkbench ui-ref --manifest <path> {identity|list|resolve <ref> --ui-map|resolve-token}",
+          "note": "沿用既有 argparse 子命令 + {schema,command,status,result} 信封；只读、不联网、不启动业务 Run"
+        },
+        {
+          "q": "查询命令为何需要 --ui-map 必填？",
+          "answer": "强制调用方声明期望版本，命令不得用当前 manifest 静默替代旧版本",
+          "note": "缺省会诱导「当前版本即答案」的错误结论"
+        },
+        {
+          "q": "校验在哪一层发生？",
+          "answer": "构造期拒绝单条声明的非法值；build_manifest() 前跑 validate() 拒绝跨声明问题（无效父级、父链循环、alias 自环）",
+          "note": "探针：5 类单条非法值与 orphan parent 全部 rejected"
+        }
+      ],
+      "notes": "API/CLI 签名定稿。证据：/tmp/zwb-api-probe/api_probe.py（schema=ui-ref-manifest/v1、4 声明、ui_map 确定性 True、found/not-found/incompatible/migrated 四结果域、5 类非法值+orphan parent 全部 rejected、CLI 4 子命令）；/tmp/zwb-api-probe/coupling_probe.py（证明 ui_map 必须排除 build receipt）。仍为 target/pending：未写入 src/。",
+      "rounds": 1
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "label": "fixture/测试代码组织与验收命令落位",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "UiRefTestLayering：render_layer_forbids_socket / loopback_bind_available / require_loopback / extract_ui_refs / coverage_capability",
+          "note": "1-1-4 交付的是测试可运行性合同本身，因此合同必须可执行、可断言，而不是写进文档的约定"
+        },
+        {
+          "q": "沙箱禁止 bind 的实测结论是什么？",
+          "answer": "TCP loopback 与 AF_UNIX 均 PermissionError [Errno 1]；socketpair 可用。提权后完整套件 153/153 OK",
+          "note": "沙箱内 3 个既有测试失败（codex_c5_c6_runner、remote_provider_failover、host_broker_fixture）全部由此造成，不是回归"
+        },
+        {
+          "q": "测试如何分层？",
+          "answer": "L1 渲染层（声明→manifest→HTML 字符串，纯函数禁 socket，任何沙箱可跑）+ L2 集成层（真实 loopback HTTP，需提权）",
+          "note": "L1 用 render_layer_forbids_socket 主动阻断 socket 构造，破坏分层会立即失败，而非依赖人工自觉"
+        },
+        {
+          "q": "L2 在缺权限时如何处理？",
+          "answer": "require_loopback() 抛 unittest.SkipTest，skip 原因必须点名缺失能力与补救方式（escalated）",
+          "note": "绝不静默通过；测试断言了 skip 原因文本包含 loopback 与 escalated"
+        },
+        {
+          "q": "能力探测如何防作弊？",
+          "answer": "两个守护测试分别注入 bind 失败/成功的 socket 子类，断言探测结果随之翻转",
+          "note": "防止 loopback_bind_available() 被退化为硬编码 True；这两条是守护测试，未经历红阶段"
+        },
+        {
+          "q": "浏览器自动化方案是否选定？",
+          "answer": "不选定。默认走 stdlib html.parser 结构断言；交互面保持 unknown",
+          "note": "覆盖矩阵的结构面（ref 存在、实例数、manifest 一致、视口类）已实测可覆盖；引入 Playwright 需单独过 pin/许可证/退出评估"
+        },
+        {
+          "q": "测不到的验证面如何记账？",
+          "answer": "coverage_capability() 对结构面返回 verifiable，对交互面与未识别面一律返回 unknown",
+          "note": "PRD 禁止把缺失实现标为 not-applicable；这里同样禁止把测不到标成通过，未识别面默认 unknown 而非 verifiable"
+        },
+        {
+          "q": "哪些交互面仍是 unknown？",
+          "answer": "keyboard-focus-order、pointer-events-passthrough、clipboard-failure-visible、focus-restore-on-close",
+          "note": "这四项属 1-6 范围，无浏览器无法自动验证；届时需人工核对或重开自动化选型"
+        },
+        {
+          "q": "测试发现与运行命令是什么？",
+          "answer": "PYTHONPATH=src python3 -m unittest discover -s tests -t tests",
+          "note": "实测得出：tests/ 无 __init__.py，-t . 会 ImportError；-t tests 且 PYTHONPATH=src 才能跑通 153 测试"
+        }
+      ],
+      "notes": "fixture 组织与验收命令落位。运行命令（实测）：PYTHONPATH=src python3 -m unittest discover -s tests -t tests → 沙箱内 153 tests / 3 failures（全为 socket 沙箱限制），提权后 153/153 OK。分层：L1 渲染层禁 socket 任何沙箱可跑，L2 集成层缺权限显式 SkipTest。证据：/tmp/zwb-layering-tdd/（5 slice，15 绿测试，实现 86 行 + 测试 135 行，零第三方依赖，受限沙箱内即可全绿）。遗留 unknown：4 项交互面无浏览器不可自动验证，移交 1-6。"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "label": "ui_ref 声明 helper：机器 ref / 中文语义名 / 无障碍名分离",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "helper 实现落在哪里？",
+          "answer": "src/zworkbench/ui_ref.py，经 __init__.py 导出；零第三方依赖，Python 3.9 兼容",
+          "note": "declare() 返回 ref 供渲染层内联；重复声明拒绝且不替换原声明"
+        }
+      ],
+      "notes": "src/zworkbench/ui_ref.py：SourceAnchor / UiRefDeclaration / UiRefRegistry.declare / declaration。ref 名称合同（1-128 ASCII、小写开头、点分段）与 SourceAnchor 合同（仓库相对路径 + 小写 sha256）在构造期强制。",
+      "rounds": 1
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "label": "manifest 生成器：schema、视图归属、父子关系、声明来源+源码 digest",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "manifest 生成的确定性如何保证？",
+          "answer": "对 {schema, refs} 做 sort_keys 规范化 JSON 再取 sha256；refs 按 ref 排序",
+          "note": "测试断言同声明两次构建 ui_map 相同、语义改动后 ui_map 改变"
+        }
+      ],
+      "notes": "build_manifest(build=) 输出 {schema, refs, ui_map, build}；refs 含 ref/semantic_zh/kind/view/parent/source。确定性与语义敏感性均有测试。"
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "label": "build receipt：源码快照（含未提交改动）与构建输入摘要，确定性可复现",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "receipt 与 ui_map 如何解耦？",
+          "answer": "receipt 写入 manifest 但不参与 ui_map 摘要",
+          "note": "见 1-1-3 决策；避免注释级改动作废所有反馈 token"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：实现 build receipt 生成与 manifest artifact 落盘",
+          "note": "1-3 已提供渲染层骨架，阻塞解除"
+        },
+        {
+          "q": "被测 seam 是什么？",
+          "answer": "build_receipt() 与 write_manifest/load_manifest 的公开合同；不测私有 helper",
+          "note": ""
+        },
+        {
+          "q": "receipt 如何固定源码快照？",
+          "answer": "对每个声明源文件读工作树内容算 sha256，再对规范化 {schema,sources} 取 sha256",
+          "note": "含未提交修改（测试：改文件后 receipt 变）；排序无关；Git commit 未参与，符合 PRD「不能替代内容 identity」"
+        },
+        {
+          "q": "artifact 如何寻址？",
+          "answer": "文件名 <ui_map>.<build>.json，双身份共同定址",
+          "note": "任一半不匹配即 manifest-missing；同语义不同 build 的两份产物可共存且各自可取"
+        },
+        {
+          "q": "source-mismatch 返回什么？",
+          "answer": "outcome=source-mismatch + reason(content-changed|source-unreadable) + 历史 repo_path/symbol/declared_digest，无行号",
+          "note": "PRD：保留历史来源提示但不给出当前源码精确命中结论"
+        }
+      ],
+      "notes": "build_receipt(root, sources) 按工作树内容算 sha256（含未提交修改），排序无关、绝对路径拒绝、缺文件 fail loud、零本机路径泄露。write_manifest/load_manifest 按 ui_map+build 双身份寻址，缺失即 manifest-missing。locate_source 校验源码 digest，不匹配返回 source-mismatch 并保留历史来源提示，无行号。",
+      "rounds": 1
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "label": "构建时校验：重复声明、非法名称、无效父级、失效迁移目标、alias 冲突与循环一律拒绝",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "跨声明校验的实现位置？",
+          "answer": "validate() 返回全部问题元组；build_manifest() 前置调用，有问题即抛 UiRefValidationError",
+          "note": "覆盖 undeclared parent、自环 parent、双向 parent cycle"
+        }
+      ],
+      "notes": "validate() + build_manifest() 前置校验：重复声明、非法名称、非法 digest、绝对路径、无效父级、自环、父链循环全部拒绝。"
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "label": "本地只读 manifest 查询：按精确 ui_map/build 返回，缺失即 manifest-missing，不联网不起 Run",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "CLI 挂在哪里？",
+          "answer": "既有 zworkbench CLI 新增 ui-ref 子命令，沿用 {schema,command,status,result} 信封",
+          "note": "不新建入口；1-1-3 已定稿签名"
+        },
+        {
+          "q": "CLI 退出码如何区分？",
+          "answer": "found=0；manifest-missing/not-found/incompatible=3",
+          "note": "非零退出让脚本无法把缺失误当成功；测试断言 code!=0"
+        },
+        {
+          "q": "CLI 只读性如何证明？",
+          "answer": "测试断言查询后 artifact 目录内容不变、无 sqlite/db 生成、输出无本机绝对路径",
+          "note": "PRD：不启动业务 Run、不联网、不改 owner 状态"
+        }
+      ],
+      "notes": "zworkbench ui-ref --store <dir> {identity|list|resolve <ref>} --ui-map --build。10 个 CLI 测试覆盖 found/not-found/manifest-missing、双身份必填、只读性、零绝对路径泄露、--help。真实端到端：以本仓库 src 生成 receipt+manifest，identity 查询 exit=0，错误 identity exit=3 且不泄露 manifest。",
+      "rounds": 1
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "label": "运行时渲染 data-ui-ref，语义粒度按 spec 白名单（装饰节点不注册）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "render_attributes(manifest, ref) 渲染 data-ui-ref，仅含结构引用。守护测试锁定属性中无业务数据、重复项共用一个结构引用。",
+      "rounds": 1
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "label": "DOM 引用与 manifest 核对；未登记节点不生成看似有效的引用",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "渲染层如何防止未登记节点获得引用？",
+          "answer": "render_attributes() 与 mount() 均先核对 manifest，未声明即抛 UnregisteredReference",
+          "note": "杜绝「看似有效的反馈引用」；测试覆盖渲染与挂载两条入口"
+        },
+        {
+          "q": "DOM 与 manifest 的一致性如何审计？",
+          "answer": "audit_rendered_html() 返回 ui_map + instances + undeclared + missing",
+          "note": "missing 由声明集合推导而非 DOM 内容，缺失实现不能缩小覆盖率分母"
+        }
+      ],
+      "notes": "render_attributes 与 ReviewSession.mount 均核对 manifest；未登记即 UnregisteredReference。audit_rendered_html 提供 undeclared/missing 双向审计，missing 由声明集合推导。"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "label": "instance handle：128-bit 随机 32 位小写 hex，仅内存关联，不从 Run ID/标题/索引派生",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "instance handle 的实现基线？",
+          "answer": "secrets.token_hex(16) 生成 32 位小写 hex，会话内 dict 关联，close() 清空且不复用",
+          "note": "1-1-2 的 TDD 探针已验证；跨会话同实体得到不同 handle"
+        }
+      ],
+      "notes": "secrets.token_hex(16) → 32 位小写 hex；仅内存关联，不从 Run ID/标题/索引派生。测试：同实体跨会话得到不同 handle，handle 中不含 entity_key。"
+    },
+    "1-3-4": {
+      "id": "1-3-4",
+      "label": "实例解析结果域：命中 / unavailable（卸载或隐藏）/ expired（跨会话）/ ambiguous（无 handle 重复结构）",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "四种实例结果域如何区分？",
+          "answer": "found（挂载中）/ unavailable（已卸载或未挂载）/ expired（跨会话或已 close）/ ambiguous（多实例无 handle）",
+          "note": "expired 与 unavailable 分开：前者不泄露 ref，后者保留 ref 供解释"
+        },
+        {
+          "q": "ambiguous 是否暴露候选实体？",
+          "answer": "不暴露。只回 instance_count，不回候选 entity_key",
+          "note": "测试用 run-abc-123/run-def-456 污染后断言 repr 中零泄露"
+        }
+      ],
+      "notes": "found/unavailable/expired/ambiguous 四结果域完整实现。ambiguous 只回 instance_count 不回候选实体；expired 不回 ref/instance/entity_key。"
+    },
+    "1-3-5": {
+      "id": "1-3-5",
+      "label": "handle 失效规则：实体删除、关闭评审、页面重载、切换工作区后失效且不复用",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "close() 的语义边界？",
+          "answer": "清空 mounted/unmounted/order/locked；close 后 resolve_instance 一律 expired，resolve_structural 为 unavailable",
+          "note": "覆盖实体删除、关闭评审、页面重载、切换工作区四种失效场景的公共行为"
+        }
+      ],
+      "notes": "close() 使全部 handle 失效且不复用；unmount+remount 同实体恢复关联，不同实体不复用 handle；reorder 不改变锁定关联。"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "label": "Token v1 生成：白名单字段 protocol/ref/ui_map/build/viewport/state/instance",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "token 的 ui_map 与 build 是什么关系？",
+          "answer": "两个独立字段：ui_map 覆盖引用语义，build 覆盖源码/构建输入；ui_map 计算时排除 build",
+          "note": "由 1-1-3 的 coupling_probe 得出；这样源码变化只触发 source-mismatch，不会让全部历史 token 变 incompatible"
+        },
+        {
+          "q": "生成器如何保证白名单？",
+          "answer": "payload 由字面 dict 构造，调用方只能传 ref/viewport/state/instance 四个受校验参数",
+          "note": "无法注入额外字段；instance 省略时字段整体不出现，而非置 null"
+        }
+      ],
+      "notes": "build_token()：白名单 6 必填 + 可选 instance；viewport/state 枚举校验、instance 须 32 位小写 hex、ref 须在 manifest 声明。真实 digest 下 token 295 字节。",
+      "rounds": 1
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "label": "Token v1 解析：1024 字节边界、重复键、未知键、类型错误、未知版本一律结构化拒绝",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "重复键检测怎么实现？",
+          "answer": "json.loads 传 object_pairs_hook 自行统计重复，先于其他校验返回 duplicate-key",
+          "note": "实测确认默认 json.loads 对 {ref:a, ref:b} 静默取 b，是真实攻击面"
+        },
+        {
+          "q": "解析错误如何表达？",
+          "answer": "结构化 outcome：too-large/malformed/duplicate-key/unknown-key/missing-field/invalid-type/unknown-protocol/invalid-value",
+          "note": "拒绝时不返回 token 字段，detail 为固定文案，不回显输入"
+        }
+      ],
+      "notes": "parse_token()：8 类结构化拒绝。重复键用 object_pairs_hook 检测（默认 json.loads 会 last-one-wins）。1024 字节先于 JSON 解析检查。"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "label": "输入按数据处理：不解释为 HTML/脚本/指令/路径，非法输入不回显进日志",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "非法输入回显如何防止？",
+          "answer": "_reject() 只输出固定 detail 文案；测试用 <script> 与路径穿越断言输出中零出现",
+          "note": "PRD：不能把非法输入回显到日志"
+        }
+      ],
+      "notes": "输入按数据处理：ref 走正则白名单，<script>/路径穿越/命令注入一律 invalid-value；_reject 不回显输入。"
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "label": "深链接：仅 ui_ref + ui_map 定位，纯 UI 导航，不恢复 Run、不触发预检/apply、不静默开启评审模式",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "深链接参数如何限制？",
+          "answer": "仅 ui_ref + ui_map；用 parse_qsl 后自行检测重复键，未知参数一律拒绝",
+          "note": "路径取 manifest 的 view 归属，纯 UI 导航；测试断言 link 中无 build/state/instance/run_id"
+        }
+      ],
+      "notes": "build_deep_link/parse_deep_link：仅 ui_ref+ui_map，路径按 manifest view 归属。重复参数、未知参数、缺参、超限、非法值均拒绝且不回显。"
+    },
+    "1-4-5": {
+      "id": "1-4-5",
+      "label": "脱敏边界断言：prompt/完整 Run ID/事件/凭证/输入内容/本机绝对路径 0 泄露",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "脱敏如何验证？",
+          "answer": "用 6 类禁止值（API key、Run ID、Bearer token、绝对路径、prompt 正文、cookie）污染后断言零进入 token",
+          "note": "同时断言 token 不含中文语义名与源码路径——它们留在本地 manifest"
+        }
+      ],
+      "notes": "6 类禁止值污染测试零泄露；token 不含语义名与源码路径；解析结果仅白名单字段，无 action/approval/effect/run_id/restore/command。"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "label": "切片范围：一个静态区域 + 一组动态工作记录 + 一个业务按钮",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "切片选哪三类目标？",
+          "answer": "静态区域=home.run-facts；动态列表=home.record-list.item；业务按钮=home.preflight-run.action",
+          "note": "覆盖 PRD 要求的三种语义形态；按钮只渲染不执行"
+        }
+      ],
+      "notes": "src/zworkbench/ui_home.py：HOME_REFS 5 条声明（root/run-facts/record-list/record-list.item/preflight-run.action）；按钮只渲染不执行，view model 已脱敏",
+      "rounds": 1
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "label": "先红后绿：声明→manifest→DOM→token→代码定位 的端到端合同测试",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "端到端链条的断言口径是什么？",
+          "answer": "_walk_chain(): DOM 审计 → build_token → parse_token → parse_deep_link → locate_source，每步都断言 outcome 而非只断言不抛异常",
+          "note": "断言 locate_source 返回 repo_path+symbol 且不含 line；行号会漂移，不进合同"
+        },
+        {
+          "q": "测试是否经历红阶段？",
+          "answer": "是：三条链条测试先因 ui_home 不存在/属性缺失而红，再实现转绿",
+          "note": "结构断言用 stdlib html.parser，不引入浏览器自动化"
+        }
+      ],
+      "notes": "tests/test_ui_home_slice.py 14 测试；三类目标各一条完整链条 + 无行号断言。真实端到端实测：token 232-250B、link 99-110B，locate_source 全部 found，指向 src/zworkbench/ui_home.py::render_home"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "label": "在 390px 与 1280px、正常与 unknown/空状态下跑通同一链条",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "两个视口如何建模？",
+          "answer": "视口是 token 的枚举字段 compact(390px)/wide(1280px)，不是渲染分支",
+          "note": "render_home 的 markup 与视口无关，已用 test_the_rendered_markup_does_not_depend_on_the_viewport 锁定；视口只影响评审侧呈现语境"
+        },
+        {
+          "q": "空列表下缺失的列表项算什么？",
+          "answer": "计入 missing（已声明未渲染），不计入 undeclared",
+          "note": "分母来自声明而非 DOM；未实现元素不能缩小覆盖率分母"
+        }
+      ],
+      "notes": "空列表：home.record-list.item 落入 missing；两条记录无 handle 时实例解析为 ambiguous；unknown 状态原样承载不猜测。四组组合（compact/wide × 正常/空/unknown）实测链条全通"
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "label": "切片结论只声明协议链条成立，不声明本功能或 R1 完成",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "本切片证明了什么？",
+          "answer": "只证明协议链条成立：一条声明可以从 manifest 走到 DOM 属性、token、深链接，再回到具体源码符号，且全程不泄露行号与业务状态",
+          "note": "证据边界：stdlib html.parser 的结构断言 + 真实源码 digest；未证明浏览器真实渲染、真实交互或视觉正确"
+        },
+        {
+          "q": "本切片没有证明什么？",
+          "answer": "不代表 R1 功能完成：评审面板 UI/交互/退出（1-6）、引用生命周期与映射兼容（1-7）、覆盖矩阵与安全负向验收（1-8）均未开始",
+          "note": "4 项交互面 keyboard-focus-order / pointer-events-passthrough / clipboard-failure-visible / focus-restore-on-close 仍为 unknown，已移交 1-6，不得标为通过或 not-applicable"
+        },
+        {
+          "q": "覆盖范围的真实分母是多少？",
+          "answer": "仅 home 视图 5 条声明；PRD 的固定语义覆盖矩阵尚未建立，当前不得报告任何覆盖率数字",
+          "note": "分母必须来自 PRD 矩阵而非已注册元素，见 1-8"
+        }
+      ],
+      "notes": "结论如实记录：协议链条成立，不声明本功能或整个 R1 完成"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "label": "评审模式默认关闭，仅本地显式开启；关闭/卸载零残留",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "label": "高亮层不接收指针事件；普通点击/Enter/Space 保留业务行为",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "label": "独立评审面板：目标列表、锁定、复制、清除，全键盘可达且焦点可见",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "面板列表条目字段？",
+          "answer": "ref + semantic_zh + instance + mark（仅重复结构项有短暂标记）；不含 entity_key",
+          "note": "1-1-2 测试断言面板不暴露业务键"
+        }
+      ],
+      "notes": ""
+    },
+    "1-6-4": {
+      "id": "1-6-4",
+      "label": "Escape 仅在面板持有焦点时清除锁定，不拦截业务弹窗",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-5": {
+      "id": "1-6-5",
+      "label": "复制由用户发起；失败可见且保留本地选择，不自动重试剪贴板",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-6-6": {
+      "id": "1-6-6",
+      "label": "关闭面板的焦点恢复合同（原目标存在则恢复，否则回评审入口）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-1": {
+      "id": "1-7-1",
+      "label": "视觉重排不改 ref；语义变更必须新建 ref 并声明 alias / replaced-by / 废弃",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-2": {
+      "id": "1-7-2",
+      "label": "当前映射版本保留对紧邻上一版本的显式迁移声明",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-3": {
+      "id": "1-7-3",
+      "label": "解析结果域：migrated / retired / incompatible / source-mismatch，禁止静默替代",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-7-4": {
+      "id": "1-7-4",
+      "label": "合成上一版本 fixture 验证兼容窗口；replaced-by 明确标注为替代元素",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "label": "首页矩阵 fixture：语义单元 × 状态（含 denied/safe-stopped/unknown）× 动态项重排与删除",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "label": "任务详情矩阵 fixture：含缺失身份、待 reconcile、只读不适用的展示 fixture",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "label": "记录视图矩阵 fixture：空事件、无筛选结果、缺失 metadata、重复结构事件项",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "label": "覆盖率断言方式：独立断言各单元存在，缺声明不得缩小分母",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "label": "安全负向面：远端请求/遥测 0、无新增 Run/effect/approval、无 Worker/Provider 执行",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-8-6": {
+      "id": "1-8-6",
+      "label": "正常模式 vs 评审模式行为对照：业务动作不截断不重复",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-1": {
+      "id": "1-9-1",
+      "label": "同步 docs/prds、architecture 与 AGENTS 导航；实现状态如实标注",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-2": {
+      "id": "1-9-2",
+      "label": "汇总实际执行命令与结果；未跑项保持 pending/unknown",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "label": "两三轮真实反馈后再判定是否抽取 skill（默认不抽取）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": ""
+    }
+  },
+  "metadata": {
+    "created": "2026-09-10 21:12:47",
+    "updated": "2026-09-11 00:52:12",
+    "md_file": "docs/roadmaps/ZJ_ROADMAP_r1-ui-reference-registry.md"
+  }
+}
