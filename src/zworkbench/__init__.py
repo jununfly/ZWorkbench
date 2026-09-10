@@ -53,6 +53,13 @@ from .ui_token import (
     parse_deep_link,
     parse_token,
 )
+from .ui_review import (
+    HOST_UNKNOWNS,
+    PANEL_ACTIONS,
+    REVIEW_ENTRY_REF,
+    ReviewMode,
+    ReviewModeError,
+)
 from .ui_runtime import (
     ReviewSession,
     UnregisteredReference,
@@ -165,6 +172,11 @@ __all__ = [
     "build_token",
     "parse_deep_link",
     "parse_token",
+    "HOST_UNKNOWNS",
+    "PANEL_ACTIONS",
+    "REVIEW_ENTRY_REF",
+    "ReviewMode",
+    "ReviewModeError",
     "BOOTSTRAP_SCHEMA",
     "DshBootstrapExecution",
     "DshBootstrapProtocolError",
