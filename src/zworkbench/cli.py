@@ -84,6 +84,33 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument("backup_directory", type=Path)
     restore.add_argument("--replace", action="store_true", help="explicitly replace an existing target DB")
     restore.set_defaults(handler=_restore_command)
+
+    ui_ref = commands.add_parser(
+        "ui-ref",
+        help="read-only UI reference manifest queries",
+        description=(
+            "Query a stored UI reference manifest artifact. The command is "
+            "read-only: it makes no network request, starts no run and changes "
+            "no owner state."
+        ),
+    )
+    ui_ref.add_argument("--store", required=True, type=Path, help="local manifest artifact directory")
+    ui_ref_commands = ui_ref.add_subparsers(dest="ui_ref_command", required=True)
+
+    ui_ref_identity = ui_ref_commands.add_parser("identity", help="print the artifact identity")
+    ui_ref_identity.add_argument("--ui-map", required=True, help="expected manifest digest")
+    ui_ref_identity.add_argument("--build", required=True, help="expected build receipt digest")
+
+    ui_ref_list = ui_ref_commands.add_parser("list", help="list declared references")
+    ui_ref_list.add_argument("--ui-map", required=True, help="expected manifest digest")
+    ui_ref_list.add_argument("--build", required=True, help="expected build receipt digest")
+
+    ui_ref_resolve = ui_ref_commands.add_parser("resolve", help="resolve one reference")
+    ui_ref_resolve.add_argument("ref")
+    ui_ref_resolve.add_argument("--ui-map", required=True, help="expected manifest digest")
+    ui_ref_resolve.add_argument("--build", required=True, help="expected build receipt digest")
+
+    ui_ref.set_defaults(handler=_ui_ref_command)
     return parser
 
 
@@ -325,6 +352,59 @@ def _run_command(args: argparse.Namespace) -> int:
         _write_json(_resolve(args.summary), payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 1 if artifact_error else (0 if result.status == "completed" else 1)
+
+
+def _ui_ref_command(args: argparse.Namespace) -> int:
+    """Answer one read-only manifest query.
+
+    The caller must name both halves of the artifact identity, so the stored
+    current manifest can never silently answer for a different version.
+    """
+    from .ui_manifest import load_manifest
+    from .ui_ref import resolve as resolve_ui_ref
+
+    loaded = load_manifest(_resolve(args.store), ui_map=args.ui_map, build=args.build)
+    if loaded["outcome"] != "found":
+        print(json.dumps(_ui_ref_payload(loaded), ensure_ascii=False, indent=2))
+        return 3
+
+    manifest = loaded["manifest"]
+    if args.ui_ref_command == "identity":
+        result: Dict[str, Any] = {
+            "outcome": "found",
+            "ui_map": manifest["ui_map"],
+            "build": manifest["build"],
+            "schema": manifest["schema"],
+            "declared": len(manifest["refs"]),
+        }
+    elif args.ui_ref_command == "list":
+        result = {
+            "outcome": "found",
+            "refs": [
+                {
+                    "ref": entry["ref"],
+                    "semantic_zh": entry["semantic_zh"],
+                    "kind": entry["kind"],
+                    "view": entry["view"],
+                }
+                for entry in manifest["refs"]
+            ],
+        }
+    else:
+        result = resolve_ui_ref(manifest, args.ref, ui_map=args.ui_map)
+
+    print(json.dumps(_ui_ref_payload(result), ensure_ascii=False, indent=2))
+    return 0 if result["outcome"] == "found" else 3
+
+
+def _ui_ref_payload(result: Dict[str, Any]) -> Dict[str, Any]:
+    status = "completed" if result["outcome"] == "found" else result["outcome"]
+    return {
+        "schema": CLI_SCHEMA,
+        "command": "ui-ref",
+        "status": status,
+        "result": result,
+    }
 
 
 def _owner_command_payload(command: str, value: Any) -> Dict[str, Any]:
