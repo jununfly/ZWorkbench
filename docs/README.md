@@ -25,11 +25,16 @@ authority: supporting
 - [CompositionOwner](architecture/ta-composition-owner.md) — durable state、effect、approval、reconcile 与 backup/restore；authority-id: architecture.subsystem.composition-owner
 - [本地只读运行流](architecture/ta-local-read-only-flow.md) — 从 preflight 到 owner-backed result 的触发、序列与退出；authority-id: architecture.flow.local-read-only-run
 - [可恢复写入边界](architecture/ta-reversible-write-boundary.md) — write effect 的 HOLD、approval、host enforcement 与放行门；authority-id: architecture.cross-cutting.reversible-write-boundary
+- [工作台用户界面](architecture/ta-workbench-user-surface.md) — 工作记录、任务详情、recorded view 与 owner-backed 界面边界；authority-id: architecture.user-surface.workbench
 
 ## 长期页面
 
 - [方法论](methods/README.md) — 证据分层、失败语义与评测边界；authority-id: method.evidence-and-safety
 - [ADR 0001：CompositionOwner 是唯一 durable owner](zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) — 唯一 durable owner 的长期决定；authority-id: adr.composition-owner.unique-durable-owner
+
+## Product requirements
+
+- [PRD 索引](prds/README.md) — 尚未实现或尚未由 owner-backed 证据证明的产品规格。
 
 ## Fixture documentation
 
