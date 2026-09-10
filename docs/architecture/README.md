@@ -62,6 +62,7 @@ live replay 都是显式的后续验证边界。
 - `src/zworkbench/worker_bridge.py`：Worker transport、identity 和进程监督 seam。
 - `src/zworkbench/local_run.py`：当前 local-read-only orchestration。
 - `src/zworkbench/replay.py`：recorded/simulated/live replay 边界。
+- `docs/architecture/ta-workbench-user-surface.md`：工作台的稳定信息结构、读模型与安全展示边界。
 - `tests/test_composition.py`、`tests/test_dsh_runtime.py`、`tests/test_worker_bridge.py`、
   `tests/test_local_run.py`、`tests/test_replay.py`：产品行为验证。
 - `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`：已接受的 owner 决定。
@@ -74,3 +75,4 @@ live replay 都是显式的后续验证边界。
 - [CompositionOwner](ta-composition-owner.md)
 - [本地只读运行流](ta-local-read-only-flow.md)
 - [可恢复写入边界](ta-reversible-write-boundary.md)
+- [工作台用户界面](ta-workbench-user-surface.md)
