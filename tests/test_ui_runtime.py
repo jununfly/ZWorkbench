@@ -285,3 +285,42 @@ class RenderedHtmlAgreesWithTheManifestTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewSessionPublicSurfaceTests(unittest.TestCase):
+    """The review mode must be able to build a panel without reaching inside."""
+
+    def setUp(self):
+        self.manifest = home_manifest()
+        self.session = ReviewSession(self.manifest)
+
+    def test_mounted_handles_reports_display_order(self):
+        first = self.session.mount("home.record-list.item", entity_key="a")
+        second = self.session.mount("home.record-list.item", entity_key="b")
+        self.assertEqual(self.session.mounted_handles(), (first, second))
+
+    def test_mounted_handles_follows_a_reorder(self):
+        first = self.session.mount("home.record-list.item", entity_key="a")
+        second = self.session.mount("home.record-list.item", entity_key="b")
+        self.session.reorder([second, first])
+        self.assertEqual(self.session.mounted_handles(), (second, first))
+
+    def test_mounted_handles_excludes_an_unmounted_instance(self):
+        first = self.session.mount("home.record-list.item", entity_key="a")
+        self.session.unmount(first)
+        self.assertEqual(self.session.mounted_handles(), ())
+
+    def test_ref_of_reports_the_structural_reference(self):
+        handle = self.session.mount("home.record-list.item", entity_key="a")
+        self.assertEqual(self.session.ref_of(handle), "home.record-list.item")
+
+    def test_unlock_drops_the_selection_without_touching_instances(self):
+        handle = self.session.mount("home.record-list.item", entity_key="a")
+        self.session.lock(handle)
+        self.session.unlock()
+        self.assertIsNone(self.session.locked_target())
+        self.assertEqual(self.session.mounted_handles(), (handle,))
+
+    def test_unlock_is_a_no_op_when_nothing_is_locked(self):
+        self.session.unlock()
+        self.assertIsNone(self.session.locked_target())

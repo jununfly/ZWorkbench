@@ -93,6 +93,23 @@ class ReviewSession:
         remaining = [handle for handle in self._order if handle not in reordered]
         self._order = reordered + remaining
 
+    def mounted_handles(self) -> tuple:
+        """Currently mounted handles in display order.
+
+        Exposed so a panel can be built without reaching into session
+        internals; unmounted instances are excluded.
+        """
+        return tuple(handle for handle in self._order if handle in self._mounted)
+
+    def ref_of(self, handle: str) -> str:
+        """The structural reference one handle points at."""
+        entry = self._mounted.get(handle) or self._unmounted[handle]
+        return entry["ref"]
+
+    def unlock(self) -> None:
+        """Drop the annotation target, leaving instance associations intact."""
+        self._locked = None
+
     def entity_key_of(self, handle: str) -> str:
         """Return the UI entity key a handle tracks, for in-memory use only."""
         entry = self._mounted.get(handle) or self._unmounted[handle]
