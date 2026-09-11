@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 11:02:36
+> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 11:23:50
 
 [~][X+] 1. R1 界面引用注册表与本地评审标注模式
 ├── [x][X+] 1-1. 前置未决项收敛（宿主/依赖/接口形态）
@@ -44,13 +44,13 @@
 │   ├── [x][Y+] 1-7-2. 当前映射版本保留对紧邻上一版本的显式迁移声明
 │   ├── [x][Y+] 1-7-3. 解析结果域：migrated / retired / incompatible / source-mismatch，禁止静默替代
 │   └── [x][Y+] 1-7-4. 合成上一版本 fixture 验证兼容窗口；replaced-by 明确标注为替代元素
-├── [ ][Y+] 1-8. 固定语义覆盖矩阵与安全负向验收
-│   ├── [ ][Y+] 1-8-1. 首页矩阵 fixture：语义单元 × 状态（含 denied/safe-stopped/unknown）× 动态项重排与删除
-│   ├── [ ][Y+] 1-8-2. 任务详情矩阵 fixture：含缺失身份、待 reconcile、只读不适用的展示 fixture
-│   ├── [ ][Y+] 1-8-3. 记录视图矩阵 fixture：空事件、无筛选结果、缺失 metadata、重复结构事件项
-│   ├── [ ][Y+] 1-8-4. 覆盖率断言方式：独立断言各单元存在，缺声明不得缩小分母
-│   ├── [ ][Y+] 1-8-5. 安全负向面：远端请求/遥测 0、无新增 Run/effect/approval、无 Worker/Provider 执行
-│   └── [ ][Y+] 1-8-6. 正常模式 vs 评审模式行为对照：业务动作不截断不重复
+├── [x][Y+] 1-8. 固定语义覆盖矩阵与安全负向验收
+│   ├── [x][Y+] 1-8-1. 首页矩阵 fixture：语义单元 × 状态（含 denied/safe-stopped/unknown）× 动态项重排与删除
+│   ├── [x][Y+] 1-8-2. 任务详情矩阵 fixture：含缺失身份、待 reconcile、只读不适用的展示 fixture
+│   ├── [x][Y+] 1-8-3. 记录视图矩阵 fixture：空事件、无筛选结果、缺失 metadata、重复结构事件项
+│   ├── [x][Y+] 1-8-4. 覆盖率断言方式：独立断言各单元存在，缺声明不得缩小分母
+│   ├── [x][Y+] 1-8-5. 安全负向面：远端请求/遥测 0、无新增 Run/effect/approval、无 Worker/Provider 执行
+│   └── [x][Y+] 1-8-6. 正常模式 vs 评审模式行为对照：业务动作不截断不重复
 └── [ ][Y+] 1-9. 收尾：文档/导航同步与 skill 抽取判定
     ├── [ ][Y+] 1-9-1. 同步 docs/prds、architecture 与 AGENTS 导航；实现状态如实标注
     ├── [ ][Y+] 1-9-2. 汇总实际执行命令与结果；未跑项保持 pending/unknown
