@@ -190,6 +190,18 @@ def render_panel(manifest: Mapping[str, Any], view: Mapping[str, Any]) -> str:
     )
 
 
+def _expands(render: Callable[..., str]) -> bool:
+    """Whether this view's renderer accepts an expansion request.
+
+    Asked of the renderer rather than kept in a table here: a view that gains or
+    loses a disclosure would otherwise need two places updated, and the table
+    would be the one that silently went stale.
+    """
+    import inspect
+
+    return "expand" in inspect.signature(render).parameters
+
+
 def render_document(
     route: str, view: Mapping[str, Any], query: str = "", review: bool = False
 ) -> str:
@@ -203,9 +215,14 @@ def render_document(
     manifest = manifest_of()
     body = render(view, manifest=manifest)
 
-    # Resolved against the rendered body rather than the manifest: see locate().
+    # Resolved against the rendered body, then rendered again if the target sits
+    # behind a disclosure: the second pass serves that disclosure open, so the
+    # link reveals its target without a click. Only the named reference is
+    # expanded -- opening every disclosure would make "located" meaningless.
     outcome = locate(manifest, query, body)
     if outcome is not None and outcome["outcome"] == "located":
+        if _expands(render):
+            body = render(view, manifest=manifest, expand=(outcome["ref"],))
         body = body.replace(
             _marker(outcome["ref"]),
             '{0} data-ui-located="{1}"'.format(_marker(outcome["ref"]), outcome["ref"]),

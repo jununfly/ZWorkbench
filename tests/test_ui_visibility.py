@@ -1,26 +1,33 @@
-"""Behaviour tests for the visibility states the PRD requires.
+"""Behaviour tests for the three visibility states the PRD requires.
 
-The PRD asks every semantic unit in a scenario to be classified as visible or
-not applicable, and attaches a different obligation to each. A hidden unit must
-answer ``unavailable`` rather than resolve to a substitute. A not applicable
-unit must carry a stated reason, and must never be a relabelled missing
-implementation.
+The PRD asks every semantic unit in a scenario to be classified as visible,
+expandable or not applicable, and it attaches a different obligation to each:
+an expandable unit must be locatable after a read-only expansion, a hidden unit
+must answer ``unavailable`` rather than resolve to a substitute, and a not
+applicable unit must carry a stated reason and must never be a relabelled
+missing implementation.
 
-Visibility is measured against the document that was actually rendered, not
-against the manifest: a declaration says a unit exists somewhere, not here.
+Two properties are load-bearing across the whole file. Visibility is measured
+against the document that was actually rendered, not against the manifest --
+a declaration says a unit exists somewhere, not that it is on this page. And
+``unavailable`` is the answer for "declared but not present", which is a
+different fix from "never declared".
 """
 
+import json
 import sys
 import unittest
+import urllib.parse
 import urllib.request
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+from browser import browser, chrome_available
 from zworkbench.composition import CompositionOwner
 from zworkbench.ui_home import home_manifest
-from zworkbench.ui_host import locate, serve_workbench
+from zworkbench.ui_host import locate, render_document, serve_workbench
 from zworkbench.ui_matrix import (
     CoverageError,
     MATRIX,
@@ -29,6 +36,7 @@ from zworkbench.ui_matrix import (
     required_units,
     unit_visibility,
 )
+from zworkbench.ui_record_view import record_manifest, render_record_view
 from zworkbench.ui_runtime import audit_rendered_html
 from zworkbench.ui_task_detail import render_task_detail, task_detail_manifest
 from zworkbench.ui_token import build_deep_link
@@ -36,6 +44,13 @@ from zworkbench.ui_view_model import owner_view_source, task_detail_view_model
 
 #: See tests/test_ui_host.py: a machine-wide proxy answers loopback requests.
 DIRECT = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+RECORD_VIEW = {
+    "picker": "run-one",
+    "events": [{"title": "run.created"}],
+    "detail": "run.created",
+    "mode": "recorded_view",
+}
 
 
 def fetch(base, path):
@@ -66,6 +81,64 @@ class ClassifyingEveryUnitTests(unittest.TestCase):
             self.assertEqual(
                 sorted(classes), sorted(required_units(view)), view
             )
+
+
+class ExpandingAUnitReadOnlyTests(unittest.TestCase):
+    """1-5-1 — an expandable unit must be locatable once expanded."""
+
+    def setUp(self):
+        self.manifest = record_manifest()
+
+    def test_the_specification_marks_the_disclosed_units_expandable(self):
+        for unit in (
+            "record-view.result",
+            "record-view.artifact-metadata",
+            "record-view.replay-metadata",
+        ):
+            self.assertEqual(unit_visibility("record-view", unit), "expandable")
+
+    def test_an_expandable_unit_is_present_but_collapsed_by_default(self):
+        markup = render_record_view(RECORD_VIEW, manifest=self.manifest)
+        audit = audit_rendered_html(self.manifest, markup)
+        self.assertIn("record-view.result", audit["instances"])
+        self.assertNotIn(" open", markup)
+
+    def test_expanding_opens_the_disclosure_that_holds_the_unit(self):
+        markup = render_record_view(
+            RECORD_VIEW, manifest=self.manifest, expand=("record-view.result",)
+        )
+        self.assertIn("<details", markup)
+        self.assertIn(" open", markup)
+
+    def test_a_deep_link_to_an_expandable_unit_expands_and_locates_it(self):
+        """The whole point: following the link must not require a click."""
+        document = render_document(
+            "/record-view",
+            RECORD_VIEW,
+            "ui_ref=record-view.result&ui_map=" + self.manifest["ui_map"],
+        )
+        self.assertIn('data-ui-located="record-view.result"', document)
+        self.assertIn(" open", document)
+
+    def test_expanding_one_unit_does_not_open_an_unrelated_disclosure(self):
+        """A link that opens everything has not located anything."""
+        markup = render_record_view(
+            RECORD_VIEW, manifest=self.manifest, expand=("record-view.record-picker",)
+        )
+        self.assertNotIn(" open", markup)
+
+    def test_expansion_reveals_content_without_changing_the_references(self):
+        collapsed = audit_rendered_html(
+            self.manifest, render_record_view(RECORD_VIEW, manifest=self.manifest)
+        )
+        expanded = audit_rendered_html(
+            self.manifest,
+            render_record_view(
+                RECORD_VIEW, manifest=self.manifest, expand=("record-view.result",)
+            ),
+        )
+        self.assertEqual(collapsed["instances"], expanded["instances"])
+        self.assertEqual(expanded["undeclared"], ())
 
 
 class LocatingAHiddenUnitTests(unittest.TestCase):
@@ -188,6 +261,69 @@ class ExcusingAUnitAsNotApplicableTests(unittest.TestCase):
         self.owner.create_run("run-beta", "worker_diff_run", {})
         model = task_detail_view_model(self.owner, "run-beta")
         self.assertEqual(model["not_applicable"], {})
+
+
+@unittest.skipUnless(
+    chrome_available(),
+    "the verification-stage browser is absent; this surface stays unknown",
+)
+class DisclosingContentInARealEngineTests(unittest.TestCase):
+    """1-5-1 — native disclosure, measured rather than asserted from markup.
+
+    ``<details>`` hides its content in the engine, not in the markup, so only an
+    engine can say whether an expandable unit is really revealed.
+
+    The measurement is ``checkVisibility()`` plus the text the page actually
+    exposes, and the choice matters. Geometry looks like the obvious probe and is
+    useless here: Chrome gives the collapsed content a layout box anyway, so its
+    height is 24px both collapsed and expanded. An assertion on height would
+    have been false in one direction and vacuously true in the other -- the
+    second is the dangerous one, because ``height > 0`` would have "passed"
+    without the disclosure ever opening. The disclosure element's own height does
+    grow, but that measures the summary plus content, not whether the unit is
+    revealed.
+    """
+
+    def setUp(self):
+        self.manifest = record_manifest()
+        self.host = serve_workbench(view_source=lambda route: RECORD_VIEW)
+        self.addCleanup(self.host.close)
+
+    def _measure(self, path):
+        with browser() as engine:
+            engine.open(self.host.base_url + path, viewport=(1280, 900))
+            return json.loads(
+                engine.evaluate(
+                    "JSON.stringify((() => {"
+                    "  const unit = document.querySelector("
+                    "    '[data-ui-ref=\"record-view.result\"]');"
+                    "  return {"
+                    "    present: !!unit,"
+                    "    rendered: unit ? unit.checkVisibility({"
+                    "      checkVisibilityCSS: true, contentVisibilityAuto: true"
+                    "    }) : false,"
+                    "    exposed: document.body.innerText.includes('unknown'),"
+                    "    open: document.querySelector('details').open,"
+                    "  };"
+                    "})())"
+                )
+            )
+
+    def test_a_collapsed_unit_is_in_the_document_but_is_not_rendered(self):
+        """Present in the DOM, absent from the page: that is what hidden means."""
+        measured = self._measure("/record-view")
+        self.assertTrue(measured["present"])
+        self.assertFalse(measured["open"])
+        self.assertFalse(measured["rendered"])
+        self.assertFalse(measured["exposed"])
+
+    def test_following_the_link_reveals_the_unit_without_scripting(self):
+        """No script runs on this page, so the engine's own disclosure did it."""
+        link = build_deep_link(self.manifest, "record-view.result")
+        measured = self._measure(link)
+        self.assertTrue(measured["open"])
+        self.assertTrue(measured["rendered"])
+        self.assertTrue(measured["exposed"])
 
 
 if __name__ == "__main__":
