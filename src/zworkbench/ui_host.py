@@ -21,6 +21,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
+from .ui_review import PANEL_ACTIONS, ReviewMode
 from .ui_style import stylesheet
 from .ui_token import parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
@@ -47,6 +48,30 @@ DOCUMENT = (
 #: unparameterised page would leave two reviewers believing they were looking
 #: at the same element.
 LINK_NOTICE = '<p data-ui-link-outcome="{outcome}">链接已失效：{outcome}</p>'
+
+#: The review layer. It names the manifest identity it was rendered against,
+#: so a reviewer can tell whether their reference names the same build, and it
+#: carries role="presentation" because the highlight conveys no content of its
+#: own -- the panel that does is a separate, focusable region.
+#: The review panel. Unlike the highlight layer this is a labelled region with
+#: content, so it carries role="region" rather than presentation and it accepts
+#: input. It states the manifest identity it was rendered against, so two
+#: reviewers can tell whether a reference means the same thing to both.
+PANEL = (
+    '<section data-ui-panel="review" role="region" aria-label="评审面板">'
+    '<p data-ui-panel-identity="{identity}">{identity}</p>'
+    '<ul data-ui-panel-entries>{entries}</ul>'
+    '<div data-ui-panel-actions>{controls}</div>'
+    "</section>"
+)
+
+OVERLAY = (
+    '<aside data-ui-overlay="review" role="{role}"'
+    ' style="pointer-events:{pointer_events}">'
+    '<span data-ui-overlay-identity="ui_map:{ui_map} build:{build}">'
+    '评审模式 · 映射 {ui_map} · 构建 {build}</span>'
+    "</aside>"
+)
 
 ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] = {
     "/home": ("工作台首页", home_manifest, render_home),
@@ -79,7 +104,74 @@ def locate(manifest: Mapping[str, Any], query: str) -> Optional[Dict[str, str]]:
     return {"outcome": "located", "ref": parsed["ui_ref"]}
 
 
-def render_document(route: str, view: Mapping[str, Any], query: str = "") -> str:
+def render_overlay(manifest: Mapping[str, Any]) -> str:
+    """Render the review overlay as a sibling subtree of the business markup.
+
+    Two properties make the layer honest rather than decorative. It is a
+    sibling, so the business markup is byte-for-byte what normal mode serves --
+    which is what lets a mode comparison subtract the overlay and find nothing
+    else changed. And it declares ``pointer-events: none``, so it can cover the
+    content without intercepting a click.
+
+    The declaration is a contract, not evidence: only an engine can confirm it
+    is honoured, which is why tests/test_ui_overlay.py hit-tests a real
+    document.
+    """
+    entry = ReviewMode(dict(manifest)).overlay_descriptor()
+    return OVERLAY.format(
+        pointer_events=html.escape(entry["pointer-events"], quote=True),
+        role=html.escape(entry["role"], quote=True),
+        build=html.escape(manifest["build"][:12], quote=True),
+        ui_map=html.escape(manifest["ui_map"][:12], quote=True),
+    )
+
+
+def render_panel(manifest: Mapping[str, Any], view: Mapping[str, Any]) -> str:
+    """Render the review panel from the state machine's own decisions.
+
+    The entries and the keyboard plan come from :class:`ReviewMode`, not from a
+    second list maintained here: a panel that invented its own actions could
+    drift from the machine that implements them while both stayed green.
+
+    Every action is a real button, because an action reachable only by pointer
+    is not reachable. Whether the resulting tab order is the one a reviewer
+    expects is a host unknown (1-6-1) and is not claimed here.
+    """
+    mode = ReviewMode(dict(manifest))
+    mode.enable()
+    for index, record in enumerate(view.get("records") or ()):
+        mode.mount("home.record-list.item", entity_key="row-{0}".format(index))
+    plan = mode.keyboard_plan()
+
+    entries = "".join(
+        '<li data-ui-panel-entry="{ref}">{semantic}（{ref}）</li>'.format(
+            ref=html.escape(entry["ref"], quote=True),
+            semantic=html.escape(entry["semantic_zh"]),
+        )
+        for entry in mode.panel_entries()
+    )
+    controls = "".join(
+        '<button type="button" data-ui-panel-action="{action}">'
+        "{action} · {keys}</button>".format(
+            action=html.escape(action, quote=True),
+            keys=html.escape(plan[action]),
+        )
+        for action in PANEL_ACTIONS
+    )
+    mode.disable()
+    return PANEL.format(
+        identity="ui_map:{0} build:{1}".format(
+            html.escape(manifest["ui_map"][:12], quote=True),
+            html.escape(manifest["build"][:12], quote=True),
+        ),
+        entries=entries,
+        controls=controls,
+    )
+
+
+def render_document(
+    route: str, view: Mapping[str, Any], query: str = "", review: bool = False
+) -> str:
     """Wrap one rendered view in a complete document.
 
     A deep link only annotates: the located element gains a marker attribute
@@ -98,6 +190,8 @@ def render_document(route: str, view: Mapping[str, Any], query: str = "") -> str
         )
     elif outcome is not None:
         body = LINK_NOTICE.format(outcome=html.escape(outcome["outcome"])) + body
+    if review:
+        body = body + render_overlay(manifest) + render_panel(manifest, view)
     return DOCUMENT.format(title=title, stylesheet=STYLESHEET_ROUTE, body=body)
 
 
@@ -120,6 +214,7 @@ class WorkbenchHost:
 def serve_workbench(
     view_source: Optional[Callable[[str], Mapping[str, Any]]] = None,
     bind: Tuple[str, int] = ("127.0.0.1", 0),
+    review: bool = False,
 ) -> WorkbenchHost:
     """Start a read-only host, by default on an ephemeral loopback port.
 
@@ -129,6 +224,10 @@ def serve_workbench(
 
     ``bind`` exists so a caller can request a specific port. Refusing a
     non-loopback address is the entry point's job, not this function's.
+
+    ``review`` is a start-up choice on purpose. A request cannot turn the
+    review layer on, so a deep link is structurally incapable of enabling it
+    rather than merely lacking the parameter.
     """
     resolve_view = view_source or (lambda route: {})
 
@@ -141,7 +240,9 @@ def serve_workbench(
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
-            body = render_document(route, resolve_view(route), query).encode("utf-8")
+            body = render_document(
+                route, resolve_view(route), query, review
+            ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
         def _respond(self, body: bytes, content_type: str) -> None:
