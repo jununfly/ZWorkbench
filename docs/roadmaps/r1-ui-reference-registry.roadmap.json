@@ -318,7 +318,7 @@
     "1-7": {
       "id": "1-7",
       "label": "引用生命周期与映射版本兼容",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -332,15 +332,36 @@
           "q": "兼容窗口有多宽？",
           "answer": "仅保证紧邻上一发布映射版本，更早返回 incompatible",
           "note": "初版用合成上一版本 fixture 验证；禁止静默复用已废弃身份"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：扩展 src/zworkbench/ui_ref.py 的声明层与 resolve，加入生命周期与映射血缘",
+          "note": "不新建模块：alias/retired 是引用语义的一部分，必须与声明同源，否则又成第二份手工注册表"
+        },
+        {
+          "q": "alias 与 replaced-by 的语义区别？",
+          "answer": "alias=同一身份改名（migrated，same-semantics）；replaced-by=语义已变的替代元素（retired + 明确标注 replacement，绝不表述为同一身份）",
+          "note": "PRD 第 93 行硬要求；两者结果域不同，禁止合并为一种 migrated"
+        },
+        {
+          "q": "alias/retired 是否进 ui_map 摘要？",
+          "answer": "进。它们是引用语义；previous_ui_map 不进（血缘指针，同 build 的处理）",
+          "note": "若 previous_ui_map 进摘要会形成自指链并让每次发版作废全部历史 token"
+        },
+        {
+          "q": "上一版本窗口内、无迁移记录的未改 ref 怎么办？",
+          "answer": "需调用方提供 previous_manifest 实物核对声明逐字一致才返回 found；拿不到旧 manifest 一律 incompatible",
+          "note": "严格遵守「不得用当前 manifest 静默替代旧 manifest」；旧产物本地按 ui_map.build 可寻址，核对是可行的而非猜测"
         }
       ],
-      "notes": "",
+      "notes": "扩展 src/zworkbench/ui_ref.py + tests/test_ui_lifecycle.py（32 测试）。验证：PYTHONPATH=src python3 -m unittest discover -s tests -t tests → Ran 382 tests OK（提权）。四条 exit criteria 全部实测通过。顺带修复 ui_map 耦合缺陷：此前 source.content_digest 参与摘要，一处注释改动即作废全部历史 token（已实测 before/after 确认修复）",
       "exit_criteria": [
         "未改语义的 ref 在文案/布局/顺序变更后保持不变",
         "旧 ref 不静默指向新语义",
         "migrated/retired/incompatible/source-mismatch 各有测试",
         "alias 冲突与循环在构建时被拒绝"
-      ]
+      ],
+      "rounds": 1
     },
     "1-8": {
       "id": "1-8",
@@ -1092,42 +1113,65 @@
     "1-7-1": {
       "id": "1-7-1",
       "label": "视觉重排不改 ref；语义变更必须新建 ref 并声明 alias / replaced-by / 废弃",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "发现缺陷：source.content_digest 参与 ui_map，注释级改动即作废全部历史 token。如何修？",
+          "answer": "ui_map 摘要只覆盖语义字段（ref/semantic_zh/kind/view/parent/alias_of/retired/replaced_by），排除 source",
+          "note": "1-2 已把 build receipt 排除在 ui_map 外，但 source digest 从后门重新引入了同一耦合。source 仍留在 manifest 供 locate_source 用，只是不进摘要"
+        },
+        {
+          "q": "accessible_name 是否进 manifest？",
+          "answer": "作为声明字段接受，但不进 to_dict 也不进 ui_map",
+          "note": "PRD 第 56 行：无障碍名变化不得改变语义未变的引用；进摘要就会让文案改动移动身份"
+        }
+      ],
+      "notes": "UiRefDeclaration 新增 accessible_name/alias_of/retired/replaced_by。ui_map 摘要收窄为语义字段，排除 source（修复注释级改动作废历史 token 的缺陷）与 accessible_name。实测：顺序调换与无障碍名变更 ui_map 不变；semantic_zh 变更 ui_map 改变"
     },
     "1-7-2": {
       "id": "1-7-2",
       "label": "当前映射版本保留对紧邻上一版本的显式迁移声明",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "血缘存在哪里？",
+          "answer": "manifest 顶层 previous_ui_map 字段，无前驱时显式为 null 而非缺字段",
+          "note": "显式 null 与「忘了写」可区分；自指（previous==current）构建期拒绝"
+        }
+      ],
+      "notes": "build_manifest(build=, previous_ui_map=) 记录紧邻上一版本。previous_ui_map 不进 ui_map 摘要（血缘非语义）。非法 digest 与自指均构建期拒绝"
     },
     "1-7-3": {
       "id": "1-7-3",
       "label": "解析结果域：migrated / retired / incompatible / source-mismatch，禁止静默替代",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "retired 结果为何不带 ref 字段？",
+          "answer": "只给 retired_ref + replacement + identity=different-semantics，不给 ref",
+          "note": "带 ref 会让调用方顺手当成同一身份使用；PRD 要求替代元素不得表述为同一身份"
+        }
+      ],
+      "notes": "结果域：found / not-found / migrated(identity=same-semantics) / retired(identity=different-semantics, 无 ref 字段) / incompatible。incompatible 带 reason 四值：outside-compatibility-window / previous-manifest-required / previous-manifest-mismatch / semantics-changed。source-mismatch 仍由 ui_manifest.locate_source 负责。测试断言任何结果都不含 selector/css 回退"
     },
     "1-7-4": {
       "id": "1-7-4",
       "label": "合成上一版本 fixture 验证兼容窗口；replaced-by 明确标注为替代元素",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "CompatibilityWindowTests 合成 v1→v2→v3 三代 fixture：v2 解析 v1 的 alias 得 migrated；v3 解析 v1 即便提供 previous_manifest 也是 incompatible/outside-compatibility-window；alias 不跨两代继承"
     },
     "1-8-1": {
       "id": "1-8-1",
@@ -1222,7 +1266,7 @@
   },
   "metadata": {
     "created": "2026-09-10 21:12:47",
-    "updated": "2026-09-11 01:51:27",
+    "updated": "2026-09-11 11:02:36",
     "md_file": "docs/roadmaps/ZJ_ROADMAP_r1-ui-reference-registry.md"
   }
 }

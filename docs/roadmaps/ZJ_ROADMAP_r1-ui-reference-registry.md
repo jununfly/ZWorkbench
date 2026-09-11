@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 01:51:27
+> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 11:02:36
 
 [~][X+] 1. R1 界面引用注册表与本地评审标注模式
 ├── [x][X+] 1-1. 前置未决项收敛（宿主/依赖/接口形态）
@@ -39,11 +39,11 @@
 │   ├── [x][Y+] 1-6-4. Escape 仅在面板持有焦点时清除锁定，不拦截业务弹窗
 │   ├── [x][Y+] 1-6-5. 复制由用户发起；失败可见且保留本地选择，不自动重试剪贴板
 │   └── [x][Y+] 1-6-6. 关闭面板的焦点恢复合同（原目标存在则恢复，否则回评审入口）
-├── [ ][Y+] 1-7. 引用生命周期与映射版本兼容
-│   ├── [ ][Y+] 1-7-1. 视觉重排不改 ref；语义变更必须新建 ref 并声明 alias / replaced-by / 废弃
-│   ├── [ ][Y+] 1-7-2. 当前映射版本保留对紧邻上一版本的显式迁移声明
-│   ├── [ ][Y+] 1-7-3. 解析结果域：migrated / retired / incompatible / source-mismatch，禁止静默替代
-│   └── [ ][Y+] 1-7-4. 合成上一版本 fixture 验证兼容窗口；replaced-by 明确标注为替代元素
+├── [x][Y+] 1-7. 引用生命周期与映射版本兼容
+│   ├── [x][Y+] 1-7-1. 视觉重排不改 ref；语义变更必须新建 ref 并声明 alias / replaced-by / 废弃
+│   ├── [x][Y+] 1-7-2. 当前映射版本保留对紧邻上一版本的显式迁移声明
+│   ├── [x][Y+] 1-7-3. 解析结果域：migrated / retired / incompatible / source-mismatch，禁止静默替代
+│   └── [x][Y+] 1-7-4. 合成上一版本 fixture 验证兼容窗口；replaced-by 明确标注为替代元素
 ├── [ ][Y+] 1-8. 固定语义覆盖矩阵与安全负向验收
 │   ├── [ ][Y+] 1-8-1. 首页矩阵 fixture：语义单元 × 状态（含 denied/safe-stopped/unknown）× 动态项重排与删除
 │   ├── [ ][Y+] 1-8-2. 任务详情矩阵 fixture：含缺失身份、待 reconcile、只读不适用的展示 fixture
