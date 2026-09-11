@@ -80,14 +80,33 @@ ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] 
 }
 
 
-def locate(manifest: Mapping[str, Any], query: str) -> Optional[Dict[str, str]]:
-    """Interpret a review deep link against the manifest this view rendered.
+def _marker(ref: str) -> str:
+    """The attribute text an element carrying this reference must contain."""
+    return 'data-ui-ref="{0}"'.format(ref)
+
+
+def locate(
+    manifest: Mapping[str, Any], query: str, rendered: Optional[str] = None
+) -> Optional[Dict[str, str]]:
+    """Interpret a review deep link against the view that was actually rendered.
 
     ``None`` means the request carried no link. Otherwise the outcome names
-    what went wrong, because the two ways a link dies need different fixes: a
-    mapping mismatch means the link came from another build and should be
-    regenerated, while an unknown reference means it points at something that
-    was never declared.
+    what went wrong, because each way a link dies needs a different fix:
+
+    * ``ui-map-mismatch`` -- the link came from another build; regenerate it.
+    * ``unknown-reference`` -- it names something never declared; the link is
+      wrong, or the declaration was removed.
+    * ``unavailable`` -- the unit is declared but is not on this page, because
+      the state that renders it does not hold (an empty list has no rows).
+      The reviewer needs to reach that state, not fix the link.
+
+    The last outcome is why ``rendered`` exists. A manifest says a unit exists
+    somewhere in the view; only the document says it exists *here*. Deciding
+    from the manifest alone reported success for a reference that no element
+    carried, and the reviewer then saw an unmarked page with no explanation.
+
+    ``rendered`` is optional so that a caller with no document can still check a
+    link's structural validity, but such a call can never answer ``unavailable``.
 
     A rejection never echoes the input. A locator that reflects what it was
     given is how one turns into an injection point.
@@ -101,6 +120,8 @@ def locate(manifest: Mapping[str, Any], query: str) -> Optional[Dict[str, str]]:
         return {"outcome": "ui-map-mismatch"}
     if not any(entry["ref"] == parsed["ui_ref"] for entry in manifest["refs"]):
         return {"outcome": "unknown-reference"}
+    if rendered is not None and _marker(parsed["ui_ref"]) not in rendered:
+        return {"outcome": "unavailable", "ref": parsed["ui_ref"]}
     return {"outcome": "located", "ref": parsed["ui_ref"]}
 
 
@@ -181,11 +202,13 @@ def render_document(
     title, manifest_of, render = ROUTES[route]
     manifest = manifest_of()
     body = render(view, manifest=manifest)
-    outcome = locate(manifest, query)
+
+    # Resolved against the rendered body rather than the manifest: see locate().
+    outcome = locate(manifest, query, body)
     if outcome is not None and outcome["outcome"] == "located":
         body = body.replace(
-            'data-ui-ref="{0}"'.format(outcome["ref"]),
-            'data-ui-ref="{0}" data-ui-located="{0}"'.format(outcome["ref"]),
+            _marker(outcome["ref"]),
+            '{0} data-ui-located="{1}"'.format(_marker(outcome["ref"]), outcome["ref"]),
             1,
         )
     elif outcome is not None:
