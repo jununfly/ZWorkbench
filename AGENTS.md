@@ -108,6 +108,7 @@ unknown，而不是把实现状态误写成目标已实现。本文件只补充�
 | 记录、诊断和回放 | [架构 wiki](docs/architecture/README.md)；[composition.py](src/zworkbench/composition.py) |
 | 评测 fixture、阈值和证据 | [fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
 | 安装、升级、许可证和退出 | [optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
+| 界面引用注册表与评审标注模式 | [R1 PRD](docs/prds/r1-ui-reference-registry.md)（target/partial）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
 | Python 包入口和命令 | [pyproject.toml](pyproject.toml)；[README.md](README.md)；代码中的 --help 输出是命令事实源 |
 
 ### Source map
@@ -119,6 +120,15 @@ src/zworkbench/
   local_run.py         local_read_only_run orchestration and preflight
   cli.py               installed user-facing CLI
   composition_cli.py   owner snapshot/backup/restore CLI
+  ui_ref.py            UI reference declarations, lifecycle and manifest digest
+  ui_manifest.py       build receipt, local artifact store and code location
+  ui_runtime.py        rendered attributes and review-session instance identity
+  ui_token.py          ui-ref/v1 review token and deep link contract
+  ui_review.py         local review annotation mode: panel, gestures and exit
+  ui_matrix.py         PRD coverage specification and counting contract
+  ui_home.py           home view declarations and fixture renderer
+  ui_task_detail.py    task-detail view declarations and fixture renderer
+  ui_record_view.py    record-view declarations and fixture renderer
 
 tests/
   behavior and regression tests for owner, adapter, orchestration and CLI
@@ -207,6 +217,7 @@ evaluation/
 | Replay/evidence | mode 隔离、事件完整性、脱敏、artifact identity | recorded/simulated/live counters；未批准外部执行 0 |
 | CLI/user entry | preflight、可读错误、JSON 脱敏、退出清理 | CLI tests + case-local smoke + --help |
 | 评测 fixture/研究文档 | 与产品实现分开，固定 source/evidence/status，unknown 不升级 | runner、summary、evidence provenance 和对应阈值 |
+| UI 引用声明/矩阵 | ui_map 只摘要语义；分母来自 PRD 矩阵而非 manifest；宿主交互面保持 unknown | ui_* 行为测试 + 覆盖报告 gaps/accepted 检查 |
 | wiki/docs | 权威页唯一，过程不与长期规则混杂 | 文档链接检查 |
 
 ## 6. Definition of done
