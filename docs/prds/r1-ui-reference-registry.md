@@ -137,14 +137,22 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 ## Further Notes
 
 - 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充，状态为 `target` / `partial`。
+- 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
+- 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
+- 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
+- 尚待实现细化：前端宿主与 fixture 在真实宿主下的代码组织。helper API、本地 manifest 查询命令、token 白名单、实例有效期、兼容窗口和覆盖分母已固定。这些细节不得削弱上述失败与隐私合同；无法证明安全唯一定位时保持不可用/歧义，不恢复业务状态。
 
 ## Implementation status
 
-结构合同已实现：声明层、manifest 与 build receipt、运行时渲染与实例定位、token v1 与深链接、
-引用生命周期与映射兼容、评审模式状态机、三视图覆盖矩阵与安全负向断言，均有产品代码与行为测试。
-相关模块见 `src/zworkbench/ui_*.py`，验证入口见 [Repository README](../../README.md)。
+引用协议已实现：声明层、manifest 与 build receipt、结构与实例定位、token v1 与深链接、
+引用生命周期与映射兼容、评审模式状态机、三视图语义单元声明与安全负向断言，均有产品代码
+与行为测试。相关模块见 `src/zworkbench/ui_*.py`，验证入口见 [Repository README](../../README.md)。
 
-以下仍为 `unknown`，不得按已通过对待：
+前端宿主尚未选型。视图渲染是纯函数拼装的 HTML 字符串，评审模式是纯状态机；仓库中没有
+样式、脚本、overlay 或服务入口，manifest 也没有构建钩子产出。因此本节区分两类未完成项：
+**未验证**指实现存在但只有真实宿主能判定，**未实现**指该行为在当前代码中还不存在。
+
+以下为 `unknown`，实现存在而判定依赖宿主：
 
 | 未验证面 | 原因 |
 |---|---|
@@ -153,10 +161,17 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 | `clipboard-failure-visible` | 真实剪贴板权限拒绝及其可见表现属宿主行为 |
 | `focus-restore-on-close` | 焦点是否可见地落到恢复目标属宿主行为 |
 
-覆盖报告固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格
-只表示声明齐全，不表示本功能验收通过；整个 R1 仍须独立通过主规格验收。未选定
-浏览器自动化方案前，上述四项保持 `unknown`，不得标注为 `not-applicable`。
-- 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
-- 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
-- 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
-- 尚待实现细化：前端宿主、具体 helper API、本地 manifest 查询命令及 fixture 的代码组织；token 白名单、实例有效期、兼容窗口和覆盖分母已在本 spec 固定。这些细节不得削弱上述失败与隐私合同；无法证明安全唯一定位时保持不可用/歧义，不恢复业务状态。
+以下为**未实现**，当前测试不构成任何证据，不得计入验收：
+
+| 未实现项 | 当前状态 |
+|---|---|
+| 390px / 1280px 两档视口执行 | 现有矩阵测试遍历视口名称但不改变渲染输入，断言的是同一份 markup；响应式行为属 CSS，尚不存在 |
+| 正常模式与评审模式对照 | 评审模式当前不修改 markup，两模式相等的断言恒真；overlay 落地前该对照没有信息量 |
+| 可展开单元展开后可定位 | 无展开状态实现 |
+| 隐藏单元直接定位返回 `unavailable` | 视图层无隐藏态，该路径未被任何视图触发 |
+| `not_applicable` 计数机制 | `coverage_report` 支持该参数，但三视图均未使用，未经真实场景检验 |
+
+覆盖报告固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格只表示
+声明齐全。上述四项 `unknown` 与五项未实现同源于宿主缺位，会随宿主落地一并解决，不得
+在此之前标注为 `not-applicable` 或计为通过。本功能验收未通过；整个 R1 仍须独立通过
+主规格验收。
