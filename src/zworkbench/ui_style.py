@@ -17,8 +17,12 @@ layer can coexist with the protocol, not to propose a visual design.
 
 from __future__ import annotations
 
-STYLESHEET = """\
+from .ui_matrix import VIEWPORT_BREAKPOINT_PX
+
+_TEMPLATE = """\
 :root { color-scheme: light dark; }
+
+main { --viewport-class: wide; }
 
 body {
   margin: 0;
@@ -59,9 +63,25 @@ main > button {
   font: inherit;
   cursor: pointer;
 }
+
+/* Last, deliberately. These rules have the same specificity as the ones above,
+   so ordering is what decides the outcome -- a media query placed earlier is
+   silently overridden, which string inspection of the stylesheet cannot show.
+   The class is also published as a custom property, so a reviewer and a test
+   can read which branch applied rather than infer it from a measurement. */
+@media (max-width: __COMPACT_MAX__px) {
+  main { --viewport-class: compact; padding: 8px; gap: 8px; }
+  main > section { padding: 6px 8px; }
+}
 """
 
 
+#: A plain substitution rather than str.format: CSS is full of braces, and
+#: escaping every one of them would make the stylesheet hard to read and easy
+#: to break.
+STYLESHEET = _TEMPLATE.replace("__COMPACT_MAX__", str(VIEWPORT_BREAKPOINT_PX - 1))
+
+
 def stylesheet() -> str:
-    """Return the workbench stylesheet."""
+    """Return the workbench stylesheet, pinned to the declared breakpoint."""
     return STYLESHEET
