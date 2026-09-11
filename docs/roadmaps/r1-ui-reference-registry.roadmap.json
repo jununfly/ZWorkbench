@@ -6,7 +6,7 @@
     "1": {
       "id": "1",
       "label": "R1 界面引用注册表与本地评审标注模式",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -416,7 +416,7 @@
     "1-9": {
       "id": "1-9",
       "label": "收尾：文档/导航同步与 skill 抽取判定",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -429,14 +429,20 @@
           "q": "何时抽取 skill？",
           "answer": "产品切片跑通并完成两三轮真实反馈之后，默认本轮不抽取",
           "note": "skill 负责校验/定位/协作流程，不实现另一套浏览器运行时"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution（文档侧）：同步 docs/AGENTS 导航与实现状态；不改产品代码",
+          "note": "收尾节点的产物是文档与如实状态标注，不是新功能"
         }
       ],
-      "notes": "",
+      "notes": "收尾完成。exit criteria：docs/AGENTS 导航已同步且状态标为 target/partial（非 implemented）；git diff --check clean，无凭证与大型 runs 入库；未完成项显式保留为 unknown（4 项宿主交互面）与 pending（R1 主规格验收、skill 抽取）",
       "exit_criteria": [
         "docs 与 AGENTS 导航同步且实现状态如实标注",
         "git diff --check 通过，无凭证/大型 runs 入库",
         "未完成项显式标为 pending/unknown/HOLD"
-      ]
+      ],
+      "rounds": 1
     },
     "1-1-1": {
       "id": "1-1-1",
@@ -1270,37 +1276,61 @@
     "1-9-1": {
       "id": "1-9-1",
       "label": "同步 docs/prds、architecture 与 AGENTS 导航；实现状态如实标注",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "PRD 的 implementation-status 应改成什么？",
+          "answer": "从 pending 改为 partial，并写明「结构合同已实现，4 项宿主交互面 unknown，未通过完整验收」",
+          "note": "改成 implemented 是谎报：accepted=False 且宿主面未验证。保持 pending 也不准确：15 个提交、418 测试确实落地了结构合同"
+        },
+        {
+          "q": "docs/README.md 第 74 行「不保留路线状态」与已入库的 docs/roadmaps/ 冲突，如何处理？",
+          "answer": "在维护规则中为 docs/roadmaps/ 写明一条限定例外，并说明它不是 wiki 权威页、不定义长期真相",
+          "note": "用户明确要求 roadmap 入库；规则与现状不一致时必须显式化，不能让仓库长期处于自相矛盾状态"
+        }
+      ],
+      "notes": "PRD frontmatter pending→partial + 新增 Implementation status 章节（含 4 项 unknown 表格与 accepted=false 说明）；docs/prds/README.md 状态同步；docs/README.md 维护规则显式化 roadmaps 例外并在文档类型表新增 Roadmap records 行；AGENTS.md 补导航行、source map 9 个 ui_* 模块、change routing 一行。所有相对链接实测可解析（broken links: none）",
+      "rounds": 1
     },
     "1-9-2": {
       "id": "1-9-2",
       "label": "汇总实际执行命令与结果；未跑项保持 pending/unknown",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "哪些验收项不能标为通过？",
+          "answer": "4 项宿主交互面（keyboard-focus-order/pointer-events-passthrough/clipboard-failure-visible/focus-restore-on-close）保持 unknown；PRD 完成门槛未达成",
+          "note": "结构覆盖 30/30 满格但 accepted=False；R1 主规格验收未独立执行"
+        }
+      ],
+      "notes": "实际执行命令与结果：(1) PYTHONPATH=src python3 -m unittest discover -s tests -t tests → Ran 418 tests OK（提权；沙箱内 3 个既有 socket 失败与本工作无关）；(2) zworkbench ui-ref --help → 只读查询命令 identity/list/resolve 可用；(3) 覆盖报告 home 10/10、task-detail 11/11、record-view 9/9，三者均 evidence=structural-only accepted=False unverified=4；(4) git diff --check clean。未跑项：真实浏览器交互验证、R1 主规格验收，均保持 unknown/pending"
     },
     "1-9-3": {
       "id": "1-9-3",
       "label": "两三轮真实反馈后再判定是否抽取 skill（默认不抽取）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "本轮是否抽取 skill？",
+          "answer": "不抽取。真实反馈轮次为 0（宿主未落地，无人用评审模式提过真实反馈）",
+          "note": "PRD 要求两三轮真实反馈后再判定；此刻抽取只会把未经使用的猜测固化成 skill"
+        }
+      ],
+      "notes": "判定：不抽取，理由是真实反馈轮次 0。前置条件记录：需先落地浏览器宿主、完成 4 项交互面验证、积累 2-3 轮真实评审反馈，再重新评估"
     }
   },
   "metadata": {
     "created": "2026-09-10 21:12:47",
-    "updated": "2026-09-11 11:23:50",
+    "updated": "2026-09-11 11:33:16",
     "md_file": "docs/roadmaps/ZJ_ROADMAP_r1-ui-reference-registry.md"
   }
 }
