@@ -372,3 +372,51 @@ class ResolvingAReferenceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class MappingVersionCouplingTests(unittest.TestCase):
+    """A change that moves no identity must not invalidate copied tokens."""
+
+    def _registry(self, digest):
+        registry = UiRefRegistry()
+        registry.declare(
+            UiRefDeclaration(
+                ref="home.run-facts",
+                semantic_zh="运行事实",
+                kind="region",
+                view="home",
+                source=SourceAnchor(
+                    repo_path="src/zworkbench/ui_home.py",
+                    symbol="render_home",
+                    content_digest=digest,
+                ),
+            )
+        )
+        return registry
+
+    def test_a_source_edit_does_not_move_the_mapping_version(self):
+        first = self._registry("a" * 64).build_manifest(build="b" * 64)
+        edited = self._registry("c" * 64).build_manifest(build="d" * 64)
+        self.assertEqual(first["ui_map"], edited["ui_map"])
+
+    def test_the_source_anchor_is_still_recorded_for_code_location(self):
+        manifest = self._registry("a" * 64).build_manifest(build="b" * 64)
+        self.assertEqual(manifest["refs"][0]["source"]["content_digest"], "a" * 64)
+
+    def test_a_semantic_change_still_moves_the_mapping_version(self):
+        first = self._registry("a" * 64).build_manifest(build="b" * 64)
+        registry = UiRefRegistry()
+        registry.declare(
+            UiRefDeclaration(
+                ref="home.run-facts",
+                semantic_zh="运行摘要",
+                kind="region",
+                view="home",
+                source=SourceAnchor(
+                    repo_path="src/zworkbench/ui_home.py",
+                    symbol="render_home",
+                    content_digest="a" * 64,
+                ),
+            )
+        )
+        self.assertNotEqual(first["ui_map"], registry.build_manifest(build="b" * 64)["ui_map"])
