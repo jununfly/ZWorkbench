@@ -20,13 +20,20 @@ from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
+from .ui_style import stylesheet
 from .ui_task_detail import render_task_detail, task_detail_manifest
+
+#: Where the style layer is served. Styling is a separate resource rather
+#: than inline markup, so a selector can never be written against the
+#: reference attributes the renderers emit.
+STYLESHEET_ROUTE = "/static/workbench.css"
 
 
 DOCUMENT = (
     "<!DOCTYPE html>\n"
     '<html lang="zh-CN"><head><meta charset="utf-8">\n'
     '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+    '<link rel="stylesheet" href="{stylesheet}">\n'
     "<title>{title}</title></head>\n"
     "<body>{body}</body></html>\n"
 )
@@ -43,7 +50,11 @@ ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] 
 def render_document(route: str, view: Mapping[str, Any]) -> str:
     """Wrap one rendered view in a complete document."""
     title, manifest_of, render = ROUTES[route]
-    return DOCUMENT.format(title=title, body=render(view, manifest=manifest_of()))
+    return DOCUMENT.format(
+        title=title,
+        stylesheet=STYLESHEET_ROUTE,
+        body=render(view, manifest=manifest_of()),
+    )
 
 
 class WorkbenchHost:
@@ -76,12 +87,18 @@ def serve_workbench(
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
             route = self.path.split("?", 1)[0]
+            if route == STYLESHEET_ROUTE:
+                self._respond(stylesheet().encode("utf-8"), "text/css; charset=utf-8")
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
             body = render_document(route, resolve_view(route)).encode("utf-8")
+            self._respond(body, "text/html; charset=utf-8")
+
+        def _respond(self, body: bytes, content_type: str) -> None:
             self.send_response(200)
-            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
