@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import threading
 from pathlib import Path
 import re
 import uuid
@@ -27,6 +28,10 @@ from .local_run import (
 
 
 CLI_SCHEMA = "zworkbench-cli/v1"
+LOOPBACK = "127.0.0.1"
+#: Addresses that keep the service on this machine. Anything else would put
+#: review material, including manifest identity, on the network.
+LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
 _SECRET_VALUE = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,}|(?:api[_-]?key|access[_-]?token|authorization)\s*[:=]\s*\S+)",
     re.IGNORECASE,
@@ -111,6 +116,32 @@ def _parser() -> argparse.ArgumentParser:
     ui_ref_resolve.add_argument("--build", required=True, help="expected build receipt digest")
 
     ui_ref.set_defaults(handler=_ui_ref_command)
+
+    ui_host = commands.add_parser(
+        "ui-host",
+        help="serve the declared UI views for local review",
+        description=(
+            "Serve the declared views on a loopback port for local review. "
+            "The command is read-only: it opens no owner database, starts no "
+            "run and changes no owner state. It takes no --db for that reason. "
+            "Interrupt it to stop; the port is released before it exits."
+        ),
+    )
+    ui_host.add_argument(
+        "--host",
+        default=LOOPBACK,
+        help=(
+            "bind address; only loopback is accepted, because the host "
+            "renders review material rather than a network service"
+        ),
+    )
+    ui_host.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        help="bind port; the default asks the OS for a free one",
+    )
+    ui_host.set_defaults(handler=_ui_host_command)
     return parser
 
 
@@ -435,6 +466,51 @@ def _restore_command(args: argparse.Namespace) -> int:
     result = CompositionOwner.restore(_resolve(args.backup_directory), _resolve(args.db), replace=args.replace)
     print(json.dumps(_owner_command_payload("restore", result), ensure_ascii=False, indent=2))
     return 0
+
+
+def _ui_host_command(args: argparse.Namespace) -> int:
+    """Serve the declared views until interrupted, then release the port.
+
+    The announcement is written before the serving loop starts, so a caller
+    that has read the line can connect straight away without polling. Stopping
+    is reported on the same stream, which is what lets a supervisor tell a
+    clean exit from a killed process.
+    """
+    import signal as signal_module
+
+    from .ui_host import serve_workbench
+
+    if args.host not in LOOPBACK_ADDRESSES:
+        raise SystemExit(
+            "ui-host binds loopback only; {0!r} would expose review material "
+            "on the network".format(args.host)
+        )
+
+    host = serve_workbench(bind=(args.host, args.port))
+    _announce({"event": "serving", "mode": "read-only", "base_url": host.base_url})
+
+    stopping = threading.Event()
+
+    def _stop(signum: int, frame: Any) -> None:
+        stopping.set()
+
+    previous = {
+        number: signal_module.signal(number, _stop)
+        for number in (signal_module.SIGINT, signal_module.SIGTERM)
+    }
+    try:
+        stopping.wait()
+    finally:
+        for number, handler in previous.items():
+            signal_module.signal(number, handler)
+        host.close()
+    _announce({"event": "stopped", "base_url": host.base_url})
+    return 0
+
+
+def _announce(payload: Dict[str, Any]) -> None:
+    """Emit one line and flush, so a reader is never blocked by buffering."""
+    print(json.dumps(payload, ensure_ascii=False), flush=True)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
