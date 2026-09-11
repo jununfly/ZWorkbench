@@ -366,7 +366,7 @@
     "1-8": {
       "id": "1-8",
       "label": "固定语义覆盖矩阵与安全负向验收",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -387,15 +387,31 @@
           "q": "覆盖矩阵的交互面如何验收？",
           "answer": "结构面用 stdlib html.parser 自动断言；4 项交互面在浏览器自动化选定前保持 unknown，不得标为 not-applicable 或通过",
           "note": "来自 1-1-4 的 coverage_capability 合同"
+        },
+        {
+          "q": "本节点 scope 分类？",
+          "answer": "Product execution：新增 src/zworkbench/ui_matrix.py（PRD 矩阵规格 + 覆盖度量）与对应 fixture 测试",
+          "note": "矩阵是验收规格不是实现；它必须独立于 manifest 存在，否则分母会随实现缩水"
+        },
+        {
+          "q": "子节点执行顺序？",
+          "answer": "先 1-8-4（度量合同），再 1-8-1/2/3（三视图 fixture），最后 1-8-5/6（安全负向与模式对照）",
+          "note": "先定分母再填分子；顺序反过来会让「覆盖率」在规格未定时就产生数字"
+        },
+        {
+          "q": "结构覆盖 100% 是否等于本节点验收通过？",
+          "answer": "否。coverage_report 硬编码 accepted=False，且始终携带 4 项 unverified；三视图满格只代表结构声明齐全",
+          "note": "PRD 完成门槛还要求真实宿主验证；1-9 收尾时必须如实标注 R1 未完成"
         }
       ],
-      "notes": "",
+      "notes": "新增 ui_matrix.py / ui_task_detail.py / ui_record_view.py + tests/test_ui_matrix.py(18) + tests/test_ui_matrix_fixtures.py(15)；ui_home 补齐 6 单元。验证：PYTHONPATH=src python3 -m unittest discover -s tests -t tests → Ran 418 tests OK（提权）。EC 实测：108 组合（三视图×27 场景×2 视口×2 模式）全执行；结构覆盖 home 10/10、task-detail 11/11、record-view 9/9；socket 建连 0；两模式 markup 全等且业务动作恰好 1 次。遗留：4 项宿主交互面仍 unknown，accepted=False",
       "exit_criteria": [
         "三视图 × 必测场景 × 两视口 × 两模式全部执行并记录实际命令",
         "远端请求/遥测计数 0",
         "无新增 Run/effect/approval，无 Worker/Provider 执行",
         "正常模式行为合同未变"
-      ]
+      ],
+      "rounds": 1
     },
     "1-9": {
       "id": "1-9",
@@ -1176,62 +1192,80 @@
     "1-8-1": {
       "id": "1-8-1",
       "label": "首页矩阵 fixture：语义单元 × 状态（含 denied/safe-stopped/unknown）× 动态项重排与删除",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "home 补齐 6 个缺失单元（workspace-context/current-intent/plan-next-step/artifacts/evidence/preflight-result），10/10。11 场景含 no-records/draft/loading/preflight-denied/running/completed/failed/safe-stopped/unknown/dynamic-reorder/dynamic-delete"
     },
     "1-8-2": {
       "id": "1-8-2",
       "label": "任务详情矩阵 fixture：含缺失身份、待 reconcile、只读不适用的展示 fixture",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "新增 src/zworkbench/ui_task_detail.py：11 单元 11/11，10 场景含 denied/recovering/safe-stopped/unknown/read-only-not-applicable/missing-identity/pending-reconcile。effect/approval/reconcile 仅为展示 fixture，不启用任何执行能力"
     },
     "1-8-3": {
       "id": "1-8-3",
       "label": "记录视图矩阵 fixture：空事件、无筛选结果、缺失 metadata、重复结构事件项",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "新增 src/zworkbench/ui_record_view.py：9 单元 9/9，6 场景含 empty-events/no-filter-results/missing-metadata/duplicate-structural-events"
     },
     "1-8-4": {
       "id": "1-8-4",
       "label": "覆盖率断言方式：独立断言各单元存在，缺声明不得缩小分母",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "分母如何保证不随实现缩水？",
+          "answer": "MATRIX 是 ui_matrix.py 里的手写常量，从 PRD 逐条誊写；测试断言该模块源码中不出现 home_manifest/build_manifest",
+          "note": "断言「当前存在未声明单元」是错的写法——补齐缺口后该断言即失效。必须断言规格是常量本身"
+        },
+        {
+          "q": "not-applicable 如何防滥用？",
+          "answer": "必须在 MATRIX 内 + 必须给非空理由；从 gaps 移除但保留在分母，且不计入 covered",
+          "note": "「选择不展示」与「已验证」是两种主张，不能合并计数；不在规格内的单元不得被 not-applicable 豁免"
+        }
+      ],
+      "notes": "新增 src/zworkbench/ui_matrix.py：MATRIX 常量（三视图 30 单元 / 27 场景）+ coverage_report。报告固定携带 evidence=structural-only、unverified=HOST_UNKNOWNS、accepted=False。18 测试覆盖分母不可缩水、not-applicable 双重校验、空声明得 0% 而非 100%",
+      "rounds": 1
     },
     "1-8-5": {
       "id": "1-8-5",
       "label": "安全负向面：远端请求/遥测 0、无新增 Run/effect/approval、无 Worker/Provider 执行",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
-      "notes": ""
+      "decisions": [
+        {
+          "q": "如何证明零远端请求？",
+          "answer": "测试期内替换 socket.socket 为抛异常的守卫类，跑完全部渲染+评审会话+复制，断言构造计数为 0",
+          "note": "比「读代码没看到 requests」强：任何间接建连都会当场炸；另断言所有 ui_* 模块源码不 import composition owner"
+        }
+      ],
+      "notes": "socket 守卫实测 0 次建连；token 脱敏断言 RUN-*/绝对路径/Bearer/sk- 零泄露；9 个 ui_* 模块均不 import composition；评审会话结束 resources=()"
     },
     "1-8-6": {
       "id": "1-8-6",
       "label": "正常模式 vs 评审模式行为对照：业务动作不截断不重复",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
       "decisions": [],
-      "notes": ""
+      "notes": "两模式 markup 逐场景全等（11 场景）；锁定执行 0 次、点击执行 1 次，业务动作不截断不重复"
     },
     "1-9-1": {
       "id": "1-9-1",
@@ -1266,7 +1300,7 @@
   },
   "metadata": {
     "created": "2026-09-10 21:12:47",
-    "updated": "2026-09-11 11:02:36",
+    "updated": "2026-09-11 11:23:50",
     "md_file": "docs/roadmaps/ZJ_ROADMAP_r1-ui-reference-registry.md"
   }
 }
