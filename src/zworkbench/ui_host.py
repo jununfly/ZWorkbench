@@ -14,6 +14,7 @@ fallback width no matter what viewport was requested.
 
 from __future__ import annotations
 
+import html
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
@@ -21,6 +22,7 @@ from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
 from .ui_style import stylesheet
+from .ui_token import parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
 
 #: Where the style layer is served. Styling is a separate resource rather
@@ -40,6 +42,12 @@ DOCUMENT = (
 
 #: Route -> (title, manifest factory, renderer). The host exposes exactly the
 #: three declared views; an unlisted path is not a view and is refused.
+#: Shown when a link no longer locates anything. It states the outcome and
+#: nothing about the input, and it does not redirect: landing silently on the
+#: unparameterised page would leave two reviewers believing they were looking
+#: at the same element.
+LINK_NOTICE = '<p data-ui-link-outcome="{outcome}">链接已失效：{outcome}</p>'
+
 ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] = {
     "/home": ("工作台首页", home_manifest, render_home),
     "/task-detail": ("任务详情", task_detail_manifest, render_task_detail),
@@ -47,14 +55,50 @@ ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] 
 }
 
 
-def render_document(route: str, view: Mapping[str, Any]) -> str:
-    """Wrap one rendered view in a complete document."""
+def locate(manifest: Mapping[str, Any], query: str) -> Optional[Dict[str, str]]:
+    """Interpret a review deep link against the manifest this view rendered.
+
+    ``None`` means the request carried no link. Otherwise the outcome names
+    what went wrong, because the two ways a link dies need different fixes: a
+    mapping mismatch means the link came from another build and should be
+    regenerated, while an unknown reference means it points at something that
+    was never declared.
+
+    A rejection never echoes the input. A locator that reflects what it was
+    given is how one turns into an injection point.
+    """
+    if not query:
+        return None
+    parsed = parse_deep_link("?" + query)
+    if parsed["outcome"] != "valid":
+        return {"outcome": parsed["outcome"]}
+    if parsed["ui_map"] != manifest["ui_map"]:
+        return {"outcome": "ui-map-mismatch"}
+    if not any(entry["ref"] == parsed["ui_ref"] for entry in manifest["refs"]):
+        return {"outcome": "unknown-reference"}
+    return {"outcome": "located", "ref": parsed["ui_ref"]}
+
+
+def render_document(route: str, view: Mapping[str, Any], query: str = "") -> str:
+    """Wrap one rendered view in a complete document.
+
+    A deep link only annotates: the located element gains a marker attribute
+    and nothing else moves. The view model is the facade's to decide, so
+    following a link cannot load a run, restore state or start a review.
+    """
     title, manifest_of, render = ROUTES[route]
-    return DOCUMENT.format(
-        title=title,
-        stylesheet=STYLESHEET_ROUTE,
-        body=render(view, manifest=manifest_of()),
-    )
+    manifest = manifest_of()
+    body = render(view, manifest=manifest)
+    outcome = locate(manifest, query)
+    if outcome is not None and outcome["outcome"] == "located":
+        body = body.replace(
+            'data-ui-ref="{0}"'.format(outcome["ref"]),
+            'data-ui-ref="{0}" data-ui-located="{0}"'.format(outcome["ref"]),
+            1,
+        )
+    elif outcome is not None:
+        body = LINK_NOTICE.format(outcome=html.escape(outcome["outcome"])) + body
+    return DOCUMENT.format(title=title, stylesheet=STYLESHEET_ROUTE, body=body)
 
 
 class WorkbenchHost:
@@ -90,14 +134,14 @@ def serve_workbench(
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
-            route = self.path.split("?", 1)[0]
+            route, _, query = self.path.partition("?")
             if route == STYLESHEET_ROUTE:
                 self._respond(stylesheet().encode("utf-8"), "text/css; charset=utf-8")
                 return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
-            body = render_document(route, resolve_view(route)).encode("utf-8")
+            body = render_document(route, resolve_view(route), query).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
         def _respond(self, body: bytes, content_type: str) -> None:
