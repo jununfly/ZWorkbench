@@ -18,3 +18,4 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 ## 索引
 
 - [ADR 0001：CompositionOwner 是唯一 durable owner](0001-composition-owner-is-the-unique-durable-owner.md)
+- [ADR 0002：映射版本只摘要引用语义](0002-ui-map-digests-reference-semantics-only.md)

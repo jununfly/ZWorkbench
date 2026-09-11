@@ -31,6 +31,7 @@ authority: supporting
 
 - [方法论](methods/README.md) — 证据分层、失败语义与评测边界；authority-id: method.evidence-and-safety
 - [ADR 0001：CompositionOwner 是唯一 durable owner](zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) — 唯一 durable owner 的长期决定；authority-id: adr.composition-owner.unique-durable-owner
+- [ADR 0002：映射版本只摘要引用语义](zj-adr/0002-ui-map-digests-reference-semantics-only.md) — 界面引用身份与迁移的长期决定；authority-id: adr.ui-reference.semantic-only-mapping-version
 
 ## Product requirements
 
