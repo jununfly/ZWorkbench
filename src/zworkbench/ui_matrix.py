@@ -21,6 +21,16 @@ from .ui_review import HOST_UNKNOWNS
 REQUIRED_VIEWPORTS = ("compact", "wide")
 REQUIRED_MODES = ("normal", "review")
 
+#: The PRD states compact as "below 768px" and wide as "at least 768px", so the
+#: boundary belongs to wide. The stylesheet must use the same number, otherwise
+#: a token could claim one class while the page was laid out as the other.
+VIEWPORT_BREAKPOINT_PX = 768
+
+
+def viewport_class(width_px: int) -> str:
+    """Classify a CSS viewport width into the two classes a token may carry."""
+    return "compact" if width_px < VIEWPORT_BREAKPOINT_PX else "wide"
+
 
 class CoverageError(UiRefError):
     """A coverage claim violates the counting contract."""

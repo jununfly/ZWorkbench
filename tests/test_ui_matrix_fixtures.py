@@ -1,8 +1,10 @@
 """The three view matrices, the safety negatives and the mode comparison.
 
-Every scenario is exercised at both required viewports and in both modes. The
-assertions are structural: they read real rendered markup and check it against
-the generated manifest. They do not claim anything about a real browser.
+The assertions here are structural: they read rendered markup and check it
+against the generated manifest. They claim nothing about a real browser, and in
+particular nothing about viewports -- markup does not vary by viewport, so a
+scenario loop cannot produce viewport evidence. That lives in
+tests/test_ui_viewport.py, which measures an engine.
 """
 
 import unittest
@@ -11,8 +13,6 @@ from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_record_view import record_manifest, render_record_view
 from zworkbench.ui_task_detail import render_task_detail, task_detail_manifest
 from zworkbench.ui_matrix import (
-    REQUIRED_MODES,
-    REQUIRED_VIEWPORTS,
     coverage_report,
     required_scenarios,
     required_units,
@@ -77,22 +77,24 @@ class MatrixCoverageTests(unittest.TestCase):
             self.assertEqual(report["gaps"], (), "%s has gaps" % view)
             self.assertEqual(report["ratio"], 1.0)
 
-    def test_every_scenario_renders_at_both_viewports_in_both_modes(self):
-        checked = 0
+    def test_every_scenario_renders_only_declared_references(self):
+        """Structural coverage of the scenarios, without a viewport claim.
+
+        This replaces a test that looped over REQUIRED_VIEWPORTS and
+        REQUIRED_MODES without using either variable: the body repeated one
+        assertion about markup that does not vary, and the count it checked was
+        arithmetic over the loop. Viewport behaviour is now measured in an
+        engine, in tests/test_ui_viewport.py; mode behaviour in
+        tests/test_ui_review.py. Neither can be established here.
+        """
         for view, (manifest_fn, render, build_view) in VIEWS.items():
             manifest = manifest_fn()
             for scenario in required_scenarios(view):
-                markup = render(build_view(scenario), manifest=manifest)
-                audit = audit_rendered_html(manifest, markup)
-                self.assertEqual(audit["undeclared"], (), "%s/%s" % (view, scenario))
-                for viewport in REQUIRED_VIEWPORTS:
-                    for mode in REQUIRED_MODES:
-                        checked += 1
-                        self.assertIn("data-ui-ref", markup)
-        self.assertEqual(
-            checked,
-            sum(len(required_scenarios(v)) for v in VIEWS) * 2 * 2,
-        )
+                with self.subTest(view=view, scenario=scenario):
+                    audit = audit_rendered_html(
+                        manifest, render(build_view(scenario), manifest=manifest)
+                    )
+                    self.assertEqual(audit["undeclared"], ())
 
     def test_no_scenario_produces_an_undeclared_reference(self):
         for view, (manifest_fn, render, build_view) in VIEWS.items():
