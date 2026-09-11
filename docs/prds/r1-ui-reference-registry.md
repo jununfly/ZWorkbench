@@ -167,11 +167,26 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 |---|---|
 | 390px / 1280px 两档视口执行 | 现有矩阵测试遍历视口名称但不改变渲染输入，断言的是同一份 markup；响应式行为属 CSS，尚不存在 |
 | 正常模式与评审模式对照 | 评审模式当前不修改 markup，两模式相等的断言恒真；overlay 落地前该对照没有信息量 |
-| 可展开单元展开后可定位 | 无展开状态实现 |
-| 隐藏单元直接定位返回 `unavailable` | 视图层无隐藏态，该路径未被任何视图触发 |
-| `not_applicable` 计数机制 | `coverage_report` 支持该参数，但三视图均未使用，未经真实场景检验 |
 
-覆盖报告固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格只表示
-声明齐全。上述四项 `unknown` 与五项未实现同源于宿主缺位，会随宿主落地一并解决，不得
-在此之前标注为 `not-applicable` 或计为通过。本功能验收未通过；整个 R1 仍须独立通过
-主规格验收。
+三项原未实现项已随宿主落地实现，见 `src/zworkbench/ui_matrix.py` 的 `UNIT_VISIBILITY`
+与 `tests/test_ui_visibility.py`：
+
+- **可见/可展开/不适用三态分类**：`UNIT_VISIBILITY` 手写转写本 PRD，独立于 manifest 与
+  渲染器。只有 `conditional` 单元可被豁免，`visible` / `expandable` 单元缺席一律计为 gap
+  —— 这是「不能将缺失实现标为不适用」的机制化实现，而非流程约定。
+- **可展开单元展开后可定位**：detail 级单元置于原生 `<details>` 披露区，默认折叠；深链接
+  目标所在披露区由宿主服务端渲染为 `open`，因此展开无需脚本、不执行任何业务动作。仅展开
+  被指名引用所在的披露区。引擎证据以 `checkVisibility()` 与页面暴露文本度量，不用几何
+  高度：Chrome 对折叠 `details` 内容仍保留布局盒，两态高度相同，高度断言在一个方向上恒真。
+- **隐藏单元直接定位返回 `unavailable`**：`locate()` 以实际渲染出的文档而非 manifest 为
+  事实源。空列表的列表项即真实隐藏态。`unavailable`（已声明但不在本页）与
+  `unknown-reference`（从未声明）是两个不同结论，各自对应不同修复动作。
+- **`not_applicable` 真实用例**：`local_read_only_run` 按定义不产生副作用，其 task-detail
+  的 effect/approval/reconcile 三单元由 view model 判定不适用并附理由；豁免随运行类别而非
+  界面而定，未识别的运行类别一律不豁免。被豁免单元不渲染引用，理由展示给评审者 ——
+  `unknown`（无法判断）与 `not_applicable`（不可能存在）是不同主张。
+
+覆盖报告仍固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格只表示
+声明齐全。上述四项 `unknown` 与剩余两项未实现同源于宿主交互面尚未逐项验证，不得在此
+之前标注为 `not-applicable` 或计为通过。本功能验收未通过；整个 R1 仍须独立通过主规格
+验收。

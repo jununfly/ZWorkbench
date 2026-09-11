@@ -65,9 +65,40 @@ def _attr(manifest: Mapping[str, Any], ref: str) -> str:
     )
 
 
-def render_record_view(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
-    """Fixture-level renderer for coverage assertions."""
+#: The units this renderer places behind a native disclosure, collapsed by
+#: default. Detail-level metadata is secondary to the event being reviewed, so
+#: hiding it keeps the surface readable at 390px.
+#:
+#: This list is written here rather than imported from :mod:`zworkbench.ui_matrix`
+#: on purpose. The matrix is the *expected* classification; if the renderer read
+#: it, the two would agree by construction and the test comparing them would
+#: prove nothing.
+DISCLOSED_REFS = (
+    "record-view.result",
+    "record-view.artifact-metadata",
+    "record-view.replay-metadata",
+)
+
+
+def render_record_view(
+    view: Mapping[str, Any],
+    *,
+    manifest: Mapping[str, Any] = None,
+    expand: Sequence[str] = (),
+) -> str:
+    """Fixture-level renderer for coverage assertions.
+
+    ``expand`` names references whose enclosing disclosure must be served open.
+    The host passes the target of a deep link, so following a link reveals the
+    element without a click and without scripting: ``<details>`` is the engine's
+    own disclosure, and opening it executes nothing.
+
+    Expansion is scoped to the disclosure that holds the named reference. A
+    renderer that opened every disclosure would satisfy "the unit is visible"
+    while locating nothing.
+    """
     m = manifest or record_manifest()
+    requested = set(expand)
     items: Sequence[Any] = view.get("events") or ()
     event_html = ""
     if items:
@@ -78,15 +109,43 @@ def render_record_view(view: Mapping[str, Any], *, manifest: Mapping[str, Any] =
             )
             for item in items
         )
+    def disclosure(ref, label, value):
+        """One read-only disclosure holding one detail-level unit."""
+        return (
+            "<details{open}><summary>{label}</summary>"
+            "<section {attrs}>{value}</section></details>"
+        ).format(
+            open=" open" if ref in requested else "",
+            label=html.escape(label),
+            attrs=_attr(m, ref),
+            value=html.escape(str(value)),
+        )
+
+    disclosures = (
+        disclosure("record-view.result", "结果", view.get("result", "unknown"))
+        + disclosure(
+            "record-view.artifact-metadata",
+            "Artifact 元数据",
+            view.get("artifact_metadata", "unknown"),
+        )
+        + disclosure(
+            "record-view.replay-metadata",
+            "Replay 元数据",
+            view.get("replay_metadata", "unknown"),
+        )
+    )
+
     return (
         "<main {root}>"
         "<section {picker}>{picker_text}</section>"
         "<ul {list}>{events}</ul>"
         "<button {filter}>筛选</button>"
         "<section {detail}>{detail_text}</section>"
+        "{disclosures}"
         "<section {mode}>{mode_text}</section>"
         "</main>"
     ).format(
+        disclosures=disclosures,
         root=_attr(m, "record-view.record-picker"),
         picker=_attr(m, "record-view.record-picker"),
         picker_text=html.escape(str(view.get("picker", "unknown"))),
