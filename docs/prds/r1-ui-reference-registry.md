@@ -2,7 +2,7 @@
 doc-kind: product-requirements
 authority: supporting
 status: target
-implementation-status: pending
+implementation-status: partial
 ---
 
 # R1 界面引用注册表与本地评审标注模式
@@ -136,7 +136,26 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 
 ## Further Notes
 
-- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充，状态为 `target` / `pending`；本次仅保存文档，不声明产品功能已实现或 GitHub Issue 已更新。
+- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充，状态为 `target` / `partial`。
+
+## Implementation status
+
+结构合同已实现：声明层、manifest 与 build receipt、运行时渲染与实例定位、token v1 与深链接、
+引用生命周期与映射兼容、评审模式状态机、三视图覆盖矩阵与安全负向断言，均有产品代码与行为测试。
+相关模块见 `src/zworkbench/ui_*.py`，验证入口见 [Repository README](../../README.md)。
+
+以下仍为 `unknown`，不得按已通过对待：
+
+| 未验证面 | 原因 |
+|---|---|
+| `keyboard-focus-order` | 原生 tab 顺序取决于真实 DOM 布局与浏览器策略 |
+| `pointer-events-passthrough` | 只有真实引擎能确认高亮层不吞点击 |
+| `clipboard-failure-visible` | 真实剪贴板权限拒绝及其可见表现属宿主行为 |
+| `focus-restore-on-close` | 焦点是否可见地落到恢复目标属宿主行为 |
+
+覆盖报告固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格
+只表示声明齐全，不表示本功能验收通过；整个 R1 仍须独立通过主规格验收。未选定
+浏览器自动化方案前，上述四项保持 `unknown`，不得标注为 `not-applicable`。
 - 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
 - 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
 - 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
