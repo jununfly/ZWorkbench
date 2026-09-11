@@ -1,9 +1,10 @@
 """The home-surface vertical slice: one static region, one dynamic list and one
 business button, declared once and rendered from a redacted view model.
 
-The view layer receives an already-redacted presentation model.  It never reads
-the composition owner, never infers a run status and never executes a business
-action: the preflight button is rendered, not invoked.
+The view layer receives an already-redacted presentation model, built by
+:mod:`zworkbench.ui_view_model`.  It never reads the composition owner, never
+infers a run status and never executes a business action: the preflight button
+is rendered, not invoked.
 """
 
 from __future__ import annotations
