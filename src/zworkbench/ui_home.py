@@ -21,10 +21,16 @@ _MODULE = "src/zworkbench/ui_home.py"
 
 HOME_REFS = (
     ("home.root", "工作台首页", "region", None),
+    ("home.workspace-context", "工作区与模式上下文", "region", "home.root"),
     ("home.run-facts", "运行事实", "region", "home.root"),
     ("home.record-list", "工作记录列表", "list", "home.root"),
     ("home.record-list.item", "工作记录项", "list-item", "home.record-list"),
+    ("home.current-intent", "当前意图与已记录文本", "region", "home.root"),
+    ("home.plan-next-step", "计划与下一步", "region", "home.root"),
+    ("home.artifacts", "产物区", "region", "home.root"),
+    ("home.evidence", "证据区", "region", "home.root"),
     ("home.preflight-run.action", "预检并运行", "action", "home.root"),
+    ("home.preflight-result", "预检结果", "detail", "home.preflight-run.action"),
 )
 
 
@@ -84,17 +90,37 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
     else:
         items = ""
 
+    def section(ref, value):
+        return "<section {0}>{1}</section>".format(
+            _attributes(resolved, ref), html.escape(str(value))
+        )
+
     return (
         "<main {root}>"
-        "<section {facts}>{status}</section>"
+        "{workspace}"
+        "{facts}"
         "<ul {list}>{items}</ul>"
+        "{intent}"
+        "{plan}"
+        "{artifacts}"
+        "{evidence}"
         "<button {action} type=\"button\">预检并运行</button>"
+        "{preflight_result}"
         "</main>"
     ).format(
         root=_attributes(resolved, "home.root"),
-        facts=_attributes(resolved, "home.run-facts"),
-        status=html.escape(str(view.get("run_facts", {}).get("status", "unknown"))),
+        workspace=section("home.workspace-context", view.get("workspace", "unknown")),
+        facts=section(
+            "home.run-facts", view.get("run_facts", {}).get("status", "unknown")
+        ),
         list=_attributes(resolved, "home.record-list"),
         items=items,
+        intent=section("home.current-intent", view.get("intent", "unknown")),
+        plan=section("home.plan-next-step", view.get("plan", "unknown")),
+        artifacts=section("home.artifacts", view.get("artifacts", "unknown")),
+        evidence=section("home.evidence", view.get("evidence", "unknown")),
         action=_attributes(resolved, "home.preflight-run.action"),
+        preflight_result=section(
+            "home.preflight-result", view.get("preflight_result", "unknown")
+        ),
     )

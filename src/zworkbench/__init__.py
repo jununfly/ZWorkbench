@@ -62,6 +62,12 @@ from .ui_matrix import (
     required_scenarios,
     required_units,
 )
+from .ui_record_view import record_manifest, record_registry, render_record_view
+from .ui_task_detail import (
+    render_task_detail,
+    task_detail_manifest,
+    task_detail_registry,
+)
 from .ui_review import (
     HOST_UNKNOWNS,
     PANEL_ACTIONS,
@@ -188,6 +194,12 @@ __all__ = [
     "coverage_report",
     "required_scenarios",
     "required_units",
+    "record_manifest",
+    "record_registry",
+    "render_record_view",
+    "render_task_detail",
+    "task_detail_manifest",
+    "task_detail_registry",
     "HOST_UNKNOWNS",
     "PANEL_ACTIONS",
     "REVIEW_ENTRY_REF",
