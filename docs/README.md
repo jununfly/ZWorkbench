@@ -50,6 +50,7 @@ authority: supporting
 | Wiki | `ZJ-CONTEXT.md`、`docs/methods/`、`docs/architecture/`、`docs/zj-adr/` | 实体、关系、事实、规则、稳定决策 | 单次运行结果或进度面板 |
 | References | [docs/references/](references/README.md) | 外部合同、账户 owner 操作边界、受控 runbook | 默认产品配置或自动授权 |
 | Fixture documentation | `evaluation/fixtures/**/README.md` | 隔离输入、oracle、版本和安全约束 | 产品使用或架构权威 |
+| Roadmap records | `docs/roadmaps/` | 单个规格的节点编排与决策记录 | 长期规则、架构权威或实现状态证明 |
 
 文档中的目标和规则与代码/测试表达的是不同维度：代码、测试和运行产物证明当前实现事实，
 文档权威页表达目标约束与稳定语义。发生差异时必须标记 target / implemented / unknown，
@@ -72,7 +73,9 @@ replay 只属于显式、受控的后续验证，不会由文档或历史 eviden
 - 新增稳定概念时，先更新领域语言、方法论、架构或 ADR 中的一个权威页；不要把同一规则复制到
   临时实现说明或评测结论。
 - 不在仓库文档中保留实施过程、评测结论、研究 ledger 或路线状态；需要核对时以代码、测试、运行产物
-  和 Git 历史为准。
+  和 Git 历史为准。唯一例外是 [`docs/roadmaps/`](roadmaps/)：它保存单个规格的节点编排与决策记录，
+  使既有实现的取舍可被追溯。该目录不是 wiki 权威页，不定义长期真相，也不授权在其他文档中出现
+  路线或里程碑状态。
 - 外部 Provider、凭证、账户、数据留存和退出的操作说明只放在 `docs/references/`；不记录 secret、
   原始资源标识、Prompt 或响应正文。
 - 文档不以“已完成”“本轮”“日期”“commit”定义长期真相。需要 provenance 时，以 artifact receipt
