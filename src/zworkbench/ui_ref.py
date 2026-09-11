@@ -146,10 +146,11 @@ class UiRefRegistry:
     def build_manifest(self, *, build: str) -> Dict[str, Any]:
         """Derive the deterministic manifest from the current declarations.
 
-        ``ui_map`` digests the reference semantics only.  The build receipt is
-        recorded alongside it but deliberately excluded from the digest, so a
-        source change that leaves every declaration intact does not invalidate
-        previously copied feedback tokens.
+        ``ui_map`` digests reference *semantics* only.  Two things are recorded
+        alongside it but excluded from the digest, because each would otherwise
+        invalidate every previously copied token for a change that moved no
+        identity: the build receipt, which follows any source edit, and the
+        source anchor, whose digest follows even a comment-only edit.
         """
         if not _SHA256_PATTERN.match(build):
             raise UiRefValidationError(
@@ -162,7 +163,13 @@ class UiRefRegistry:
             self._declarations[ref].to_dict()
             for ref in sorted(self._declarations)
         ]
-        semantics = {"schema": UI_REF_SCHEMA, "refs": refs}
+        semantics = {
+            "schema": UI_REF_SCHEMA,
+            "refs": [
+                {key: value for key, value in entry.items() if key != "source"}
+                for entry in refs
+            ],
+        }
         canonical = json.dumps(
             semantics, sort_keys=True, separators=(",", ":"), ensure_ascii=False
         )
