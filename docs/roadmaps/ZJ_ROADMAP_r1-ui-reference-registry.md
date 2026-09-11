@@ -1,9 +1,9 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 11:23:50
+> 数据文件: `r1-ui-reference-registry.roadmap.json` | 最后更新: 2026-09-11 11:33:16
 
-[~][X+] 1. R1 界面引用注册表与本地评审标注模式
+[x][X+] 1. R1 界面引用注册表与本地评审标注模式
 ├── [x][X+] 1-1. 前置未决项收敛（宿主/依赖/接口形态）
 │   ├── [x][X+] 1-1-1. 选定前端宿主并记录证据（不选型不得进入 1-2）
 │   ├── [x][X+] 1-1-2. 第三方 picker/highlighter 复用评估：版本 pin/许可证/退出路径
@@ -51,8 +51,8 @@
 │   ├── [x][Y+] 1-8-4. 覆盖率断言方式：独立断言各单元存在，缺声明不得缩小分母
 │   ├── [x][Y+] 1-8-5. 安全负向面：远端请求/遥测 0、无新增 Run/effect/approval、无 Worker/Provider 执行
 │   └── [x][Y+] 1-8-6. 正常模式 vs 评审模式行为对照：业务动作不截断不重复
-└── [ ][Y+] 1-9. 收尾：文档/导航同步与 skill 抽取判定
-    ├── [ ][Y+] 1-9-1. 同步 docs/prds、architecture 与 AGENTS 导航；实现状态如实标注
-    ├── [ ][Y+] 1-9-2. 汇总实际执行命令与结果；未跑项保持 pending/unknown
-    └── [ ][Y+] 1-9-3. 两三轮真实反馈后再判定是否抽取 skill（默认不抽取）
+└── [x][Y+] 1-9. 收尾：文档/导航同步与 skill 抽取判定
+    ├── [x][Y+] 1-9-1. 同步 docs/prds、architecture 与 AGENTS 导航；实现状态如实标注
+    ├── [x][Y+] 1-9-2. 汇总实际执行命令与结果；未跑项保持 pending/unknown
+    └── [x][Y+] 1-9-3. 两三轮真实反馈后再判定是否抽取 skill（默认不抽取）
 <!-- ROADMAP_SECTION_END -->
