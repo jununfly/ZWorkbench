@@ -53,6 +53,15 @@ from .ui_token import (
     parse_deep_link,
     parse_token,
 )
+from .ui_matrix import (
+    MATRIX,
+    REQUIRED_MODES,
+    REQUIRED_VIEWPORTS,
+    CoverageError,
+    coverage_report,
+    required_scenarios,
+    required_units,
+)
 from .ui_review import (
     HOST_UNKNOWNS,
     PANEL_ACTIONS,
@@ -172,6 +181,13 @@ __all__ = [
     "build_token",
     "parse_deep_link",
     "parse_token",
+    "MATRIX",
+    "REQUIRED_MODES",
+    "REQUIRED_VIEWPORTS",
+    "CoverageError",
+    "coverage_report",
+    "required_scenarios",
+    "required_units",
     "HOST_UNKNOWNS",
     "PANEL_ACTIONS",
     "REVIEW_ENTRY_REF",
