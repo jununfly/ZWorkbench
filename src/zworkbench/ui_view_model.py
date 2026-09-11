@@ -43,6 +43,31 @@ def display_text(value: Any) -> str:
     return _SECRET_VALUE.sub(REDACTED, str(value))
 
 
+#: Run classes that cannot produce an effect, an approval or a reconcile by
+#: definition, and the units that therefore do not apply to them.
+#:
+#: This is a narrower claim than "this run has none yet". A read-only run makes
+#: no external change, so rendering ``unknown`` for approval would say "we
+#: cannot tell whether one was granted" when the truth is that none can exist.
+#: The distinction matters: ``unknown`` is a reason to investigate.
+_EFFECT_FREE_TASK_TYPES = ("local_read_only_run",)
+
+_EFFECT_FAMILY = ("task-detail.effect", "task-detail.approval", "task-detail.reconcile")
+
+
+def _not_applicable_units(task_type: Any) -> Dict[str, str]:
+    """Units that do not apply to this run class, each with its reason.
+
+    An empty mapping is the default. A run class this function does not
+    recognise is never excused: an unrecognised class might well produce
+    effects, and silently excusing it would hide a real gap.
+    """
+    if str(task_type) not in _EFFECT_FREE_TASK_TYPES:
+        return {}
+    reason = "只读运行按定义不产生副作用，无 effect/approval/reconcile"
+    return {unit: reason for unit in _EFFECT_FAMILY}
+
+
 def _runs(owner: Any) -> List[Mapping[str, Any]]:
     return list(owner.snapshot()["runs"])
 
@@ -79,10 +104,15 @@ def task_detail_view_model(owner: Any, run_id: str) -> Dict[str, Any]:
         run = None
 
     if run is None:
-        return {key: UNKNOWN for key in (
+        absent = {key: UNKNOWN for key in (
             "intent", "denial", "identity", "timeline", "result",
             "error", "effect", "approval", "reconcile", "replay_mode",
-        )} | {"admission": {"status": UNKNOWN}}
+        )}
+        absent["admission"] = {"status": UNKNOWN}
+        # An absent run has no class, so nothing can be excused: unknown is the
+        # honest answer for every unit.
+        absent["not_applicable"] = {}
+        return absent
 
     results = run.get("results") or ()
     effects = run.get("effects") or ()
@@ -98,6 +128,7 @@ def task_detail_view_model(owner: Any, run_id: str) -> Dict[str, Any]:
         "approval": UNKNOWN,
         "reconcile": UNKNOWN,
         "replay_mode": "recorded_view",
+        "not_applicable": _not_applicable_units(run.get("task_type")),
     }
 
 

@@ -68,9 +68,28 @@ def _attr(manifest: Mapping[str, Any], ref: str) -> str:
 
 
 def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
-    """Fixture-level renderer for coverage assertions."""
+    """Fixture-level renderer for coverage assertions.
+
+    ``view["not_applicable"]`` maps a reference to the reason it does not apply
+    to this run. It comes from the view model, which knows the run class; the
+    renderer does not decide what applies.
+    """
     m = manifest or task_detail_manifest()
+    excused = dict(view.get("not_applicable") or {})
+
     def section(ref, value):
+        """Render one unit, or state why it does not apply to this run.
+
+        An excused unit must not carry its reference: a coverage report that
+        counted it as both rendered and not applicable would contradict itself.
+        The reason is shown rather than dropped, because "not applicable" and
+        "unknown" are different claims and a reviewer needs to see which one
+        this is.
+        """
+        if ref in excused:
+            return '<section data-ui-not-applicable="{0}">{1}</section>'.format(
+                html.escape(ref, quote=True), html.escape(str(excused[ref]))
+            )
         return "<section {0}>{1}</section>".format(
             _attr(m, ref), html.escape(str(value))
         )

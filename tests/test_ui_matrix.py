@@ -64,6 +64,11 @@ class MatrixSpecificationTests(unittest.TestCase):
         )
 
 
+#: A unit whose presence depends on state, so it is the only kind that may
+#: be excused as not applicable. An empty record list renders no row.
+EXCUSABLE = "home.record-list.item"
+
+
 class DenominatorTests(unittest.TestCase):
     """1-8-4 — a missing declaration must widen the gap, not shrink the base."""
 
@@ -92,25 +97,35 @@ class DenominatorTests(unittest.TestCase):
             coverage_report("home", declared_refs=(), not_applicable={"home.ghost": "无此单元"})
 
     def test_not_applicable_requires_a_stated_reason(self):
-        unit = required_units("home")[0]
         with self.assertRaises(CoverageError):
-            coverage_report("home", declared_refs=(), not_applicable={unit: ""})
+            coverage_report("home", declared_refs=(), not_applicable={EXCUSABLE: ""})
 
     def test_a_not_applicable_unit_leaves_the_denominator_intact(self):
-        unit = required_units("home")[0]
         report = coverage_report(
-            "home", declared_refs=(), not_applicable={unit: "该视图不展示此单元"}
+            "home", declared_refs=(), not_applicable={EXCUSABLE: "该场景无此单元"}
         )
         self.assertEqual(report["required"], len(required_units("home")))
         self.assertEqual(report["not_applicable"], 1)
-        self.assertNotIn(unit, report["gaps"])
+        self.assertNotIn(EXCUSABLE, report["gaps"])
 
     def test_a_not_applicable_unit_is_not_counted_as_covered(self):
-        unit = required_units("home")[0]
         report = coverage_report(
-            "home", declared_refs=(), not_applicable={unit: "该视图不展示此单元"}
+            "home", declared_refs=(), not_applicable={EXCUSABLE: "该场景无此单元"}
         )
         self.assertEqual(report["covered"], 0)
+
+    def test_a_unit_specified_as_always_present_cannot_be_excused(self):
+        """These tests used to take units[0], which the visibility rule now
+        refuses: a unit specified visible is always supposed to be there, so
+        excusing it would be exactly the relabelling the PRD forbids. The rule
+        is pinned here rather than left implicit in the change above.
+        """
+        with self.assertRaises(CoverageError):
+            coverage_report(
+                "home",
+                declared_refs=(),
+                not_applicable={"home.workspace-context": "暂不展示"},
+            )
 
     def test_full_coverage_requires_every_unit(self):
         report = coverage_report("home", declared_refs=required_units("home"))

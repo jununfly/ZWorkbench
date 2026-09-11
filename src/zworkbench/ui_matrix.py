@@ -119,6 +119,79 @@ MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
 }
 
 
+#: View -> unit -> the visibility the PRD requires of it in a normal scenario.
+#:
+#: ``visible``      always rendered when the view renders at all.
+#: ``expandable``   rendered inside a read-only disclosure, collapsed by
+#:                  default; locating it must expand it.
+#: ``conditional``  rendered only when the run class or state can produce it;
+#:                  otherwise it is legitimately absent and may be excused as
+#:                  not applicable with a stated reason.
+#:
+#: Transcribed by hand from the PRD, like :data:`MATRIX` and for the same
+#: reason: a table derived from what the renderers happen to emit would agree
+#: with every implementation, including one that renders nothing. Only
+#: ``conditional`` units may be excused, which is the rule that stops a missing
+#: implementation from being relabelled as out of scope.
+UNIT_VISIBILITY: Dict[str, Dict[str, str]] = {
+    "home": {
+        "home.workspace-context": "visible",
+        "home.record-list": "visible",
+        "home.record-list.item": "conditional",
+        "home.current-intent": "visible",
+        "home.plan-next-step": "visible",
+        "home.artifacts": "visible",
+        "home.run-facts": "visible",
+        "home.evidence": "visible",
+        "home.preflight-run.action": "visible",
+        "home.preflight-result": "visible",
+    },
+    "task-detail": {
+        "task-detail.intent": "visible",
+        "task-detail.admission-check": "visible",
+        "task-detail.denial-reason": "conditional",
+        "task-detail.execution-identity": "visible",
+        "task-detail.timeline": "visible",
+        "task-detail.result": "visible",
+        "task-detail.error": "conditional",
+        "task-detail.effect": "conditional",
+        "task-detail.approval": "conditional",
+        "task-detail.reconcile": "conditional",
+        "task-detail.replay-mode": "visible",
+    },
+    "record-view": {
+        "record-view.record-picker": "visible",
+        "record-view.event-list": "visible",
+        "record-view.event-list.item": "conditional",
+        "record-view.filter": "visible",
+        "record-view.event-detail": "visible",
+        "record-view.result": "expandable",
+        "record-view.artifact-metadata": "expandable",
+        "record-view.replay-metadata": "expandable",
+        "record-view.mode-boundary": "visible",
+    },
+}
+
+
+def unit_visibility(view: str, unit: str) -> str:
+    """The visibility class the specification requires of one unit."""
+    classes = UNIT_VISIBILITY.get(view)
+    if classes is None or unit not in classes:
+        raise CoverageError(
+            "unit {0!r} has no declared visibility in view {1!r}".format(unit, view)
+        )
+    return classes[unit]
+
+
+def expandable_units(view: str) -> Tuple[str, ...]:
+    """The units this view must render behind a read-only disclosure."""
+    return tuple(
+        unit
+        for unit, visibility in UNIT_VISIBILITY.get(view, {}).items()
+        if visibility == "expandable"
+    )
+
+
 def _view(view: str) -> Dict[str, Tuple[str, ...]]:
     if view not in MATRIX:
         raise CoverageError("view {0!r} is not in the acceptance matrix".format(view))
@@ -150,7 +223,10 @@ def coverage_report(
 
     A unit that is not in the specification cannot be excused as not
     applicable, because that is how a missing implementation gets relabelled as
-    out of scope.
+    out of scope. Neither can a unit the specification requires to be visible or
+    expandable: those are always supposed to be there, so their absence is a
+    gap by definition. Only a ``conditional`` unit -- one whose presence depends
+    on the run class or state -- can legitimately be excused.
     """
     units = required_units(view)
     excused = dict(not_applicable or {})
@@ -164,6 +240,12 @@ def coverage_report(
         if not str(reason).strip():
             raise CoverageError(
                 "unit {0!r} needs a stated reason to be not applicable".format(unit)
+            )
+        visibility = unit_visibility(view, unit)
+        if visibility != "conditional":
+            raise CoverageError(
+                "unit {0!r} is specified as {1!r} and cannot be excused as not "
+                "applicable; its absence is a gap".format(unit, visibility)
             )
 
     declared = set(declared_refs)
