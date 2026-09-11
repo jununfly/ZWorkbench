@@ -75,12 +75,16 @@ class WorkbenchHost:
 
 def serve_workbench(
     view_source: Optional[Callable[[str], Mapping[str, Any]]] = None,
+    bind: Tuple[str, int] = ("127.0.0.1", 0),
 ) -> WorkbenchHost:
-    """Start a read-only host on an ephemeral loopback port.
+    """Start a read-only host, by default on an ephemeral loopback port.
 
     ``view_source`` supplies the redacted presentation model for a route. The
     host never reads owner storage itself; until the control-plane facade
     lands, callers pass their own already-redacted model.
+
+    ``bind`` exists so a caller can request a specific port. Refusing a
+    non-loopback address is the entry point's job, not this function's.
     """
     resolve_view = view_source or (lambda route: {})
 
@@ -106,7 +110,7 @@ def serve_workbench(
         def log_message(self, *args: Any) -> None:
             """Keep the test output clean; the host is not an evidence source."""
 
-    server = HTTPServer(("127.0.0.1", 0), Handler)
+    server = HTTPServer(bind, Handler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return WorkbenchHost(server, thread)
