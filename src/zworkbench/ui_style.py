@@ -64,6 +64,26 @@ main > button {
   cursor: pointer;
 }
 
+/* The review layer covers the viewport. Covering matters: a layer with no
+   area intercepts nothing, so passthrough would be vacuously true and the
+   hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is
+   set inline from the ReviewMode descriptor rather than here, so the contract
+   has one source. */
+[data-ui-overlay] {
+  position: fixed;
+  inset: 0;
+  display: block;
+}
+
+[data-ui-overlay] > span {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Last, deliberately. These rules have the same specificity as the ones above,
    so ordering is what decides the outcome -- a media query placed earlier is
    silently overridden, which string inspection of the stylesheet cannot show.
