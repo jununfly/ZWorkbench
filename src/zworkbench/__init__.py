@@ -69,6 +69,7 @@ from .ui_task_detail import (
     task_detail_registry,
 )
 from .ui_review import (
+    HOST_SURFACES,
     HOST_UNKNOWNS,
     PANEL_ACTIONS,
     REVIEW_ENTRY_REF,
@@ -200,6 +201,7 @@ __all__ = [
     "render_task_detail",
     "task_detail_manifest",
     "task_detail_registry",
+    "HOST_SURFACES",
     "HOST_UNKNOWNS",
     "PANEL_ACTIONS",
     "REVIEW_ENTRY_REF",

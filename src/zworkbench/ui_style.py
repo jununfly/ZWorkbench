@@ -84,6 +84,103 @@ main > button {
   font-variant-numeric: tabular-nums;
 }
 
+/* The review panel is a fixed side region, visually above the business page
+   but below nothing the page owns: it appears only in review mode, so these
+   rules can never reshape the normal document. */
+[data-ui-panel] {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  max-height: 100vh;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  background: Canvas;
+  border-left: 2px solid rgba(128, 128, 128, 0.5);
+  font-size: 13px;
+  z-index: 2;
+}
+
+[data-ui-panel-entries] {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-ui-panel-entry] {
+  padding: 4px 8px;
+  border: 1px solid rgba(128, 128, 128, 0.3);
+  border-radius: 4px;
+}
+
+[data-ui-panel-locked="true"] {
+  outline: 2px solid Highlight;
+}
+
+[data-ui-panel-action] {
+  display: block;
+  width: 100%;
+  margin: 4px 0;
+  padding: 6px 8px;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The panel is docked, not overlaid: the page makes room for it, so it can
+   never cover the element a reviewer is pointing at. ``:has`` keeps the
+   padding review-only -- this stylesheet is shared with normal mode, whose
+   document has no panel to match, and ``:not([hidden])`` hands the space back
+   the moment the panel closes. */
+body:has([data-ui-panel]:not([hidden])) {
+  /* panel width + its padding and border: the page must make room for the
+     whole box, or the root unit's edge slides underneath it. */
+  padding-right: 332px;
+}
+
+/* Declared elements become focusable in review mode; the ring makes the
+   focus stop visible, the preview badge names it. The selector keys off the
+   behaviour hook the page layer adds, never the reference attribute itself:
+   the style layer stays independent of the reference protocol. */
+[data-ui-review-focusable]:focus {
+  outline: 2px solid Highlight;
+  outline-offset: 2px;
+}
+
+/* Visible rings for the two ways an element gets pointed at: a deep link
+   locating it, and a reviewer locking it from the panel. Same ring, because
+   both mean "this is the element under discussion". */
+[data-ui-located],
+[data-ui-locked-target] {
+  outline: 3px solid Highlight;
+  outline-offset: 2px;
+}
+
+/* The hover preview lives in the overlay: a dashed box matching the hovered
+   element, carrying its Chinese semantic name. The overlay is pointer-events
+   none, so the preview can never intercept a click. */
+[data-ui-preview-box] {
+  position: absolute;
+  border: 2px dashed Highlight;
+  border-radius: 4px;
+}
+
+[data-ui-preview-badge] {
+  position: absolute;
+  top: -1.7em;
+  left: 0;
+  padding: 2px 6px;
+  background: Canvas;
+  border: 1px solid rgba(128, 128, 128, 0.5);
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 /* Last, deliberately. These rules have the same specificity as the ones above,
    so ordering is what decides the outcome -- a media query placed earlier is
    silently overridden, which string inspection of the stylesheet cannot show.
@@ -92,6 +189,21 @@ main > button {
 @media (max-width: __COMPACT_MAX__px) {
   main { --viewport-class: compact; padding: 8px; gap: 8px; }
   main > section { padding: 6px 8px; }
+  /* A 300px side panel would leave a compact page 70px wide. Dock it at the
+     bottom instead, and let the page make room downwards. */
+  [data-ui-panel] {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: 50vh;
+    border-left: none;
+    border-top: 2px solid rgba(128, 128, 128, 0.5);
+  }
+  body:has([data-ui-panel]:not([hidden])) {
+    padding-right: 0;
+    padding-bottom: 50vh;
+  }
 }
 """
 
