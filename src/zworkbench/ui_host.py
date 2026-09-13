@@ -15,21 +15,29 @@ fallback width no matter what viewport was requested.
 from __future__ import annotations
 
 import html
+import json
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
 from .ui_review import PANEL_ACTIONS, ReviewMode
+from .ui_script import review_script
 from .ui_style import stylesheet
-from .ui_token import parse_deep_link
+from .ui_matrix import REQUIRED_VIEWPORTS
+from .ui_token import build_token, parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
 
 #: Where the style layer is served. Styling is a separate resource rather
 #: than inline markup, so a selector can never be written against the
 #: reference attributes the renderers emit.
 STYLESHEET_ROUTE = "/static/workbench.css"
+
+#: Where the review behaviour layer is served. It is linked only in review
+#: mode, so a normal document carries no script at all rather than a script
+#: that decides to do nothing.
+REVIEW_SCRIPT_ROUTE = "/static/review.js"
 
 
 DOCUMENT = (
@@ -38,8 +46,10 @@ DOCUMENT = (
     '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
     '<link rel="stylesheet" href="{stylesheet}">\n'
     "<title>{title}</title></head>\n"
-    "<body>{body}</body></html>\n"
+    "<body>{body}{script}</body></html>\n"
 )
+
+REVIEW_SCRIPT_TAG = '<script src="{0}" defer></script>'.format(REVIEW_SCRIPT_ROUTE)
 
 #: Route -> (title, manifest factory, renderer). The host exposes exactly the
 #: three declared views; an unlisted path is not a view and is refused.
@@ -49,6 +59,14 @@ DOCUMENT = (
 #: at the same element.
 LINK_NOTICE = '<p data-ui-link-outcome="{outcome}">链接已失效：{outcome}</p>'
 
+#: Route -> (list-item reference, view-model key) the panel mounts entries
+#: from. A route absent here gets an empty panel rather than a crash or a
+#: wrong-view token.
+_PANEL_ENTRY_SOURCES: Dict[str, Tuple[Tuple[str, str], ...]] = {
+    "/home": (("home.record-list.item", "records"),),
+    "/record-view": (("record-view.event-list.item", "events"),),
+}
+
 #: The review layer. It names the manifest identity it was rendered against,
 #: so a reviewer can tell whether their reference names the same build, and it
 #: carries role="presentation" because the highlight conveys no content of its
@@ -57,12 +75,25 @@ LINK_NOTICE = '<p data-ui-link-outcome="{outcome}">链接已失效：{outcome}</
 #: content, so it carries role="region" rather than presentation and it accepts
 #: input. It states the manifest identity it was rendered against, so two
 #: reviewers can tell whether a reference means the same thing to both.
+#: ``aria-live`` on the status line, because the outcome of a copy is the one
+#: thing here a reviewer may never look at: they pressed a button and turned to
+#: paste. An unannounced failure reads as success.
 PANEL = (
-    '<section data-ui-panel="review" role="region" aria-label="评审面板">'
+    '<section data-ui-panel="review" role="region" aria-label="评审面板" '
+    "data-ui-panel-names='{names}' data-ui-panel-tokens='{token_map}'>"
     '<p data-ui-panel-identity="{identity}">{identity}</p>'
     '<ul data-ui-panel-entries>{entries}</ul>'
     '<div data-ui-panel-actions>{controls}</div>'
+    '<p data-ui-panel-status="idle" role="status" aria-live="polite"></p>'
     "</section>"
+)
+
+#: The control that opens review mode. It is also the focus fallback when the
+#: element a reviewer came from is gone by the time the panel closes, so it is
+#: rendered as a real focusable button rather than a label.
+REVIEW_ENTRY = (
+    '<button type="button" data-ui-review-entry="open" '
+    'aria-pressed="true">评审模式</button>'
 )
 
 OVERLAY = (
@@ -125,6 +156,24 @@ def locate(
     return {"outcome": "located", "ref": parsed["ui_ref"]}
 
 
+def _panel_state(route: str, view: Mapping[str, Any]) -> str:
+    """The state a token claims the reviewer saw, from the served view model.
+
+    The value is validated against the token whitelist rather than trusted:
+    a view model carrying a status the token contract does not know yields
+    ``unknown``, because minting a state the contract rejects would be worse
+    than honestly claiming nothing.
+    """
+    from .ui_token import STATES
+
+    candidate = {
+        "/home": (view.get("run_facts") or {}).get("status"),
+        "/task-detail": (view.get("admission") or {}).get("status"),
+        "/record-view": view.get("mode"),
+    }.get(route)
+    return str(candidate) if candidate in STATES else "unknown"
+
+
 def render_overlay(manifest: Mapping[str, Any]) -> str:
     """Render the review overlay as a sibling subtree of the business markup.
 
@@ -147,7 +196,9 @@ def render_overlay(manifest: Mapping[str, Any]) -> str:
     )
 
 
-def render_panel(manifest: Mapping[str, Any], view: Mapping[str, Any]) -> str:
+def render_panel(
+    manifest: Mapping[str, Any], view: Mapping[str, Any], route: str = "/home"
+) -> str:
     """Render the review panel from the state machine's own decisions.
 
     The entries and the keyboard plan come from :class:`ReviewMode`, not from a
@@ -160,14 +211,48 @@ def render_panel(manifest: Mapping[str, Any], view: Mapping[str, Any]) -> str:
     """
     mode = ReviewMode(dict(manifest))
     mode.enable()
-    for index, record in enumerate(view.get("records") or ()):
-        mode.mount("home.record-list.item", entity_key="row-{0}".format(index))
+    # Mount only references this route's manifest declares. Hard-coding one
+    # view's reference here crashed any other route whose view model carried
+    # the same key (mount raises on undeclared refs), and the failure surfaced
+    # as a dropped connection, not an error a reviewer could read.
+    for ref, items_key in _PANEL_ENTRY_SOURCES.get(route, ()):
+        for index, item in enumerate(view.get(items_key) or ()):
+            mode.mount(ref, entity_key="{0}-{1}".format(ref, index))
     plan = mode.keyboard_plan()
 
+    # One token per viewport, both minted here by ui_token. The server cannot
+    # know which viewport the engine will lay out, and minting in the page
+    # would move the field whitelist out of the module whose tests enforce it.
+    #
+    # No instance handle is carried. A handle belongs to the ReviewMode session
+    # that minted it, and that session ends with the response -- a served
+    # handle would resolve as "expired" for every reviewer who used it, which
+    # is worse than a token that honestly identifies the structural unit only.
+    # It also kept the document from being reproducible across requests, and
+    # that reproducibility is what tests/test_ui_review_lifecycle.py uses to
+    # detect state accumulating in the host.
+    state = _panel_state(route, view)
+
     entries = "".join(
-        '<li data-ui-panel-entry="{ref}">{semantic}（{ref}）</li>'.format(
+        '<li data-ui-panel-entry="{ref}" data-ui-panel-semantic="{semantic}" '
+        '{tokens}>{semantic}（{ref}）</li>'.format(
             ref=html.escape(entry["ref"], quote=True),
             semantic=html.escape(entry["semantic_zh"]),
+            tokens=" ".join(
+                'data-ui-panel-token-{0}="{1}"'.format(
+                    viewport,
+                    html.escape(
+                        build_token(
+                            dict(manifest),
+                            entry["ref"],
+                            viewport=viewport,
+                            state=state,
+                        ),
+                        quote=True,
+                    ),
+                )
+                for viewport in REQUIRED_VIEWPORTS
+            ),
         )
         for entry in mode.panel_entries()
     )
@@ -180,7 +265,38 @@ def render_panel(manifest: Mapping[str, Any], view: Mapping[str, Any]) -> str:
         for action in PANEL_ACTIONS
     )
     mode.disable()
+    # The whole manifest's ref -> Chinese semantic name map, so the page layer
+    # can name any element a reviewer hovers -- not just the entries this
+    # route mounts into the panel. Names stay server-rendered state-machine
+    # data; the script displays them and never invents one.
+    names = json.dumps(
+        {
+            entry["ref"]: entry["semantic_zh"]
+            for entry in manifest["refs"]
+            if not entry.get("retired")
+        },
+        ensure_ascii=False,
+    )
+    # One token per declared reference per viewport, not just for the entries
+    # this route mounts: Tab traversal lets a keyboard reviewer focus -- and
+    # copy -- any declared element, so every reference needs its token in the
+    # page. Minting stays server-side; the script only ever picks one up.
+    token_map = json.dumps(
+        {
+            entry["ref"]: {
+                viewport: build_token(
+                    dict(manifest), entry["ref"], viewport=viewport, state=state
+                )
+                for viewport in REQUIRED_VIEWPORTS
+            }
+            for entry in manifest["refs"]
+            if not entry.get("retired")
+        },
+        ensure_ascii=False,
+    )
     return PANEL.format(
+        names=html.escape(names, quote=True),
+        token_map=html.escape(token_map, quote=True),
         identity="ui_map:{0} build:{1}".format(
             html.escape(manifest["ui_map"][:12], quote=True),
             html.escape(manifest["build"][:12], quote=True),
@@ -231,14 +347,22 @@ def render_document(
     elif outcome is not None:
         body = LINK_NOTICE.format(outcome=html.escape(outcome["outcome"])) + body
     if review:
-        body = body + render_overlay(manifest) + render_panel(manifest, view)
-    return DOCUMENT.format(title=title, stylesheet=STYLESHEET_ROUTE, body=body)
+        body = body + render_overlay(manifest) + REVIEW_ENTRY + render_panel(
+            manifest, view, route
+        )
+    return DOCUMENT.format(
+        title=title,
+        stylesheet=STYLESHEET_ROUTE,
+        body=body,
+        script=REVIEW_SCRIPT_TAG if review else "",
+    )
 
 
 class WorkbenchHost:
     """A running host. Obtain one through :func:`serve_workbench`."""
 
     def __init__(self, server: HTTPServer, thread: threading.Thread) -> None:
+        # HTTPServer is only the annotation; serving is threaded, see below.
         self._server = server
         self._thread = thread
         host, port = server.server_address[0], server.server_address[1]
@@ -277,6 +401,18 @@ def serve_workbench(
             if route == STYLESHEET_ROUTE:
                 self._respond(stylesheet().encode("utf-8"), "text/css; charset=utf-8")
                 return
+            if route == REVIEW_SCRIPT_ROUTE:
+                # Served only while review mode is on: in normal mode the
+                # behaviour layer does not exist as a resource, so it cannot be
+                # fetched and injected into a page that never linked it.
+                if not review:
+                    self.send_error(404, "unknown view")
+                    return
+                self._respond(
+                    review_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -295,7 +431,14 @@ def serve_workbench(
         def log_message(self, *args: Any) -> None:
             """Keep the test output clean; the host is not an evidence source."""
 
-    server = HTTPServer(bind, Handler)
+    # Threaded, with daemon threads: a browser preconnects by opening a TCP
+    # connection and saying nothing on it until a navigation needs it. A
+    # single-threaded server would block in recv on that idle socket and queue
+    # every real request behind it -- the page loads forever while the host
+    # looks healthy. Daemon threads keep close() a port release rather than a
+    # wait for idle sockets to time out.
+    server = ThreadingHTTPServer(bind, Handler)
+    server.daemon_threads = True
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     return WorkbenchHost(server, thread)

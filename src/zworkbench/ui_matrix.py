@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any, Dict, Mapping, Sequence, Tuple
 
 from .ui_ref import UiRefError
-from .ui_review import HOST_UNKNOWNS
+from .ui_review import HOST_SURFACES, HOST_UNKNOWNS
 
 
 REQUIRED_VIEWPORTS = ("compact", "wide")
@@ -208,6 +208,86 @@ def required_scenarios(view: str) -> Tuple[str, ...]:
     return _view(view)["scenarios"]
 
 
+#: The host-executed evidence beyond the four interaction surfaces: the full
+#: PRD matrix re-run in the real engine, and the negative redaction check. Same
+#: pattern as ``HOST_SURFACES`` -- a status is only ever ``met`` alongside the
+#: evidence file that backs it, so a condition cannot be dropped from this list
+#: to fake readiness.
+HOST_EVIDENCE: Tuple[Dict[str, str], ...] = (
+    {
+        "condition": "full-matrix-in-real-host",
+        "status": "met",
+        "evidence": "tests/test_ui_matrix_host.py",
+        "scope": "every view x scenario at 390px and 1280px in normal and "
+        "review mode, served over HTTP and asserted in the engine: each "
+        "required unit rendered, no undeclared reference, the review layer "
+        "purely additive",
+    },
+    {
+        "condition": "redaction-negative",
+        "status": "met",
+        "evidence": "tests/test_ui_redaction_host.py",
+        "scope": "an owner polluted with credential-shaped strings served "
+        "through the host; nothing sensitive survives in the document, URL, "
+        "token or browser-persisted storage",
+    },
+)
+
+
+def _acceptance(gaps: Tuple[str, ...]) -> Dict[str, Any]:
+    """List the conditions under which this report could be accepted.
+
+    The report never accepts itself. It states each precondition, whether it
+    currently holds, and the evidence behind that claim, so a human can make
+    the decision the PRD reserves for a human without re-deriving what is
+    outstanding. ``met`` means every precondition holds; the decision itself is
+    recorded in the PRD, never flipped here.
+    """
+    conditions = [
+        {
+            "condition": "structural-coverage-complete",
+            "status": "unmet" if gaps else "met",
+            "evidence": "this report's gap list against the fixed PRD matrix",
+        },
+        {
+            "condition": "host-interaction-surfaces-verified",
+            "status": "unmet" if HOST_UNKNOWNS else "met",
+            "evidence": ", ".join(s["evidence"] for s in HOST_SURFACES),
+        },
+    ]
+    conditions.extend(dict(entry) for entry in HOST_EVIDENCE)
+    return {
+        "conditions": tuple(conditions),
+        "met": all(c["status"] == "met" for c in conditions),
+        "decision": "human: recorded in the PRD, never flipped by this report",
+    }
+
+
+def _conclusion() -> str:
+    """State what this report is, and what it still is not.
+
+    Even with every interaction surface verified the report stays
+    ``accepted: false``. Structural coverage plus host surfaces is not the
+    acceptance decision: the PRD's fixed matrix -- every view, state and
+    viewport -- and the negative redaction checks are separate evidence, and an
+    acceptance decision is a human one recorded in the PRD, not a flag this
+    function flips on its own.
+    """
+    if HOST_UNKNOWNS:
+        return (
+            "structural declarations only; {0} interaction surface(s) remain "
+            "unknown and this report is not an acceptance decision".format(
+                len(HOST_UNKNOWNS)
+            )
+        )
+    return (
+        "structural declarations complete and every interaction surface has "
+        "host evidence within its stated scope; full-matrix and redaction "
+        "evidence is registered under acceptance conditions, and this report "
+        "is not an acceptance decision"
+    )
+
+
 def coverage_report(
     view: str,
     *,
@@ -263,10 +343,9 @@ def coverage_report(
         "gaps": gaps,
         "ratio": ratio,
         "evidence": "structural-only",
+        "surfaces": HOST_SURFACES,
         "unverified": HOST_UNKNOWNS,
         "accepted": False,
-        "conclusion": (
-            "structural declarations only; interaction surfaces remain unknown "
-            "and this report is not an acceptance decision"
-        ),
+        "acceptance": _acceptance(gaps),
+        "conclusion": _conclusion(),
     }

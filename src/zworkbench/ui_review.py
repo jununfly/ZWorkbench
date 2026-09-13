@@ -9,7 +9,9 @@ Scope of evidence.  Every contract below is verified as a state machine.  The
 host-dependent half of each interaction — whether a browser really honours
 ``pointer-events: none``, what native focus order a real DOM yields, how a real
 clipboard API rejects a write, and whether focus visibly lands where we ask —
-is *not* verified here and is declared unknown in ``HOST_UNKNOWNS``.
+is *not* verified here. Each such surface is tracked in ``HOST_SURFACES``
+together with the host evidence that settled it, or as ``unknown`` when none
+has. A green test in this module is never that evidence.
 """
 
 from __future__ import annotations
@@ -27,34 +29,67 @@ PANEL_ACTIONS = ("select", "lock", "copy", "clear", "close")
 REVIEW_ENTRY_REF = "review.entry"
 
 #: The four interaction surfaces the PRD requires that a state machine cannot
-#: settle.  They stay unknown until a real host verifies them; a green test in
-#: this module must never be reported as covering them.
-HOST_UNKNOWNS: Tuple[Dict[str, str], ...] = (
+#: settle. Each one is lifted out of ``unknown`` only by naming the evidence
+#: that settled it, and only for the scope that evidence actually covers.
+#:
+#: ``verified_by`` is ``host-engine`` when a real rendering engine produced the
+#: observation and ``pending-host`` when nothing has. It is never ``automated``:
+#: a green test in this module exercises the state machine, and calling that
+#: automated verification of a host surface is the precise confusion this table
+#: exists to prevent.
+#:
+#: ``scope`` is load-bearing on ``clipboard-failure-visible``. A headless engine
+#: produces no spontaneous user denial, so the rejection is injected (ADR 0004).
+#: That supports "when a rejection occurs it is visible and nothing retries" and
+#: nothing about how a real permission dialog behaves.
+HOST_SURFACES: Tuple[Dict[str, str], ...] = (
     {
         "surface": "keyboard-focus-order",
-        "status": "unknown",
-        "verified_by": "pending-host",
-        "reason": "native tab order depends on real DOM layout and browser policy",
+        "status": "verified",
+        "verified_by": "host-engine",
+        "evidence": "tests/test_ui_focus_order.py",
+        "scope": "real Tab and Shift+Tab dispatched to a rendered document; "
+        "the ring is every declared element in document order -- the page "
+        "layer makes static units focusable because a keyboard reviewer has "
+        "no hover -- then the review entry and the panel actions in declared "
+        "order, traversable in both directions",
     },
     {
         "surface": "pointer-events-passthrough",
-        "status": "unknown",
-        "verified_by": "pending-host",
-        "reason": "only a real engine can confirm the overlay lets clicks through",
+        "status": "verified",
+        "verified_by": "host-engine",
+        "evidence": "tests/test_ui_pointer_passthrough.py",
+        "scope": "a real click dispatched at a covered business element is "
+        "delivered to that element exactly once, and a click on a panel "
+        "control stays in the panel",
     },
     {
         "surface": "clipboard-failure-visible",
-        "status": "unknown",
-        "verified_by": "pending-host",
-        "reason": "real clipboard permission rejection and its visible surface are host behaviour",
+        "status": "verified",
+        "verified_by": "host-engine",
+        "evidence": "tests/test_ui_clipboard.py",
+        "scope": "injected rejection only: when a write is refused the failure "
+        "is announced, the selection survives, the host error text is not "
+        "echoed and nothing retries; a real user denial is not covered",
     },
     {
         "surface": "focus-restore-on-close",
-        "status": "unknown",
-        "verified_by": "pending-host",
-        "reason": "whether focus visibly lands on the restored element is host behaviour",
+        "status": "verified",
+        "verified_by": "host-engine",
+        "evidence": "tests/test_ui_focus_restore.py",
+        "scope": "focus lands on the prior element when it is still rendered "
+        "and on the review entry otherwise, never inside the closed panel and "
+        "never on the body; a keyboard-driven close leaves a visible ring",
     },
 )
+
+#: The surfaces still waiting on host evidence. Derived rather than maintained,
+#: so a surface cannot be dropped from the unknown list without gaining the
+#: evidence field that moved it.
+HOST_UNKNOWNS: Tuple[Dict[str, str], ...] = tuple(
+    surface for surface in HOST_SURFACES if surface["status"] == "unknown"
+)
+
 
 _BUSINESS_GESTURES = frozenset({"click", "Enter", " "})
 _PREVIEW_GESTURES = frozenset({"hover", "focus"})
@@ -226,7 +261,10 @@ class ReviewMode:
         """Every panel action must be reachable without a pointer."""
         self._require_enabled()
         return {
-            "select": "ArrowUp/ArrowDown",
+            # Pointing at any declared element is ArrowUp/ArrowDown (or Tab):
+            # the page layer moves focus across all of them. Locking the
+            # pointed-at entry is this button, reached by key.
+            "select": "ArrowUp/ArrowDown to point, Enter to lock",
             "lock": "Enter",
             "copy": "Ctrl+C",
             "clear": "Escape",

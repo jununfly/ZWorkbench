@@ -125,6 +125,11 @@ src/zworkbench/
   ui_runtime.py        rendered attributes and review-session instance identity
   ui_token.py          ui-ref/v1 review token and deep link contract
   ui_review.py         local review annotation mode: panel, gestures and exit
+  ui_host.py           read-only loopback host serving the three views
+  ui_script.py         review-mode behaviour layer (ADR 0005), review mode only
+  ui_style.py          style layer, independent of the reference protocol
+  ui_build.py          build entry point producing manifests and receipts
+  ui_view_model.py     control-plane facade: owner state to redacted view model
   ui_matrix.py         PRD coverage specification and counting contract
   ui_home.py           home view declarations and fixture renderer
   ui_task_detail.py    task-detail view declarations and fixture renderer
