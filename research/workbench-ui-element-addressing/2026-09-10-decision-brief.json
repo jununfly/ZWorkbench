@@ -1,0 +1,78 @@
+{
+  "schema": "technical-decision-brief/v1",
+  "user": {
+    "actor": "ZWorkbench 的 Human 与 AI 协作开发者",
+    "job": "在本地工作台评审界面时，唯一且可复现地定位一个可见元素及其运行/视口状态，并把反馈关联到稳定的代码与文档语义。"
+  },
+  "baseline": {
+    "workflow": "Human 在浏览器中看到工作台，使用自然语言、截图位置或视觉描述向 AI 反馈；AI 依据不稳定的视觉猜测寻找元素。",
+    "failureModes": [
+      "“左边卡片”“右下按钮”等描述在响应式布局、不同运行状态或重排后没有唯一目标。",
+      "CSS selector、DOM 路径和截图像素坐标会随实现重构失效。",
+      "通用反馈 SaaS、截图或录屏可能引入远端数据、遥测或不可控保留。",
+      "直接从页面、DSH/Codex session 或浏览器缓存抽取状态会绕过 CompositionOwner 的 owner 边界。"
+    ]
+  },
+  "targetOutcome": "在 R1 工作台中提供仅本地的协作标注模式：Human 可悬停/选择界面元素，看到中文语义名与稳定引用，复制或深链接一个不含敏感内容的反馈 token；AI 与文档、代码使用同一引用命名。",
+  "goals": [
+    "为主要工作台元素提供稳定、语义化、可读的标识，而非 CSS selector 或坐标。",
+    "让标注 token 包含界面引用、视口类别、可公开的界面状态和构建/映射版本，而不包含 prompt、事件正文、凭证、approval token 或 Owner snapshot。",
+    "让 docs 中的元素映射、代码中的稳定标识和标注模式使用一个版本化 source-of-truth。",
+    "优先复用许可、维护和本地部署边界明确的开源 unit capability；不为一个元素选择器引入整套反馈平台。",
+    "若没有合适的 native capability，则把最小协作标注模式沉淀为可测试、可复用的 Codex skill/项目模块。"
+  ],
+  "nonGoals": [
+    "远端 Bug tracker、用户行为分析、会话录制、屏幕录制或第三方遥测。",
+    "在浏览器创建 durable Run、approval、effect、replay 或第二套工作记录状态。",
+    "让标注模式替代产品最终用户界面、无障碍语义或端到端测试。",
+    "将本次 R1 研究扩展为 DSH/Codex Worker/Provider 写操作或多用户协作系统。"
+  ],
+  "constraints": [
+    {
+      "id": "local-first",
+      "statement": "R1 只能在本地工作台运行；默认零远端请求、零遥测，且可明确关闭。"
+    },
+    {
+      "id": "ownership",
+      "statement": "CompositionOwner 仍是 Run、attempt、event、effect、result、approval 和 replay metadata 的唯一 durable owner；标注模式只读或产生脱敏、短暂反馈 token。"
+    },
+    {
+      "id": "reference-stability",
+      "statement": "引用必须从产品语义生成，且能在 HTML、可访问名称、docs 映射与深链接之间一致解析；不得把 CSS class、DOM tree order 或像素坐标视为 identity。"
+    },
+    {
+      "id": "security",
+      "statement": "反馈 token 和可视 overlay 不得泄露 prompt、原始事件载荷、凭证、cookie、approval bearer token 或本地文件绝对路径。"
+    },
+    {
+      "id": "lifecycle",
+      "statement": "需要可验证的许可证、版本 pin、依赖退出和禁用行为；R1 不增加常驻远端服务。"
+    },
+    {
+      "id": "stage",
+      "statement": "这是 experience-version：应交付可丢弃的纵向切片和测量阈值，不预先建设生产级反馈平台。"
+    }
+  ],
+  "assumptions": [
+    "R1 前端宿主尚未选定，研究应比较 unit capability 而非假定 React、Vue 或特定浏览器扩展。",
+    "Human 可以在本地评审模式中主动复制 token 或打开由 token 构成的深链接。",
+    "项目可以维护一个小型版本化元素映射文档，并通过测试检查代码引用与映射的一致性。",
+    "为建立稳定引用而增加的最小标记属性可以进入产品 DOM；高亮 overlay 与复制交互仅在显式评审模式启用。"
+  ],
+  "stage": "experience-version",
+  "decisionScope": "为 ZWorkbench R1 的 Human–AI 界面反馈与元素寻址选择可复用的开源能力、轻量适配方式或自建 reusable skill/module。",
+  "options": [
+    {
+      "id": "unit-reuse",
+      "name": "复用轻量 DOM 选择/高亮/定位 unit capability，并由 ZWorkbench 持有稳定语义与反馈 token"
+    },
+    {
+      "id": "feedback-platform",
+      "name": "集成完整开源反馈、会话回放或标注平台"
+    },
+    {
+      "id": "own-review-mode",
+      "name": "自建最小本地协作标注模式，并先沉淀为可复用 skill/module"
+    }
+  ]
+}

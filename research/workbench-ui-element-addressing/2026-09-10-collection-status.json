@@ -1,0 +1,137 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "collection-blocked",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "Local-first DOM element addressing and collaboration annotation for a developer workbench",
+    "criteria": [
+      {
+        "id": "visual-dom-selection",
+        "question": "Does the repository natively provide an embeddable way for a human to visually select or highlight a live DOM/UI element?",
+        "critical": true,
+        "keywords": [
+          "DOM",
+          "element",
+          "select",
+          "highlight",
+          "overlay",
+          "inspect"
+        ]
+      },
+      {
+        "id": "stable-reference",
+        "question": "Does the repository provide or compose with stable semantic element references rather than only screenshot coordinates, CSS selectors, or a developer-only DOM tree?",
+        "critical": true,
+        "keywords": [
+          "locator",
+          "test id",
+          "accessibility",
+          "role",
+          "selector",
+          "reference"
+        ]
+      },
+      {
+        "id": "local-embedding",
+        "question": "Can the relevant capability run locally and be embedded/adapted without requiring a hosted feedback or telemetry service?",
+        "critical": true,
+        "keywords": [
+          "self-hosted",
+          "local",
+          "offline",
+          "SDK",
+          "embed",
+          "telemetry"
+        ]
+      },
+      {
+        "id": "feedback-artifact",
+        "question": "Can the capability preserve a human feedback artifact or context suitable for a copyable/deep-linkable review reference without capturing secrets by default?",
+        "critical": false,
+        "keywords": [
+          "annotation",
+          "feedback",
+          "share",
+          "link",
+          "redact",
+          "privacy"
+        ]
+      },
+      {
+        "id": "license-lifecycle",
+        "question": "What license, release/version evidence, dependency surface and exit constraints does the repository declare for this capability?",
+        "critical": true,
+        "keywords": [
+          "license",
+          "release",
+          "version",
+          "dependencies",
+          "self-hosted"
+        ]
+      }
+    ],
+    "repositories": [],
+    "discovery": {
+      "query": "DOM element annotation visual feedback overlay selector",
+      "limit": 12,
+      "topicKeywords": [
+        "dom",
+        "annotation",
+        "feedback",
+        "overlay",
+        "selector",
+        "accessibility"
+      ]
+    },
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 48,
+      "maxBytes": 1800000,
+      "deadlineMs": 180000
+    }
+  },
+  "briefFingerprint": "081a6e15bf7b62f9d12af0a7870df0108817d24aeb710fed69851e6660445e22",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "state": "failed",
+    "error": {
+      "code": "GITHUB_NETWORK_FAILED",
+      "message": "GitHub network failure interrupted the collection preflight",
+      "operation": "collect",
+      "phase": "preflight",
+      "retryable": true,
+      "details": {
+        "reason": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+      },
+      "recovery": [
+        "check network access to api.github.com",
+        "rerun the GitHub preflight"
+      ]
+    }
+  },
+  "ledger": {
+    "relationship": "not-produced",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  },
+  "error": {
+    "code": "GITHUB_NETWORK_FAILED",
+    "message": "GitHub network failure interrupted the collection preflight",
+    "operation": "collect",
+    "phase": "preflight",
+    "retryable": true,
+    "details": {
+      "reason": "<urlopen error [Errno 8] nodename nor servname provided, or not known>"
+    },
+    "recovery": [
+      "check network access to api.github.com",
+      "rerun the GitHub preflight"
+    ]
+  }
+}

@@ -94,7 +94,7 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 
 ## Testing Decisions
 
-测试公开输入输出和用户可见行为，不绑定组件内部状态、私有 helper、DOM 嵌套或 CSS 实现。以下阈值是待实现验收合同，不是已通过结果。
+测试公开输入输出和用户可见行为，不绑定组件内部状态、私有 helper、DOM 嵌套或 CSS 实现。以下阈值是验收合同；各项的执行证据在文末 Implementation status 逐项登记，未登记证据的项不得视为已通过。
 
 | 验证面 | 行为与失败路径 | 验收阈值 |
 |---|---|---|
@@ -140,7 +140,7 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 - 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
 - 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
 - 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
-- 尚待实现细化：前端宿主与 fixture 在真实宿主下的代码组织。helper API、本地 manifest 查询命令、token 白名单、实例有效期、兼容窗口和覆盖分母已固定。这些细节不得削弱上述失败与隐私合同；无法证明安全唯一定位时保持不可用/歧义，不恢复业务状态。
+- helper API、本地 manifest 查询命令、token 白名单、实例有效期、兼容窗口和覆盖分母已固定；前端宿主与真实宿主下的 fixture 组织已落地（ADR 0003，见 Implementation status）。这些细节不得削弱上述失败与隐私合同；无法证明安全唯一定位时保持不可用/歧义，不恢复业务状态。
 
 ## Implementation status
 
@@ -148,35 +148,38 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 引用生命周期与映射兼容、评审模式状态机、三视图语义单元声明与安全负向断言，均有产品代码
 与行为测试。相关模块见 `src/zworkbench/ui_*.py`，验证入口见 [Repository README](../../README.md)。
 
-前端宿主尚未选型。视图渲染是纯函数拼装的 HTML 字符串，评审模式是纯状态机；仓库中没有
-样式、脚本、overlay 或服务入口，manifest 也没有构建钩子产出。因此本节区分两类未完成项：
-**未验证**指实现存在但只有真实宿主能判定，**未实现**指该行为在当前代码中还不存在。
+前端宿主已落地：服务端渲染 HTML 经本机回环只读提供（[ADR 0003](../zj-adr/0003-workbench-host-is-server-rendered-html-over-loopback.md)），
+带独立样式层、overlay 与评审面板，manifest 由构建钩子产出 build receipt。视图渲染仍是纯函数，
+评审决策仍由状态机拥有。
 
-以下为 `unknown`，实现存在而判定依赖宿主：
+四项宿主交互面已逐项取得真实引擎证据，见 `src/zworkbench/ui_review.py` 的 `HOST_SURFACES`。
+每项的 `status` 只能由被引用的证据文件抬升，且必须同时声明 `scope`——其中一项的 scope 窄于
+其名称：
 
-| 未验证面 | 原因 |
-|---|---|
-| `keyboard-focus-order` | 原生 tab 顺序取决于真实 DOM 布局与浏览器策略 |
-| `pointer-events-passthrough` | 只有真实引擎能确认高亮层不吞点击 |
-| `clipboard-failure-visible` | 真实剪贴板权限拒绝及其可见表现属宿主行为 |
-| `focus-restore-on-close` | 焦点是否可见地落到恢复目标属宿主行为 |
+| 面 | 状态 | 证据 | 结论边界 |
+|---|---|---|---|
+| `keyboard-focus-order` | verified | `tests/test_ui_focus_order.py` | 真实 Tab/Shift+Tab 派发；环为全部声明元素（页面层为静态单元补 tabindex，键盘评审者没有悬停）→ 评审入口 → 面板动作，正反向一致且不成陷阱 |
+| `pointer-events-passthrough` | verified | `tests/test_ui_pointer_passthrough.py` | 真实点击送达被覆盖的业务元素且恰好一次；面板自身控件的点击不外泄 |
+| `clipboard-failure-visible` | verified | `tests/test_ui_clipboard.py` | **仅注入式拒绝**：拒绝发生时可见、可播报、保留选择、不回显宿主错误、不自动重试；不覆盖真实用户拒绝 |
+| `focus-restore-on-close` | verified | `tests/test_ui_focus_restore.py` | 焦点落回原元素或评审入口，绝不停留在已关闭面板内或 body；键盘关闭留有可见焦点环 |
 
-以下为**未实现**，当前测试不构成任何证据，不得计入验收：
+判定这两项需要页面内行为，因此评审模式加载一层最小行为脚本，边界见
+[ADR 0005](../zj-adr/0005-review-mode-carries-a-minimal-behaviour-layer.md)（`accepted`）。
+证据由本机浏览器经 CDP 产生，浏览器缺席时相关测试跳过并保留 `unknown`，不改判为通过。
 
-| 未实现项 | 当前状态 |
-|---|---|
-| 390px / 1280px 两档视口执行 | 现有矩阵测试遍历视口名称但不改变渲染输入，断言的是同一份 markup；响应式行为属 CSS，尚不存在 |
-| 正常模式与评审模式对照 | 评审模式当前不修改 markup，两模式相等的断言恒真；overlay 落地前该对照没有信息量 |
+原列为**未实现**的两项已随宿主落地实现：390px/1280px 两档视口在真实引擎下分别渲染并断言
+差异（`tests/test_ui_viewport.py`），正常与评审两模式的对照恢复为有信息量的减法——评审模式
+新增的每个子树都必须逐项登记后两份文档才相等（`tests/test_ui_overlay.py`）。
 
-三项原未实现项已随宿主落地实现，见 `src/zworkbench/ui_matrix.py` 的 `UNIT_VISIBILITY`
+另有三项原未实现项同样已随宿主落地实现，见 `src/zworkbench/ui_matrix.py` 的 `UNIT_VISIBILITY`
 与 `tests/test_ui_visibility.py`：
 
 - **可见/可展开/不适用三态分类**：`UNIT_VISIBILITY` 手写转写本 PRD，独立于 manifest 与
   渲染器。只有 `conditional` 单元可被豁免，`visible` / `expandable` 单元缺席一律计为 gap
   —— 这是「不能将缺失实现标为不适用」的机制化实现，而非流程约定。
 - **可展开单元展开后可定位**：detail 级单元置于原生 `<details>` 披露区，默认折叠；深链接
-  目标所在披露区由宿主服务端渲染为 `open`，因此展开无需脚本、不执行任何业务动作。仅展开
-  被指名引用所在的披露区。引擎证据以 `checkVisibility()` 与页面暴露文本度量，不用几何
+  目标所在披露区由宿主服务端渲染为 `open`，因此展开由服务端完成、不执行任何业务动作，也不
+  依赖 ADR 0005 的评审行为层。仅展开被指名引用所在的披露区。引擎证据以 `checkVisibility()` 与页面暴露文本度量，不用几何
   高度：Chrome 对折叠 `details` 内容仍保留布局盒，两态高度相同，高度断言在一个方向上恒真。
 - **隐藏单元直接定位返回 `unavailable`**：`locate()` 以实际渲染出的文档而非 manifest 为
   事实源。空列表的列表项即真实隐藏态。`unavailable`（已声明但不在本页）与
@@ -186,7 +189,33 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
   界面而定，未识别的运行类别一律不豁免。被豁免单元不渲染引用，理由展示给评审者 ——
   `unknown`（无法判断）与 `not_applicable`（不可能存在）是不同主张。
 
-覆盖报告仍固定返回 `evidence: structural-only` 与 `accepted: false`。结构覆盖满格只表示
-声明齐全。上述四项 `unknown` 与剩余两项未实现同源于宿主交互面尚未逐项验证，不得在此
-之前标注为 `not-applicable` 或计为通过。本功能验收未通过；整个 R1 仍须独立通过主规格
-验收。
+端到端与安全负向已在真实宿主下复验通过：
+
+- **全矩阵重跑**：每个视图 × 场景在 390px/1280px、正常与评审两模式下经 HTTP 由真实引擎断言
+  ——每个必需单元渲染在页、无未声明引用、评审层只增不删（`tests/test_ui_matrix_host.py`）。
+- **脱敏负向**：以伪造的凭据形字符串污染 Owner 后经真实宿主提供服务，文档、URL、token 与
+  浏览器持久存储零泄露（`tests/test_ui_redaction_host.py`）。
+- **零远端请求与零 Owner 状态变更**：引擎资源时间线中每个请求都指向回环宿主本身；完整评审
+  会话前后 Owner canonical state 摘要不差（`tests/test_ui_no_side_effects.py`）。
+- **深链接负向**：链接不恢复业务状态、不静默开启评审模式、不为普通页面加载脚本
+  （`tests/test_ui_deep_link_negative.py`）。
+- **键盘指向**：Tab 遍历全部声明元素（页面层补 tabindex），ArrowUp/ArrowDown 在任意焦点位置
+  沿同一环移动焦点并回绕；焦点即预览（虚线框+中文名），Ctrl+C 复制所指元素的 token——键盘
+  路径与鼠标路径等价。面板的锁定仍是面板行为（select 按钮/Enter），不占用方向键
+  （`tests/test_ui_arrow_keys.py`、`tests/test_ui_focus_order.py`、`tests/test_ui_clipboard.py`）。
+- **评审层可见性**：面板是停靠式侧栏（宽屏右侧、紧凑视口底部），页面为它让位而非被它遮盖，
+  关闭即归还空间；悬停元素时在 overlay 内显示虚线框与
+  中文语义名（预览绝不锁定）；面板锁定时对应业务元素带可见高亮环；深链接定位的标记同样带
+  可见环——「悬停或选择时看到边框、中文语义名」由引擎断言，不再只是属性存在
+  （`tests/test_ui_review_highlight.py`）。
+
+覆盖报告新增结构化 `acceptance.conditions`：结构覆盖完整、四项交互面 verified、全矩阵宿主
+证据、脱敏负向证据，各带 status 与 evidence 文件；全部 `met` 时 `acceptance.met=true`，但这
+只是人工判断的前置条件——`accepted` 不由计数函数自行翻转。
+
+**验收结论（2026-09-13，Human 在真实宿主上完成）**：本功能六项人工验收（A 普通模式基线与双
+视口、B 两模式对照、C 指认闭环与 token 脱敏、D 键盘全遍历与焦点复制、E 深链接正负向、F 零
+远端请求与零存储）全部通过；验收过程中发现的四项缺陷（preconnect 死锁、评审层不可见、面板
+遮盖、键盘路径不完整）均已修复并带回归测试。**Human 判断：本功能 accepted。** 遗留：宿主服
+务的 manifest 身份与构建钩子 receipt 身份的统一（见下文，R1 后续）；整个 R1 仍须独立通过主
+规格验收。
