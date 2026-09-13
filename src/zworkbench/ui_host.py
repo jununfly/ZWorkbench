@@ -17,9 +17,11 @@ from __future__ import annotations
 import html
 import json
 import threading
+from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
+from .ui_build import ROOT_SOURCES, build_receipt
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
 from .ui_review import PANEL_ACTIONS, ReviewMode
@@ -82,6 +84,9 @@ PANEL = (
     '<section data-ui-panel="review" role="region" aria-label="评审面板" '
     "data-ui-panel-names='{names}' data-ui-panel-tokens='{token_map}'>"
     '<p data-ui-panel-identity="{identity}">{identity}</p>'
+    '<p data-ui-panel-query>本地查询：zworkbench ui-ref --store '
+    "&lt;manifest 目录&gt; resolve &lt;ref&gt; --ui-map {ui_map_full} "
+    '--build {build_full}</p>'
     '<ul data-ui-panel-entries>{entries}</ul>'
     '<div data-ui-panel-actions>{controls}</div>'
     '<p data-ui-panel-status="idle" role="status" aria-live="polite"></p>'
@@ -301,6 +306,10 @@ def render_panel(
             html.escape(manifest["ui_map"][:12], quote=True),
             html.escape(manifest["build"][:12], quote=True),
         ),
+        # The query hint carries the full digests: a truncated identity names
+        # nothing a local lookup could resolve.
+        ui_map_full=html.escape(manifest["ui_map"], quote=True),
+        build_full=html.escape(manifest["build"], quote=True),
         entries=entries,
         controls=controls,
     )
@@ -318,6 +327,23 @@ def _expands(render: Callable[..., str]) -> bool:
     return "expand" in inspect.signature(render).parameters
 
 
+#: The one build identity the host serves (ADR 0006): the whole-tree receipt,
+#: computed once from the same function and sources the build hook uses. A
+#: served token's build then matches what ``build_ui_artifacts`` stores, so a
+#: reviewer’s copy resolves locally instead of answering manifest-missing.
+#: Computed lazily so importing the module never touches the tree; an
+#: unreadable source fails at serve time, not at token-parse time.
+_SERVED_BUILD: Optional[str] = None
+
+
+def _served_build() -> str:
+    global _SERVED_BUILD
+    if _SERVED_BUILD is None:
+        root = Path(__file__).resolve().parents[2]
+        _SERVED_BUILD = build_receipt(root, ROOT_SOURCES)["build"]
+    return _SERVED_BUILD
+
+
 def render_document(
     route: str, view: Mapping[str, Any], query: str = "", review: bool = False
 ) -> str:
@@ -328,7 +354,7 @@ def render_document(
     following a link cannot load a run, restore state or start a review.
     """
     title, manifest_of, render = ROUTES[route]
-    manifest = manifest_of()
+    manifest = manifest_of(build=_served_build())
     body = render(view, manifest=manifest)
 
     # Resolved against the rendered body, then rendered again if the target sits

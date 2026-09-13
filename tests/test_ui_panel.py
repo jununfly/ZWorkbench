@@ -50,15 +50,34 @@ class RenderingThePanelTests(unittest.TestCase):
         self.assertIn('data-ui-panel="review"', self.document)
 
     def test_the_panel_names_the_manifest_identity_it_was_rendered_against(self):
-        """A reviewer must be able to tell whether they share a build."""
+        """A reviewer must be able to tell whether they share a build.
+
+        The build half is the whole-tree receipt (ADR 0006), not one module's
+        content digest.
+        """
+        from zworkbench.ui_build import ROOT_SOURCES, build_receipt
+
         manifest = home_manifest()
+        receipt = build_receipt(Path(__file__).resolve().parents[1], ROOT_SOURCES)
         self.assertIn(manifest["ui_map"][:12], self.document)
-        self.assertIn(manifest["build"][:12], self.document)
+        self.assertIn(receipt["build"][:12], self.document)
 
     def test_every_panel_action_is_present_as_a_control(self):
         for action in PANEL_ACTIONS:
             with self.subTest(action=action):
                 self.assertIn('data-ui-panel-action="{0}"'.format(action), self.document)
+
+    def test_the_panel_shows_how_to_query_the_manifest_locally(self):
+        """Identity without a query path is a label, not an explanation."""
+        self.assertIn("data-ui-panel-query", self.document)
+        self.assertIn("zworkbench ui-ref", self.document)
+        from zworkbench.ui_build import ROOT_SOURCES, build_receipt
+
+        receipt = build_receipt(Path(__file__).resolve().parents[1], ROOT_SOURCES)
+        manifest = home_manifest()
+        self.assertIn(manifest["ui_map"], self.document)
+        # ADR 0006: the served build identity is the whole-tree receipt.
+        self.assertIn(receipt["build"], self.document)
 
     def test_the_panel_lists_the_declared_references_it_can_target(self):
         self.assertIn("home.record-list.item", self.document)

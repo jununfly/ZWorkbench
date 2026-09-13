@@ -2,7 +2,7 @@
 doc-kind: product-requirements
 authority: supporting
 status: target
-implementation-status: partial
+implementation-status: accepted
 ---
 
 # R1 界面引用注册表与本地评审标注模式
@@ -104,7 +104,7 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 | 动态实例 | 多个相同结构 ref、空列表、列表重排、实例离开视图 | 同会话已选且挂载的实例准确定位率 100%，重排/重渲染仍命中；卸载为 unavailable，会话失效为 expired，无 handle 的重复项为 ambiguous；错误定位 0 |
 | Token 与深链接 | 正常解析、1024 字节边界及超限、重复/未知键、非法枚举、未知版本、畸形输入、隐藏元素、alias、废弃和跨版本输入 | 无猜测性回退；不执行任何业务动作 |
 | 版本与源码闭环 | 本地查询当前/上一版本产物、缺失 manifest、源码变化、alias 循环与冲突 | identity 匹配时定位准确；缺失/不匹配显式报错；静默替代 0 |
-| 选择与焦点 | 面板锁定业务按钮，普通点击、键盘选择、清除、关闭及原焦点消失 | 锁定不执行按钮；普通点击只执行一次；仅面板消费评审按键；焦点可预测恢复 |
+| 选择与焦点 | 面板锁定业务按钮，普通点击、键盘选择、清除、关闭及原焦点消失 | 锁定不执行按钮；普通点击只执行一次；评审按键（方向键/Ctrl+C）仅在评审模式消费、普通模式零消费、焦点不在声明元素上时不拦截；焦点可预测恢复 |
 | 脱敏 | 用合成 prompt、标题、Run ID、事件、路径、凭证等污染页面与输入 | token、URL、overlay、日志和浏览器持久化中泄露 0 |
 | 本地与副作用 | 开启、悬停、选择、复制、链接定位、关闭 | 远端请求/遥测 0；无自动剪贴板写入；无新增 Run/effect/approval 或 Worker/Provider 执行 |
 | 正常模式与评审模式 | 对照执行既有预检、Run 展示和 effect 流程；测试点击、输入、焦点与键盘导航 | 行为合同一致；overlay 不截断或重复业务动作 |
@@ -136,7 +136,7 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 
 ## Further Notes
 
-- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充，状态为 `target` / `partial`。
+- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充。设计状态为 `target`；实现状态为 `accepted`（2026-09-13 Human 验收，见 Implementation status）。整个 R1 主规格仍独立验收。
 - 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
 - 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
 - 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
@@ -216,6 +216,7 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 **验收结论（2026-09-13，Human 在真实宿主上完成）**：本功能六项人工验收（A 普通模式基线与双
 视口、B 两模式对照、C 指认闭环与 token 脱敏、D 键盘全遍历与焦点复制、E 深链接正负向、F 零
 远端请求与零存储）全部通过；验收过程中发现的四项缺陷（preconnect 死锁、评审层不可见、面板
-遮盖、键盘路径不完整）均已修复并带回归测试。**Human 判断：本功能 accepted。** 遗留：宿主服
-务的 manifest 身份与构建钩子 receipt 身份的统一（见下文，R1 后续）；整个 R1 仍须独立通过主
-规格验收。
+遮盖、键盘路径不完整）均已修复并带回归测试。**Human 判断：本功能 accepted。** 原遗留项"宿
+主 manifest 身份与构建钩子 receipt 身份的统一"已由
+[ADR 0006](../zj-adr/0006-one-build-identity-for-served-manifests.md) 定死：全树 receipt 为唯
+一 build 身份，宿主启动时现算。整个 R1 仍须独立通过主规格验收。
