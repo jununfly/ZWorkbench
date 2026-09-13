@@ -12,6 +12,7 @@ while measuring the fallback layout viewport).
 """
 
 import contextlib
+import socket
 import sys
 import unittest
 import urllib.error
@@ -21,7 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.ui_home import home_manifest
-from zworkbench.ui_host import serve_workbench
+from zworkbench.ui_host import REVIEW_SCRIPT_ROUTE, serve_workbench
 from zworkbench.ui_record_view import record_manifest
 from zworkbench.ui_runtime import audit_rendered_html
 from zworkbench.ui_task_detail import task_detail_manifest
@@ -82,6 +83,22 @@ class HostLifecycleTests(unittest.TestCase):
         host.close()
         host.close()
 
+    def test_an_idle_preconnected_socket_does_not_block_real_requests(self):
+        """Browsers preconnect: they open a TCP connection and say nothing on
+        it until a navigation needs it. A single-threaded server blocks in
+        ``recv`` on that idle socket and every real request queues behind it --
+        the page loads forever while the host looks perfectly healthy."""
+        host = serve_workbench()
+        self.addCleanup(host.close)
+        host_port = int(host.base_url.rsplit(":", 1)[1])
+        idle = socket.create_connection(("127.0.0.1", host_port), timeout=5)
+        self.addCleanup(idle.close)
+        # The idle connection never sends a byte; the real request must still
+        # be answered promptly on its own connection.
+        status, _, body = fetch(host.base_url, "/home")
+        self.assertEqual(status, 200)
+        self.assertIn("home", body)
+
     def test_a_failing_body_still_releases_the_host(self):
         host = serve_workbench()
         base = host.base_url
@@ -116,6 +133,51 @@ class ServingEveryDeclaredViewTests(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError) as raised:
             fetch(self.host.base_url, "/owner-snapshot")
         self.assertEqual(raised.exception.code, 404)
+
+
+class TheReviewBehaviourLayerTests(unittest.TestCase):
+    """ADR 0005 -- the script exists only where review mode does.
+
+    Not linking it in normal mode is not enough on its own: a resource that is
+    still served can be fetched and injected. Refusing the route unless the
+    host was started in review mode makes the absence structural, which is the
+    same reasoning that keeps review mode out of the query string.
+    """
+
+    def setUp(self):
+        self.plain = serve_workbench(view_source=lambda route: {})
+        self.addCleanup(self.plain.close)
+        self.review = serve_workbench(view_source=lambda route: {}, review=True)
+        self.addCleanup(self.review.close)
+
+    def _get(self, base, path):
+        request = urllib.request.Request(base + path)
+        try:
+            with DIRECT.open(request, timeout=5) as response:
+                return response.status, response.read().decode("utf-8")
+        except urllib.error.HTTPError as error:
+            return error.code, ""
+
+    def test_review_mode_serves_the_behaviour_layer(self):
+        status, body = self._get(self.review.base_url, REVIEW_SCRIPT_ROUTE)
+        self.assertEqual(status, 200)
+        self.assertIn("clipboard", body)
+
+    def test_normal_mode_does_not_serve_it_at_all(self):
+        status, _ = self._get(self.plain.base_url, REVIEW_SCRIPT_ROUTE)
+        self.assertEqual(status, 404)
+
+    def test_normal_documents_carry_no_script_element(self):
+        for route in ("/home", "/task-detail", "/record-view"):
+            with self.subTest(route=route):
+                _, body = self._get(self.plain.base_url, route)
+                self.assertNotIn("<script", body)
+
+    def test_the_behaviour_layer_is_a_separate_resource_not_inline_text(self):
+        """The document stays free of executable text, so it can be diffed."""
+        _, body = self._get(self.review.base_url, "/home")
+        self.assertIn(REVIEW_SCRIPT_ROUTE, body)
+        self.assertNotIn("navigator.clipboard", body)
 
 
 if __name__ == "__main__":

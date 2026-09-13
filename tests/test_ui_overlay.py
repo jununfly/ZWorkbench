@@ -61,14 +61,21 @@ class RenderingTheOverlayTests(unittest.TestCase):
         normal document byte for byte. This is the assertion the old mode
         comparison could not make, because there was nothing to subtract.
 
-        Both subtrees are removed by locating their boundaries rather than by
-        assuming there is one. An earlier version subtracted only the overlay
-        and passed; adding the panel turned it red, which is the behaviour a
-        subtraction test should have.
+        Every review addition is removed by locating its boundaries rather than
+        by assuming there is one. An earlier version subtracted only the
+        overlay and passed; adding the panel turned it red, and adding the
+        review entry and behaviour layer turned it red again. That is the
+        behaviour a subtraction test should have: each new review-mode part
+        must be named here before the comparison can pass.
         """
         review = fetch(self.review.base_url)
         stripped = review
-        for opening, closing in (("<aside", "</aside>"), ("<section data-ui-panel", "</section>")):
+        for opening, closing in (
+            ("<aside", "</aside>"),
+            ("<button type=\"button\" data-ui-review-entry", "</button>"),
+            ("<section data-ui-panel", "</section>"),
+            ("<script", "</script>"),
+        ):
             start = stripped.index(opening)
             end = stripped.index(closing, start) + len(closing)
             stripped = stripped[:start] + stripped[end:]

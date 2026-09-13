@@ -9,6 +9,7 @@ showing up as a gap, and coverage would approach 100% by doing nothing.
 import pathlib
 import unittest
 
+from zworkbench.ui_review import HOST_SURFACES
 from zworkbench.ui_matrix import (
     MATRIX,
     REQUIRED_VIEWPORTS,
@@ -140,21 +141,72 @@ class DenominatorTests(unittest.TestCase):
 class HonestyTests(unittest.TestCase):
     """The report must state what it did not verify."""
 
-    def test_the_report_carries_the_unverified_interaction_surfaces(self):
+    def test_the_report_carries_every_interaction_surface_and_its_status(self):
         report = coverage_report("home", declared_refs=required_units("home"))
-        self.assertTrue(report["unverified"])
+        self.assertEqual(report["surfaces"], HOST_SURFACES)
         for surface in report["unverified"]:
             self.assertEqual(surface["status"], "unknown")
 
+    def test_the_unverified_list_is_exactly_the_surfaces_still_unknown(self):
+        """The report may not under-report what is outstanding."""
+        report = coverage_report("home", declared_refs=required_units("home"))
+        self.assertEqual(
+            report["unverified"],
+            tuple(s for s in report["surfaces"] if s["status"] == "unknown"),
+        )
+
     def test_full_structural_coverage_is_not_reported_as_acceptance(self):
+        """Not even with every host surface verified.
+
+        Acceptance also needs the full PRD matrix and the redaction checks, and
+        it is a human decision recorded in the PRD. A flag this function could
+        flip on its own would turn a coverage count into an approval.
+        """
         report = coverage_report("home", declared_refs=required_units("home"))
         self.assertEqual(report["ratio"], 1.0)
         self.assertFalse(report["accepted"])
-        self.assertIn("unknown", report["conclusion"])
+        self.assertIn("not an acceptance decision", report["conclusion"])
+
+    def test_the_conclusion_states_how_many_surfaces_are_still_unknown(self):
+        report = coverage_report("home", declared_refs=required_units("home"))
+        if report["unverified"]:
+            self.assertIn("unknown", report["conclusion"])
+        else:
+            self.assertIn("host evidence", report["conclusion"])
 
     def test_the_report_states_which_evidence_class_it_is(self):
         report = coverage_report("home", declared_refs=())
         self.assertEqual(report["evidence"], "structural-only")
+
+    def test_the_report_lists_each_acceptance_condition_with_status_and_evidence(self):
+        report = coverage_report("home", declared_refs=required_units("home"))
+        conditions = report["acceptance"]["conditions"]
+        names = [c["condition"] for c in conditions]
+        self.assertIn("structural-coverage-complete", names)
+        self.assertIn("host-interaction-surfaces-verified", names)
+        self.assertIn("full-matrix-in-real-host", names)
+        self.assertIn("redaction-negative", names)
+        for condition in conditions:
+            self.assertIn(condition["status"], ("met", "unmet"))
+            self.assertTrue(condition["evidence"])
+
+    def test_structural_gaps_make_the_structural_condition_unmet(self):
+        report = coverage_report("home", declared_refs=())
+        by_name = {c["condition"]: c for c in report["acceptance"]["conditions"]}
+        self.assertEqual(by_name["structural-coverage-complete"]["status"], "unmet")
+        self.assertFalse(report["acceptance"]["met"])
+        self.assertFalse(report["accepted"])
+
+    def test_all_conditions_met_still_does_not_flip_accepted(self):
+        """Every condition holding is the precondition for a human decision,
+        not the decision itself."""
+        report = coverage_report("home", declared_refs=required_units("home"))
+        self.assertTrue(
+            all(c["status"] == "met" for c in report["acceptance"]["conditions"])
+        )
+        self.assertTrue(report["acceptance"]["met"])
+        self.assertFalse(report["accepted"])
+        self.assertIn("not an acceptance decision", report["conclusion"])
 
 
 if __name__ == "__main__":
