@@ -83,9 +83,26 @@ class NotRetainingReviewStateTests(unittest.TestCase):
         self.assertEqual(after, before)
 
     def test_a_review_host_still_serves_the_plain_document_elsewhere(self):
-        """The stylesheet route must not acquire review state either."""
+        """The stylesheet route must not acquire review state either.
+
+        Static rules that target review-only elements are fine: they match
+        nothing in a normal document. What must not happen is per-request
+        state -- a token, a handle, a decision a ReviewMode made for one
+        response -- leaking into a resource every response shares. So the
+        assertion is byte stability across interleaved requests, and no token
+        material in the bytes.
+        """
         with DIRECT.open(self.host.base_url + "/static/workbench.css", timeout=5) as r:
-            self.assertNotIn("data-ui-panel", r.read().decode("utf-8"))
+            first = r.read()
+        fetch(self.host.base_url)
+        try:
+            fetch(self.host.base_url + "?ui_ref=home.record-list&ui_map=" + "0" * 64)
+        except urllib.error.URLError:
+            pass  # the link is refused; what matters is the stylesheet after it
+        with DIRECT.open(self.host.base_url + "/static/workbench.css", timeout=5) as r:
+            again = r.read()
+        self.assertEqual(again, first)
+        self.assertNotIn(b"ui-ref/v1", again)
 
 
 if __name__ == "__main__":

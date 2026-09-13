@@ -43,6 +43,28 @@ CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 #: Only the stable CDP 1.3 domains are used: Page, Runtime, Emulation.
 NAVIGATION_SETTLE_SECONDS = 0.3
 
+#: A dispatched key is processed asynchronously; reading ``activeElement``
+#: immediately after the write can observe the focus that preceded it.
+KEY_SETTLE_SECONDS = 0.05
+
+#: Only the keys the review contracts need. Each entry is the full identity a
+#: real key press carries: an engine that receives a partial descriptor may
+#: accept the event and then act on nothing.
+_KEYS = {
+    "Tab": {"code": "Tab", "vk": 9, "modifiers": 0},
+    "ShiftTab": {"code": "Tab", "vk": 9, "modifiers": 8},
+    "Escape": {"code": "Escape", "vk": 27, "modifiers": 0},
+    "ArrowUp": {"code": "ArrowUp", "vk": 38, "modifiers": 0},
+    # Ctrl+C as the keyboard plan declares it; ``text`` makes Chrome treat it
+    # as a character chord rather than a bare raw key.
+    "CtrlC": {"code": "KeyC", "key": "c", "vk": 67, "modifiers": 2, "text": "c"},
+    "ArrowDown": {"code": "ArrowDown", "vk": 40, "modifiers": 0},
+    # ``text`` is what makes Enter activate the focused control. Without it
+    # Chrome delivers the key event but performs no default action, so a button
+    # never sees a click and a keyboard activation test quietly asserts nothing.
+    "Enter": {"code": "Enter", "vk": 13, "modifiers": 0, "text": "\r"},
+}
+
 
 def chrome_available() -> bool:
     """Whether the verification-stage browser is present on this machine."""
@@ -145,6 +167,12 @@ class Browser:
         the page at a 1x1 viewport, which quietly breaks hit testing.
         """
         self._connection.call("Page.enable")
+        # A headless window never gains OS focus, so the document reports
+        # itself unfocused: focus/blur events do not fire and :focus-visible
+        # never matches. That is a property of the harness, not of the page,
+        # and leaving it in place would make every focus assertion measure the
+        # window manager instead of the product.
+        self._connection.call("Emulation.setFocusEmulationEnabled", enabled=True)
         self._connection.call("Page.navigate", url=url)
         time.sleep(NAVIGATION_SETTLE_SECONDS)
         if viewport is not None:
@@ -157,6 +185,65 @@ class Browser:
                 mobile=False,
             )
             time.sleep(NAVIGATION_SETTLE_SECONDS)
+
+    def press(self, key: str) -> None:
+        """Dispatch one real key press to the page.
+
+        ``rawKeyDown`` is used rather than ``keyDown`` because the latter
+        expects the text of a character key; for navigation keys Chrome then
+        ignores the event and focus does not move, silently turning a focus
+        order assertion into a measurement of the initial focus.
+        """
+        descriptor = _KEYS[key]
+        text = descriptor.get("text")
+        for kind in ("keyDown" if text else "rawKeyDown", "keyUp"):
+            event = {
+                "type": kind,
+                # DOM ``key`` is the character ("c"), ``code`` the physical
+                # key ("KeyC"); for navigation keys the two coincide.
+                "key": descriptor.get("key", descriptor["code"]),
+                "code": descriptor["code"],
+                "windowsVirtualKeyCode": descriptor["vk"],
+                "nativeVirtualKeyCode": descriptor["vk"],
+                "modifiers": descriptor["modifiers"],
+            }
+            if text and kind == "keyDown":
+                event["text"] = text
+            self._connection.call("Input.dispatchKeyEvent", **event)
+            time.sleep(KEY_SETTLE_SECONDS)
+
+    def move(self, x: float, y: float) -> None:
+        """Dispatch a real mouse move at viewport coordinates.
+
+        Hover is an engine decision: only a dispatched move says which element
+        the engine considers hovered, which is what a preview highlight must
+        track.
+        """
+        self._connection.call(
+            "Input.dispatchMouseEvent", type="mouseMoved", x=x, y=y
+        )
+        time.sleep(KEY_SETTLE_SECONDS)
+
+    def click(self, x: float, y: float, modifiers: int = 0) -> None:
+        """Dispatch a real mouse click at viewport coordinates.
+
+        Hit testing says which element sits under a point; only a dispatched
+        click says which element the engine delivers the event to. The two can
+        disagree when a layer is transparent to hit testing but still receives
+        input, which is precisely the failure passthrough must exclude.
+        """
+        for kind in ("mousePressed", "mouseReleased"):
+            self._connection.call(
+                "Input.dispatchMouseEvent",
+                type=kind,
+                x=x,
+                y=y,
+                button="left",
+                buttons=1 if kind == "mousePressed" else 0,
+                clickCount=1,
+                modifiers=modifiers,
+            )
+        time.sleep(KEY_SETTLE_SECONDS)
 
     def evaluate(self, expression: str):
         """Evaluate an expression in the page and return it by value."""

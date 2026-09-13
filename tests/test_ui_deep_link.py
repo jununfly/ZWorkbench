@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.composition import CompositionOwner
 from zworkbench.ui_home import home_manifest
-from zworkbench.ui_host import render_document, serve_workbench
+from zworkbench.ui_host import REVIEW_SCRIPT_ROUTE, render_document, serve_workbench
 from zworkbench.ui_token import build_deep_link
 from zworkbench.ui_view_model import owner_view_source
 
@@ -164,11 +164,42 @@ class StayingAPureNavigationTests(unittest.TestCase):
         self.assertEqual(self.owner.state_digest(), before)
 
     def test_a_deep_link_does_not_turn_on_review_mode(self):
-        """Locating an element is not the same as starting an annotation."""
+        """Locating an element is not the same as starting an annotation.
+
+        The markers are the ones review mode actually emits. An earlier version
+        asserted the absence of ``data-ui-review-mode``, an attribute no
+        renderer has ever produced, so it passed against every possible
+        implementation -- including one that turned review mode fully on.
+        """
         _, body = fetch(
             self.host.base_url, build_deep_link(home_manifest(), "home.record-list")
         )
-        self.assertNotIn("data-ui-review-mode", body)
+        for marker in (
+            "data-ui-overlay",
+            'data-ui-panel="review"',
+            "data-ui-review-entry",
+            REVIEW_SCRIPT_ROUTE,
+        ):
+            with self.subTest(marker=marker):
+                self.assertNotIn(marker, body)
+
+    def test_those_markers_are_the_ones_review_mode_really_emits(self):
+        """Pins the negative above to the product, not to a guessed spelling.
+
+        A marker list that drifted from what the renderer emits would make the
+        previous test vacuous again, silently.
+        """
+        review = serve_workbench(review=True)
+        self.addCleanup(review.close)
+        _, body = fetch(review.base_url, "/home")
+        for marker in (
+            "data-ui-overlay",
+            'data-ui-panel="review"',
+            "data-ui-review-entry",
+            REVIEW_SCRIPT_ROUTE,
+        ):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, body)
 
     def test_the_page_content_is_the_same_with_and_without_the_link(self):
         _, plain = fetch(self.host.base_url, "/home")

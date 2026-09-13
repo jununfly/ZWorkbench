@@ -8,9 +8,11 @@ stay ``unknown`` and are declared as such in ``HOST_UNKNOWNS``.
 """
 
 import unittest
+from pathlib import Path
 
 from zworkbench.ui_home import home_manifest
 from zworkbench.ui_review import (
+    HOST_SURFACES,
     HOST_UNKNOWNS,
     PANEL_ACTIONS,
     ReviewMode,
@@ -291,17 +293,11 @@ class FocusRestoreTests(unittest.TestCase):
         self.assertTrue(mode.enabled)
 
 
-class HostUnknownTests(unittest.TestCase):
-    """The honesty anchor: host-dependent halves are not claimed as passing."""
-
-    def test_every_host_surface_stays_unknown(self):
-        self.assertTrue(HOST_UNKNOWNS)
-        for surface in HOST_UNKNOWNS:
-            self.assertEqual(surface["status"], "unknown")
-            self.assertTrue(surface["reason"])
+class HostSurfaceTests(unittest.TestCase):
+    """The honesty anchor: a host surface is settled only by host evidence."""
 
     def test_the_four_prd_interaction_surfaces_are_all_declared(self):
-        declared = {surface["surface"] for surface in HOST_UNKNOWNS}
+        declared = {surface["surface"] for surface in HOST_SURFACES}
         self.assertEqual(
             declared,
             {
@@ -312,9 +308,52 @@ class HostUnknownTests(unittest.TestCase):
             },
         )
 
-    def test_no_host_surface_claims_automated_verification(self):
+    def test_no_host_surface_claims_verification_by_a_state_machine_test(self):
+        """This module's own green tests are never the evidence.
+
+        ``automated`` is the label that would let a passing state-machine test
+        stand in for a host observation, which is the single confusion this
+        table exists to prevent.
+        """
+        for surface in HOST_SURFACES:
+            with self.subTest(surface=surface["surface"]):
+                self.assertIn(surface["verified_by"], ("host-engine", "pending-host"))
+
+    def test_an_unknown_surface_states_why_it_is_still_unknown(self):
         for surface in HOST_UNKNOWNS:
-            self.assertNotEqual(surface["verified_by"], "automated")
+            with self.subTest(surface=surface["surface"]):
+                self.assertEqual(surface["verified_by"], "pending-host")
+                self.assertTrue(surface["reason"])
+
+    def test_a_verified_surface_names_its_evidence_and_its_scope(self):
+        """Lifting an unknown costs a citation, so it cannot be done in passing.
+
+        Scope is required alongside the evidence file because some of it is
+        narrower than the surface's name: the clipboard rejection is injected,
+        and a scope-less "verified" would read as covering a real user denial.
+        """
+        verified = [s for s in HOST_SURFACES if s["status"] == "verified"]
+        self.assertTrue(verified)
+        for surface in verified:
+            with self.subTest(surface=surface["surface"]):
+                self.assertEqual(surface["verified_by"], "host-engine")
+                self.assertTrue(surface["evidence"].startswith("tests/"))
+                repo = Path(__file__).resolve().parents[1]
+                self.assertTrue((repo / surface["evidence"]).exists())
+                self.assertTrue(surface["scope"].strip())
+
+    def test_no_surface_is_ever_excused_as_not_applicable(self):
+        """These four exist in every host; only evidence can settle them."""
+        for surface in HOST_SURFACES:
+            with self.subTest(surface=surface["surface"]):
+                self.assertIn(surface["status"], ("unknown", "verified"))
+
+    def test_the_unknown_list_is_derived_from_the_surface_table(self):
+        """It cannot be shortened without moving a surface and citing evidence."""
+        self.assertEqual(
+            HOST_UNKNOWNS,
+            tuple(s for s in HOST_SURFACES if s["status"] == "unknown"),
+        )
 
 
 if __name__ == "__main__":
