@@ -12,6 +12,9 @@ while measuring the fallback layout viewport).
 """
 
 import contextlib
+import html as html_module
+import json
+import re
 import socket
 import sys
 import unittest
@@ -65,6 +68,40 @@ class ServingTheHomeViewTests(unittest.TestCase):
     def test_the_served_markup_uses_only_declared_references(self):
         _, _, body = fetch(self.host.base_url, "/home")
         self.assertEqual(audit_rendered_html(home_manifest(), body)["undeclared"], ())
+
+
+class ServedTokensResolveAgainstTheBuildStoreTests(unittest.TestCase):
+    """ADR 0006: one build identity. Before this, the host served per-module
+    digests while the store addressed artifacts by the whole-tree receipt, and
+    a reviewer's copied token answered ``manifest-missing`` on the same tree.
+    """
+
+    def test_a_served_token_resolves_against_a_receipt_built_store(self):
+        import tempfile
+
+        from zworkbench.ui_build import build_ui_artifacts
+        from zworkbench.ui_manifest import load_manifest
+
+        with tempfile.TemporaryDirectory() as store:
+            build_ui_artifacts(
+                Path(__file__).resolve().parents[1], Path(store)
+            )
+            host = serve_workbench(
+                view_source=lambda route: {"records": [{"title": "run-one"}]},
+                review=True,
+            )
+            self.addCleanup(host.close)
+            _, _, document = fetch(host.base_url, "/home")
+            match = re.search(
+                r'data-ui-panel-tokens=\'([^\']+)\'', document
+            )
+            self.assertIsNotNone(match)
+            tokens = json.loads(html_module.unescape(match.group(1)))
+            token = json.loads(tokens["home.record-list.item"]["wide"])
+            resolved = load_manifest(
+                Path(store), ui_map=token["ui_map"], build=token["build"]
+            )
+        self.assertEqual(resolved["outcome"], "found")
 
 
 class HostLifecycleTests(unittest.TestCase):

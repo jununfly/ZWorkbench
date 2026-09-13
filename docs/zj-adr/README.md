@@ -22,3 +22,4 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0003：工作台宿主是经回环提供的服务端渲染 HTML](0003-workbench-host-is-server-rendered-html-over-loopback.md)
 - [ADR 0004：宿主交互证据来自经 CDP 驱动的本机浏览器](0004-host-interaction-evidence-comes-from-a-local-browser-over-cdp.md)
 - [ADR 0005：评审模式携带一层最小行为脚本](0005-review-mode-carries-a-minimal-behaviour-layer.md)（`accepted`）
+- [ADR 0006：宿主服务的 manifest 只有一个 build 身份——全树 receipt](0006-one-build-identity-for-served-manifests.md)（`accepted`）
