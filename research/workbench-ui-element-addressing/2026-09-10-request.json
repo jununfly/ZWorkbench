@@ -1,0 +1,52 @@
+{
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "Local-first DOM element addressing and collaboration annotation for a developer workbench",
+    "criteria": [
+      {
+        "id": "visual-dom-selection",
+        "question": "Does the repository natively provide an embeddable way for a human to visually select or highlight a live DOM/UI element?",
+        "critical": true,
+        "keywords": ["DOM", "element", "select", "highlight", "overlay", "inspect"]
+      },
+      {
+        "id": "stable-reference",
+        "question": "Does the repository provide or compose with stable semantic element references rather than only screenshot coordinates, CSS selectors, or a developer-only DOM tree?",
+        "critical": true,
+        "keywords": ["locator", "test id", "accessibility", "role", "selector", "reference"]
+      },
+      {
+        "id": "local-embedding",
+        "question": "Can the relevant capability run locally and be embedded/adapted without requiring a hosted feedback or telemetry service?",
+        "critical": true,
+        "keywords": ["self-hosted", "local", "offline", "SDK", "embed", "telemetry"]
+      },
+      {
+        "id": "feedback-artifact",
+        "question": "Can the capability preserve a human feedback artifact or context suitable for a copyable/deep-linkable review reference without capturing secrets by default?",
+        "critical": false,
+        "keywords": ["annotation", "feedback", "share", "link", "redact", "privacy"]
+      },
+      {
+        "id": "license-lifecycle",
+        "question": "What license, release/version evidence, dependency surface and exit constraints does the repository declare for this capability?",
+        "critical": true,
+        "keywords": ["license", "release", "version", "dependencies", "self-hosted"]
+      }
+    ],
+    "repositories": [],
+    "discovery": {
+      "query": "DOM element annotation visual feedback overlay selector",
+      "limit": 12,
+      "topicKeywords": ["dom", "annotation", "feedback", "overlay", "selector", "accessibility"]
+    },
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 48,
+      "maxBytes": 1800000,
+      "deadlineMs": 180000
+    }
+  }
+}
