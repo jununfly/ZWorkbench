@@ -18,6 +18,7 @@ import re
 import socket
 import sys
 import unittest
+import unittest.mock
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -146,6 +147,42 @@ class HostLifecycleTests(unittest.TestCase):
             pass
         with self.assertRaises(urllib.error.URLError):
             fetch(base, "/home")
+
+
+class StartupBuildIdentityTests(unittest.TestCase):
+    """ADR 0006: the receipt is computed once, at startup, and fails loud there.
+
+    The first version computed it lazily inside the first request, so an
+    unreadable source surfaced as a dropped connection on a healthy-looking
+    service. The decision record puts the failure at the startup line.
+    """
+
+    def test_an_unreadable_source_fails_at_startup_before_serving(self):
+        with unittest.mock.patch(
+            "zworkbench.ui_host.build_receipt",
+            side_effect=OSError("source tree unreadable"),
+        ):
+            with self.assertRaises(OSError):
+                serve_workbench()
+
+    def test_the_receipt_is_computed_once_at_startup_not_per_request(self):
+        """Mutation target: routing requests through _served_build() (or
+        recomputing per request) must fail this, and a cache that skips the
+        startup read entirely must fail it too -- exactly one startup read."""
+        calls = []
+        real = __import__("zworkbench.ui_host", fromlist=["build_receipt"]).build_receipt
+
+        def counting(*args, **kwargs):
+            calls.append(1)
+            return real(*args, **kwargs)
+
+        with unittest.mock.patch("zworkbench.ui_host.build_receipt", counting):
+            host = serve_workbench()
+            self.addCleanup(host.close)
+            fetch(host.base_url, "/home")
+            fetch(host.base_url, "/task-detail")
+            fetch(host.base_url, "/home")
+        self.assertEqual(len(calls), 1)
 
 
 class ServingEveryDeclaredViewTests(unittest.TestCase):

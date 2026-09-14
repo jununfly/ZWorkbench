@@ -9,13 +9,12 @@ is rendered, not invoked.
 
 from __future__ import annotations
 
-import hashlib
 import html
 from pathlib import Path
 from typing import Any, Dict, Mapping, Sequence
 
 from .ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
-from .ui_runtime import render_attributes
+from .ui_declare import attribute_text, module_source_digest
 
 
 _MODULE = "src/zworkbench/ui_home.py"
@@ -35,15 +34,10 @@ HOME_REFS = (
 )
 
 
-def _module_digest() -> str:
-    """Digest this module's own source, so the manifest points at real code."""
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-
-
 def home_registry() -> UiRefRegistry:
     """Declare every semantic unit the home slice renders."""
     registry = UiRefRegistry()
-    digest = _module_digest()
+    digest = module_source_digest(Path(__file__))
     for ref, semantic_zh, kind, parent in HOME_REFS:
         registry.declare(
             UiRefDeclaration(
@@ -64,15 +58,7 @@ def home_registry() -> UiRefRegistry:
 
 def home_manifest(*, build: str = None) -> Dict[str, Any]:
     """Generate the manifest for the home slice."""
-    return home_registry().build_manifest(build=build or _module_digest())
-
-
-def _attributes(manifest: Mapping[str, Any], ref: str) -> str:
-    rendered = render_attributes(manifest, ref)
-    return " ".join(
-        '{0}="{1}"'.format(name, html.escape(value, quote=True))
-        for name, value in sorted(rendered.items())
-    )
+    return home_registry().build_manifest(build=build or module_source_digest(Path(__file__)))
 
 
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
@@ -83,7 +69,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
     if records:
         items = "".join(
             "<li {0}>{1}</li>".format(
-                _attributes(resolved, "home.record-list.item"),
+                attribute_text(resolved, "home.record-list.item"),
                 html.escape(str(record.get("title", "unknown"))),
             )
             for record in records
@@ -93,7 +79,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
 
     def section(ref, value):
         return "<section {0}>{1}</section>".format(
-            _attributes(resolved, ref), html.escape(str(value))
+            attribute_text(resolved, ref), html.escape(str(value))
         )
 
     return (
@@ -109,18 +95,18 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         "{preflight_result}"
         "</main>"
     ).format(
-        root=_attributes(resolved, "home.root"),
+        root=attribute_text(resolved, "home.root"),
         workspace=section("home.workspace-context", view.get("workspace", "unknown")),
         facts=section(
             "home.run-facts", view.get("run_facts", {}).get("status", "unknown")
         ),
-        list=_attributes(resolved, "home.record-list"),
+        list=attribute_text(resolved, "home.record-list"),
         items=items,
         intent=section("home.current-intent", view.get("intent", "unknown")),
         plan=section("home.plan-next-step", view.get("plan", "unknown")),
         artifacts=section("home.artifacts", view.get("artifacts", "unknown")),
         evidence=section("home.evidence", view.get("evidence", "unknown")),
-        action=_attributes(resolved, "home.preflight-run.action"),
+        action=attribute_text(resolved, "home.preflight-run.action"),
         preflight_result=section(
             "home.preflight-result", view.get("preflight_result", "unknown")
         ),

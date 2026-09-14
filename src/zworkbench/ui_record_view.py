@@ -7,18 +7,18 @@ future host.
 
 from __future__ import annotations
 
-import hashlib
 import html
 from pathlib import Path
 from typing import Any, Dict, Mapping, Sequence
 
 from .ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
-from .ui_runtime import render_attributes
+from .ui_declare import attribute_text, module_source_digest
 
 
 _MODULE = "src/zworkbench/ui_record_view.py"
 _RECORD_REFS = (
-    ("record-view.record-picker", "记录选择器", "region", None),
+    ("record-view.root", "记录视图页", "region", None),
+    ("record-view.record-picker", "记录选择器", "region", "record-view.root"),
     ("record-view.event-list", "事件列表", "list", "record-view.record-picker"),
     ("record-view.event-list.item", "事件项", "list-item", "record-view.event-list"),
     ("record-view.filter", "筛选", "action", "record-view.record-picker"),
@@ -30,13 +30,9 @@ _RECORD_REFS = (
 )
 
 
-def _module_digest() -> str:
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-
-
 def record_registry() -> UiRefRegistry:
     registry = UiRefRegistry()
-    digest = _module_digest()
+    digest = module_source_digest(Path(__file__))
     for ref, semantic_zh, kind, parent in _RECORD_REFS:
         registry.declare(
             UiRefDeclaration(
@@ -54,15 +50,7 @@ def record_registry() -> UiRefRegistry:
 
 
 def record_manifest(*, build: str = None) -> Dict[str, Any]:
-    return record_registry().build_manifest(build=build or _module_digest())
-
-
-def _attr(manifest: Mapping[str, Any], ref: str) -> str:
-    rendered = render_attributes(manifest, ref)
-    return " ".join(
-        '{0}="{1}"'.format(name, html.escape(value, quote=True))
-        for name, value in sorted(rendered.items())
-    )
+    return record_registry().build_manifest(build=build or module_source_digest(Path(__file__)))
 
 
 #: The units this renderer places behind a native disclosure, collapsed by
@@ -104,7 +92,7 @@ def render_record_view(
     if items:
         event_html = "".join(
             "<li {0}>{1}</li>".format(
-                _attr(m, "record-view.event-list.item"),
+                attribute_text(m, "record-view.event-list.item"),
                 html.escape(str(item.get("title", "unknown"))),
             )
             for item in items
@@ -117,7 +105,7 @@ def render_record_view(
         ).format(
             open=" open" if ref in requested else "",
             label=html.escape(label),
-            attrs=_attr(m, ref),
+            attrs=attribute_text(m, ref),
             value=html.escape(str(value)),
         )
 
@@ -146,14 +134,14 @@ def render_record_view(
         "</main>"
     ).format(
         disclosures=disclosures,
-        root=_attr(m, "record-view.record-picker"),
-        picker=_attr(m, "record-view.record-picker"),
+        root=attribute_text(m, "record-view.root"),
+        picker=attribute_text(m, "record-view.record-picker"),
         picker_text=html.escape(str(view.get("picker", "unknown"))),
-        list=_attr(m, "record-view.event-list"),
+        list=attribute_text(m, "record-view.event-list"),
         events=event_html,
-        filter=_attr(m, "record-view.filter"),
-        detail=_attr(m, "record-view.event-detail"),
+        filter=attribute_text(m, "record-view.filter"),
+        detail=attribute_text(m, "record-view.event-detail"),
         detail_text=html.escape(str(view.get("detail", "unknown"))),
-        mode=_attr(m, "record-view.mode-boundary"),
+        mode=attribute_text(m, "record-view.mode-boundary"),
         mode_text=html.escape(str(view.get("mode", ""))),
     )

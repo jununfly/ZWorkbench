@@ -7,18 +7,18 @@ host.
 
 from __future__ import annotations
 
-import hashlib
 import html
 from pathlib import Path
 from typing import Any, Dict, Mapping
 
 from .ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
-from .ui_runtime import render_attributes
+from .ui_declare import attribute_text, module_source_digest
 
 
 _MODULE = "src/zworkbench/ui_task_detail.py"
 _TASK_DETAIL_REFS = (
-    ("task-detail.intent", "意图", "region", None),
+    ("task-detail.root", "任务详情页", "region", None),
+    ("task-detail.intent", "意图", "region", "task-detail.root"),
     ("task-detail.admission-check", "准入检查", "region", "task-detail.intent"),
     ("task-detail.denial-reason", "拒绝原因", "detail", "task-detail.admission-check"),
     ("task-detail.execution-identity", "执行身份", "detail", "task-detail.intent"),
@@ -32,13 +32,9 @@ _TASK_DETAIL_REFS = (
 )
 
 
-def _module_digest() -> str:
-    return hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-
-
 def task_detail_registry() -> UiRefRegistry:
     registry = UiRefRegistry()
-    digest = _module_digest()
+    digest = module_source_digest(Path(__file__))
     for ref, semantic_zh, kind, parent in _TASK_DETAIL_REFS:
         registry.declare(
             UiRefDeclaration(
@@ -56,15 +52,7 @@ def task_detail_registry() -> UiRefRegistry:
 
 
 def task_detail_manifest(*, build: str = None) -> Dict[str, Any]:
-    return task_detail_registry().build_manifest(build=build or _module_digest())
-
-
-def _attr(manifest: Mapping[str, Any], ref: str) -> str:
-    rendered = render_attributes(manifest, ref)
-    return " ".join(
-        '{0}="{1}"'.format(name, html.escape(value, quote=True))
-        for name, value in sorted(rendered.items())
-    )
+    return task_detail_registry().build_manifest(build=build or module_source_digest(Path(__file__)))
 
 
 def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
@@ -91,7 +79,7 @@ def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] =
                 html.escape(ref, quote=True), html.escape(str(excused[ref]))
             )
         return "<section {0}>{1}</section>".format(
-            _attr(m, ref), html.escape(str(value))
+            attribute_text(m, ref), html.escape(str(value))
         )
 
     return (
@@ -100,7 +88,7 @@ def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] =
         "{result}{error}{effect}{approval}{reconcile}{replay}"
         "</main>"
     ).format(
-        root=_attr(m, "task-detail.intent"),
+        root=attribute_text(m, "task-detail.root"),
         intent=section("task-detail.intent", view.get("intent", "unknown")),
         admission=section(
             "task-detail.admission-check",

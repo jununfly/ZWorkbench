@@ -141,6 +141,14 @@ def _parser() -> argparse.ArgumentParser:
         default=0,
         help="bind port; the default asks the OS for a free one",
     )
+    ui_host.add_argument(
+        "--review",
+        action="store_true",
+        help=(
+            "enable the local review annotation mode; off by default, so a "
+            "normal page carries no overlay, panel, token or script"
+        ),
+    )
     ui_host.set_defaults(handler=_ui_host_command)
     return parser
 
@@ -486,8 +494,15 @@ def _ui_host_command(args: argparse.Namespace) -> int:
             "on the network".format(args.host)
         )
 
-    host = serve_workbench(bind=(args.host, args.port))
-    _announce({"event": "serving", "mode": "read-only", "base_url": host.base_url})
+    host = serve_workbench(bind=(args.host, args.port), review=args.review)
+    _announce(
+        {
+            "event": "serving",
+            "mode": "read-only",
+            "review": bool(args.review),
+            "base_url": host.base_url,
+        }
+    )
 
     stopping = threading.Event()
 

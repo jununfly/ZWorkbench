@@ -43,6 +43,7 @@ class CoverageError(UiRefError):
 MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
     "home": {
         "units": (
+            "home.root",
             "home.workspace-context",
             "home.record-list",
             "home.record-list.item",
@@ -70,6 +71,7 @@ MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
     },
     "task-detail": {
         "units": (
+            "task-detail.root",
             "task-detail.intent",
             "task-detail.admission-check",
             "task-detail.denial-reason",
@@ -97,6 +99,7 @@ MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
     },
     "record-view": {
         "units": (
+            "record-view.root",
             "record-view.record-picker",
             "record-view.event-list",
             "record-view.event-list.item",
@@ -135,6 +138,7 @@ MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
 #: implementation from being relabelled as out of scope.
 UNIT_VISIBILITY: Dict[str, Dict[str, str]] = {
     "home": {
+        "home.root": "visible",
         "home.workspace-context": "visible",
         "home.record-list": "visible",
         "home.record-list.item": "conditional",
@@ -147,6 +151,7 @@ UNIT_VISIBILITY: Dict[str, Dict[str, str]] = {
         "home.preflight-result": "visible",
     },
     "task-detail": {
+        "task-detail.root": "visible",
         "task-detail.intent": "visible",
         "task-detail.admission-check": "visible",
         "task-detail.denial-reason": "conditional",
@@ -160,6 +165,7 @@ UNIT_VISIBILITY: Dict[str, Dict[str, str]] = {
         "task-detail.replay-mode": "visible",
     },
     "record-view": {
+        "record-view.root": "visible",
         "record-view.record-picker": "visible",
         "record-view.event-list": "visible",
         "record-view.event-list.item": "conditional",

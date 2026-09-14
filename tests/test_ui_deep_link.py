@@ -14,6 +14,7 @@ quietly gains side effects is far worse than one that fails.
 import sys
 import unittest
 import unittest.mock
+import unittest.mock
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -22,8 +23,15 @@ from tempfile import TemporaryDirectory
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.composition import CompositionOwner
-from zworkbench.ui_home import home_manifest
-from zworkbench.ui_host import REVIEW_SCRIPT_ROUTE, render_document, serve_workbench
+from zworkbench.ui_home import home_manifest, render_home
+from zworkbench.ui_record_view import record_manifest
+from zworkbench.ui_task_detail import task_detail_manifest
+from zworkbench.ui_host import (
+    REVIEW_SCRIPT_ROUTE,
+    locate,
+    render_document,
+    serve_workbench,
+)
 from zworkbench.ui_token import build_deep_link
 from zworkbench.ui_view_model import owner_view_source
 
@@ -77,6 +85,119 @@ class FollowingAValidDeepLinkTests(unittest.TestCase):
         _, body = fetch(host.base_url, build_deep_link(self.manifest, "home.record-list.item"))
         self.assertEqual(body.count('data-ui-ref="home.record-list.item"'), 3)
         self.assertEqual(body.count("data-ui-located="), 1)
+
+
+class OneElementPerStructuralReferenceTests(unittest.TestCase):
+    """A structural reference names one element, so it must render exactly once.
+
+    The page root used to borrow a child unit's reference (the record-picker,
+    the intent region). The link then "located" the whole page: the marker
+    lands on the first occurrence, and the first occurrence was <main>.
+    Dedicated root units are what keep the located ring on the named unit.
+    """
+
+    VIEWS = (
+        ("/home", home_manifest),
+        ("/task-detail", task_detail_manifest),
+        ("/record-view", record_manifest),
+    )
+
+    def setUp(self):
+        self.host = serve_workbench()
+        self.addCleanup(self.host.close)
+
+    def test_every_structural_reference_renders_exactly_once(self):
+        for route, manifest_of in self.VIEWS:
+            manifest = manifest_of()
+            _, body = fetch(self.host.base_url, route)
+            for entry in manifest["refs"]:
+                if entry["kind"] == "list-item":
+                    continue
+                self.assertEqual(
+                    body.count('data-ui-ref="{0}"'.format(entry["ref"])),
+                    1,
+                    "{0} renders {1} more than once".format(route, entry["ref"]),
+                )
+
+    def test_the_located_ring_lands_on_the_named_unit_not_the_page(self):
+        for route, manifest_of, ref in (
+            ("/task-detail", task_detail_manifest, "task-detail.intent"),
+            ("/record-view", record_manifest, "record-view.record-picker"),
+        ):
+            manifest = manifest_of()
+            _, body = fetch(
+                self.host.base_url, build_deep_link(manifest, ref)
+            )
+            self.assertIn('data-ui-located="{0}"'.format(ref), body)
+            self.assertNotIn(
+                '<main data-ui-ref="{0}"'.format(ref), body,
+                "{0} still borrows the page root for {1}".format(route, ref),
+            )
+
+
+class RetiredReferenceLinkTests(unittest.TestCase):
+    """A retired reference gets its lifecycle outcome, not "unavailable".
+
+    "Unavailable" tells the reviewer to reach the state that renders the unit;
+    for a retired reference no such state exists, so that advice is always
+    wrong. PRD story 9: old feedback must stay interpretable.
+    """
+
+    def _manifest_with_retired(self, replaced_by=None):
+        manifest = home_manifest()
+        entry = dict(manifest["refs"][0])
+        entry["retired"] = True
+        entry["replaced_by"] = replaced_by
+        manifest["refs"] = [entry] + [
+            dict(item) for item in manifest["refs"][1:]
+        ]
+        return manifest, entry["ref"]
+
+    def test_a_retired_reference_reports_retired_with_its_replacement(self):
+        manifest, ref = self._manifest_with_retired(replaced_by="home.record-list")
+        outcome = locate(
+            manifest, "ui_ref={0}&ui_map={1}".format(ref, manifest["ui_map"])
+        )
+        self.assertEqual(outcome["outcome"], "retired")
+        self.assertEqual(outcome["replaced_by"], "home.record-list")
+
+    def test_a_retired_reference_without_a_replacement_still_says_retired(self):
+        manifest, ref = self._manifest_with_retired()
+        outcome = locate(
+            manifest, "ui_ref={0}&ui_map={1}".format(ref, manifest["ui_map"])
+        )
+        self.assertEqual(outcome["outcome"], "retired")
+        self.assertNotIn("replaced_by", outcome)
+
+    def test_the_served_notice_names_the_replacement(self):
+        """Story 9 is honoured on the page, not only in locate()'s return value."""
+        host = serve_workbench()
+        self.addCleanup(host.close)
+        manifest, ref = self._manifest_with_retired(replaced_by="home.record-list")
+        with unittest.mock.patch(
+            "zworkbench.ui_host.ROUTES",
+            {"/home": ("工作台首页", lambda **kw: manifest, render_home)},
+        ):
+            _, body = fetch(
+                host.base_url,
+                "/home?ui_ref={0}&ui_map={1}".format(ref, manifest["ui_map"]),
+            )
+        self.assertIn('data-ui-link-outcome="retired"', body)
+        self.assertIn('data-ui-link-replacement="home.record-list"', body)
+
+    def test_unavailable_and_unknown_reference_keep_their_meanings(self):
+        manifest = home_manifest()
+        unavailable = locate(
+            manifest,
+            "ui_ref=home.record-list.item&ui_map={0}".format(manifest["ui_map"]),
+            rendered="<main></main>",
+        )
+        self.assertEqual(unavailable["outcome"], "unavailable")
+        unknown = locate(
+            manifest,
+            "ui_ref=home.never-declared&ui_map={0}".format(manifest["ui_map"]),
+        )
+        self.assertEqual(unknown["outcome"], "unknown-reference")
 
 
 class RefusingALinkThatNoLongerLocatesAnythingTests(unittest.TestCase):
