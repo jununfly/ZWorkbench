@@ -26,6 +26,7 @@ from browser import browser, chrome_available
 from zworkbench.composition import CompositionOwner
 from zworkbench.ui_home import home_manifest
 from zworkbench.ui_host import REVIEW_SCRIPT_ROUTE, serve_workbench
+from zworkbench.ui_host import REVIEW_HINT
 from zworkbench.ui_record_view import record_manifest
 from zworkbench.ui_task_detail import task_detail_manifest
 from zworkbench.ui_token import build_deep_link
@@ -101,19 +102,24 @@ class ALinkCannotRestoreBusinessStateTests(unittest.TestCase):
         self.host = serve_workbench(view_source=owner_view_source(self.owner))
         self.addCleanup(self.host.close)
 
-    def test_the_located_page_differs_from_the_plain_page_only_by_the_marker(self):
-        """The whole claim in one assertion: a marker, and nothing else.
+    def test_the_located_page_differs_from_the_plain_page_only_by_annotation(self):
+        """The whole claim in one assertion: a marker, a mode hint, nothing else.
 
-        Subtracting the marker must yield the unparameterised page byte for
-        byte. Any state a link restored -- an expanded section, a selected
-        record, a different status -- would survive the subtraction.
+        Subtracting the located marker and the review-mode hint must yield the
+        unparameterised page byte for byte. Any state a link restored -- an
+        expanded section, a selected record, a different status -- would
+        survive the subtraction. The hint is annotation, not state: it tells
+        the reviewer the mode is off rather than quietly turning it on.
         """
         link = build_deep_link(home_manifest(), "home.record-list.item")
         _, located = fetch(self.host.base_url, link)
         _, plain = fetch(self.host.base_url, "/home")
         self.assertIn("data-ui-located=", located)
         self.assertEqual(
-            located.replace(' data-ui-located="home.record-list.item"', ""), plain
+            located.replace(' data-ui-located="home.record-list.item"', "").replace(
+                REVIEW_HINT, ""
+            ),
+            plain,
         )
 
     def test_a_link_to_a_detail_view_does_not_select_a_different_run(self):
@@ -122,7 +128,10 @@ class ALinkCannotRestoreBusinessStateTests(unittest.TestCase):
         _, located = fetch(self.host.base_url, link)
         _, plain = fetch(self.host.base_url, "/task-detail")
         self.assertEqual(
-            located.replace(' data-ui-located="task-detail.timeline"', ""), plain
+            located.replace(' data-ui-located="task-detail.timeline"', "").replace(
+                REVIEW_HINT, ""
+            ),
+            plain,
         )
 
     def test_following_a_link_repeatedly_changes_no_owner_state(self):
@@ -137,6 +146,46 @@ class ALinkCannotRestoreBusinessStateTests(unittest.TestCase):
     chrome_available(),
     "the verification-stage browser is absent; this surface stays unknown",
 )
+class ALinkFollowedWithoutReviewModeSaysSoTests(unittest.TestCase):
+    """The PRD's middle path: never silently enable, never silently annotate.
+
+    A link followed on a host without the review layer still locates -- that
+    is pure annotation -- but the page must say review mode is off and how to
+    enter it explicitly, instead of presenting a located mark as if the mode
+    were on.
+    """
+
+    def test_normal_mode_locates_and_prompts_for_explicit_review_mode(self):
+        host = serve_workbench()
+        self.addCleanup(host.close)
+        link = build_deep_link(home_manifest(), "home.record-list")
+        _, body = fetch(host.base_url, link)
+        self.assertIn('data-ui-review-hint="off"', body)
+        self.assertIn("data-ui-located=", body)
+        self.assertNotIn("review.js", body)
+
+    def test_review_mode_needs_no_hint(self):
+        host = serve_workbench(review=True)
+        self.addCleanup(host.close)
+        link = build_deep_link(home_manifest(), "home.record-list")
+        _, body = fetch(host.base_url, link)
+        self.assertNotIn("data-ui-review-hint", body)
+        self.assertIn('data-ui-overlay="review"', body)
+
+    def test_a_link_that_finds_nothing_gets_no_hint(self):
+        """The failure notice already says what happened; a mode hint on top
+        of it would suggest the link half-worked."""
+        host = serve_workbench()
+        self.addCleanup(host.close)
+        manifest = home_manifest()
+        _, body = fetch(
+            host.base_url,
+            "/home?ui_ref=home.invented-element&ui_map={0}".format(manifest["ui_map"]),
+        )
+        self.assertIn("unknown-reference", body)
+        self.assertNotIn("data-ui-review-hint", body)
+
+
 class ALinkPerformsNoActionInARealEngineTests(unittest.TestCase):
     """What a string comparison cannot see: what the engine did on load."""
 

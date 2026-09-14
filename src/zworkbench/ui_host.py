@@ -61,6 +61,16 @@ REVIEW_SCRIPT_TAG = '<script src="{0}" defer></script>'.format(REVIEW_SCRIPT_ROU
 #: at the same element.
 LINK_NOTICE = '<p data-ui-link-outcome="{outcome}">链接已失效：{outcome}</p>'
 
+#: Shown when a link locates its target while review mode is off. The link
+#: must never switch review mode on by itself -- so instead of an overlay the
+#: page says how the reviewer enters the mode explicitly. The hint names no
+#: flag: how review mode is enabled belongs to the entry point, and the page
+#: must not pretend to know which one served it.
+REVIEW_HINT = (
+    '<p data-ui-review-hint="off">评审模式未开启：链接已完成定位，'
+    "如需标注请显式开启评审模式</p>"
+)
+
 #: Route -> (list-item reference, view-model key) the panel mounts entries
 #: from. A route absent here gets an empty panel rather than a crash or a
 #: wrong-view token.
@@ -404,6 +414,13 @@ def render_document(
         body = body + render_overlay(manifest) + REVIEW_ENTRY + render_panel(
             manifest, view, route
         )
+    elif outcome is not None and outcome["outcome"] == "located":
+        # A deep link located its target on a host without the review layer.
+        # The location mark is harmless annotation; silently presenting it as
+        # if review were on would be the quiet enablement the PRD forbids, so
+        # the page states the mode explicitly instead. A failed link gets no
+        # hint: its notice already says what happened.
+        body = REVIEW_HINT + body
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,

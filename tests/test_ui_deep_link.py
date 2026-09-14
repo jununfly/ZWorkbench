@@ -27,6 +27,7 @@ from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_record_view import record_manifest
 from zworkbench.ui_task_detail import task_detail_manifest
 from zworkbench.ui_host import (
+    REVIEW_HINT,
     REVIEW_SCRIPT_ROUTE,
     locate,
     render_document,
@@ -327,8 +328,13 @@ class StayingAPureNavigationTests(unittest.TestCase):
         _, located = fetch(
             self.host.base_url, build_deep_link(home_manifest(), "home.record-list")
         )
+        # The link adds annotation only: the located marker and, while review
+        # mode is off, the hint that states the mode explicitly.
         self.assertEqual(
-            located.replace(' data-ui-located="home.record-list"', ""), plain
+            located.replace(' data-ui-located="home.record-list"', "").replace(
+                REVIEW_HINT, ""
+            ),
+            plain,
         )
 
 
