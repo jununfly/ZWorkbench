@@ -154,8 +154,20 @@ def locate(
         return {"outcome": parsed["outcome"]}
     if parsed["ui_map"] != manifest["ui_map"]:
         return {"outcome": "ui-map-mismatch"}
-    if not any(entry["ref"] == parsed["ui_ref"] for entry in manifest["refs"]):
+    entry = next(
+        (item for item in manifest["refs"] if item["ref"] == parsed["ui_ref"]), None
+    )
+    if entry is None:
         return {"outcome": "unknown-reference"}
+    if entry.get("retired"):
+        # A retired reference is not "reach that state and it appears": no
+        # state will ever render it again. The link needs the lifecycle
+        # outcome, and the replacement when one was declared, so old feedback
+        # stays interpretable (PRD story 9) instead of reading as a stale page.
+        outcome = {"outcome": "retired", "ref": parsed["ui_ref"]}
+        if entry.get("replaced_by"):
+            outcome["replaced_by"] = entry["replaced_by"]
+        return outcome
     if rendered is not None and _marker(parsed["ui_ref"]) not in rendered:
         return {"outcome": "unavailable", "ref": parsed["ui_ref"]}
     return {"outcome": "located", "ref": parsed["ui_ref"]}
@@ -345,7 +357,11 @@ def _served_build() -> str:
 
 
 def render_document(
-    route: str, view: Mapping[str, Any], query: str = "", review: bool = False
+    route: str,
+    view: Mapping[str, Any],
+    query: str = "",
+    review: bool = False,
+    build: Optional[str] = None,
 ) -> str:
     """Wrap one rendered view in a complete document.
 
@@ -354,7 +370,7 @@ def render_document(
     following a link cannot load a run, restore state or start a review.
     """
     title, manifest_of, render = ROUTES[route]
-    manifest = manifest_of(build=_served_build())
+    manifest = manifest_of(build=build or _served_build())
     body = render(view, manifest=manifest)
 
     # Resolved against the rendered body, then rendered again if the target sits
@@ -371,7 +387,19 @@ def render_document(
             1,
         )
     elif outcome is not None:
-        body = LINK_NOTICE.format(outcome=html.escape(outcome["outcome"])) + body
+        notice = LINK_NOTICE.format(outcome=html.escape(outcome["outcome"]))
+        if outcome.get("replaced_by"):
+            # Story 9 is only honoured if the reviewer can see what replaced
+            # the retired reference; "retired" alone leaves old feedback
+            # uninterpretable. The value comes from the manifest, not from
+            # the link, and is escaped like everything else on the page.
+            replacement = html.escape(outcome["replaced_by"], quote=True)
+            notice += (
+                '<p data-ui-link-replacement="{0}">替代引用：{0}</p>'.format(
+                    replacement
+                )
+            )
+        body = notice + body
     if review:
         body = body + render_overlay(manifest) + REVIEW_ENTRY + render_panel(
             manifest, view, route
@@ -421,6 +449,17 @@ def serve_workbench(
     """
     resolve_view = view_source or (lambda route: {})
 
+    # ADR 0006: the build identity is computed once, here, at startup. A source
+    # that cannot be read fails loudly at this line -- before the socket opens
+    # and before any request can be answered with an identity nothing aligns
+    # with -- rather than surfacing as a dropped connection mid-request. This
+    # deliberately bypasses the module-level cache: a long-lived process that
+    # filled the cache earlier must not skip the startup read and serve an
+    # identity the tree can no longer back.
+    served_build = build_receipt(Path(__file__).resolve().parents[2], ROOT_SOURCES)[
+        "build"
+    ]
+
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
             route, _, query = self.path.partition("?")
@@ -443,7 +482,7 @@ def serve_workbench(
                 self.send_error(404, "unknown view")
                 return
             body = render_document(
-                route, resolve_view(route), query, review
+                route, resolve_view(route), query, review, build=served_build
             ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 

@@ -18,5 +18,9 @@ zworkbench run \
 默认边界：未知工具、越界 workspace、未确认 approval、网络/凭证要求和不可关联事件都会
 safe-stop。真实 Provider、真实项目写入、Git push、部署和 live replay 不是该入口的隐含能力。
 
+本地评审入口是只读 loopback 宿主：`zworkbench ui-host` 服务三个声明视图，默认不带任何
+评审层；`zworkbench ui-host --review` 显式开启本地评审标注模式（悬停语义名、脱敏反馈
+token、深链接定位）。宿主只绑定 127.0.0.1，不打开 owner 数据库，中断即释放端口。
+
 从 [文档地图](docs/README.md) 开始：领域语言解释对象，方法论解释判定，架构解释责任边界，
 ADR 解释长期选择；外部 staging 的受控操作边界见 references。

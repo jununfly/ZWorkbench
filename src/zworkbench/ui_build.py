@@ -33,6 +33,7 @@ ROOT_SOURCES: Tuple[str, ...] = (
     "src/zworkbench/ui_record_view.py",
     "src/zworkbench/ui_ref.py",
     "src/zworkbench/ui_runtime.py",
+    "src/zworkbench/ui_declare.py",
 )
 
 #: View name -> the factory that generates its manifest for a given build.

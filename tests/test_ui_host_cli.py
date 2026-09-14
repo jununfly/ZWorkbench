@@ -18,6 +18,7 @@ import subprocess
 import sys
 import time
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -135,6 +136,45 @@ class ExitingCleanlyTests(unittest.TestCase):
         service.process.send_signal(signal.SIGINT)
         closing = json.loads(service.read_remaining_output().strip().splitlines()[-1])
         self.assertEqual(closing["event"], "stopped")
+
+
+class ReviewModeSwitchTests(unittest.TestCase):
+    """Review mode is an explicit, default-off start-up choice (PRD Story 1/13).
+
+    The CLI is the only shipped entry point, so the switch must exist here --
+    a flag that only tests can pass is a feature users cannot reach.
+    """
+
+    def test_review_mode_is_off_by_default(self):
+        service = Service()
+        self.addCleanup(service.stop)
+        self.assertIs(service.announcement["review"], False)
+        with DIRECT.open(service.base_url + "/home", timeout=5) as response:
+            body = response.read().decode("utf-8")
+        self.assertNotIn('data-ui-overlay', body)
+        self.assertNotIn('data-ui-panel', body)
+        try:
+            DIRECT.open(service.base_url + "/static/review.js", timeout=5)
+            self.fail("review.js must not exist as a resource in normal mode")
+        except urllib.error.HTTPError as error:
+            self.assertEqual(error.code, 404)
+
+    def test_the_announcement_states_whether_review_mode_is_on(self):
+        service = Service("--review")
+        self.addCleanup(service.stop)
+        self.assertIs(service.announcement["review"], True)
+        self.assertEqual(service.announcement["mode"], "read-only")
+
+    def test_the_review_flag_serves_the_review_layer(self):
+        service = Service("--review")
+        self.addCleanup(service.stop)
+        with DIRECT.open(service.base_url + "/home", timeout=5) as response:
+            body = response.read().decode("utf-8")
+        self.assertIn('data-ui-overlay="review"', body)
+        self.assertIn('data-ui-panel="review"', body)
+        self.assertIn("review.js", body)
+        with DIRECT.open(service.base_url + "/static/review.js", timeout=5) as response:
+            self.assertEqual(response.status, 200)
 
 
 class RefusingToBecomeMoreThanAViewerTests(unittest.TestCase):

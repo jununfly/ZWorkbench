@@ -14,3 +14,12 @@ zworkbench = "zworkbench.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+# Requires pytest >= 7: the pythonpath ini option does not exist before that.
+# Product behaviour tests live in tests/. evaluation/fixtures and
+# evaluation/evidence contain fixture tests that import packages installed
+# only inside their runners' isolated environments; collecting them from the
+# repo root fails imports that are not product failures.
+testpaths = ["tests"]
+pythonpath = ["src", "."]
