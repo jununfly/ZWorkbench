@@ -250,5 +250,5 @@ case-local turn；脱敏 summary 分别位于 `evaluation/evidence/optional-real
 相关事实源：
 
 - [`optional-provider-exit-inventory.md`](./optional-provider-exit-inventory.md)
-- [架构规则](../architecture/README.md)
+- [架构规则](../architecture/ta-overview.md)
 - [`optional-provider-exit-primary-sources.md`](./optional-provider-exit-primary-sources.md)

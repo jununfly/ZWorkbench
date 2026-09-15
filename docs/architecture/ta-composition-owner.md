@@ -51,19 +51,19 @@ restore 默认拒绝覆盖已有目标，必须显式 replace；关键 identity 
 
 ## Source map
 
-- `src/zworkbench/composition.py`
-- `src/zworkbench/composition_cli.py`
-- `src/zworkbench/codex_adapter.py`
-- `src/zworkbench/replay.py`
-- `tests/test_composition.py`
-- `tests/test_replay.py`
-- `tests/test_codex_adapter.py`
-- `evaluation/fixtures/w8_evidence_replay/v1/README.md`
-- `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
+- `../../src/zworkbench/composition.py`
+- `../../src/zworkbench/composition_cli.py`
+- `../../src/zworkbench/codex_adapter.py`
+- `../../src/zworkbench/replay.py`
+- `../../tests/test_composition.py`
+- `../../tests/test_replay.py`
+- `../../tests/test_codex_adapter.py`
+- `../../evaluation/fixtures/w8_evidence_replay/v1/README.md`
+- `../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [分层与依赖](ta-layers.md)
 - [Codex Worker bridge](ta-codex-worker-bridge.md)
 - [本地只读运行流](ta-local-read-only-flow.md)

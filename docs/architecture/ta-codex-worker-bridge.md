@@ -53,18 +53,18 @@ stdout/stderr/line 超限、启动失败、超时或无法清理进程树时，b
 
 ## Source map
 
-- `src/zworkbench/worker_contract.py`
-- `src/zworkbench/worker_bridge.py`
-- `src/zworkbench/composition.py`
-- `tests/test_worker_bridge.py`
-- `tests/test_composition.py`
-- `evaluation/runner/run_w8_worker_coding.py`
-- `AGENTS.md`
-- `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
+- `../../src/zworkbench/worker_contract.py`
+- `../../src/zworkbench/worker_bridge.py`
+- `../../src/zworkbench/composition.py`
+- `../../tests/test_worker_bridge.py`
+- `../../tests/test_composition.py`
+- `../../evaluation/runner/run_w8_worker_coding.py`
+- `../../AGENTS.md`
+- `../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [分层与依赖](ta-layers.md)
 - [DSH runtime 集成](ta-dsh-runtime-integration.md)
 - [CompositionOwner](ta-composition-owner.md)

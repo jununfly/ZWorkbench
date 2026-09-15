@@ -156,4 +156,4 @@ Gate A: HOLD / UNKNOWN (no existing Provider console session; remote exit remain
 - 默认产品路径继续使用 loopback/fake Provider；已完成的真实只读 staging 是单独的
   owner-authorized evidence，不会自动成为默认路由或退出授权。
 - 可恢复写操作仍受 Gate B 独立约束；Provider 资料完整也不能放行本地写 effect。
-- 本地写操作仍受 [架构规则](../architecture/README.md) 中 owner policy、approval、effect claim 与 reconcile 边界约束。
+- 本地写操作仍受 [架构规则](../architecture/ta-overview.md) 中 owner policy、approval、effect claim 与 reconcile 边界约束。
