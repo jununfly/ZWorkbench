@@ -20,7 +20,6 @@ FIXTURE = FIXTURE_ROOT / "catalog_adapter.py"
 PROFILE = FIXTURE_ROOT / "profile.json"
 PROFILE_VALIDATOR = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "scripts"
@@ -28,7 +27,6 @@ PROFILE_VALIDATOR = (
 )
 RUNTIME_STATUS = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-runtime"
     / "scripts"

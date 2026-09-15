@@ -11,7 +11,6 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "scripts"
@@ -19,7 +18,6 @@ VALIDATOR = (
 )
 EXAMPLE = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "examples"
@@ -27,7 +25,6 @@ EXAMPLE = (
 )
 PROFILE_STATUS = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "scripts"
@@ -35,13 +32,12 @@ PROFILE_STATUS = (
 )
 DECLARATION_VALIDATOR = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "scripts"
     / "validate_declarations.py"
 )
-PROTOCOL_SKILL = REPO_ROOT / ".codex" / "skills" / "ui-reference-protocol"
+PROTOCOL_SKILL = REPO_ROOT / "skills" / "ui-reference-protocol"
 
 
 def valid_profile():

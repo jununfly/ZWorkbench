@@ -21,11 +21,10 @@ from ui_reference_support import runtime_evidence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-RUNTIME_SKILL = REPO_ROOT / ".codex" / "skills" / "ui-reference-runtime"
+RUNTIME_SKILL = REPO_ROOT / "skills" / "ui-reference-runtime"
 RUNTIME_STATUS = RUNTIME_SKILL / "scripts" / "runtime_status.py"
 PROFILE = (
     REPO_ROOT
-    / ".codex"
     / "skills"
     / "ui-reference-protocol"
     / "examples"
