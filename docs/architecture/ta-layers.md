@@ -44,20 +44,20 @@ authority-id: architecture.layers.core
 
 ## Source map
 
-- `src/zworkbench/composition.py`
-- `src/zworkbench/dsh_runtime.py`
-- `src/zworkbench/worker_bridge.py`
-- `src/zworkbench/worker_contract.py`
-- `src/zworkbench/local_run.py`
-- `tests/test_composition.py`
-- `tests/test_dsh_runtime.py`
-- `tests/test_worker_bridge.py`
-- `AGENTS.md`
-- `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
+- `../../src/zworkbench/composition.py`
+- `../../src/zworkbench/dsh_runtime.py`
+- `../../src/zworkbench/worker_bridge.py`
+- `../../src/zworkbench/worker_contract.py`
+- `../../src/zworkbench/local_run.py`
+- `../../tests/test_composition.py`
+- `../../tests/test_dsh_runtime.py`
+- `../../tests/test_worker_bridge.py`
+- `../../AGENTS.md`
+- `../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [DSH runtime 集成](ta-dsh-runtime-integration.md)
 - [Codex Worker bridge](ta-codex-worker-bridge.md)
 - [CompositionOwner](ta-composition-owner.md)

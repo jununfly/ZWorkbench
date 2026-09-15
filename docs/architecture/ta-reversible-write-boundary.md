@@ -50,22 +50,22 @@ credential 和 process boundary 的实际强制能力。
 
 ## Source map
 
-- `src/zworkbench/composition.py`
-- `src/zworkbench/local_run.py`
-- `src/zworkbench/worker_bridge.py`
-- `src/zworkbench/replay.py`
-- `tests/test_composition.py`
-- `tests/test_local_run.py`
-- `tests/test_worker_bridge.py`
-- `tests/test_replay.py`
-- `evaluation/fixtures/w8_capability_broker/v1/README.md`
-- `evaluation/fixtures/w8_host_broker/v1/README.md`
-- `evaluation/fixtures/w8_external_sandbox_native_approval/v1/README.md`
-- `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
+- `../../src/zworkbench/composition.py`
+- `../../src/zworkbench/local_run.py`
+- `../../src/zworkbench/worker_bridge.py`
+- `../../src/zworkbench/replay.py`
+- `../../tests/test_composition.py`
+- `../../tests/test_local_run.py`
+- `../../tests/test_worker_bridge.py`
+- `../../tests/test_replay.py`
+- `../../evaluation/fixtures/w8_capability_broker/v1/README.md`
+- `../../evaluation/fixtures/w8_host_broker/v1/README.md`
+- `../../evaluation/fixtures/w8_external_sandbox_native_approval/v1/README.md`
+- `../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [CompositionOwner](ta-composition-owner.md)
 - [本地只读运行流](ta-local-read-only-flow.md)
 - [Codex Worker bridge](ta-codex-worker-bridge.md)

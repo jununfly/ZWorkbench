@@ -1,5 +1,5 @@
 ---
-doc-kind: architecture-user-surface
+doc-kind: architecture-subsystem
 authority: supporting
 authority-id: architecture.user-surface.workbench
 ---
@@ -159,6 +159,6 @@ overlay 或链接。token 是定位符，不是执行或授权入口；展示状
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [CompositionOwner](ta-composition-owner.md)
 - [本地只读运行流](ta-local-read-only-flow.md)

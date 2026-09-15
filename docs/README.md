@@ -18,7 +18,7 @@ authority: supporting
 
 ## 架构手册
 
-- [系统概览](architecture/README.md) — 系统边界、主要组成与读者路由；authority-id: architecture.overview
+- [系统概览](architecture/ta-overview.md) — 系统边界、主要组成与读者路由；authority-id: architecture.overview
 - [分层与依赖](architecture/ta-layers.md) — DSH、Worker、Control Plane 与 Owner 的允许依赖；authority-id: architecture.layers.core
 - [DSH runtime 集成](architecture/ta-dsh-runtime-integration.md) — 固定 artifact、manifest、启动与回滚边界；authority-id: architecture.subsystem.dsh-runtime-integration
 - [Codex Worker bridge](architecture/ta-codex-worker-bridge.md) — Worker envelope、identity、失败关闭与进程生命周期；authority-id: architecture.subsystem.codex-worker-bridge

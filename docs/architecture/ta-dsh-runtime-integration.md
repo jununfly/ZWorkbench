@@ -53,16 +53,16 @@ manifest、provenance、Provider、environment、workspace、protocol、启动�
 
 ## Source map
 
-- `src/zworkbench/dsh_runtime.py`
-- `src/zworkbench/composition.py`
-- `tests/test_dsh_runtime.py`
-- `tests/test_composition.py`
-- `AGENTS.md`
-- `docs/references/optional-real-provider-staging.md`
+- `../../src/zworkbench/dsh_runtime.py`
+- `../../src/zworkbench/composition.py`
+- `../../tests/test_dsh_runtime.py`
+- `../../tests/test_composition.py`
+- `../../AGENTS.md`
+- `../references/optional-real-provider-staging.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [分层与依赖](ta-layers.md)
 - [Codex Worker bridge](ta-codex-worker-bridge.md)
 - [CompositionOwner](ta-composition-owner.md)

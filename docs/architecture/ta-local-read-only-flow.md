@@ -58,20 +58,20 @@ cassette，`live_replay` 默认拒绝。
 
 ## Source map
 
-- `src/zworkbench/local_run.py`
-- `src/zworkbench/composition.py`
-- `src/zworkbench/codex_adapter.py`
-- `src/zworkbench/worker_bridge.py`
-- `src/zworkbench/replay.py`
-- `tests/test_local_run.py`
-- `tests/test_local_run_orchestration.py`
-- `tests/test_codex_adapter.py`
-- `tests/test_replay.py`
-- `evaluation/fixtures/w8_local_read_only/v1/README.md`
+- `../../src/zworkbench/local_run.py`
+- `../../src/zworkbench/composition.py`
+- `../../src/zworkbench/codex_adapter.py`
+- `../../src/zworkbench/worker_bridge.py`
+- `../../src/zworkbench/replay.py`
+- `../../tests/test_local_run.py`
+- `../../tests/test_local_run_orchestration.py`
+- `../../tests/test_codex_adapter.py`
+- `../../tests/test_replay.py`
+- `../../evaluation/fixtures/w8_local_read_only/v1/README.md`
 
 ## Related authority
 
-- [系统概览](README.md)
+- [系统概览](ta-overview.md)
 - [CompositionOwner](ta-composition-owner.md)
 - [Codex Worker bridge](ta-codex-worker-bridge.md)
 - [可恢复写入边界](ta-reversible-write-boundary.md)

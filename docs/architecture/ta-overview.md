@@ -55,17 +55,17 @@ live replay 都是显式的后续验证边界。
 
 ## Source map
 
-- `AGENTS.md`：目标架构、ownership、不变量和安全边界。
-- `ZJ-CONTEXT.md`：Workbench、Run、Provider、effect、unknown 和 replay 词汇。
-- `src/zworkbench/composition.py`：CompositionOwner 的当前 durable 实现。
-- `src/zworkbench/dsh_runtime.py`：DSH artifact-mode H1 runtime seam。
-- `src/zworkbench/worker_bridge.py`：Worker transport、identity 和进程监督 seam。
-- `src/zworkbench/local_run.py`：当前 local-read-only orchestration。
-- `src/zworkbench/replay.py`：recorded/simulated/live replay 边界。
-- `docs/architecture/ta-workbench-user-surface.md`：工作台的稳定信息结构、读模型与安全展示边界。
-- `tests/test_composition.py`、`tests/test_dsh_runtime.py`、`tests/test_worker_bridge.py`、
-  `tests/test_local_run.py`、`tests/test_replay.py`：产品行为验证。
-- `docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`：已接受的 owner 决定。
+- `../../AGENTS.md`：目标架构、ownership、不变量和安全边界。
+- `../../ZJ-CONTEXT.md`：Workbench、Run、Provider、effect、unknown 和 replay 词汇。
+- `../../src/zworkbench/composition.py`：CompositionOwner 的当前 durable 实现。
+- `../../src/zworkbench/dsh_runtime.py`：DSH artifact-mode H1 runtime seam。
+- `../../src/zworkbench/worker_bridge.py`：Worker transport、identity 和进程监督 seam。
+- `../../src/zworkbench/local_run.py`：当前 local-read-only orchestration。
+- `../../src/zworkbench/replay.py`：recorded/simulated/live replay 边界。
+- `ta-workbench-user-surface.md`：工作台的稳定信息结构、读模型与安全展示边界。
+- `../../tests/test_composition.py`、`../../tests/test_dsh_runtime.py`、`../../tests/test_worker_bridge.py`、
+  `../../tests/test_local_run.py`、`../../tests/test_replay.py`：产品行为验证。
+- `../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md`：已接受的 owner 决定。
 
 ## Related authority
 

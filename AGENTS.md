@@ -18,7 +18,7 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 - CompositionOwner 是唯一 durable source of truth：负责 run、attempt、event、effect、result、approval、replay metadata、backup/restore 和 safe-stop。
 - DSH session、插件存储、Codex session/rollout、Provider 日志和观测投影都只能作为输入或 evidence，不能成为第二个 canonical owner。
 
-当前代码和用户入口仍可能是 Codex-only 的 local_read_only_run。它是可运行回退基线，不代表目标混合架构已经实现。目标架构的长期权威摘要见 [docs/architecture/](docs/architecture/README.md)。
+当前代码和用户入口仍可能是 Codex-only 的 local_read_only_run。它是可运行回退基线，不代表目标混合架构已经实现。目标架构的长期权威摘要见 [docs/architecture/](docs/architecture/ta-overview.md)。
 
 ### Decision hierarchy
 
@@ -27,7 +27,7 @@ ZWorkbench 是面向个人开发者或小团队的本地优先个人工作台。
 1. 用户当前明确的范围和安全授权；
 2. 本文件的长期硬约束；
 3. [ZJ-CONTEXT.md](ZJ-CONTEXT.md) 的领域词汇和共享语义；
-4. [docs/architecture/](docs/architecture/README.md) 中已确认的目标设计；
+4. [docs/architecture/](docs/architecture/ta-overview.md) 中已确认的目标设计；
 5. 代码、配置、测试和运行产物；
 6. Git 历史、旧报告、临时评测目录和对话中的未落盘判断。
 
@@ -90,25 +90,25 @@ unknown，而不是把实现状态误写成目标已实现。本文件只补充�
 
 | 任务 | 先读 |
 |---|---|
-| 方案准备阶段、当前目标态和文档分类 | [docs 文档地图](docs/README.md)；[方法论](docs/methods/README.md)；[架构 wiki](docs/architecture/README.md) |
-| 理解目标架构和模块 ownership | [架构 wiki](docs/architecture/README.md)；[ADR](docs/zj-adr/README.md) |
+| 方案准备阶段、当前目标态和文档分类 | [docs 文档地图](docs/README.md)；[方法论](docs/methods/README.md)；[架构 wiki](docs/architecture/ta-overview.md) |
+| 理解目标架构和模块 ownership | [架构 wiki](docs/architecture/ta-overview.md)；[ADR](docs/zj-adr/README.md) |
 | 理解领域词汇、unknown 和 replay 语义 | [ZJ-CONTEXT.md](ZJ-CONTEXT.md) |
 | 了解当前用户入口和 Codex-only 回退基线 | [README.md](README.md)；[local_run.py](src/zworkbench/local_run.py) |
-| 修改 durable state、approval、effect、reconcile、backup/restore | [composition.py](src/zworkbench/composition.py)；[架构 wiki](docs/architecture/README.md) |
+| 修改 durable state、approval、effect、reconcile、backup/restore | [composition.py](src/zworkbench/composition.py)；[架构 wiki](docs/architecture/ta-overview.md) |
 | 修改 Codex app-server/CLI 接入 | [codex_adapter.py](src/zworkbench/codex_adapter.py)；[local_run.py](src/zworkbench/local_run.py) |
-| 开发 DSH 主 Harness 或插件 facade | [架构 wiki](docs/architecture/README.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
-| 构建、引入、升级或回滚 DSH runtime | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
-| H1 DSH bootstrap runtime seam | [架构 wiki](docs/architecture/README.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
-| H2 Worker handshake | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
+| 开发 DSH 主 Harness 或插件 facade | [架构 wiki](docs/architecture/ta-overview.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
+| 构建、引入、升级或回滚 DSH runtime | [架构 wiki](docs/architecture/ta-overview.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
+| H1 DSH bootstrap runtime seam | [架构 wiki](docs/architecture/ta-overview.md)；[dsh_runtime.py](src/zworkbench/dsh_runtime.py) |
+| H2 Worker handshake | [架构 wiki](docs/architecture/ta-overview.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py) |
 | H3 Worker read-only coding | [worker_bridge.py](src/zworkbench/worker_bridge.py)；[worker coding runner](evaluation/runner/run_w8_worker_coding.py) |
 | 真实远程 Provider 兼容性 | [HTTP staging runbook](docs/references/optional-real-provider-staging.md)；[Codex runtime staging runbook](docs/references/optional-real-codex-provider-staging.md)；对应 scripts |
-| 开发 DSH–Codex Worker bridge | [架构 wiki](docs/architecture/README.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py)；对应 H1–H5 验证 |
-| Provider profile、路由、retry、fallback、降级 | [架构 wiki](docs/architecture/README.md)；[真实 Provider staging](docs/references/optional-real-provider-staging.md) |
-| scheduler、幂等和中断恢复 | [架构 wiki](docs/architecture/README.md)；[composition.py](src/zworkbench/composition.py) |
-| 记录、诊断和回放 | [架构 wiki](docs/architecture/README.md)；[composition.py](src/zworkbench/composition.py) |
+| 开发 DSH–Codex Worker bridge | [架构 wiki](docs/architecture/ta-overview.md)；[worker_bridge.py](src/zworkbench/worker_bridge.py)；对应 H1–H5 验证 |
+| Provider profile、路由、retry、fallback、降级 | [架构 wiki](docs/architecture/ta-overview.md)；[真实 Provider staging](docs/references/optional-real-provider-staging.md) |
+| scheduler、幂等和中断恢复 | [架构 wiki](docs/architecture/ta-overview.md)；[composition.py](src/zworkbench/composition.py) |
+| 记录、诊断和回放 | [架构 wiki](docs/architecture/ta-overview.md)；[composition.py](src/zworkbench/composition.py) |
 | 评测 fixture、阈值和证据 | [fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
 | 安装、升级、许可证和退出 | [optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
-| 界面引用注册表与评审标注模式 | [R1 PRD](docs/prds/r1-ui-reference-registry.md)（target/partial）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
+| 界面引用注册表与评审标注模式 | [R1 PRD](docs/prds/r1-ui-reference-registry.md)（implementation accepted；R1 主规格仍独立验收）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
 | Python 包入口和命令 | [pyproject.toml](pyproject.toml)；[README.md](README.md)；代码中的 --help 输出是命令事实源 |
 
 ### Source map
