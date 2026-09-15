@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>ZWorkbench · 主工作台设计原型</title>
+    <style>
+      :root {
+        --ink: #333333;
+        --muted: #5D5D5D;
+        --quiet: #707070;
+        --canvas: #FAE8C5;
+        --surface: #FFF8EB;
+        --surface-raised: #FFFDF7;
+        --surface-strong: #F3DEB6;
+        --line: #D8C5A2;
+        --line-soft: #EAD9B9;
+        --jade: #6E6F50;
+        --jade-bright: #55563D;
+        --jade-wash: rgba(110, 111, 80, .13);
+        --amber: #D09C65;
+        --amber-wash: rgba(208, 156, 101, .16);
+        --rose: #8F6650;
+        --rose-wash: rgba(143, 102, 80, .13);
+        --blue: #6E6F50;
+        --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        --sans: "PingFang SC", "Noto Sans CJK SC", Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --display: "Iowan Old Style", "Noto Serif CJK SC", "Songti SC", Georgia, serif;
+        --radius: 12px;
+        --elevation-1: 0 1px 2px rgba(62, 57, 48, .08), 0 2px 8px rgba(62, 57, 48, .045);
+        --shadow: 0 16px 34px rgba(62, 57, 48, .11), 0 2px 7px rgba(62, 57, 48, .05);
+      }
+
+      * { box-sizing: border-box; }
+      html { background: var(--canvas); }
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background: var(--canvas);
+        font-family: var(--sans);
+        font-size: 14px;
+        letter-spacing: -.01em;
+      }
+      button, input { font: inherit; }
+      button { color: inherit; }
+      button:focus-visible, input:focus-visible { outline: 2px solid var(--jade-bright); outline-offset: 3px; }
+      .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+      .hidden { display: none !important; }
+      .app-shell { min-height: 100vh; padding-bottom: 84px; }
+      .proto-ribbon {
+        display: flex; align-items: center; gap: 10px; min-height: 32px; padding: 6px 20px;
+        color: #55563D; background: #F3DEB6; border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 11px;
+      }
+      .proto-ribbon strong { color: var(--amber); font-weight: 600; }
+      .proto-ribbon span:last-child { color: var(--quiet); }
+      .window { min-height: calc(100vh - 32px); }
+      .topbar {
+        height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+        padding: 0 20px; border-bottom: 1px solid var(--line); background: rgba(250,248,243,.92);
+      }
+      .brand { display:flex; align-items:center; gap:10px; font-weight:650; letter-spacing:-.025em; }
+      .brand-mark { width:20px; height:20px; display:grid; place-items:center; border:1px solid var(--jade); border-radius:6px; color:var(--jade-bright); }
+      .brand-mark svg { width:12px; height:12px; }
+      .crumb { color: var(--quiet); font-family:var(--mono); font-size:12px; }
+      .top-meta { display:flex; align-items:center; gap:9px; min-width: 0; }
+      .pill, .tag { display:inline-flex; align-items:center; gap:6px; white-space:nowrap; border-radius:999px; font-family:var(--mono); font-size:11px; line-height:1; }
+      .pill { padding:7px 9px; border:1px solid var(--line); color:var(--muted); background:var(--surface); }
+      .tag { padding:5px 7px; border:1px solid transparent; }
+      .tag.implemented { color:var(--jade-bright); background:var(--jade-wash); border-color:color-mix(in srgb, var(--jade) 31%, transparent); }
+      .tag.target { color:var(--blue); background:color-mix(in srgb, var(--blue) 9%, transparent); border-color:color-mix(in srgb, var(--blue) 28%, transparent); }
+      .tag.warn { color:var(--amber); background:var(--amber-wash); border-color:color-mix(in srgb, var(--amber) 28%, transparent); }
+      .tag.stop { color:var(--rose); background:var(--rose-wash); border-color:color-mix(in srgb, var(--rose) 27%, transparent); }
+      .dot { display:inline-block; width:6px; height:6px; border-radius:99px; background:currentColor; }
+      .icon-button { display:grid; place-items:center; flex:0 0 auto; width:30px; height:30px; padding:0; border:1px solid transparent; border-radius:8px; background:transparent; cursor:pointer; transition:background .18s, border-color .18s; }
+      .icon-button:hover { background:var(--surface-raised); border-color:var(--line); }
+      .icon-button svg { width:16px; height:16px; stroke:currentColor; stroke-width:1.7; fill:none; }
+      .subtle { color: var(--muted); }
+      .muted { color:var(--quiet); }
+      .mono { font-family:var(--mono); }
+      .workspace-title { min-width:0; display:flex; align-items:baseline; gap:9px; }
+      .workspace-title h1 { overflow:hidden; margin:0; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:600; }
+
+      /* Variant A — conversation first */
+      .conversation-layout { display:grid; grid-template-columns:236px minmax(460px, 1fr) 318px; min-height:calc(100vh - 88px); }
+      .side-panel, .inspector { min-width:0; background:var(--surface); }
+      .side-panel { padding:15px 12px; border-right:1px solid var(--line); }
+      .side-action { display:flex; justify-content:space-between; align-items:center; width:100%; margin:0 0 16px; padding:10px 11px; color:var(--ink); border:1px solid var(--line); border-radius:9px; background:var(--surface-raised); box-shadow:var(--elevation-1); cursor:pointer; text-align:left; transition:background .18s,border-color .18s; }
+      .side-action:hover { background:var(--surface-strong); border-color:color-mix(in srgb, var(--jade) 45%, var(--line)); }
+      .side-action svg { width:15px; height:15px; stroke:var(--jade); fill:none; stroke-width:1.8; }
+      .nav-label { margin:18px 9px 8px; color:var(--quiet); font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+      .run-link { display:block; width:100%; margin:2px 0; padding:9px; color:var(--muted); border:1px solid transparent; border-radius:8px; background:transparent; cursor:pointer; text-align:left; transition:background .18s,border-color .18s,color .18s; }
+      .run-link:hover { color:var(--ink); background:var(--surface-raised); }
+      .run-link.active { color:var(--ink); background:var(--surface-strong); border-color:var(--line); }
+      .run-link .link-title { display:block; overflow:hidden; margin-bottom:5px; text-overflow:ellipsis; white-space:nowrap; font-size:13px; }
+      .run-link .link-meta { display:flex; justify-content:space-between; gap:8px; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .nav-project { display:flex; align-items:center; gap:8px; margin:8px 9px; color:var(--muted); font-size:12px; }
+      .nav-project svg { width:13px; height:13px; stroke:var(--quiet); fill:none; stroke-width:1.6; }
+      .conversation-main { min-width:0; display:flex; flex-direction:column; background:var(--canvas); }
+      .task-header { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; padding:22px 28px 17px; border-bottom:1px solid var(--line-soft); }
+      .task-title { min-width:0; }
+      .eyebrow { margin-bottom:7px; color:var(--jade); font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.085em; text-transform:uppercase; }
+      .task-title h2 { margin:0 0 6px; font-size:18px; font-weight:620; line-height:1.35; letter-spacing:-.025em; }
+      .task-title p { max-width:650px; margin:0; color:var(--muted); font-size:13px; line-height:1.55; }
+      .task-header-actions { display:flex; align-items:center; gap:7px; padding-top:2px; }
+      .messages { display:flex; flex:1; flex-direction:column; gap:16px; padding:24px 28px; }
+      .message { display:grid; grid-template-columns:27px minmax(0, 1fr); gap:11px; max-width:790px; }
+      .avatar { display:grid; width:27px; height:27px; place-items:center; border:1px solid var(--line); border-radius:7px; color:var(--muted); background:var(--surface-raised); font-family:var(--mono); font-size:10px; }
+      .avatar.assistant { color:var(--jade-bright); border-color:rgba(142,209,174,.32); background:var(--jade-wash); }
+      .message-meta { display:flex; align-items:baseline; gap:8px; margin:1px 0 5px; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .message-meta b { color:var(--muted); font-family:var(--sans); font-size:12px; font-weight:600; }
+      .message-content { color:var(--ink); font-size:13px; line-height:1.6; }
+      .message-content p { margin:0; }
+      .message-content p + p { margin-top:8px; }
+      .plan-card { max-width:780px; margin-left:38px; border:1px solid var(--line); border-radius:10px; background:var(--surface); box-shadow:var(--elevation-1); overflow:hidden; }
+      .card-head { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:37px; padding:0 12px; border-bottom:1px solid var(--line); background:var(--surface-strong); }
+      .card-head h3 { margin:0; color:#4A4A4A; font-family:var(--mono); font-size:11px; font-weight:500; }
+      .plan-row { display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; gap:9px; padding:10px 12px; border-top:1px solid var(--line-soft); color:var(--muted); font-size:12px; }
+      .plan-row:first-of-type { border-top:0; }
+      .plan-row .step { display:grid; place-items:center; width:18px; height:18px; color:var(--quiet); border:1px solid var(--line); border-radius:50%; font-family:var(--mono); font-size:9px; }
+      .plan-row.done .step { color:var(--jade-bright); border-color:rgba(142,209,174,.4); background:var(--jade-wash); }
+      .plan-row.current { color:var(--ink); background:rgba(95,128,107,.055); }
+      .composer { padding:14px 28px 23px; border-top:1px solid var(--line-soft); }
+      .composer-box { display:flex; align-items:flex-end; gap:10px; padding:8px; border:1px solid var(--line); border-radius:10px; background:var(--surface-raised); box-shadow:var(--elevation-1); }
+      .composer-input { flex:1; min-width:0; padding:7px 4px 7px 3px; color:var(--quiet); background:transparent; border:0; outline:0; font-size:13px; }
+      .send-button { display:grid; width:30px; height:30px; place-items:center; border:0; border-radius:7px; color:#fffdf9; background:var(--jade); cursor:pointer; transition:background .18s; }
+      .send-button:hover { background:var(--jade-bright); }
+      .send-button:disabled { color:var(--quiet); background:var(--surface-strong); cursor:not-allowed; }
+      .send-button svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:2; }
+      .composer-note { margin:8px 2px 0; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .inspector { padding:17px 15px; border-left:1px solid var(--line); }
+      .inspector-heading { display:flex; align-items:center; justify-content:space-between; margin:1px 2px 15px; }
+      .inspector-heading h2 { margin:0; color:var(--ink); font-size:13px; font-weight:600; }
+      .inspector-block { padding:14px 2px; border-top:1px solid var(--line); }
+      .inspector-block:first-of-type { border-top:0; padding-top:0; }
+      .inspector-label { margin:0 0 8px; color:var(--quiet); font-family:var(--mono); font-size:10px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+      .key-value { display:flex; justify-content:space-between; gap:10px; padding:6px 0; font-family:var(--mono); font-size:11px; }
+      .key-value dt { color:var(--quiet); }
+      .key-value dd { max-width:155px; overflow:hidden; margin:0; color:var(--muted); text-align:right; text-overflow:ellipsis; white-space:nowrap; }
+      .key-value dd.good { color:var(--jade); }
+      .effect-row { display:flex; align-items:flex-start; gap:9px; padding:9px 0; border-top:1px solid var(--line-soft); }
+      .effect-row:first-child { border-top:0; }
+      .effect-indicator { flex:0 0 auto; width:7px; height:7px; margin-top:5px; border-radius:99px; background:var(--quiet); }
+      .effect-indicator.good { background:var(--jade); }
+      .effect-indicator.wait { background:var(--amber); }
+      .effect-indicator.stop { background:var(--rose); }
+      .effect-copy { min-width:0; color:var(--muted); font-size:12px; line-height:1.4; }
+      .effect-copy small { display:block; overflow:hidden; margin-top:2px; color:var(--quiet); font-family:var(--mono); font-size:10px; text-overflow:ellipsis; white-space:nowrap; }
+      .evidence-link { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; padding:9px 0; color:#444444; border:0; border-top:1px solid var(--line-soft); background:transparent; cursor:pointer; text-align:left; }
+      .evidence-link:first-of-type { border-top:0; }
+      .evidence-link:hover { color:var(--jade-bright); }
+      .evidence-link svg { width:14px; height:14px; stroke:currentColor; fill:none; stroke-width:1.6; }
+
+      /* Variant B — command canvas */
+      .canvas-layout { min-height:calc(100vh - 88px); padding:26px clamp(18px, 4vw, 58px) 35px; background:radial-gradient(circle at 60% 10%, rgba(110,111,80,.08), transparent 28%), var(--canvas); }
+      .canvas-header { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; max-width:1260px; margin:0 auto 24px; }
+      .canvas-header h2 { max-width:620px; margin:0; font-size:26px; font-weight:620; letter-spacing:-.04em; line-height:1.18; }
+      .canvas-header p { max-width:640px; margin:10px 0 0; color:var(--muted); line-height:1.6; }
+      .canvas-actions { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+      .outline-button { padding:9px 11px; border:1px solid var(--line); border-radius:8px; color:#444444; background:var(--surface-raised); box-shadow:var(--elevation-1); cursor:pointer; transition:border-color .18s, background .18s; }
+      .outline-button:hover { background:var(--surface-strong); border-color:color-mix(in srgb, var(--jade) 45%, var(--line)); }
+      .canvas-grid { display:grid; grid-template-columns:minmax(0, 1fr) 274px; gap:17px; max-width:1260px; margin:auto; }
+      .canvas-main { min-width:0; padding:18px; border:1px solid var(--line); border-radius:16px; background:rgba(255,253,247,.78); box-shadow:var(--shadow); }
+      .run-rail { min-width:0; padding:16px; border:1px solid var(--line); border-radius:16px; background:var(--surface); }
+      .canvas-context { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:2px 2px 14px; border-bottom:1px solid var(--line); }
+      .canvas-context span { color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .canvas-context b { color:var(--muted); font-size:12px; font-weight:600; }
+      .task-brief { padding:23px 6px 25px; }
+      .task-brief .brief-label { display:flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--jade); font-family:var(--mono); font-size:11px; }
+      .task-brief h3 { max-width:780px; margin:0 0 11px; font-size:22px; font-weight:600; letter-spacing:-.035em; line-height:1.28; }
+      .task-brief p { max-width:705px; margin:0; color:var(--muted); line-height:1.65; }
+      .command-path { display:flex; align-items:center; gap:0; overflow:auto; padding:8px 1px 17px; }
+      .command-node { position:relative; flex:1 1 0; min-width:145px; padding:12px; border:1px solid var(--line); background:var(--surface); }
+      .command-node:first-child { border-radius:10px 0 0 10px; }
+      .command-node:last-child { border-radius:0 10px 10px 0; }
+      .command-node + .command-node { border-left:0; }
+      .command-node::after { position:absolute; z-index:1; top:50%; right:-7px; width:12px; height:12px; content:""; border-top:1px solid var(--line); border-right:1px solid var(--line); background:var(--surface); transform:translateY(-50%) rotate(45deg); }
+      .command-node:last-child::after { display:none; }
+      .node-index { display:block; margin-bottom:22px; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .node-title { display:block; color:var(--ink); font-size:12px; font-weight:600; }
+      .node-state { display:block; margin-top:5px; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .command-node.complete { border-color:color-mix(in srgb, var(--jade) 34%, var(--line)); background:rgba(110,111,80,.065); }
+      .command-node.complete .node-state { color:var(--jade); }
+      .command-node.active { z-index:2; border-color:color-mix(in srgb, var(--jade) 56%, var(--line)); background:var(--jade-wash); box-shadow:0 0 0 3px rgba(110,111,80,.07); }
+      .command-node.active .node-title { color:var(--jade-bright); }
+      .command-node.waiting { border-color:color-mix(in srgb, var(--amber) 36%, var(--line)); background:rgba(169,111,49,.045); }
+      .command-node.waiting .node-state { color:var(--amber); }
+      .canvas-bottom { display:grid; grid-template-columns:1.25fr .75fr; gap:17px; padding-top:4px; }
+      .note-panel, .artifact-panel { min-width:0; padding:15px; border:1px solid var(--line); border-radius:10px; background:rgba(255,253,249,.64); }
+      .panel-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:13px; }
+      .panel-title h4 { margin:0; color:#4A4A4A; font-family:var(--mono); font-size:11px; font-weight:500; }
+      .note-line { display:flex; align-items:flex-start; gap:9px; padding:8px 0; border-top:1px solid var(--line-soft); color:var(--muted); font-size:12px; line-height:1.45; }
+      .note-line:first-of-type { border-top:0; }
+      .note-line svg { flex:0 0 auto; width:14px; height:14px; margin-top:1px; stroke:var(--jade); fill:none; stroke-width:1.7; }
+      .artifact-file { display:flex; align-items:center; gap:9px; padding:8px 0; color:var(--muted); border-top:1px solid var(--line-soft); font-family:var(--mono); font-size:11px; }
+      .artifact-file:first-of-type { border-top:0; }
+      .file-glyph { width:11px; height:13px; border:1px solid var(--quiet); border-radius:2px; }
+      .run-rail h3 { margin:2px 0 16px; color:var(--ink); font-size:13px; font-weight:600; }
+      .rail-stat { padding:12px 0; border-top:1px solid var(--line); }
+      .rail-stat:first-of-type { border-top:0; }
+      .rail-stat label { display:block; margin-bottom:5px; color:var(--quiet); font-family:var(--mono); font-size:10px; text-transform:uppercase; }
+      .rail-stat strong { color:var(--ink); font-size:12px; font-weight:550; }
+      .rail-timeline { margin:10px 0 14px; padding-left:11px; border-left:1px solid var(--line); }
+      .rail-event { position:relative; padding:0 0 14px 10px; color:var(--muted); font-size:11px; line-height:1.45; }
+      .rail-event::before { position:absolute; top:4px; left:-14px; width:5px; height:5px; content:""; border:1px solid var(--surface); border-radius:50%; background:var(--quiet); }
+      .rail-event.current::before { background:var(--jade); box-shadow:0 0 0 3px var(--jade-wash); }
+      .rail-event time { display:block; margin-bottom:2px; color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .rail-callout { padding:10px; border:1px solid color-mix(in srgb, var(--jade) 24%, var(--line)); border-radius:8px; color:#444444; background:var(--jade-wash); font-size:11px; line-height:1.45; }
+
+      /* Variant C — project journal */
+      .journal-layout { display:grid; grid-template-columns:270px minmax(0, 1fr); min-height:calc(100vh - 88px); }
+      .journal-index { padding:18px 16px; border-right:1px solid var(--line); background:var(--surface); }
+      .journal-index h2 { margin:2px 5px 17px; color:var(--ink); font-size:14px; font-weight:600; }
+      .project-card { padding:13px; border:1px solid var(--line); border-radius:10px; background:var(--surface-raised); }
+      .project-card h3 { margin:0 0 6px; font-size:13px; font-weight:600; }
+      .project-card p { margin:0; color:var(--muted); font-size:11px; line-height:1.5; }
+      .journal-filter { display:flex; align-items:center; gap:8px; width:100%; margin:16px 0 10px; padding:8px 9px; color:var(--quiet); border:1px solid var(--line); border-radius:8px; background:transparent; font-size:12px; text-align:left; }
+      .journal-filter svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:1.7; }
+      .journal-day { margin:17px 5px 7px; color:var(--quiet); font-family:var(--mono); font-size:10px; letter-spacing:.06em; text-transform:uppercase; }
+      .journal-item { display:flex; flex-direction:column; width:100%; gap:5px; margin:2px 0; padding:9px; color:var(--muted); border:1px solid transparent; border-radius:8px; background:transparent; cursor:pointer; text-align:left; }
+      .journal-item:hover { background:var(--surface-raised); }
+      .journal-item.active { color:var(--ink); border-color:var(--line); background:var(--surface-strong); }
+      .journal-item small { color:var(--quiet); font-family:var(--mono); font-size:10px; }
+      .journal-main { min-width:0; padding:clamp(20px, 4vw, 52px) clamp(20px, 7vw, 100px) 70px; background:var(--canvas); }
+      .journal-reading { max-width:860px; margin:auto; }
+      .journal-header { padding-bottom:28px; border-bottom:1px solid var(--line); }
+      .journal-header .date { color:var(--quiet); font-family:var(--mono); font-size:11px; }
+      .journal-header h1 { max-width:720px; margin:11px 0 9px; font-family:var(--display); font-size:clamp(28px, 4vw, 44px); font-weight:600; letter-spacing:-.052em; line-height:1.16; }
+      .journal-header .lede { max-width:650px; margin:0; color:var(--muted); font-size:15px; line-height:1.6; }
+      .journal-provenance { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:17px; }
+      .journal-entry { display:grid; grid-template-columns:115px minmax(0,1fr); gap:24px; padding:29px 0; border-bottom:1px solid var(--line); }
+      .entry-stamp { padding-top:2px; color:var(--quiet); font-family:var(--mono); font-size:10px; line-height:1.55; }
+      .entry-stamp b { display:block; color:var(--jade); font-size:11px; font-weight:500; }
+      .entry-content h2 { margin:0 0 9px; color:var(--ink); font-size:17px; font-weight:600; letter-spacing:-.025em; }
+      .entry-content p { max-width:600px; margin:0; color:var(--muted); font-size:13px; line-height:1.65; }
+      .entry-content p + p { margin-top:10px; }
+      .evidence-table { width:100%; margin-top:15px; border:1px solid var(--line); border-collapse:separate; border-spacing:0; border-radius:9px; overflow:hidden; background:var(--surface); font-family:var(--mono); font-size:11px; }
+      .evidence-table th, .evidence-table td { padding:10px; border-bottom:1px solid var(--line-soft); text-align:left; }
+      .evidence-table th { color:var(--quiet); font-size:10px; font-weight:500; text-transform:uppercase; }
+      .evidence-table td { color:var(--muted); }
+      .evidence-table tr:last-child td { border-bottom:0; }
+      .entry-state { display:inline-flex; align-items:center; gap:6px; margin-top:12px; padding:6px 8px; color:var(--jade); border:1px solid rgba(142,209,174,.22); border-radius:7px; background:var(--jade-wash); font-family:var(--mono); font-size:10px; }
+      .entry-state.warning { color:var(--amber); border-color:rgba(230,183,117,.25); background:var(--amber-wash); }
+      .journal-footer { padding-top:26px; color:var(--quiet); font-family:var(--mono); font-size:11px; }
+
+      /* Shared scenario state and the bottom prototype control */
+      .scenario-control { position:fixed; z-index:10; right:18px; bottom:17px; left:18px; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+      .switcher { display:flex; align-items:center; gap:5px; max-width:calc(100vw - 36px); padding:6px; border:1px solid #CFC8BC; border-radius:12px; color:var(--ink); background:rgba(255,253,249,.96); box-shadow:0 14px 38px rgba(62,57,48,.18); pointer-events:auto; backdrop-filter:blur(12px); }
+      .switcher button { height:31px; padding:0 10px; border:1px solid transparent; border-radius:7px; color:var(--muted); background:transparent; cursor:pointer; font-size:11px; transition:background .18s,color .18s; white-space:nowrap; }
+      .switcher button:hover { color:var(--ink); background:var(--surface-strong); }
+      .switcher button.active { color:#fffdf9; background:var(--jade); font-weight:650; }
+      .switcher .arrow { width:31px; padding:0; font-size:16px; }
+      .switcher-divider { width:1px; height:21px; margin:0 2px; background:var(--line); }
+      .scenario-label { padding:0 7px; color:var(--quiet); font-family:var(--mono); font-size:10px; white-space:nowrap; }
+      .scenario-button { color:var(--amber) !important; }
+      .scenario-button.active { color:#fffdf9 !important; background:var(--amber) !important; }
+      .scenario-banner { display:flex; align-items:center; gap:8px; margin:0 0 16px; padding:8px 10px; color:#444444; border:1px solid color-mix(in srgb, var(--amber) 30%, var(--line)); border-radius:8px; background:var(--amber-wash); font-size:11px; line-height:1.4; }
+      .scenario-banner strong { color:var(--amber); font-family:var(--mono); font-size:10px; }
+      .empty-state { display:grid; min-height:390px; place-content:center; padding:36px; text-align:center; }
+      .empty-state .empty-mark { width:42px; height:42px; margin:0 auto 16px; border:1px dashed #B8B1A5; border-radius:12px; }
+      .empty-state h3 { margin:0 0 8px; font-size:17px; font-weight:600; }
+      .empty-state p { max-width:370px; margin:0; color:var(--muted); line-height:1.6; }
+      .stop-callout { margin:13px 0; padding:12px; border:1px solid color-mix(in srgb, var(--rose) 32%, var(--line)); border-radius:9px; color:#76574F; background:var(--rose-wash); font-size:12px; line-height:1.55; }
+      .stop-callout strong { display:block; margin-bottom:4px; color:var(--rose); font-family:var(--mono); font-size:11px; }
+
+      @media (max-width: 1100px) {
+        .conversation-layout { grid-template-columns:214px minmax(0,1fr); }
+        .conversation-layout .inspector { display:none; }
+        .canvas-grid { grid-template-columns:1fr; }
+        .run-rail { display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; }
+        .run-rail h3 { grid-column:1/-1; margin-bottom:0; }
+        .rail-callout { align-self:start; }
+      }
+      @media (max-width: 760px) {
+        .topbar { padding:0 13px; }
+        .crumb, .top-meta .pill { display:none; }
+        .conversation-layout, .journal-layout { display:block; }
+        .side-panel, .journal-index { display:none; }
+        .task-header, .messages, .composer { padding-right:17px; padding-left:17px; }
+        .task-header { align-items:flex-start; }
+        .task-title h2 { font-size:16px; }
+        .canvas-layout { padding:19px 14px 34px; }
+        .canvas-header { display:block; }
+        .canvas-header h2 { font-size:23px; }
+        .canvas-actions { margin-top:15px; }
+        .canvas-main { padding:12px; }
+        .canvas-bottom { grid-template-columns:1fr; }
+        .run-rail { display:block; }
+        .journal-main { padding:29px 18px 70px; }
+        .journal-entry { grid-template-columns:1fr; gap:9px; }
+        .entry-stamp { display:flex; gap:8px; align-items:baseline; }
+        .entry-stamp b { display:inline; }
+        .switcher { gap:2px; padding:5px; }
+        .switcher button { padding:0 7px; font-size:10px; }
+        .switcher .arrow { width:27px; }
+        .scenario-label { display:none; }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto !important; transition:none !important; } }
+    </style>
+  </head>
+  <body>
+    <!-- Throwaway prototype: three ZWorkbench main-surface IA directions, ?variant=conversation|canvas|journal -->
+    <main class="app-shell">
+      <div class="proto-ribbon"><strong>DESIGN PROTOTYPE</strong><span>仅内存示例数据 · 不连接 CompositionOwner · 不执行任何 Run 或审批</span></div>
+
+      <section class="window" id="conversation" data-variant>
+        <header class="topbar">
+          <div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v13H8l-3 3V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m9 9 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span>ZWorkbench</span><span class="crumb">/ personal-workspace</span></div>
+          <div class="top-meta"><span class="tag implemented"><i class="dot"></i>implemented · local_read_only</span><span class="pill">case-local workspace</span><button class="icon-button" aria-label="原型信息"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/></svg></button></div>
+        </header>
+        <div class="conversation-layout">
+          <aside class="side-panel" aria-label="工作区导航">
+            <button class="side-action"><span>新建工作记录</span><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+            <p class="nav-label">近期工作</p>
+            <button class="run-link active"><span class="link-title">工作台主界面设计</span><span class="link-meta"><span>planning</span><span>现在</span></span></button>
+            <button class="run-link"><span class="link-title">检查 local run fixture</span><span class="link-meta"><span>completed</span><span>昨天</span></span></button>
+            <button class="run-link"><span class="link-title">Provider 边界梳理</span><span class="link-meta"><span>safe-stopped</span><span>周一</span></span></button>
+            <p class="nav-label">工作区</p>
+            <div class="nav-project"><svg viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v10H3z"/></svg><span>personal-workspace</span></div>
+            <div class="nav-project"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8"/></svg><span>Evidence archive</span></div>
+          </aside>
+          <section class="conversation-main" aria-label="当前工作记录">
+            <div class="task-header">
+              <div class="task-title"><div class="eyebrow">WORK RECORD · W-42</div><h2>为 ZWorkbench 找到可验证的工作台主界面</h2><p>把任务的对话、计划、进度与可复核运行事实放在同一条工作记录里。</p></div>
+              <div class="task-header-actions"><button class="icon-button" aria-label="查看链接"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></button><button class="icon-button" aria-label="更多工作记录操作"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="19" cy="12" r="1" fill="currentColor"/></svg></button></div>
+            </div>
+            <div class="messages" data-content="conversation">
+              <div data-scenario-content><div class="scenario-banner"><strong>SCENARIO · planning</strong><span>原型状态；真实产品当前仅支持受控的 <span class="mono">local_read_only_run</span>。</span></div></div>
+              <article class="message"><div class="avatar">YOU</div><div><div class="message-meta"><b>你</b><span>10:12</span></div><div class="message-content"><p>先做一个主工作台信息架构原型。重点是：我能否一眼看到正在做什么、依据是什么、是否可安全继续。</p></div></div></article>
+              <article class="message"><div class="avatar assistant">ZW</div><div><div class="message-meta"><b>ZWorkbench</b><span>10:13</span></div><div class="message-content"><p>我会把本次工作记为一条可追溯的记录。先确认可见内容，暂不创建 Run、调用 Worker 或写入任何状态。</p></div></div></article>
+              <section class="plan-card" aria-label="本次工作计划"><div class="card-head"><h3>WORKING PLAN</h3><span class="tag target">target concept</span></div><div class="plan-row done"><span class="step">✓</span><span>确认当前已实现的运行边界</span><span class="mono muted">evidence</span></div><div class="plan-row current"><span class="step">2</span><span>对比三种工作台信息结构</span><span class="tag implemented">in progress</span></div><div class="plan-row"><span class="step">3</span><span>选择一条方向，进入真实界面实现</span><span class="mono muted">pending</span></div></section>
+              <article class="message"><div class="avatar assistant">ZW</div><div><div class="message-meta"><b>ZWorkbench</b><span>10:16</span></div><div class="message-content"><p>这个方向把“谈什么”和“做到了什么”并排呈现；右侧只显示 owner-backed 的事实，缺失身份会显式标为 unknown。</p></div></div></article>
+            </div>
+            <div class="composer"><div class="composer-box"><input class="composer-input" aria-label="原型输入框" value="原型：此处未来承载下一条任务消息" readonly /><button class="send-button" aria-label="原型中不可发送" disabled><svg viewBox="0 0 24 24"><path d="m5 12 14-7-4 14-3-5-7-2Z"/></svg></button></div><p class="composer-note">PROTOTYPE · 输入和发送均未接入产品逻辑</p></div>
+          </section>
+          <aside class="inspector" aria-label="运行事实检查器">
+            <div class="inspector-heading"><h2>运行事实</h2><span class="tag implemented">owner-backed</span></div>
+            <section class="inspector-block"><p class="inspector-label">当前边界</p><dl><div class="key-value"><dt>mode</dt><dd class="good">local_read_only</dd></div><div class="key-value"><dt>workspace</dt><dd>case-local</dd></div><div class="key-value"><dt>approval</dt><dd>never</dd></div><div class="key-value"><dt>worker</dt><dd>not started</dd></div></dl></section>
+            <section class="inspector-block"><p class="inspector-label">Effect / approval</p><div class="effect-row"><span class="effect-indicator good"></span><div class="effect-copy">没有副作用请求<small>no effect claim</small></div></div><div class="effect-row"><span class="effect-indicator"></span><div class="effect-copy">没有待审批项目<small>not applicable</small></div></div></section>
+            <section class="inspector-block"><p class="inspector-label">Evidence</p><button class="evidence-link"><span><span class="mono">README.md</span><br><small class="muted">current entry boundary</small></span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button><button class="evidence-link"><span><span class="mono">preflight result</span><br><small class="muted">not created in prototype</small></span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></section>
+          </aside>
+        </div>
+      </section>
+
+      <section class="window hidden" id="canvas" data-variant>
+        <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v13H8l-3 3V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m9 9 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span>ZWorkbench</span><span class="crumb">/ command surface</span></div><div class="top-meta"><span class="tag target">target · DSH → Codex</span><span class="pill">W-42 · draft</span><button class="icon-button" aria-label="原型信息"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/></svg></button></div></header>
+        <div class="canvas-layout"><div class="canvas-header"><div><div class="eyebrow">COMMAND CANVAS · W-42</div><h2>将一项工作拆成可验证的运行路径</h2><p>主要对象不是聊天记录，而是一条从意图到证据的路径。每一步都说明它现在是已实现能力、目标能力，还是 unknown。</p></div><div class="canvas-actions"><button class="outline-button">查看依据</button><button class="outline-button">导出工作记录</button></div></div>
+          <div class="canvas-grid"><section class="canvas-main"><div class="canvas-context"><span>WORKSPACE · personal-workspace</span><b>安全界面设计</b><span class="tag implemented">no effect</span></div><div class="task-brief"><div class="brief-label"><i class="dot"></i><span>INTENT</span></div><h3>选择 ZWorkbench 的工作台信息架构</h3><p>先通过可互动的设计原型验证信息层级；选择后才会进入产品界面实现与真实数据接线。</p></div><div class="command-path" aria-label="运行路径"><div class="command-node complete"><span class="node-index">01</span><span class="node-title">确认事实</span><span class="node-state">evidence found</span></div><div class="command-node active"><span class="node-index">02</span><span class="node-title">比较结构</span><span class="node-state">in progress</span></div><div class="command-node"><span class="node-index">03</span><span class="node-title">选择方向</span><span class="node-state">human input</span></div><div class="command-node waiting"><span class="node-index">04</span><span class="node-title">变更实现</span><span class="node-state">not admitted</span></div></div><div class="canvas-bottom"><section class="note-panel"><div class="panel-title"><h4>DECISION NOTES</h4><span class="mono muted">3 recorded</span></div><div class="note-line"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg><span>真实入口为 <span class="mono">local_read_only_run</span>；不能把目标架构表现成已可操作的功能。</span></div><div class="note-line"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg><span>CompositionOwner 是唯一持久 owner；run、approval、effect 和 evidence 必须可关联。</span></div><div class="note-line"><svg viewBox="0 0 24 24"><path d="M12 5v7l4 2"/><circle cx="12" cy="12" r="8"/></svg><span>当前在评估界面结构，尚未声明产品变更边界。</span></div></section><section class="artifact-panel"><div class="panel-title"><h4>INPUTS</h4><span class="tag implemented">read-only</span></div><div class="artifact-file"><span class="file-glyph"></span><span>AGENTS.md</span></div><div class="artifact-file"><span class="file-glyph"></span><span>README.md</span></div><div class="artifact-file"><span class="file-glyph"></span><span>design prototype</span></div></section></div></section>
+            <aside class="run-rail"><h3>本次工作</h3><section class="rail-stat"><label>状态</label><strong><span class="dot" style="color:var(--jade)"></span> Planning</strong></section><section class="rail-stat"><label>可执行 Run</label><strong>尚未创建</strong></section><section class="rail-stat"><label>Owner 记录</label><strong class="muted">prototype only</strong></section><section class="rail-stat"><label>证据轨迹</label><div class="rail-timeline"><div class="rail-event"><time>10:12</time>用户指出现有界面不可用</div><div class="rail-event current"><time>10:16</time>建立三种原型结构</div><div class="rail-event"><time>next</time>选择一个方向</div></div></section><div class="rail-callout">此栏只回答“现在能否继续”，不会伪造启动、审批或写入能力。</div></aside>
+          </div></div>
+      </section>
+
+      <section class="window hidden" id="journal" data-variant>
+        <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 4h14v13H8l-3 3V4Z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m9 9 3 3 3-3" fill="none" stroke="currentColor" stroke-width="2"/></svg></span><span>ZWorkbench</span><span class="crumb">/ project journal</span></div><div class="top-meta"><span class="tag implemented">recorded view</span><span class="pill">no live replay</span><button class="icon-button" aria-label="原型信息"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/></svg></button></div></header>
+        <div class="journal-layout"><aside class="journal-index" aria-label="项目日记导航"><h2>Personal workspace</h2><section class="project-card"><h3>ZWorkbench</h3><p>本地优先的个人工作台。此处按已发生的工作记录，而不是按聊天分组。</p><div class="journal-provenance"><span class="tag implemented">local</span><span class="tag target">hybrid target</span></div></section><button class="journal-filter"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg><span>筛选工作记录</span></button><p class="journal-day">今天 · 3 条</p><button class="journal-item active"><span>工作台主界面设计</span><small>W-42 · planning</small></button><button class="journal-item"><span>运行边界复核</span><small>W-41 · completed</small></button><button class="journal-item"><span>Provider 兼容性调查</span><small>W-40 · safe-stopped</small></button><p class="journal-day">本周较早 · 2 条</p><button class="journal-item"><span>Worker bridge 契约</span><small>H2 · evidence</small></button><button class="journal-item"><span>Owner replay 语义</span><small>C6 · pending</small></button></aside>
+          <article class="journal-main"><div class="journal-reading"><header class="journal-header"><span class="date">2026-09-10 · WORK RECORD W-42</span><h1>工作台需要先成为一份可审阅的工作记录</h1><p class="lede">这个方向将任务置于项目日记中：人可以回看决定、证据和停止条件，之后再进入任何执行或恢复。</p><div class="journal-provenance"><span class="tag implemented">implemented boundary</span><span class="tag target">target architecture</span><span class="tag warn">design decision pending</span></div></header>
+            <section class="journal-entry"><div class="entry-stamp"><b>10:12</b><span>用户输入</span></div><div class="entry-content"><h2>问题重新框定</h2><p>此前的界面看起来像仪表盘，却没有帮助人判断“我上次做到哪、依据是什么、下一步是否安全”。本次先不再实现产品界面，而用三种信息架构验证这个基本问题。</p><span class="entry-state">recorded intent</span></div></section>
+            <section class="journal-entry"><div class="entry-stamp"><b>10:14</b><span>事实核对</span></div><div class="entry-content"><h2>当前可运行的边界</h2><p>真实用户入口是 case-local 的 <span class="mono">local_read_only_run</span>。真实 Provider、写项目、推送、部署和 live replay 都不是它的隐含能力。</p><table class="evidence-table"><thead><tr><th>Source</th><th>Observation</th><th>Meaning</th></tr></thead><tbody><tr><td>README.md</td><td>受控、本地只读运行</td><td>implemented</td></tr><tr><td>AGENTS.md</td><td>CompositionOwner 唯一 owner</td><td>invariant</td></tr><tr><td>prototype</td><td>三种主界面形态</td><td>design input</td></tr></tbody></table></div></section>
+            <section class="journal-entry"><div class="entry-stamp"><b>10:16</b><span>下一决定</span></div><div class="entry-content"><h2>选择将来最常打开的视图</h2><p>会话优先适合连续协作；命令画布优先适合单项工作的推进；项目日记优先适合回顾与证据。选中一个方向后，才为它定义实际的数据边界和交互合同。</p><span class="entry-state warning">needs human choice · no effect requested</span></div></section>
+            <footer class="journal-footer">END OF RECORDED VIEW · 没有把日记视图伪装成 deterministic replay。</footer>
+          </div></article>
+        </div>
+      </section>
+    </main>
+
+    <nav class="scenario-control" aria-label="设计原型切换器">
+      <div class="switcher">
+        <button class="arrow" id="previous" aria-label="上一个界面方案">‹</button>
+        <button data-variant-button="conversation" title="A — 会话优先">A 会话</button>
+        <button data-variant-button="canvas" title="B — 命令画布">B 画布</button>
+        <button data-variant-button="journal" title="C — 项目日记">C 日记</button>
+        <button class="arrow" id="next" aria-label="下一个界面方案">›</button>
+        <span class="switcher-divider" aria-hidden="true"></span><span class="scenario-label">场景</span>
+        <button class="scenario-button" data-scenario-button="empty">空工作区</button>
+        <button class="scenario-button" data-scenario-button="planning">规划中</button>
+        <button class="scenario-button" data-scenario-button="approval">待审批</button>
+        <button class="scenario-button" data-scenario-button="stopped">安全停止</button>
+      </div>
+    </nav>
+
+    <script>
+      (() => {
+        const variants = ["conversation", "canvas", "journal"];
+        const scenarioNames = { empty: "空工作区", planning: "规划中", approval: "待审批", stopped: "安全停止" };
+        const params = new URLSearchParams(location.search);
+        let activeVariant = variants.includes(params.get("variant")) ? params.get("variant") : "conversation";
+        let activeScenario = Object.hasOwn(scenarioNames, params.get("scenario")) ? params.get("scenario") : "planning";
+
+        function setUrl() {
+          const next = new URL(location.href);
+          next.searchParams.set("variant", activeVariant);
+          next.searchParams.set("scenario", activeScenario);
+          history.replaceState({}, "", next);
+        }
+        function showVariant() {
+          document.querySelectorAll("[data-variant]").forEach((section) => section.classList.toggle("hidden", section.id !== activeVariant));
+          document.querySelectorAll("[data-variant-button]").forEach((button) => {
+            const selected = button.dataset.variantButton === activeVariant;
+            button.classList.toggle("active", selected);
+            button.setAttribute("aria-pressed", String(selected));
+          });
+          document.title = `ZWorkbench · ${activeVariant === "conversation" ? "会话优先" : activeVariant === "canvas" ? "命令画布" : "项目日记"} 原型`;
+        }
+        function scenarioMarkup() {
+          if (activeScenario === "empty") return `<div class="empty-state"><div class="empty-mark"></div><h3>还没有工作记录</h3><p>当你准备好开始时，这里会保留任务意图、运行边界和证据；现在不会创建任何持久状态。</p></div>`;
+          if (activeScenario === "approval") return `<div class="scenario-banner"><strong>SCENARIO · approval required</strong><span>目标架构概念：变更应用应经 owner policy 和一次性审批。此原型没有真实审批请求。</span></div><div class="stop-callout" style="border-color:color-mix(in srgb, var(--amber) 38%, var(--line)); background:var(--amber-wash); color:#705C3E"><strong style="color:var(--amber)">TARGET CONCEPT · pending approval</strong>拟应用的变更：将选择的工作台方向写入产品界面。操作、资源、idempotency key 和 effect receipt 尚未创建。</div>`;
+          if (activeScenario === "stopped") return `<div class="scenario-banner"><strong>SCENARIO · safe-stopped</strong><span>关键身份或 effect 结果不明确时，产品必须停止并请求 reconcile，而不是自动继续。</span></div><div class="stop-callout"><strong>SAFE-STOP · identity unresolved</strong>Worker run 与 parent run 的关联缺失；状态为 unknown。不会重试、不会声称成功，也不会隐式执行副作用。</div>`;
+          return `<div class="scenario-banner"><strong>SCENARIO · planning</strong><span>原型状态；真实产品当前仅支持受控的 <span class="mono">local_read_only_run</span>。</span></div>`;
+        }
+        function applyScenario() {
+          document.querySelectorAll("[data-scenario-button]").forEach((button) => {
+            const selected = button.dataset.scenarioButton === activeScenario;
+            button.classList.toggle("active", selected);
+            button.setAttribute("aria-pressed", String(selected));
+          });
+          const scenarioContainer = document.querySelector("[data-scenario-content]");
+          if (scenarioContainer) {
+            scenarioContainer.innerHTML = scenarioMarkup();
+          }
+          document.querySelectorAll(".canvas-main .canvas-context .tag").forEach((tag) => {
+            tag.textContent = activeScenario === "approval" ? "approval concept" : activeScenario === "stopped" ? "safe-stopped" : activeScenario === "empty" ? "empty" : "no effect";
+            tag.className = `tag ${activeScenario === "stopped" ? "stop" : activeScenario === "approval" ? "warn" : "implemented"}`;
+          });
+          document.querySelectorAll(".run-rail .rail-stat strong").forEach((value, i) => {
+            if (i === 0) value.innerHTML = activeScenario === "stopped" ? '<span class="dot" style="color:var(--rose)"></span> Safe-stopped' : activeScenario === "approval" ? '<span class="dot" style="color:var(--amber)"></span> Approval required' : activeScenario === "empty" ? '尚未开始' : '<span class="dot" style="color:var(--jade)"></span> Planning';
+          });
+          const journalState = document.querySelector(".journal-header .journal-provenance");
+          if (journalState) journalState.lastElementChild.textContent = activeScenario === "stopped" ? "safe-stopped / unknown" : activeScenario === "approval" ? "approval concept only" : activeScenario === "empty" ? "no record created" : "design decision pending";
+        }
+        function update() { setUrl(); showVariant(); applyScenario(); }
+        document.querySelectorAll("[data-variant-button]").forEach((button) => button.addEventListener("click", () => { activeVariant = button.dataset.variantButton; update(); }));
+        document.querySelectorAll("[data-scenario-button]").forEach((button) => button.addEventListener("click", () => { activeScenario = button.dataset.scenarioButton; update(); }));
+        document.getElementById("previous").addEventListener("click", () => { activeVariant = variants[(variants.indexOf(activeVariant) + variants.length - 1) % variants.length]; update(); });
+        document.getElementById("next").addEventListener("click", () => { activeVariant = variants[(variants.indexOf(activeVariant) + 1) % variants.length]; update(); });
+        window.addEventListener("keydown", (event) => {
+          if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) || document.activeElement.isContentEditable) return;
+          if (event.key === "ArrowLeft") document.getElementById("previous").click();
+          if (event.key === "ArrowRight") document.getElementById("next").click();
+        });
+        update();
+      })();
+    </script>
+  </body>
+</html>

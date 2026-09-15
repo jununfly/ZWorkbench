@@ -39,6 +39,10 @@ authority: supporting
 
 - [PRD 索引](prds/README.md) — 尚未实现或尚未由 owner-backed 证据证明的产品规格。
 
+## Designs
+
+- [设计索引](designs/README.md) — 将已确认的产品目标转化为可实现、可验证的界面与交互设计规格。
+
 ## Fixture documentation
 
 - [Fixture 文档索引](../evaluation/fixtures/README.md) — 隔离输入、oracle、版本与安全约束；fixture documentation，不是产品或架构权威
