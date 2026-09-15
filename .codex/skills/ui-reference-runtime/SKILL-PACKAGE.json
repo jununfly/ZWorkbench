@@ -1,0 +1,24 @@
+{
+  "schema": "codex-skill-package/v1",
+  "name": "ui-reference-runtime",
+  "version": "1",
+  "entrypoint": "SKILL.md",
+  "files": [
+    "SKILL.md",
+    "SKILL-PACKAGE.json",
+    "references/runtime-contract.md",
+    "scripts/runtime_status.py"
+  ],
+  "dependencies": [],
+  "source": {
+    "kind": "local-declared-files",
+    "revision": "working-tree",
+    "digest_scope": "declared-files-excluding-manifest",
+    "content_digest": "a6e94c41e8da05c722004ceeb0b179b499157df3614e2df4fc15c63f8e415121"
+  },
+  "install": {
+    "mode": "copy-declared-files",
+    "rollback": "remove-installed-directory",
+    "residuals": []
+  }
+}

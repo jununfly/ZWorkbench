@@ -23,6 +23,10 @@ class UnregisteredReference(UiRefError):
     """A reference that the manifest does not declare cannot be rendered."""
 
 
+class ReviewSessionClosed(UiRefError):
+    """A closed review session cannot accept new instance registrations."""
+
+
 def render_attributes(manifest: Dict[str, Any], ref: str) -> Dict[str, str]:
     """Return the DOM attributes for one declared semantic element."""
     for entry in manifest["refs"]:
@@ -48,9 +52,15 @@ class ReviewSession:
         self._unmounted: Dict[str, Dict[str, str]] = {}
         self._order: list = []
         self._locked: Optional[str] = None
+        self._closed = False
+
+    def _require_open(self) -> None:
+        if self._closed:
+            raise ReviewSessionClosed("review session is closed")
 
     def mount(self, ref: str, *, entity_key: str) -> str:
         """Register one mounted instance and return its session handle."""
+        self._require_open()
         if ref not in self._declared:
             raise UnregisteredReference(
                 "reference {0!r} is not declared in this manifest".format(ref)
@@ -62,6 +72,7 @@ class ReviewSession:
 
     def close(self) -> None:
         """End the review session: every handle is void and never reused."""
+        self._closed = True
         self._mounted.clear()
         self._unmounted.clear()
         self._order = []
@@ -80,6 +91,7 @@ class ReviewSession:
 
     def remount(self, ref: str, *, entity_key: str) -> str:
         """Re-attach an entity that was unmounted, reusing its handle."""
+        self._require_open()
         for handle, entry in list(self._unmounted.items()):
             if entry["ref"] == ref and entry["entity_key"] == entity_key:
                 self._mounted[handle] = self._unmounted.pop(handle)

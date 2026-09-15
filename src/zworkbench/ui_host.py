@@ -159,7 +159,7 @@ def locate(
     """
     if not query:
         return None
-    parsed = parse_deep_link("?" + query)
+    parsed = parse_deep_link("/?" + query)
     if parsed["outcome"] != "valid":
         return {"outcome": parsed["outcome"]}
     if parsed["ui_map"] != manifest["ui_map"]:

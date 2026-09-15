@@ -78,6 +78,7 @@ from .ui_review import (
 )
 from .ui_runtime import (
     ReviewSession,
+    ReviewSessionClosed,
     UnregisteredReference,
     audit_rendered_html,
     render_attributes,
@@ -173,6 +174,7 @@ __all__ = [
     "UiRefValidationError",
     "resolve_ui_ref",
     "ReviewSession",
+    "ReviewSessionClosed",
     "UnregisteredReference",
     "audit_rendered_html",
     "render_attributes",

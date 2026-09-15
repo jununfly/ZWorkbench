@@ -352,6 +352,20 @@ class ParsingADeepLinkTests(unittest.TestCase):
         parsed = parse_deep_link(raw)
         self.assertNotIn("script", json.dumps(parsed, ensure_ascii=False))
 
+    def test_an_external_origin_is_not_a_local_deep_link(self):
+        raw = "https://external.example/home?ui_ref=home.root&ui_map=" + "b" * 64
+
+        parsed = parse_deep_link(raw)
+
+        self.assertEqual(parsed["outcome"], "invalid-origin")
+
+    def test_a_backslash_prefixed_path_cannot_be_normalised_to_an_external_origin(self):
+        raw = "/\\\\evil.example/home?ui_ref=home.root&ui_map=" + "b" * 64
+
+        parsed = parse_deep_link(raw)
+
+        self.assertEqual(parsed["outcome"], "invalid-origin")
+
 class TokenResolvesAgainstASessionTests(unittest.TestCase):
     """A token resolves structure/code separately from the live DOM instance."""
 
