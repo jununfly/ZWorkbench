@@ -13,8 +13,8 @@ from ui_reference_support import runtime_evidence
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PROTOCOL = REPO_ROOT / ".codex" / "skills" / "ui-reference-protocol"
-RUNTIME = REPO_ROOT / ".codex" / "skills" / "ui-reference-runtime"
+PROTOCOL = REPO_ROOT / "skills" / "ui-reference-protocol"
+RUNTIME = REPO_ROOT / "skills" / "ui-reference-runtime"
 PROFILE = PROTOCOL / "examples" / "minimal-profile.json"
 R1 = REPO_ROOT / "docs" / "prds" / "r1-ui-reference-registry.md"
 R2 = REPO_ROOT / "docs" / "prds" / "r2-ui-reference-skills.md"

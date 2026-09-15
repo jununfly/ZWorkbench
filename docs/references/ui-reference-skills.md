@@ -9,9 +9,9 @@ ZWorkbench keeps the product contract in [R1](../prds/r1-ui-reference-registry.m
 and the extraction decision in [R2](../prds/r2-ui-reference-skills.md). The
 reusable packages are separate from both product documents:
 
-- [ui-reference-protocol](../../.codex/skills/ui-reference-protocol/SKILL.md)
+- [ui-reference-protocol](../../skills/ui-reference-protocol/SKILL.md)
   designs or audits a project-owned `ui-reference-profile/v1`.
-- [ui-reference-runtime](../../.codex/skills/ui-reference-runtime/SKILL.md)
+- [ui-reference-runtime](../../skills/ui-reference-runtime/SKILL.md)
   consumes that profile and guides an adapter through the public UI Reference
   Contract.
 
