@@ -73,6 +73,17 @@ class ReviewModeLifecycleTests(unittest.TestCase):
         self.assertEqual(mode.resources(), ())
         self.assertEqual(mode.session_handles(), ())
 
+    def test_unloading_the_review_host_releases_every_resource(self):
+        mode = _mode()
+        mode.enable()
+        mode.mount("home.record-list.item", entity_key="record-1")
+
+        mode.unload()
+
+        self.assertFalse(mode.enabled)
+        self.assertEqual(mode.resources(), ())
+        self.assertEqual(mode.session_handles(), ())
+
     def test_disabling_an_already_disabled_mode_is_a_no_op(self):
         mode = _mode()
         mode.disable()

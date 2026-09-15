@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from zworkbench.ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
 from zworkbench.ui_runtime import (
     ReviewSession,
+    ReviewSessionClosed,
     audit_rendered_html,
     UnregisteredReference,
     render_attributes,
@@ -242,6 +243,20 @@ class HandleInvalidationTests(unittest.TestCase):
         session = ReviewSession(home_manifest())
         session.close()
         self.assertEqual(session.resolve_structural("home.root")["outcome"], "unavailable")
+
+    def test_a_closed_session_rejects_new_mounts(self):
+        session = ReviewSession(home_manifest())
+        session.close()
+        with self.assertRaises(ReviewSessionClosed):
+            session.mount("home.root", entity_key="new")
+
+    def test_a_closed_session_rejects_remounts(self):
+        session = ReviewSession(home_manifest())
+        handle = session.mount("home.record-list.item", entity_key="e1")
+        session.unmount(handle)
+        session.close()
+        with self.assertRaises(ReviewSessionClosed):
+            session.remount("home.record-list.item", entity_key="e1")
 
 class RenderedHtmlAgreesWithTheManifestTests(unittest.TestCase):
     """Generated metadata must agree with what a reviewer actually sees."""

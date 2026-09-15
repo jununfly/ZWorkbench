@@ -1,0 +1,36 @@
+{
+  "schema": "ui-ref-coverage/v1",
+  "scope": "catalog-review",
+  "units": [
+    "catalog.shell",
+    "catalog.add",
+    "catalog.items",
+    "catalog.item",
+    "review.entry",
+    "review.panel",
+    "review.clipboard"
+  ],
+  "scenarios": [
+    "normal",
+    "empty",
+    "unknown",
+    "compact-viewport",
+    "wide-viewport",
+    "dynamic-reorder",
+    "dynamic-rerender",
+    "dynamic-unmount",
+    "dynamic-remount",
+    "session-close",
+    "cross-session",
+    "deep-link"
+  ],
+  "gates": [
+    "pointer-passthrough",
+    "focus",
+    "keyboard",
+    "clipboard-success",
+    "clipboard-failure",
+    "teardown",
+    "zero-remote-requests"
+  ]
+}

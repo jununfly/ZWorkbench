@@ -1,0 +1,116 @@
+{
+  "schema": "ui-ref-conformance/v1",
+  "cases": [
+    {
+      "name": "valid-static-closure",
+      "class": "positive",
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "implemented",
+        "reason": "static-closure-verified"
+      }
+    },
+    {
+      "name": "unsupported-manifest-schema",
+      "class": "negative",
+      "profile_patch": {
+        "contract.schemas.manifest": "ui-ref-manifest/v2"
+      },
+      "expected": {
+        "protocol": "rejected",
+        "runtime": "HOLD",
+        "reason": "profile-missing-or-invalid"
+      }
+    },
+    {
+      "name": "protocol-version-requires-revalidation",
+      "class": "negative",
+      "profile_patch": {
+        "protocol.version": "2"
+      },
+      "evidence_patch": {
+        "protocol_version": "1"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "HOLD",
+        "reason": "protocol-identity-mismatch"
+      }
+    },
+    {
+      "name": "unsafe-side-effect-evidence",
+      "class": "security",
+      "evidence_patch": {
+        "side_effects": "remote-write"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "HOLD",
+        "reason": "side-effects-not-zero"
+      }
+    },
+    {
+      "name": "browser-capability-unknown",
+      "class": "unknown",
+      "evidence_patch": {
+        "browser": "unknown"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "unknown",
+        "reason": "browser-evidence-missing"
+      }
+    },
+    {
+      "name": "host-capability-unknown",
+      "class": "unknown",
+      "evidence_patch": {
+        "host_capabilities": [
+          "rendered-surface",
+          "manifest-artifact"
+        ]
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "unknown",
+        "reason": "host-capability-evidence-missing"
+      }
+    },
+    {
+      "name": "malformed-evidence",
+      "class": "negative",
+      "evidence_patch": {
+        "browser": []
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "HOLD",
+        "reason": "evidence.browser must be a non-empty string"
+      }
+    },
+    {
+      "name": "manifest-schema-evidence-requires-revalidation",
+      "class": "negative",
+      "evidence_patch": {
+        "manifest_schema": "ui-ref-manifest/v2"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "HOLD",
+        "reason": "manifest-schema-mismatch"
+      }
+    },
+    {
+      "name": "token-schema-evidence-requires-revalidation",
+      "class": "negative",
+      "evidence_patch": {
+        "token_schema": "ui-ref/v2"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "HOLD",
+        "reason": "token-schema-mismatch"
+      }
+    }
+  ]
+}

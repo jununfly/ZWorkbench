@@ -185,7 +185,18 @@ def parse_deep_link(raw: str) -> Dict[str, Any]:
         return _reject("too-large", "link exceeds the size budget")
 
     try:
-        pairs = parse_qsl(urlsplit(raw).query, strict_parsing=True)
+        split = urlsplit(raw)
+        # WHATWG URL parsing treats backslashes in a special-scheme relative
+        # URL as authority separators.  Reject them before a browser can turn
+        # a string that Python considered local into an external navigation.
+        if (
+            split.scheme
+            or split.netloc
+            or not split.path.startswith("/")
+            or "\\" in split.path
+        ):
+            return _reject("invalid-origin", "link must use a local relative entry point")
+        pairs = parse_qsl(split.query, strict_parsing=True)
     except ValueError:
         return _reject("malformed", "link query cannot be parsed")
 

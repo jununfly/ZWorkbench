@@ -1,0 +1,157 @@
+{
+  "schema": "ui-reference-profile/v1",
+  "protocol": {
+    "name": "semantic-ui-reference",
+    "version": "1"
+  },
+  "identity": {
+    "reference_pattern": "project.view.unit",
+    "mapping_identity": "semantic-manifest",
+    "build_identity": "source-receipt",
+    "source_provenance": "repository-relative-content-identity"
+  },
+  "contract": {
+    "semantic_scope": ["declared-ui-elements", "interactive-actions"],
+    "identity_separation": [
+      "semantic",
+      "accessible",
+      "presentation",
+      "source",
+      "mapping",
+      "build"
+    ],
+    "schemas": {
+      "manifest": "ui-ref-manifest/v1",
+      "token": "ui-ref/v1"
+    },
+    "fields": {
+      "declaration": {
+        "reference": "ref",
+        "semantic_name": "semantic",
+        "accessible_name": "accessible_name",
+        "presentation": "presentation",
+        "parent": "parent"
+      },
+      "manifest": {
+        "reference": "ref",
+        "mapping_identity": "ui_map",
+        "build_identity": "build",
+        "source_provenance": "source"
+      },
+      "token": {
+        "reference": "ref",
+        "mapping_identity": "ui_map",
+        "build_identity": "build",
+        "viewport": "viewport",
+        "display_state": "state",
+        "instance": "instance"
+      },
+      "deep_link": {
+        "reference": "ui_ref",
+        "mapping_identity": "ui_map"
+      },
+      "source": {
+        "repository_relative_anchor": "repo_path",
+        "symbol": "symbol",
+        "content_identity": "content_digest"
+      }
+    },
+    "enums": {
+      "viewport": ["compact", "wide"],
+      "display_state": ["normal", "empty", "unknown"]
+    },
+    "lifecycle": {
+      "alias_field": "alias_of",
+      "replacement_field": "replaced_by",
+      "retired_field": "retired",
+      "compatibility_window": "one-previous-mapping"
+    }
+  },
+  "instances": {
+    "scope": "review-session",
+    "handle": "random-memory-only",
+    "outcomes": [
+      "ambiguous",
+      "unavailable",
+      "expired"
+    ]
+  },
+  "migration": {
+    "policy": "explicit-only",
+    "outcomes": [
+      "migrated",
+      "retired",
+      "incompatible"
+    ]
+  },
+  "token": {
+    "max_bytes": 1024,
+    "fields": [
+      "protocol",
+      "reference",
+      "mapping_identity",
+      "build_identity",
+      "viewport",
+      "display_state",
+      "instance"
+    ]
+  },
+  "deep_link": {
+    "fields": [
+      "reference",
+      "mapping_identity"
+    ],
+    "side_effects": false
+  },
+  "security": {
+    "forbidden_data": [
+      "prompt",
+      "event-body",
+      "credential",
+      "absolute-path"
+    ],
+    "remote_requests": false,
+    "persistent_storage": false
+  },
+  "trust": {
+    "token_role": "locator-only",
+    "state_owner": "project-owned",
+    "review_state": "ephemeral",
+    "effects": "none"
+  },
+  "host": {
+    "capabilities": [
+      "rendered-surface",
+      "manifest-artifact",
+      "source-provenance",
+      "review-session",
+      "local-navigation"
+    ],
+    "missing_policy": "unknown"
+  },
+  "review": {
+    "default": "disabled",
+    "explicit_enable": true,
+    "pointer_passthrough": true,
+    "user_initiated_clipboard": true,
+    "teardown": "release-all-resources"
+  },
+  "evidence": {
+    "required": [
+      "profile",
+      "artifact",
+      "environment"
+    ],
+    "unknown_policy": "preserve-unknown"
+  },
+  "acceptance": {
+    "required": [
+      "declaration-manifest",
+      "rendered-reference",
+      "exact-resolution",
+      "negative-security"
+    ],
+    "threshold": "all-required",
+    "unknown_policy": "preserve-unknown"
+  }
+}

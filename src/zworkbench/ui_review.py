@@ -149,6 +149,10 @@ class ReviewMode:
         self._panel_focused = False
         self._focused_ref = None
 
+    def unload(self) -> None:
+        """Release review resources when the host document is unloaded."""
+        self.disable()
+
     def resources(self) -> Tuple[Dict[str, str], ...]:
         """Report currently held host resources, for residue checks."""
         return self._resources

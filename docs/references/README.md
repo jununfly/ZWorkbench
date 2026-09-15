@@ -14,6 +14,7 @@ API key、cookie、原始账户标识、Prompt 或响应正文。
   合成 turn。
 - [Provider inventory](optional-provider-exit-inventory.md)：只读脱敏 receipt 的字段与责任边界。
 - [Provider 一手来源](optional-provider-exit-primary-sources.md)：外部合同、数据处理与退出资料。
+- [UI Reference skills binding](ui-reference-skills.md)：R1 产品规格与通用协议／运行时 skill 的显式 profile 交接、安装和证据边界。
 
 所有真实网络请求、账户盘点或退出操作都要求账户 owner 在本机明确授权；本目录不提供远端删除、
 停用、注销或 secret 交接能力。

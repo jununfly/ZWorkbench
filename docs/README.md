@@ -43,6 +43,10 @@ authority: supporting
 
 - [Fixture 文档索引](../evaluation/fixtures/README.md) — 隔离输入、oracle、版本与安全约束；fixture documentation，不是产品或架构权威
 
+## Agent skills
+
+- [UI Reference skills binding](references/ui-reference-skills.md) — R1 产品规格与两个可独立安装的通用 UI 引用 skill 之间的 profile、验证和安全边界。
+
 这一顺序优先回答“对象是什么、如何判断、如何连接、为何这样选择”，而不是复述某次
 评测、路线节点或实现过程。
 

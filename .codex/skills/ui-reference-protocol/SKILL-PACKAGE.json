@@ -1,0 +1,27 @@
+{
+  "schema": "codex-skill-package/v1",
+  "name": "ui-reference-protocol",
+  "version": "1",
+  "entrypoint": "SKILL.md",
+  "files": [
+    "SKILL.md",
+    "SKILL-PACKAGE.json",
+    "examples/minimal-profile.json",
+    "references/profile-contract.md",
+    "scripts/profile_status.py",
+    "scripts/validate_declarations.py",
+    "scripts/validate_profile.py"
+  ],
+  "dependencies": [],
+  "source": {
+    "kind": "local-declared-files",
+    "revision": "working-tree",
+    "digest_scope": "declared-files-excluding-manifest",
+    "content_digest": "c260fd2dd61643e82ac9084b847aa6ec50f7c263ce3f694c4c9ebe57916d5e22"
+  },
+  "install": {
+    "mode": "copy-declared-files",
+    "rollback": "remove-installed-directory",
+    "residuals": []
+  }
+}
