@@ -55,6 +55,23 @@ def task_detail_manifest(*, build: str = None) -> Dict[str, Any]:
     return task_detail_registry().build_manifest(build=build or module_source_digest(Path(__file__)))
 
 
+def _render_value(value: Any) -> str:
+    """Render projection values as readable HTML without Python syntax."""
+
+    if isinstance(value, Mapping):
+        rows = "".join(
+            "<div><dt>{0}</dt><dd>{1}</dd></div>".format(
+                html.escape(str(key)), _render_value(item)
+            )
+            for key, item in value.items()
+        )
+        return "<dl>{0}</dl>".format(rows)
+    if isinstance(value, (list, tuple)):
+        items = "".join("<li>{0}</li>".format(_render_value(item)) for item in value)
+        return "<ul>{0}</ul>".format(items)
+    return html.escape(str(value))
+
+
 def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Fixture-level renderer for coverage assertions.
 
@@ -78,12 +95,14 @@ def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] =
             return '<section data-ui-not-applicable="{0}">{1}</section>'.format(
                 html.escape(ref, quote=True), html.escape(str(excused[ref]))
             )
-        return "<section {0}>{1}</section>".format(
-            attribute_text(m, ref), html.escape(str(value))
-        )
+        return "<section {0}>{1}</section>".format(attribute_text(m, ref), _render_value(value))
 
     return (
         "<main {root}>"
+        '<nav class="view-nav" aria-label="工作台视图">'
+        '<a href="/home" tabindex="-1">工作台</a>'
+        '<a href="/task-detail" tabindex="-1" aria-current="page">任务详情</a>'
+        '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
         "{intent}{admission}{denial}{identity}{timeline}"
         "{result}{error}{effect}{approval}{reconcile}{replay}"
         "</main>"
@@ -104,5 +123,8 @@ def render_task_detail(view: Mapping[str, Any], *, manifest: Mapping[str, Any] =
         effect=section("task-detail.effect", view.get("effect", "unknown")),
         approval=section("task-detail.approval", view.get("approval", "unknown")),
         reconcile=section("task-detail.reconcile", view.get("reconcile", "unknown")),
-        replay=section("task-detail.replay-mode", view.get("replay_mode", "unknown")),
+        replay=section(
+            "task-detail.replay-mode",
+            view.get("replay", view.get("replay_mode", "unknown")),
+        ),
     )
