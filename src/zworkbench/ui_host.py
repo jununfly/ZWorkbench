@@ -17,6 +17,7 @@ from __future__ import annotations
 import html
 import json
 import threading
+from urllib.parse import parse_qsl, urlencode
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
@@ -124,6 +125,25 @@ ROUTES: Dict[str, Tuple[str, Callable[[], Dict[str, Any]], Callable[..., str]]] 
     "/task-detail": ("任务详情", task_detail_manifest, render_task_detail),
     "/record-view": ("记录视图", record_manifest, render_record_view),
 }
+
+_BUSINESS_QUERY_KEYS = {
+    "/record-view": frozenset({"run_id", "filter"}),
+    "/task-detail": frozenset({"run_id"}),
+}
+
+
+def _locator_query(route: str, query: str) -> str:
+    """Remove only the route's read-only selection fields before deep-linking."""
+
+    business_keys = _BUSINESS_QUERY_KEYS.get(route, frozenset())
+    if not query or not business_keys:
+        return query
+    pairs = [
+        (key, value)
+        for key, value in parse_qsl(query, keep_blank_values=True)
+        if key not in business_keys
+    ]
+    return urlencode(pairs)
 
 
 def _marker(ref: str) -> str:
@@ -387,7 +407,7 @@ def render_document(
     # behind a disclosure: the second pass serves that disclosure open, so the
     # link reveals its target without a click. Only the named reference is
     # expanded -- opening every disclosure would make "located" meaningless.
-    outcome = locate(manifest, query, body)
+    outcome = locate(manifest, _locator_query(route, query), body)
     if outcome is not None and outcome["outcome"] == "located":
         if _expands(render):
             body = render(view, manifest=manifest, expand=(outcome["ref"],))
@@ -498,9 +518,13 @@ def serve_workbench(
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
-            body = render_document(
-                route, resolve_view(route), query, review, build=served_build
-            ).encode("utf-8")
+            query_resolver = getattr(resolve_view, "resolve_query", None)
+            view = (
+                query_resolver(route, query)
+                if callable(query_resolver)
+                else resolve_view(route)
+            )
+            body = render_document(route, view, query, review, build=served_build).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
         def _respond(self, body: bytes, content_type: str) -> None:

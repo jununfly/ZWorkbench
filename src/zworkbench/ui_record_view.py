@@ -68,6 +68,23 @@ DISCLOSED_REFS = (
 )
 
 
+def _render_value(value: Any) -> str:
+    """Render redacted view-model values without exposing Python repr syntax."""
+
+    if isinstance(value, Mapping):
+        rows = "".join(
+            "<div><dt>{0}</dt><dd>{1}</dd></div>".format(
+                html.escape(str(key)), _render_value(item)
+            )
+            for key, item in value.items()
+        )
+        return "<dl>{0}</dl>".format(rows)
+    if isinstance(value, (list, tuple)):
+        items = "".join("<li>{0}</li>".format(_render_value(item)) for item in value)
+        return "<ul>{0}</ul>".format(items)
+    return html.escape(str(value))
+
+
 def render_record_view(
     view: Mapping[str, Any],
     *,
@@ -93,7 +110,20 @@ def render_record_view(
         event_html = "".join(
             "<li {0}>{1}</li>".format(
                 attribute_text(m, "record-view.event-list.item"),
-                html.escape(str(item.get("title", "unknown"))),
+                _render_value(
+                    {
+                        "type": item.get("type", item.get("title", "unknown")),
+                        **(
+                            {
+                                "event_id": item["event_id"],
+                                "created_at": item["created_at"],
+                                "source": item["source"],
+                            }
+                            if "event_id" in item
+                            else {}
+                        ),
+                    }
+                ),
             )
             for item in items
         )
@@ -106,7 +136,7 @@ def render_record_view(
             open=" open" if ref in requested else "",
             label=html.escape(label),
             attrs=attribute_text(m, ref),
-            value=html.escape(str(value)),
+            value=_render_value(value),
         )
 
     disclosures = (
@@ -123,11 +153,57 @@ def render_record_view(
         )
     )
 
+    selected_run = html.escape(str(view.get("picker", "unknown")), quote=True)
+    options = "".join(
+        '<option value="{run_id}"{selected}>{title} · {status}</option>'.format(
+            run_id=html.escape(str(item.get("run_id", "unknown")), quote=True),
+            selected=(
+                " selected"
+                if str(item.get("run_id")) == str(view.get("picker"))
+                else ""
+            ),
+            title=html.escape(str(item.get("title", item.get("run_id", "unknown")))),
+            status=html.escape(str(item.get("status", "unknown"))),
+        )
+        for item in (view.get("run_options") or ())
+        if isinstance(item, Mapping)
+    )
+    picker_content = (
+        '<form method="get" action="/record-view" class="record-picker-form">'
+        '<label for="record-run-id">记录</label>'
+        '<select id="record-run-id" name="run_id">{options}</select>'
+        '<button type="submit">打开记录</button></form>'
+        .format(options=options)
+        if options
+        else _render_value(view.get("picker", "unknown"))
+    )
+    filter_value = view.get("filter")
+    filter_query = (
+        filter_value.get("query", "")
+        if isinstance(filter_value, Mapping)
+        else filter_value
+    )
+    filter_content = (
+        '<form method="get" action="/record-view" class="record-filter-form">'
+        '<input type="hidden" name="run_id" value="{run_id}">'
+        '<label for="record-event-filter">事件筛选</label>'
+        '<input id="record-event-filter" name="filter" value="{query}">'
+        '<button {filter} type="submit">筛选</button></form>'
+    ).format(
+        run_id=selected_run,
+        query=html.escape(str(filter_query if filter_query != "unknown" else ""), quote=True),
+        filter=attribute_text(m, "record-view.filter"),
+    )
+
     return (
         "<main {root}>"
-        "<section {picker}>{picker_text}</section>"
+        '<nav class="view-nav" aria-label="工作台视图">'
+        '<a href="/home" tabindex="-1">工作台</a>'
+        '<a href="/task-detail" tabindex="-1">任务详情</a>'
+        '<a href="/record-view" tabindex="-1" aria-current="page">记录视图</a></nav>'
+        "<section {picker}>{picker_content}</section>"
         "<ul {list}>{events}</ul>"
-        "<button {filter}>筛选</button>"
+        "{filter_content}"
         "<section {detail}>{detail_text}</section>"
         "{disclosures}"
         "<section {mode}>{mode_text}</section>"
@@ -136,12 +212,15 @@ def render_record_view(
         disclosures=disclosures,
         root=attribute_text(m, "record-view.root"),
         picker=attribute_text(m, "record-view.record-picker"),
-        picker_text=html.escape(str(view.get("picker", "unknown"))),
+        picker_content=picker_content,
         list=attribute_text(m, "record-view.event-list"),
         events=event_html,
-        filter=attribute_text(m, "record-view.filter"),
+        filter_content=filter_content,
         detail=attribute_text(m, "record-view.event-detail"),
         detail_text=html.escape(str(view.get("detail", "unknown"))),
         mode=attribute_text(m, "record-view.mode-boundary"),
-        mode_text=html.escape(str(view.get("mode", ""))),
+        mode_text=html.escape(
+            str(view.get("mode", ""))
+            + "；live replay 默认不可用，需显式授权和独立安全策略"
+        ),
     )

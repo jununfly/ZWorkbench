@@ -1,17 +1,18 @@
-"""The home-surface vertical slice: one static region, one dynamic list and one
-business button, declared once and rendered from a redacted view model.
+"""The server-rendered workbench home surface.
 
 The view layer receives an already-redacted presentation model, built by
 :mod:`zworkbench.ui_view_model`.  It never reads the composition owner, never
-infers a run status and never executes a business action: the preflight button
-is rendered, not invoked.
+infers a run status and never executes a business action.  The renderer owns
+the information architecture; :mod:`zworkbench.ui_style` owns its visual
+system.  Keeping those concerns separate lets the UI reference protocol stay
+stable while the surface gets refined.
 """
 
 from __future__ import annotations
 
 import html
 from pathlib import Path
-from typing import Any, Dict, Mapping, Sequence
+from typing import Any, Dict, Iterable, Mapping, Sequence
 
 from .ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
 from .ui_declare import attribute_text, module_source_digest
@@ -61,53 +62,262 @@ def home_manifest(*, build: str = None) -> Dict[str, Any]:
     return home_registry().build_manifest(build=build or module_source_digest(Path(__file__)))
 
 
+def _text(value: Any, fallback: str = "unknown") -> str:
+    """Escape one view-model value without making presentation decisions."""
+    if value is None or value == "":
+        value = fallback
+    return html.escape(str(value))
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _status(value: Any) -> str:
+    """Return the status token used for styling and the visible label."""
+    candidate = str(value or "unknown").strip().lower().replace("_", "-")
+    allowed = {
+        "created", "running", "recovering", "completed", "failed",
+        "safe-stopped", "denied", "unknown", "ready", "not-applicable",
+    }
+    return candidate if candidate in allowed else "unknown"
+
+
+def _scope(value: Any) -> str:
+    candidate = str(value or "unknown").strip().lower().replace("_", "-")
+    return candidate if candidate in {"implemented", "target", "unknown"} else "unknown"
+
+
+def _status_chip(value: Any, *, source: Any = "source unknown") -> str:
+    token = _status(value)
+    labels = {
+        "created": "已创建",
+        "running": "进行中",
+        "recovering": "恢复中",
+        "completed": "已完成",
+        "failed": "失败",
+        "safe-stopped": "safe-stopped",
+        "denied": "已拒绝",
+        "unknown": "unknown",
+        "ready": "可预检",
+        "not-applicable": "不适用",
+    }
+    return (
+        '<span class="status-chip status-{token}" data-status="{token}">'
+        '<span class="status-dot" aria-hidden="true"></span>'
+        '<b>{label}</b><code>{token}</code>'
+        '<small>来源：{source}</small></span>'
+    ).format(token=token, label=labels[token], source=_text(source))
+
+
+def _value_title(value: Any, fallback: str) -> str:
+    if isinstance(value, Mapping):
+        return str(value.get("title") or value.get("label") or fallback)
+    return fallback
+
+
+def _value_summary(value: Any, fallback: str = "unknown") -> str:
+    if isinstance(value, Mapping):
+        return str(value.get("summary") or value.get("description") or value.get("text") or fallback)
+    return str(value if value is not None else fallback)
+
+
+def _items(value: Any) -> Iterable[Any]:
+    if isinstance(value, Mapping):
+        value = value.get("items") or value.get("steps") or value.get("entries") or ()
+    if isinstance(value, (str, bytes)) or value is None:
+        return ()
+    try:
+        return tuple(value)
+    except TypeError:
+        return (value,)
+
+
+def _render_plan(value: Any) -> str:
+    if isinstance(value, Mapping) and (value.get("steps") or value.get("items")):
+        rows = []
+        for index, item in enumerate(_items(value), 1):
+            item_map = _mapping(item)
+            state = _status(item_map.get("state", item_map.get("status", "unknown")))
+            title = item_map.get("title") or item_map.get("label") or item_map.get("text") or "unknown"
+            detail = item_map.get("detail") or item_map.get("description")
+            rows.append(
+                '<li class="plan-row plan-{state}">'
+                '<span class="plan-step" aria-hidden="true">{index}</span>'
+                '<span><strong>{title}</strong>{detail}</span>'
+                '<code>{state}</code></li>'.format(
+                    state=state,
+                    index=index,
+                    title=_text(title),
+                    detail=("<small>{0}</small>".format(_text(detail)) if detail else ""),
+                )
+            )
+        return '<ol class="plan-list">{0}</ol>'.format("".join(rows))
+    return '<p class="section-copy">{0}</p>'.format(_text(_value_summary(value)))
+
+
+def _render_items(value: Any, *, kind: str) -> str:
+    entries = []
+    for item in _items(value):
+        item_map = _mapping(item)
+        title = item_map.get("title") or item_map.get("name") or item_map.get("label") or item
+        detail = item_map.get("summary") or item_map.get("description") or item_map.get("source")
+        entries.append(
+            '<li class="{kind}-row"><span class="row-mark" aria-hidden="true"></span>'
+            '<span><strong>{title}</strong>{detail}</span></li>'.format(
+                kind=kind,
+                title=_text(title),
+                detail=("<small>{0}</small>".format(_text(detail)) if detail else ""),
+            )
+        )
+    if entries:
+        return '<ul class="{0}-list">{1}</ul>'.format(kind, "".join(entries))
+    return '<p class="section-copy section-empty">暂无已记录内容</p>'
+
+
+def _render_record(record: Mapping[str, Any]) -> str:
+    title = record.get("title") or record.get("name") or record.get("run_id") or "unknown"
+    status = record.get("status") or record.get("state")
+    identity = record.get("run_id") or record.get("key")
+    activity = record.get("updated_at") or record.get("last_activity") or record.get("time")
+    meta = ""
+    if status or identity or activity:
+        meta = (
+            '<span class="record-meta"><code>{identity}</code><span>{status}</span></span>'
+            '<span class="record-activity">{activity}</span>'
+        ).format(
+            identity=_text(identity),
+            status=_text(status),
+            activity=_text(activity),
+        )
+    return (
+        '<li data-ui-ref="{ref}" class="record-item">'
+        '<span class="record-title">{title}</span>{meta}</li>'
+    ).format(
+        ref="home.record-list.item",
+        title=_text(title),
+        meta=meta,
+    )
+
+
+def _render_run_facts(value: Any) -> str:
+    facts = _mapping(value)
+    state = facts.get("status", "unknown")
+    source = facts.get("source") or "source unknown"
+    source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+    rows = (
+        ("run_id", facts.get("run_id", facts.get("run", "unknown"))),
+        ("parent / child", facts.get("parent_child", "unknown")),
+        ("workspace", facts.get("workspace", "unknown")),
+        ("provider", facts.get("provider", "unknown")),
+        ("evidence", facts.get("evidence", "unknown")),
+    )
+    details = "".join(
+        '<div class="fact-row"><dt>{label}</dt><dd>{value}</dd></div>'.format(
+            label=_text(label), value=_text(value)
+        )
+        for label, value in rows
+    )
+    return (
+        '<div class="inspector-heading"><div><p class="eyebrow">RUNTIME FACTS</p>'
+        '<h2>运行事实</h2></div><span class="source-badge">{source_badge}</span></div>'
+        '<div class="state-card">{status}</div>'
+        '<dl class="fact-list">{details}</dl>'
+        '<p class="source-note">判断来源：{source}</p>'.format(
+            source_badge=_text(source_badge),
+            status=_status_chip(state, source=source), details=details, source=_text(source)
+        )
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
-    """Render the home slice from a redacted view model."""
+    """Render the home surface from a redacted view model.
+
+    The DOM order intentionally follows the review-mode focus contract:
+    workspace context, run facts, record list, then the central work surface.
+    CSS grid places the run facts on the right without changing that semantic
+    order.
+    """
     resolved = manifest or home_manifest()
     records: Sequence[Mapping[str, Any]] = view.get("records") or ()
 
     if records:
-        items = "".join(
-            "<li {0}>{1}</li>".format(
-                attribute_text(resolved, "home.record-list.item"),
-                html.escape(str(record.get("title", "unknown"))),
-            )
-            for record in records
-        )
+        items = "".join(_render_record(record) for record in records)
     else:
-        items = ""
+        items = '<li class="records-empty"><span class="empty-mark" aria-hidden="true"></span>' \
+            '<strong>还没有工作记录</strong><span>完成一次本地只读运行后，Owner-backed 记录会出现在这里。</span></li>'
 
-    def section(ref, value):
-        return "<section {0}>{1}</section>".format(
-            attribute_text(resolved, ref), html.escape(str(value))
-        )
+    raw_workspace = view.get("workspace")
+    workspace = _mapping(raw_workspace)
+    workspace_name = workspace.get("name") or (raw_workspace if raw_workspace not in (None, "") and not workspace else "unknown")
+    workspace_mode = workspace.get("mode") or "unknown"
+    workspace_status = workspace.get("status") or view.get("workspace_status") or "unknown"
+    intent = view.get("intent", "unknown")
+    intent_title = _value_title(intent, "当前工作")
+    intent_summary = _value_summary(intent)
+    preflight = _mapping(view.get("preflight_result"))
+    preflight_status = preflight.get("status", view.get("preflight_result", "unknown"))
 
     return (
-        "<main {root}>"
-        "{workspace}"
-        "{facts}"
-        "<ul {list}>{items}</ul>"
-        "{intent}"
-        "{plan}"
-        "{artifacts}"
-        "{evidence}"
-        "<button {action} type=\"button\">预检并运行</button>"
-        "{preflight_result}"
-        "</main>"
+        '<main {root} class="workbench-page">'
+        '<header {workspace_ref} class="workspace-bar">'
+        '<div class="brand-lockup"><span class="brand-mark" aria-hidden="true">'
+        '<svg viewBox="0 0 24 24"><path d="M5 4h14v13H8l-3 3V4Z"/><path d="m9 9 3 3 3-3"/></svg>'
+        '</span><span class="brand-name">ZWorkbench</span><span class="breadcrumb">/ workbench</span></div>'
+        '<div class="workspace-meta"><span class="meta-pill"><span class="status-dot" aria-hidden="true"></span>{workspace}</span>'
+        '<span class="scope-tag scope-{scope}">{mode}</span><span class="scope-tag scope-target">{status}</span></div>'
+        '</header>'
+        '<nav class="view-nav" aria-label="工作台视图">'
+        '<a href="/home" tabindex="-1" aria-current="page">工作台</a>'
+        '<a href="/task-detail" tabindex="-1">任务详情</a>'
+        '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
+        '<div class="home-layout">'
+        '<section {facts_ref} class="home-inspector">{facts}</section>'
+        '<nav {list_ref} class="home-records" aria-label="工作记录">'
+        '<div class="records-heading"><div><p class="eyebrow">WORK RECORDS</p><h2>工作记录</h2></div>'
+        '<span class="record-count">{record_count:02d}</span></div>'
+        '<p class="records-caption">从 Owner 恢复的上下文</p><ul class="record-list">{items}</ul>'
+        '<p class="records-boundary">只读索引 · 不在浏览器保存 Run 状态</p></nav>'
+        '<section class="home-content">'
+        '<section {intent_ref} class="home-section intent-section">'
+        '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
+        '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
+        '<div class="intent-context"><span>mode</span><code>{mode}</code><span>workspace</span><code>{workspace}</code></div>'
+        '</section>'
+        '<section {plan_ref} class="home-section plan-section">'
+        '<div class="section-heading"><div><p class="eyebrow">NEXT STEPS</p><h2>计划与下一步</h2></div>'
+        '<span class="section-source">view model</span></div>{plan}</section>'
+        '<div class="home-secondary-grid">'
+        '<section {artifacts_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">ARTIFACTS</p><h2>产物</h2></div></div>{artifacts}</section>'
+        '<section {evidence_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">EVIDENCE</p><h2>证据</h2></div></div>{evidence}</section>'
+        '</div>'
+        '<section class="home-action-block"><div><p class="eyebrow">BOUNDARY</p><strong>下一步仍需显式预检</strong><p>当前页面只展示已记录事实；不会从页面启动 Run、写入工作区或切换 Provider。</p></div>'
+        '<button {action_ref} class="preflight-button" type="button" aria-disabled="true">预检并运行<span>只读入口</span></button></section>'
+        '<section {preflight_ref} class="preflight-result"><div class="section-heading"><div><p class="eyebrow">PREFLIGHT</p><h2>预检结果</h2></div></div>{preflight}</section>'
+        '</section></div></main>'
     ).format(
         root=attribute_text(resolved, "home.root"),
-        workspace=section("home.workspace-context", view.get("workspace", "unknown")),
-        facts=section(
-            "home.run-facts", view.get("run_facts", {}).get("status", "unknown")
-        ),
-        list=attribute_text(resolved, "home.record-list"),
+        workspace_ref=attribute_text(resolved, "home.workspace-context"),
+        facts_ref=attribute_text(resolved, "home.run-facts"),
+        list_ref=attribute_text(resolved, "home.record-list"),
+        intent_ref=attribute_text(resolved, "home.current-intent"),
+        plan_ref=attribute_text(resolved, "home.plan-next-step"),
+        artifacts_ref=attribute_text(resolved, "home.artifacts"),
+        evidence_ref=attribute_text(resolved, "home.evidence"),
+        action_ref=attribute_text(resolved, "home.preflight-run.action"),
+        preflight_ref=attribute_text(resolved, "home.preflight-result"),
+        workspace=_text(workspace_name),
+        mode=_text(workspace_mode),
+        scope=_scope(workspace_status),
+        status=_text(workspace_status),
+        facts=_render_run_facts(view.get("run_facts", {})),
         items=items,
-        intent=section("home.current-intent", view.get("intent", "unknown")),
-        plan=section("home.plan-next-step", view.get("plan", "unknown")),
-        artifacts=section("home.artifacts", view.get("artifacts", "unknown")),
-        evidence=section("home.evidence", view.get("evidence", "unknown")),
-        action=attribute_text(resolved, "home.preflight-run.action"),
-        preflight_result=section(
-            "home.preflight-result", view.get("preflight_result", "unknown")
-        ),
+        record_count=len(records),
+        intent_status=_status_chip(_mapping(intent).get("status", view.get("state", "unknown")), source=_mapping(intent).get("source", "Owner / recorded input")),
+        intent_title=_text(intent_title),
+        intent_summary=_text(intent_summary),
+        plan=_render_plan(view.get("plan", "unknown")),
+        artifacts=_render_items(view.get("artifacts", "unknown"), kind="artifact"),
+        evidence=_render_items(view.get("evidence", "unknown"), kind="evidence"),
+        preflight=_status_chip(preflight_status, source=preflight.get("source", "preflight not recorded")),
     )
