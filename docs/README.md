@@ -34,6 +34,7 @@ authority: supporting
 - [ADR 0002：映射版本只摘要引用语义](zj-adr/0002-ui-map-digests-reference-semantics-only.md) — 界面引用身份与迁移的长期决定；authority-id: adr.ui-reference.semantic-only-mapping-version
 - [ADR 0003：工作台宿主是经回环提供的服务端渲染 HTML](zj-adr/0003-workbench-host-is-server-rendered-html-over-loopback.md) — 宿主形态的长期决定；authority-id: adr.ui-host.server-rendered-html-over-loopback
 - [ADR 0004：宿主交互证据来自经 CDP 驱动的本机浏览器](zj-adr/0004-host-interaction-evidence-comes-from-a-local-browser-over-cdp.md) — 交互取证方式的长期决定；authority-id: adr.ui-host.interaction-evidence-via-local-cdp
+- [ADR 0007：dsh-web 作为外部能力参考而非可安装依赖](zj-adr/0007-dsh-web-treated-as-external-capability-reference.md) — 对外部 UI 能力源的复用边界长期决定；authority-id: adr.dsh-web.external-capability-reference
 
 ## Product requirements
 
@@ -61,6 +62,7 @@ authority: supporting
 | Wiki | `ZJ-CONTEXT.md`、`docs/methods/`、`docs/architecture/`、`docs/zj-adr/` | 实体、关系、事实、规则、稳定决策 | 单次运行结果或进度面板 |
 | References | [docs/references/](references/README.md) | 外部合同、账户 owner 操作边界、受控 runbook | 默认产品配置或自动授权 |
 | Fixture documentation | `evaluation/fixtures/**/README.md` | 隔离输入、oracle、版本和安全约束 | 产品使用或架构权威 |
+| Plans | `docs/plans/` | 研究包、路线状态、过程材料与证据 sidecar（历史归档） | 长期权威页或 ADR |
 
 文档中的目标和规则与代码/测试表达的是不同维度：代码、测试和运行产物证明当前实现事实，
 文档权威页表达目标约束与稳定语义。发生差异时必须标记 target / implemented / unknown，
