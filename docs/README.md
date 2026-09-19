@@ -64,6 +64,8 @@ authority: supporting
 | Fixture documentation | `evaluation/fixtures/**/README.md` | 隔离输入、oracle、版本和安全约束 | 产品使用或架构权威 |
 | Plans | `docs/plans/` | 研究包、路线状态、过程材料与证据 sidecar（历史归档） | 长期权威页或 ADR |
 
+> **已知缺口（local-only，非仓库缺陷）**：`evaluation/evidence/` 存放本地评测记录（按 AGENTS.md 永不入库）。其中部分记录引用 `docs/plans/research/<study>.request.json` / `.collection-status.json` / `.ledger-response.json` 等证据 sidecar，但这些 sidecar 从未生成——对应正式 zj-research 采集被阻塞（证据记录内 `formal_collection.state: "collection-blocked"`、`fresh_sealed_ledger_produced: false`）。此类悬空引用是「采集被阻塞」的诚实记载，并非文档断链；仓库治理校验只扫描 docs 地图、不触及 `evaluation/evidence/`，故对仓库不可见。处理方式：保持原样，不伪造 sidecar、不删除过期本地记录。
+
 文档中的目标和规则与代码/测试表达的是不同维度：代码、测试和运行产物证明当前实现事实，
 文档权威页表达目标约束与稳定语义。发生差异时必须标记 target / implemented / unknown，
 不能以一方静默替代另一方；稳定规则只回写一个 wiki 权威页。
