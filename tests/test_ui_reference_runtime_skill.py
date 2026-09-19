@@ -212,6 +212,52 @@ class RuntimeSkillPackagingTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["status"], "HOLD")
 
+    def test_runtime_status_holds_for_duplicate_evidence_fields(self):
+        evidence = runtime_evidence(PROFILE)
+        encoded = json.dumps(evidence, separators=(",", ":"))
+        encoded = encoded.replace(
+            '"browser":"verified"',
+            '"browser":"verified","browser":"verified"',
+            1,
+        )
+
+        result = subprocess.run(
+            [sys.executable, str(RUNTIME_STATUS), str(PROFILE)],
+            input=encoded,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["status"], "HOLD")
+        self.assertEqual(report["reason"], "evidence-json-invalid")
+
+    def test_runtime_status_preserves_explicit_lifecycle_and_resolution_outcomes(self):
+        for status in (
+            "target",
+            "blocked",
+            "migrated",
+            "retired",
+            "incompatible",
+            "source-mismatch",
+        ):
+            with self.subTest(status=status):
+                evidence = runtime_evidence(PROFILE, status=status)
+                result = subprocess.run(
+                    [sys.executable, str(RUNTIME_STATUS), str(PROFILE)],
+                    input=json.dumps(evidence),
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+
+                self.assertEqual(result.returncode, 0, result.stderr)
+                report = json.loads(result.stdout)
+                self.assertEqual(report["status"], status)
+                self.assertEqual(report["reason"], "evidence-is-not-complete")
+
     def test_runtime_status_holds_when_manifest_or_token_schema_identity_changes(self):
         for field, value in (
             ("manifest_schema", "ui-ref-manifest/v2"),
