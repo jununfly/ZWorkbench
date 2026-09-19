@@ -2,7 +2,11 @@
 doc-kind: design
 authority: supporting
 status: target
-implementation-status: pending
+implementation-status: implemented
+# Core views + no-side-effects + host/review boundaries shipped and tested;
+# prefers-reduced-motion and all-three-views no-horizontal-scroll acceptance
+# now covered (test_ui_style / test_ui_no_horizontal_scroll). Flipped from
+# "partial" on 2026-09-19 after closing both acceptance gaps.
 ---
 
 # Issue #1：Workbench UI 实现规格
@@ -192,3 +196,68 @@ fixture 应标为 `prototype` 或 `fixture`。
 
 本文不引入前端框架、桌面外壳、浏览器 durable state、新 Agent loop、第二个 durable owner、
 真实 Provider、主工作区写入、云同步或多用户协作。
+
+## Implementation status
+
+The front matter above was stale: the UI has been shipped (see `7215f6b feat: ship
+owner-backed workbench UI` and its follow-ups on `main`), so `implementation-status`
+moved from `pending` to `partial` and is now `implemented`. This section records what
+actually landed, what grew beyond this spec, and the acceptance gaps that have since
+been closed.
+
+### Shipped and covered
+
+- All three views (`/home`, `/task-detail`, `/record-view`) render server-side over
+  loopback, fed by owner-backed redacted view models (`ui_view_model.py`).
+- The no-side-effect boundary is enforced and tested (`test_ui_no_side_effects.py`,
+  `test_ui_redaction_host.py`).
+- UI manifest ↔ DOM reference consistency and the "styles never key off
+  `data-ui-ref`" rule are asserted at the engine level (`test_ui_style.py`,
+  `test_ui_ref.py`).
+- Dual-viewport (390px / 1280px) layout and computed-style checks exist
+  (`test_ui_viewport.py`, `test_ui_home_surface.py`, `test_ui_style.py` real-engine
+  assertions).
+- Host loopback, viewport meta, lifecycle, and review-mode boundaries are covered
+  (`test_ui_host.py`, `test_ui_lifecycle.py`, `test_ui_review*.py`).
+
+### Code boundaries beyond this spec
+
+The "Rendering and data boundary" section enumerates six modules: the three view
+renderers (`ui_home`, `ui_task_detail`, `ui_record_view`), the redaction façade
+(`ui_view_model`), the style layer (`ui_style`), and the loopback host
+(`ui_host`). After that section was written, the implementation grew a
+reference-protocol layer around them. The nine modules below are not in the
+original six; recording each one's authority and hard owner boundary is what
+keeps the reference protocol from drifting without a paper trail.
+
+| Module | Authority (owns) | Hard owner boundary (must not) | Governing ADR |
+|---|---|---|---|
+| `ui_ref.py` | Single source of UI reference metadata: code declares each semantic element once; the build derives the manifest from those declarations. No hand-maintained mapping table. | Holds no run/attempt/event/effect/approval/replay state; never reads or writes the composition owner. | 0002 |
+| `ui_manifest.py` | Build receipt (`build_receipt`) + local artifact store/read. Pins the exact source snapshot that produced the manifest, including uncommitted working-tree edits; content identity is never replaced by a Git commit. | Queries are local and read-only: never downloads a historical version, never starts a business run. | 0002, 0006 |
+| `ui_build.py` | Build entry point. One receipt covers all views on purpose (a change in a shared helper must move every view's identity); digests the declaring sources into a single receipt and stores each view manifest under its own identity. | Only reads sources and writes artifacts. Starts no run, reaches no owner storage, reports no acceptance. | 0006 |
+| `ui_declare.py` | Shared, byte-for-byte-duplicated declaration plumbing: `module_source_digest` and `attribute_text` (escaped attribute rendering). | Per-view `DISCLOSED_REFS` decisions stay in the view modules; only identical plumbing lives here, never view-specific policy. | — |
+| `ui_runtime.py` | Runtime rendering of declared references (`render_attributes`); `ReviewSession` instance identity (random, memory-only handles); `audit_rendered_html` (manifest↔DOM consistency). | Owns interface reference metadata and short-lived presentation state ONLY. Holds no run/attempt/event/effect/approval/replay state; handles are never derived from run identity, titles, positions or their hashes. | — |
+| `ui_matrix.py` | Fixed semantic coverage matrix transcribed from the R1 PRD; the acceptance *specification*. Denominator is the full PRD, independent of what the manifest happens to declare. | Structural only; never reports acceptance itself (the decision is a human one recorded in the PRD); a missing unit always surfaces as a gap and is never silently dropped from the denominator. | — |
+| `ui_token.py` | `ui-ref/v1` review token and local deep link: locates a semantic element for discussion. Every field whitelisted; `build`/`parse` round-trips are validated and reject unknown/duplicate/oversized input. | NOT a credential, approval, state-restoration instruction or execution entry point. Prompts, run titles, full run ids, raw events, owner snapshots, credentials, input contents and local absolute paths must never reach a token; free-form context is not accepted. | — |
+| `ui_script.py` | Review-mode behaviour layer (ADR 0005), served only when review mode is on. Mirrors the decisions `ReviewMode` has already made (preview, lock, copy, focus restore). | Adds none of its own: no request, no storage, no telemetry, no business activation, and no token minted here (tokens arrive pre-built from the server, one per viewport). Inert outside review mode — not linked at all in normal mode. | 0005 |
+| `ui_review.py` | Local review annotation mode: panel state, gestures and exit. `ReviewMode` owns the *decisions* review mode makes. Tracks host-dependent evidence in `HOST_SURFACES` / `HOST_UNKNOWNS`. | Holds no run/effect/approval state, performs no network or telemetry call, and never dispatches a business action of its own (business activation is delivered by the host and merely observed here). A green state-machine test in this module is never the host evidence the table names. | 0004, 0005 |
+
+Cross-cutting owner boundary. Every module above is a presentation/reference
+layer. None of them may become a second durable owner (ADR 0001): they read an
+already-redacted view model, they never write the composition owner, and they
+hold only memory-only review session handles. The host (`ui_host`) and the
+reference protocol together must stay a read-only projection of owner-backed
+state, not a co-author of it.
+
+### Acceptance gaps (closed)
+
+Both gaps that kept this at `partial` are now closed:
+
+- `prefers-reduced-motion` is asserted in a real engine
+  (`test_ui_style.py::TheStyleLayerInARealEngineTests::
+  test_reduced_motion_disables_transitions`): with the feature emulated, an
+  element that normally transitions reports `transitionDuration: 0s`.
+- "No horizontal scroll" now covers all three views at both acceptance
+  viewports (`test_ui_no_horizontal_scroll.py`), not just `/home`.
+
+`implementation-status` is therefore flipped to `implemented` (2026-09-19).
