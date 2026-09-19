@@ -209,7 +209,7 @@ ZWorkbench 已有的 manifest 校验、token／deep link 解析、动态实例�
 - `implemented`：协议设计与运行时实现两个独立 skill、`ui-reference-profile/v1` 校验器、严格运行时 evidence checker、双 validator conformance corpus，以及不依赖 ZWorkbench 模块的 `catalog-html` 完整 portability runtime 已落地。独立 fixture 已取得协议、静态闭环、动态 session、真实浏览器交互、覆盖矩阵和 unload teardown 证据；R1 的声明、manifest、动态实例、review mode、token、deep link、迁移、源码 provenance、脱敏和 owner 不变回归保持通过。
 - `deferred/unknown`：本阶段不做 `ZWorkbench-specific profile` 联调验证；它不阻塞本阶段完成，后续证据由项目维护者负责。没有浏览器或指定历史 artifact 时，evidence checker 仍保留 `unknown`，不能由当前 artifact 静默替代。第三方 picker/highlighter 依赖仍不是协议必需项。
 - `HOLD`：profile 缺失、字段冲突、证据结构不完整、敏感数据或未授权副作用会 fail closed。`blocked`：当前实现链无外部阻塞。
-- 证据接缝：[profile contract tests](../../tests/test_ui_reference_profile.py)、[runtime skill tests](../../tests/test_ui_reference_runtime_skill.py)、[portability fixture tests](../../tests/test_ui_reference_portability.py)、[installation tests](../../tests/test_ui_reference_skill_installation.py)；R1 产品行为仍以其自身 `tests/test_ui_*.py` 和 [R1 PRD](r1-ui-reference-registry.md) 为准。
+- 证据接缝：[profile contract tests](../../tests/test_ui_reference_profile.py)、[runtime skill tests](../../tests/test_ui_reference_runtime_skill.py)、[portability fixture tests](../../tests/test_ui_reference_portability.py)、[installation tests](../../tests/test_ui_reference_skill_installation.py)、[lifecycle tests](../../tests/test_ui_reference_skill_lifecycle.py)；R1 产品行为仍以其自身 `tests/test_ui_*.py` 和 [R1 PRD](r1-ui-reference-registry.md) 为准。
 - 回滚边界：skill 只生成可审查的 diff 和 evidence；apply 仍由项目 policy／approval／effect receipt 拥有，任何 apply 必须有可恢复 rollback 路径。skill 不创建新的 Agent loop、durable owner、scheduler、Provider 或业务执行入口。
 
 ## Out of Scope

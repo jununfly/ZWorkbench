@@ -106,6 +106,11 @@ evidence returns `HOLD`. Reports include identity, evidence, uncovered items,
 next evidence, owner, and rollback path. Evidence must not include prompts,
 business data, credentials, cookies, absolute paths, or event bodies.
 
+The evidence `status` is an explicit, evidence-backed result and may preserve
+`target`, `blocked`, `migrated`, `retired`, `incompatible`, `source-mismatch`,
+`manifest-missing`, `ambiguous`, `unavailable`, or `expired`; these outcomes
+never become `implemented` merely because the static checks pass.
+
 `evidence_identity` is the SHA-256 of the complete evidence object after removing
 `evidence_identity`, serialized as UTF-8 JSON with sorted keys and compact
 separators. Changing any evidence field without regenerating this digest is a

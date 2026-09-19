@@ -61,6 +61,22 @@ RUNTIME_GATES = (
     "teardown",
     "coverage-matrix",
 )
+REPORT_STATUSES = {
+    "implemented",
+    "target",
+    "unknown",
+    "HOLD",
+    "blocked",
+    "migrated",
+    "retired",
+    "incompatible",
+    "source-mismatch",
+    "manifest-missing",
+    "ambiguous",
+    "unavailable",
+    "expired",
+}
+STATUS_CATALOG = tuple(sorted(REPORT_STATUSES))
 
 _CONTRACT_FIELDS = {
     "declaration": (
@@ -95,6 +111,15 @@ class ProfileError(ValueError):
 
 class EvidenceError(ValueError):
     """Evidence is malformed or contradicts a safety invariant."""
+
+
+def _reject_duplicate_evidence_keys(pairs: Any) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise EvidenceError("evidence contains duplicate fields")
+        result[key] = value
+    return result
 
 
 def _reject_duplicate_keys(pairs: Any) -> Dict[str, Any]:
@@ -473,6 +498,7 @@ def _report(
     result: Dict[str, Any] = {
         "status": status,
         "reason": reason,
+        "status_catalog": list(STATUS_CATALOG),
         "profile_identity": profile_identity,
         "artifact_identity": artifact_identity,
         "environment_identity": environment_identity,
@@ -578,7 +604,7 @@ def _validate_evidence_shape(
 
     if evidence["side_effects"] != "none":
         raise EvidenceError("side-effects-not-zero")
-    if evidence["status"] not in {"implemented", "unknown", "HOLD"}:
+    if evidence["status"] not in REPORT_STATUSES:
         raise EvidenceError("status-unsupported")
 
 
@@ -736,7 +762,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("profile")
     args = parser.parse_args(argv[1:])
     try:
-        evidence = json.load(sys.stdin)
+        evidence = json.load(sys.stdin, object_pairs_hook=_reject_duplicate_evidence_keys)
     except (ValueError, TypeError):
         result = {"status": "HOLD", "reason": "evidence-json-invalid"}
     else:

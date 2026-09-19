@@ -6,7 +6,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from pathlib import Path
+from pathlib import PurePosixPath, PureWindowsPath
 import sys
 from typing import Any, Dict, List, Optional
 
@@ -22,6 +24,51 @@ REQUIRED_DISCOVERY_FIELDS = {
     "browser",
     "local_navigation",
 }
+SENSITIVE_PATTERNS = (
+    re.compile(r"(?i)\bbearer\s+"),
+    re.compile(r"(?<![a-z0-9])sk-[a-z0-9]", re.IGNORECASE),
+    re.compile(r"(?<![a-z0-9])ghp_[a-z0-9]", re.IGNORECASE),
+    re.compile(r"(?<![a-z0-9])akia[0-9a-z]{8,}", re.IGNORECASE),
+)
+STATUS_CATALOG = (
+    "implemented",
+    "target",
+    "unknown",
+    "HOLD",
+    "blocked",
+    "migrated",
+    "retired",
+    "incompatible",
+    "source-mismatch",
+    "manifest-missing",
+    "ambiguous",
+    "unavailable",
+    "expired",
+)
+
+
+def _contains_sensitive(value: Any) -> bool:
+    if isinstance(value, str):
+        return (
+            value.lower().startswith("file://")
+            or PurePosixPath(value).is_absolute()
+            or PureWindowsPath(value).is_absolute()
+            or any(pattern.search(value) for pattern in SENSITIVE_PATTERNS)
+        )
+    if isinstance(value, dict):
+        return any(_contains_sensitive(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_sensitive(item) for item in value)
+    return False
+
+
+def _reject_duplicate_keys(pairs: Any) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("discovery contains duplicate fields")
+        result[key] = value
+    return result
 
 
 def _text_list(value: Any, label: str) -> List[str]:
@@ -33,7 +80,12 @@ def _text_list(value: Any, label: str) -> List[str]:
 
 
 def _load_discovery(path: str) -> Dict[str, Any]:
-    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    raw = json.loads(
+        Path(path).read_text(encoding="utf-8"),
+        object_pairs_hook=_reject_duplicate_keys,
+    )
+    if _contains_sensitive(raw):
+        raise ValueError("discovery contains a forbidden data marker")
     if not isinstance(raw, dict) or set(raw) != {
         "conventions",
         "capabilities",
@@ -58,6 +110,7 @@ def _report(
     *,
     mode: str,
     status: str,
+    reason: str,
     profile_identity: str = "unknown",
     artifact_identity: str = "unknown",
     environment_identity: str = "unknown",
@@ -71,6 +124,8 @@ def _report(
     result: Dict[str, Any] = {
         "mode": mode,
         "status": status,
+        "reason": reason,
+        "status_catalog": list(STATUS_CATALOG),
         "profile_identity": profile_identity,
         "artifact_identity": artifact_identity,
         "environment_identity": environment_identity,
@@ -92,6 +147,7 @@ def report(
             return _report(
                 mode="design",
                 status="target",
+                reason="design-input-missing",
                 next_evidence=["validated project-neutral profile", "project discovery input"],
                 unknowns=["project-discovery-input"],
                 assumptions=[],
@@ -101,6 +157,7 @@ def report(
             return _report(
                 mode="design",
                 status="HOLD",
+                reason="profile-missing",
                 next_evidence=["an accepted protocol profile"],
                 unknowns=["profile"],
                 assumptions=[],
@@ -113,6 +170,7 @@ def report(
                 return _report(
                     mode="design",
                     status="unknown",
+                    reason="project-discovery-missing",
                     profile_identity=hashlib.sha256(Path(profile_path).read_bytes()).hexdigest(),
                     evidence=["validated-profile"],
                     uncovered_items=["project-conventions"],
@@ -126,6 +184,7 @@ def report(
             return _report(
                 mode="design",
                 status="HOLD",
+                reason="profile-or-discovery",
                 next_evidence=["valid profile and discovery input"],
                 unknowns=["profile-or-discovery"],
                 assumptions=[],
@@ -138,6 +197,11 @@ def report(
         return _report(
             mode="design",
             status="unknown" if unknowns else "implemented",
+            reason=(
+                "project-discovery-incomplete"
+                if unknowns
+                else "profile-and-project-discovery-validated"
+            ),
             profile_identity=profile_identity,
             evidence=["validated-profile", "project-discovery"],
             uncovered_items=unknowns,
@@ -151,6 +215,7 @@ def report(
         return _report(
             mode="missing-profile",
             status="HOLD",
+            reason="profile-missing",
             next_evidence=["an accepted protocol profile"],
             uncovered_items=["profile"],
         )
@@ -161,12 +226,14 @@ def report(
         return _report(
             mode="audit",
             status="HOLD",
+            reason="profile-invalid",
             next_evidence=["a profile satisfying the v1 contract"],
             uncovered_items=["profile-contract"],
         )
     return _report(
         mode="audit",
         status="implemented",
+        reason="profile-validated",
         profile_identity=hashlib.sha256(Path(profile_path).read_bytes()).hexdigest(),
         evidence=["validated-profile"],
         next_evidence=["project-specific implementation evidence"],
