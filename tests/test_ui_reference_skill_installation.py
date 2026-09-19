@@ -278,6 +278,9 @@ class IndependentInstallationTests(unittest.TestCase):
         self.assertIn("generated diff", binding)
         self.assertIn("rollback", binding)
         self.assertIn("deferred", binding)
+        self.assertIn("run_ui_reference_skill_lifecycle.py", binding)
+        for operation in ("install", "upgrade", "rollback", "uninstall"):
+            self.assertIn(operation, binding)
 
 
 if __name__ == "__main__":

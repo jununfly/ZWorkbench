@@ -20,6 +20,14 @@ ZWorkbench source files; the runtime package does not import the protocol
 package. The project supplies its own renderer, artifact store, source lookup,
 review session, host, and browser adapter.
 
+For case-local lifecycle checks, the
+[`run_ui_reference_skill_lifecycle.py`](../../evaluation/runner/run_ui_reference_skill_lifecycle.py)
+runner can observe `install`, `upgrade`, `rollback`, and `uninstall` from an
+explicit local package directory. It verifies the package's declared-file
+digest, writes a redacted receipt, and never uses a registry or remote request.
+The runner is evaluation infrastructure: it does not apply generated diffs,
+grant approval, or create a project runtime.
+
 For a local check, validate the profile with the protocol package's
 `scripts/validate_profile.py`, then feed runtime evidence to
 `scripts/runtime_status.py`. Evidence identifies the skill, protocol profile,

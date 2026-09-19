@@ -111,6 +111,18 @@
         "runtime": "HOLD",
         "reason": "token-schema-mismatch"
       }
+    },
+    {
+      "name": "source-mismatch-remains-explicit",
+      "class": "negative",
+      "evidence_patch": {
+        "status": "source-mismatch"
+      },
+      "expected": {
+        "protocol": "accepted",
+        "runtime": "source-mismatch",
+        "reason": "evidence-is-not-complete"
+      }
     }
   ]
 }
