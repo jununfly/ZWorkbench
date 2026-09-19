@@ -1,0 +1,63 @@
+{
+  "schema": "dsh-web-capability-fit-sealed-ledger/v1",
+  "note": "Manually produced fresh sealed ledger via `gh api` (authenticated as jununfly) to close the 2026-09-15 GITHUB_RATE_LIMITED gap (collection-status.json: ledger.relationship='not-produced', anonymous 34/60). NOT produced by the zj-research-cli binary; real GitHub data only.",
+  "protocol": "zj-research-cli/v1",
+  "topic": "dsh-web as an independent reusable UI plugin capability for ZWorkbench",
+  "repository": "zhu1090093659/dsh-web",
+  "sealedAt": "2026-09-19T10:31:03.349364+08:00",
+  "fetchedAt": "2026-09-19T02:31:03+00:00",
+  "evidences": [
+    {
+      "evidenceId": "EV-001-repo-meta",
+      "source": "GET /repos/zhu1090093659/dsh-web",
+      "repository": "zhu1090093659/dsh-web",
+      "anchor": "repo-root",
+      "github": {
+        "full_name": "zhu1090093659/dsh-web",
+        "visibility": "public",
+        "archived": false,
+        "disabled": false,
+        "language": "TypeScript",
+        "license": "Apache License 2.0",
+        "stargazers_count": 7748,
+        "forks_count": 523,
+        "open_issues_count": 14,
+        "default_branch": "dev",
+        "created_at": "2026-08-12T05:15:20Z",
+        "pushed_at": "2026-09-19T01:54:14Z",
+        "size_kib": 745053
+      },
+      "claim": "Repository is a real, public, non-archived TypeScript project under Apache-2.0. License-lifecycle constraint satisfied at the repo level; per-package NOTICE/license closure for actually-chosen deps remains deferred (conclusion-report §6.5)."
+    },
+    {
+      "evidenceId": "EV-002-tag-v0.3.22",
+      "source": "GET /repos/zhu1090093659/dsh-web/tags",
+      "repository": "zhu1090093659/dsh-web",
+      "anchor": "tag v0.3.22",
+      "github": {
+        "tag": "v0.3.22",
+        "commit_sha": "2629c3f55847c77549cdb251c0fe0e7f0d3d6cd5",
+        "exists": true
+      },
+      "claim": "Pinned release tag v0.3.22 resolves to commit 2629c3f55847c77549cdb251c0fe0e7f0d3d6cd5, exactly matching the evidence anchor declared in conclusion-report §1."
+    },
+    {
+      "evidenceId": "EV-003-commit-2629c3f",
+      "source": "GET /repos/zhu1090093659/dsh-web/commits/2629c3f55847c77549cdb251c0fe0e7f0d3d6cd5",
+      "repository": "zhu1090093659/dsh-web",
+      "anchor": "commit 2629c3f55847c77549cdb251c0fe0e7f0d3d6cd5",
+      "github": {
+        "sha": "2629c3f55847c77549cdb251c0fe0e7f0d3d6cd5",
+        "message_head": "chore(release): bump to 0.3.22",
+        "author": "zhu1090093659",
+        "date": "2026-09-13T14:19:19Z",
+        "tree": "69d5a8821d52bf7e5cb81c32c873f25f9a5be70c",
+        "parents": 1,
+        "verified": false
+      },
+      "claim": "Pinned commit exists, single-parent release commit, and is the exact tree all source-level observations in conclusion-report §3/§4 are anchored to. Conclusions do NOT depend on stars/README/old-ledger."
+    }
+  ],
+  "coverage": "Closes conclusion-report §6.1: GitHub metadata + Evidence IDs now empirically confirmed via authenticated API. Does NOT cover local build/test runs (§6.3/§6.4) or DSH profile integration (§6.2), which remain unknown and are not sealed here.",
+  "ledgerHash": "8f8ddca21642b324e1901eb5ba7f07e708c1d164d1488f386de940f9bbde5ee8"
+}

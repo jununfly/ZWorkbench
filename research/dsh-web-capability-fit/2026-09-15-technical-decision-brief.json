@@ -1,0 +1,81 @@
+{
+  "schema": "technical-decision-brief/v1",
+  "user": {
+    "actor": "ZWorkbench 的 Human 与 AI 协作开发者",
+    "job": "在不重复建设完整 Web Harness 的前提下，复用成熟的界面插件能力，缩短从 0 到 1 交付工作台界面的时间。"
+  },
+  "baseline": {
+    "workflow": "ZWorkbench 当前以 Python 本地只读入口和服务端渲染 HTML 提供工作台；新增界面需要在现有 UI host、view model、CSS/HTML renderer 和测试边界内从零实现。",
+    "failureModes": [
+      "每个新界面都重复建设布局、设置面板、插件入口、状态投影和浏览器交互，首个可用纵向切片交付慢。",
+      "直接引入完整 Web Harness 可能同时引入第二套 Agent loop、session、插件状态、网络服务和 durable 业务语义。",
+      "DSH/Cordis 插件依赖宿主提供的 client slots、remote APIs、settings、workspace 和 web server；当前 ZWorkbench 并未证明这些 DSH runtime seams 已完整实现。",
+      "dsh-web 的远程访问、创意工坊和匿名遥测等能力若被整包启用，会与本地优先、零默认外发和最小权限边界冲突。"
+    ]
+  },
+  "targetOutcome": "形成一份可复核的吸纳决策：明确 dsh-web 能复用的最小单位能力、与 ZWorkbench 的接口/ownership 适配方式、不能直接吸纳的部分、首个 PoC 和停止条件。",
+  "goals": [
+    "判断 dsh-web 是否能以独立、可禁用、可替换的插件或外部 runtime 方式接入，而不是把它误当作 ZWorkbench 的产品主体。",
+    "识别可以真正缩短 UI 从 0 到 1 的单位能力，例如 UI slots、settings cards、client plugin loading、主题/布局 seam 或经过验证的插件包。",
+    "建立 dsh-web 与 ZWorkbench 的 capability、语义、组合性、ownership、生命周期和安全矩阵。",
+    "给出一个低成本、case-local、可回滚的 Experience Version PoC，验证最昂贵的兼容性假设。"
+  ],
+  "nonGoals": [
+    "本轮不把 dsh-web 整个 monorepo、桌面客户端、创意工坊或远程访问平台迁入 ZWorkbench。",
+    "本轮不修改 DSH 源码，不复制 DSH Agent loop，不建立第二个 CompositionOwner 或第二套跨 Run canonical state。",
+    "本轮不启用真实远程 Provider、第三方遥测、Cloudflare tunnel、Git push、部署或生产工作区写入。",
+    "本轮不宣称 ZWorkbench-specific profile 联调已经完成；若需要宿主 profile 适配，作为后续独立验证门。"
+  ],
+  "constraints": [
+    {
+      "id": "independent-plugin",
+      "statement": "吸纳单元必须保留明确 source/version/commit/digest、manifest、capability、permission、依赖、生命周期和 disposer，能够独立禁用或移除。"
+    },
+    {
+      "id": "owner-boundary",
+      "statement": "CompositionOwner 仍是 run、attempt、event、effect、result、approval、replay metadata 和 backup/restore 的唯一 durable owner；外部 UI 插件只能通过显式 Host Capability Facade 读写允许的投影。"
+    },
+    {
+      "id": "runtime-compatibility",
+      "statement": "当前 ZWorkbench 已证明的是 artifact-mode DSH bootstrap seam，而不是完整 DSH Web profile、Cordis client slots、settings API 或 plugin loader；未验证的能力不能计入有效供给。"
+    },
+    {
+      "id": "local-first-security",
+      "statement": "首个切片必须在 case-local 环境运行，默认零远端请求、零遥测、零真实凭证，未知网络/子进程/写入边界 fail-closed。"
+    },
+    {
+      "id": "license-lifecycle",
+      "statement": "只考虑许可证与依赖来源可核验、版本可 pin、升级/回滚/退出责任可接受的复用；不因仓库 popularity 或 README 功能数量直接采用。"
+    },
+    {
+      "id": "experience-version",
+      "statement": "当前处于 experience-version：需要一个可丢弃的最小纵向切片、预先定义的成功阈值和明确止损线，不提前建设完整生产级前端平台。"
+    }
+  ],
+  "assumptions": [
+    "用户愿意把 dsh-web 作为独立插件/外部能力源进行吸纳，而不是要求立即把 ZWorkbench 改造成 dsh-web 的完整运行环境。",
+    "可复用价值主要来自成熟的插件注册、UI composition 和 browser interaction seams；具体业务状态仍由 ZWorkbench 产品层定义。",
+    "首个 PoC 可以选择单一 settings/card 或只读 UI surface，并使用 fake/loopback data，不要求真实 DSH profile 联调。",
+    "dsh-web 的公开仓库、固定 commit、LICENSE、package manifests、source code 和可复现实验足以作为本轮主要证据；未能从这些来源证明的内容保留 unknown。"
+  ],
+  "stage": "experience-version",
+  "decisionScope": "评估 https://github.com/zhu1090093659/dsh-web 是否适合作为 ZWorkbench 的独立插件能力源，以及选择整包、选择性复用、外部薄桥接或继续自建的落地路径。",
+  "options": [
+    {
+      "id": "whole-dsh-web",
+      "name": "整套 dsh-web Web GUI / aggregate bundle"
+    },
+    {
+      "id": "selective-dsh-plugin",
+      "name": "选择性复用 dsh-web 的独立 UI plugin package"
+    },
+    {
+      "id": "external-dsh-bridge",
+      "name": "保留 dsh-web 外部运行，通过 DSH runtime adapter / sidecar 薄桥接"
+    },
+    {
+      "id": "native-zworkbench-ui",
+      "name": "继续以 ZWorkbench 自有 server-rendered UI seam 为主体，仅借鉴或生成模板"
+    }
+  ]
+}
