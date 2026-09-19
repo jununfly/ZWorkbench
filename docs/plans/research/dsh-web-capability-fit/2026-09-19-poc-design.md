@@ -95,7 +95,7 @@ dsh-session-id 包的核心价值 = 在一个独立 UI unit 里**只读展示"�
 
 > 以下每步对应一个具体测试文件/断言，作为 product 路线的验收契约；本规格不实现，仅规定。
 
-1. **固定源码锚点**：新建 `research/dsh-web-capability-fit/poc-source-pin.json` 记录 dsh-web `@2629c3f` + 选中 surface 的 source path；PoC 实现须以 `build_receipt` 产出 build 身份并写入 manifest，断言 `ui_map`/`build` 与 `poc-source-pin` 一致。
+1. **固定源码锚点**：新建 `docs/plans/research/dsh-web-capability-fit/poc-source-pin.json` 记录 dsh-web `@2629c3f` + 选中 surface 的 source path；PoC 实现须以 `build_receipt` 产出 build 身份并写入 manifest，断言 `ui_map`/`build` 与 `poc-source-pin` 一致。
 2. **Facade 脱敏 DTO**：`tests/test_poc_session_references_facade.py` — 用 mock owner 注入，断言 `session_references_view_model` 仅调用 facade 投影方法、**不**触达 owner 原始表；断言缺字段返回 `unknown` 而非异常。
 3. **零网络请求**：`tests/test_poc_session_references_zero_network.py` — 用 socket 计数 / 本地代理断言 surface 渲染与 host 生命周期内 outbound 连接数 = 0（尤其确认未引入 dsh telemetry）。
 4. **enable/disable/dispose 归零**：`tests/test_poc_session_references_dispose.py` — 启 host → 渲染 → `WorkbenchHost.close()` + `ReviewSession.close()` 后，断言 DOM 无残留引用节点、无存活 timer/listener、无 PendingNetwork（复用 `test_ui_review_lifecycle` 的可复现请求检测法）。

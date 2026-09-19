@@ -91,7 +91,7 @@
 
 ## 8. 决策记录索引
 
-关键方向性决策已落盘于路线图（`research/dsh-web-capability-fit/roadmap.json`）：
+关键方向性决策已落盘于路线图（`docs/plans/research/dsh-web-capability-fit/roadmap.json`）：
 
 - 证据锚点（节点 1-1-3）
 - 脱离 DSH runtime 嵌入不可行（节点 1-2-1）
