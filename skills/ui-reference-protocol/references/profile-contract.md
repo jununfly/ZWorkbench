@@ -31,7 +31,10 @@ contradictory safety constraints, unsupported values, and obvious credential/pat
 markers. `profile_status.py --mode design --profile PROFILE.json --discovery
 DISCOVERY.json` records renderer, host boundary, browser, and local navigation
 conventions alongside capabilities, assumptions, unknowns, and profile
-identity. `scripts/validate_declarations.py` separately validates a project's
+identity. Every design/audit report includes a stable reason, evidence,
+uncovered items, next evidence, owner, and rollback path; lifecycle and source
+resolution outcomes are preserved by the runtime evidence contract rather than
+inferred from profile validation. `scripts/validate_declarations.py` separately validates a project's
 declaration graph, including duplicate references, parent cycles, alias
 collisions, and missing or cyclic replacements. Keep project names, views,
 routes, framework details, and dynamic data in a separate project profile or
