@@ -27,3 +27,4 @@ provenance 和失败时的 fail-closed 语义；生成的 runs、logs 和 eviden
 - [W8 host boundary minimum permissions](w8_host_boundary_min_permissions/v1/README.md)
 - [W8 host broker](w8_host_broker/v1/README.md)
 - [W8 local read-only](w8_local_read_only/v1/README.md)
+- [UI Reference portability](ui_reference_portability/README.md)
