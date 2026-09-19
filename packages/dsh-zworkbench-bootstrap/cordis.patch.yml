@@ -1,0 +1,6 @@
+# The ZWorkbench bootstrap bundle: a process-level DSH identity handshake over
+# the shared base profile. It creates no Agent and emits no task output.
+
+- insert:
+    - id: zworkbench-bootstrap
+      name: '@deepseek-ai/dsh-zworkbench-bootstrap'

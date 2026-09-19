@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "es2024",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2024"],
+    "rootDir": "src",
+    "outDir": "lib",
+    "declaration": true,
+    "declarationMap": true,
+    "declarationDir": "lib/types",
+    "sourceMap": true,
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["node"],
+    "tsBuildInfoFile": "lib/.tsbuildinfo"
+  },
+  "include": ["src"]
+}
