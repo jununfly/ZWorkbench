@@ -167,6 +167,26 @@ class TheStyleLayerInARealEngineTests(unittest.TestCase):
         offenders = [s for s in json.loads(selectors) if "data-ui-ref" in s]
         self.assertEqual(offenders, [])
 
+    def test_reduced_motion_disables_transitions(self):
+        """The stylesheet's prefers-reduced-motion block must actually apply.
+
+        A media query placed earlier in the file is silently overridden by a
+        same-specificity rule, so a string scan of the stylesheet cannot prove
+        the block wins. Ask the engine for the computed transition of an element
+        that normally animates.
+        """
+        with browser() as engine:
+            engine.open(self.host.base_url + "/home", viewport=(1280, 900), reduced_motion=False)
+            normal = engine.evaluate(
+                "getComputedStyle(document.querySelector('.record-item')).transitionDuration"
+            )
+            engine.open(self.host.base_url + "/home", viewport=(1280, 900), reduced_motion=True)
+            reduced = engine.evaluate(
+                "getComputedStyle(document.querySelector('.record-item')).transitionDuration"
+            )
+        self.assertNotEqual(normal, "0s")
+        self.assertEqual(reduced, "0s")
+
 
 if __name__ == "__main__":
     unittest.main()

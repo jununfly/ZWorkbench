@@ -160,11 +160,18 @@ class Browser:
     def __init__(self, connection: "_WebSocket") -> None:
         self._connection = connection
 
-    def open(self, url: str, viewport=None) -> None:
+    def open(self, url: str, viewport=None, reduced_motion: bool = False) -> None:
         """Navigate to a loopback URL, then apply the viewport override.
 
         The order matters: overriding device metrics before navigation leaves
         the page at a 1x1 viewport, which quietly breaks hit testing.
+
+        ``reduced_motion`` asks the engine to emulate the
+        ``prefers-reduced-motion: reduce`` media feature so a test can observe
+        whether the stylesheet's reduced-motion block actually wins. It is set
+        after navigation: a media feature applied to a not-yet-loaded document
+        would be re-evaluated on load anyway, but setting it last keeps the
+        ordering rule (metrics after navigation) unambiguous.
         """
         self._connection.call("Page.enable")
         # A headless window never gains OS focus, so the document reports
@@ -183,6 +190,12 @@ class Browser:
                 height=height,
                 deviceScaleFactor=1,
                 mobile=False,
+            )
+            time.sleep(NAVIGATION_SETTLE_SECONDS)
+        if reduced_motion:
+            self._connection.call(
+                "Emulation.setEmulatedMedia",
+                features=[{"name": "prefers-reduced-motion", "value": "reduce"}],
             )
             time.sleep(NAVIGATION_SETTLE_SECONDS)
 
