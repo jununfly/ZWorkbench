@@ -25,3 +25,8 @@ docs/plans/research/*-map-v2/
 
 # Finder metadata is never project content.
 .DS_Store
+
+# Node/TypeScript DSH plugin (packages/dsh-zworkbench-bootstrap): install
+# state and compiled output are reproducible artifacts, not source.
+node_modules/
+packages/dsh-zworkbench-bootstrap/lib/
