@@ -1,0 +1,161 @@
+{
+  "schema": "zj-research-collection-status/v1",
+  "protocol": "zj-research-cli/v1",
+  "operation": "collect",
+  "state": "collection-blocked",
+  "brief": {
+    "schema": "zj-research-brief/v1",
+    "topic": "dsh-web as an independent reusable UI plugin capability for ZWorkbench",
+    "criteria": [
+      {
+        "id": "plugin-composition",
+        "question": "Does the repository expose independently mountable DSH/Cordis plugin packages with explicit manifests, bundle patches, client injection declarations, lifecycle/disposer behavior, and a reusable UI composition seam?",
+        "critical": true,
+        "keywords": [
+          "plugin",
+          "Cordis",
+          "cordis.patch.yml",
+          "dsh.client",
+          "inject",
+          "dispose",
+          "mountOnce",
+          "slots"
+        ]
+      },
+      {
+        "id": "ui-velocity-unit",
+        "question": "Which source-level unit capabilities can shorten UI delivery from zero to one, such as reusable React surfaces, settings cards, slots, layout hooks, client runtime loading, or plugin templates, without adopting the whole product?",
+        "critical": true,
+        "keywords": [
+          "React",
+          "settings",
+          "card",
+          "slot",
+          "layout",
+          "renderer",
+          "template",
+          "client"
+        ]
+      },
+      {
+        "id": "host-runtime-contract",
+        "question": "What DSH/Cordis host runtime, SDK, profile, web server, API, workspace, session, and browser assumptions are required to run the candidate plugin, and are those assumptions separable from the full dsh-web shell?",
+        "critical": true,
+        "keywords": [
+          "host",
+          "runtime",
+          "profile",
+          "webServer",
+          "session",
+          "workspace",
+          "api",
+          "sdk",
+          "browser"
+        ]
+      },
+      {
+        "id": "state-ownership",
+        "question": "What state, persistence, execution, network, credentials, telemetry, remote-access, or marketplace responsibilities do the packages introduce, and can they remain outside ZWorkbench's CompositionOwner boundary?",
+        "critical": true,
+        "keywords": [
+          "state",
+          "storage",
+          "session",
+          "telemetry",
+          "remote",
+          "credential",
+          "network",
+          "market",
+          "filesystem"
+        ]
+      },
+      {
+        "id": "local-security-lifecycle",
+        "question": "Can the reusable capability run local-first with explicit permissions, no required remote service, pinned versions, deterministic build inputs, teardown, upgrade/rollback and a clear exit path?",
+        "critical": true,
+        "keywords": [
+          "local",
+          "offline",
+          "permission",
+          "security",
+          "license",
+          "version",
+          "rollback",
+          "upgrade",
+          "Apache"
+        ]
+      },
+      {
+        "id": "integration-evidence",
+        "question": "Does the repository provide reproducible tests, fixtures, build checks or documented integration paths that can validate the selected unit capability independently of the full desktop or market product?",
+        "critical": false,
+        "keywords": [
+          "test",
+          "fixture",
+          "e2e",
+          "build",
+          "check",
+          "profile",
+          "link",
+          "integration"
+        ]
+      }
+    ],
+    "repositories": [
+      {
+        "owner": "zhu1090093659",
+        "name": "dsh-web"
+      }
+    ],
+    "policyVersion": "v1",
+    "budget": {
+      "maxFiles": 96,
+      "maxBytes": 2200000,
+      "deadlineMs": 240000
+    }
+  },
+  "briefFingerprint": "36bdb6e4c8af3cd5699f8667f443f1fab5808f6429caa686823cdde9f30f5692",
+  "preflight": {
+    "schema": "zj-research-github-preflight/v1",
+    "provider": "github",
+    "authentication": {
+      "mode": "anonymous",
+      "tokenConfigured": false
+    },
+    "rateLimit": {
+      "resource": "core",
+      "limit": 60,
+      "remaining": 33,
+      "resetAt": "2026-09-15T07:40:30Z"
+    },
+    "canCollect": true
+  },
+  "ledger": {
+    "relationship": "not-produced",
+    "source": null
+  },
+  "fallback": {
+    "automatic": false,
+    "oldLedgerUsed": false
+  },
+  "error": {
+    "code": "GITHUB_RATE_LIMITED",
+    "message": "GitHub API rate limit blocked collect; no fresh sealed ledger was produced",
+    "operation": "collect",
+    "phase": "compiler",
+    "retryable": true,
+    "details": {
+      "compilerMessage": "GitHub API rate limit exhausted; retry after 2026-09-15T08:24:34.000Z",
+      "returncode": 1,
+      "compilerErrorPayload": {
+        "protocol": "zj-research-cli/v1",
+        "error": "GitHub API rate limit exhausted; retry after 2026-09-15T08:24:34.000Z"
+      }
+    },
+    "recovery": [
+      "wait until the GitHub reset time",
+      "configure a valid GITHUB_TOKEN",
+      "rerun fresh collection"
+    ]
+  }
+}
