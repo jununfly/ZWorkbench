@@ -352,6 +352,19 @@ class UIReferenceProfileContractTests(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertEqual(report["mode"], "design")
         self.assertEqual(report["status"], "target")
+        self.assertTrue(
+            {
+                "implemented",
+                "target",
+                "unknown",
+                "HOLD",
+                "blocked",
+                "migrated",
+                "retired",
+                "incompatible",
+                "source-mismatch",
+            } <= set(report["status_catalog"])
+        )
 
     def test_design_mode_reports_discovered_conventions_and_profile_identity(self):
         discovery = {
@@ -444,6 +457,85 @@ class UIReferenceProfileContractTests(unittest.TestCase):
         report = json.loads(result.stdout)
         self.assertEqual(report["status"], "unknown")
         self.assertIn("manifest-artifact", report["unknowns"])
+
+    def test_design_mode_holds_and_does_not_echo_sensitive_discovery(self):
+        canary = "Bearer discovery-secret-canary"
+        discovery = {
+            "conventions": {
+                "reference_attribute": "data-ref",
+                "renderer": "static-html",
+                "manifest_artifact": "catalog-manifest",
+                "source_anchor": "/Users/alice/private/project",
+                "host_boundary": "loopback-document",
+                "browser": "cdp-compatible",
+                "local_navigation": "relative-entry-point",
+            },
+            "capabilities": ["rendered-surface"],
+            "assumptions": [canary],
+            "unknowns": [],
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            discovery_path = Path(directory) / "discovery.json"
+            discovery_path.write_text(json.dumps(discovery), encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PROFILE_STATUS),
+                    "--mode",
+                    "design",
+                    "--profile",
+                    str(EXAMPLE),
+                    "--discovery",
+                    str(discovery_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["status"], "HOLD")
+        self.assertEqual(report["reason"], "profile-or-discovery")
+        self.assertNotIn("discovery-secret-canary", result.stdout)
+        self.assertNotIn("/Users/alice/private/project", result.stdout)
+
+    def test_design_mode_holds_for_duplicate_discovery_fields(self):
+        raw = (
+            '{"conventions":{"reference_attribute":"data-ref",'
+            '"renderer":"static-html","manifest_artifact":"catalog-manifest",'
+            '"source_anchor":"repository-relative-content-identity",'
+            '"host_boundary":"loopback-document","browser":"cdp-compatible",'
+            '"local_navigation":"relative-entry-point"},'
+            '"capabilities":["rendered-surface","manifest-artifact",'
+            '"source-provenance","review-session","local-navigation"],'
+            '"capabilities":["rendered-surface","manifest-artifact",'
+            '"source-provenance","review-session","local-navigation"],'
+            '"assumptions":[],"unknowns":[]}'
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            discovery_path = Path(directory) / "duplicate-discovery.json"
+            discovery_path.write_text(raw, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(PROFILE_STATUS),
+                    "--mode",
+                    "design",
+                    "--profile",
+                    str(EXAMPLE),
+                    "--discovery",
+                    str(discovery_path),
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        self.assertEqual(report["status"], "HOLD")
+        self.assertEqual(report["reason"], "profile-or-discovery")
 
     def test_audit_mode_reports_missing_profile_as_hold(self):
         result = subprocess.run(
