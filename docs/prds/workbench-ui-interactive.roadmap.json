@@ -176,13 +176,20 @@
       "id": "1-1-5",
       "uid": "01a0bda021a3-6c8339b962",
       "label": "F5 计划卡（done/current/pending 步骤，投影驱动）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F5 计划卡落位与 done/current/pending 三态策略？",
+          "answer": "复用现有 plan-section + _render_plan + _project_plan（PRD 同 F4 内聚，不重建）。缺口：_status() allowed 集无 done/current/pending，owner plan step status 经 _status 全归 unknown，三态无区分。修复：(1) _render_plan 内新增专用 plan step-state 映射（done→plan-done / current→plan-current / pending→plan-pending，兼容 completed/running），不污染全局 _status；(2) ui_style 补全 .plan-done(✓+完成色) / .plan-current(左侧高亮条+强调) / .plan-pending(暗化) 三态视觉；(3) plan-section 加「计划卡」标题 + 步骤态图例，成为独立可识别组件；(4) 补 F5 测试。ui_matrix 已注册 home.plan-next-step(visible)。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-6": {
       "id": "1-1-6",
@@ -355,7 +362,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-20 20:16:25",
+    "updated": "2026-09-20 20:34:04",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }

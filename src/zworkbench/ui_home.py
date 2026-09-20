@@ -139,23 +139,60 @@ def _items(value: Any) -> Iterable[Any]:
         return (value,)
 
 
+_PLAN_STEP_STATE_MAP = {
+    "done": "done",
+    "completed": "done",
+    "current": "current",
+    "running": "current",
+    "in-progress": "current",
+    "pending": "pending",
+    "not-started": "pending",
+    "todo": "pending",
+    "unknown": "pending",
+}
+
+_PLAN_STEP_LABEL = {
+    "done": "已完成",
+    "current": "进行中",
+    "pending": "待办",
+}
+
+_PLAN_STEP_MARKER = {
+    "done": "✓",
+    "current": "▸",
+    "pending": "·",
+}
+
+
+def _plan_step_state(value: Any) -> str:
+    """Map a plan-step status to a CSS state token (done/current/pending).
+
+    Isolated from ``_status`` so plan-card semantics never leak into the
+    run-status chip vocabulary.
+    """
+    candidate = str(value or "unknown").strip().lower().replace("_", "-")
+    return _PLAN_STEP_STATE_MAP.get(candidate, "pending")
+
+
 def _render_plan(value: Any) -> str:
     if isinstance(value, Mapping) and (value.get("steps") or value.get("items")):
         rows = []
         for index, item in enumerate(_items(value), 1):
             item_map = _mapping(item)
-            state = _status(item_map.get("state", item_map.get("status", "unknown")))
+            state = _plan_step_state(item_map.get("state", item_map.get("status", "unknown")))
             title = item_map.get("title") or item_map.get("label") or item_map.get("text") or "unknown"
             detail = item_map.get("detail") or item_map.get("description")
+            marker = _PLAN_STEP_MARKER.get(state, str(index))
             rows.append(
                 '<li class="plan-row plan-{state}">'
-                '<span class="plan-step" aria-hidden="true">{index}</span>'
+                '<span class="plan-step" aria-hidden="true">{marker}</span>'
                 '<span><strong>{title}</strong>{detail}</span>'
-                '<code>{state}</code></li>'.format(
+                '<code>{label}</code></li>'.format(
                     state=state,
-                    index=index,
+                    marker=marker,
                     title=_text(title),
                     detail=("<small>{0}</small>".format(_text(detail)) if detail else ""),
+                    label=_text(_PLAN_STEP_LABEL.get(state, state)),
                 )
             )
         return '<ol class="plan-list">{0}</ol>'.format("".join(rows))
@@ -412,9 +449,14 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
         '<div class="intent-context"><span>mode</span><code>{mode}</code><span>workspace</span><code>{workspace}</code></div>'
         '</section>'
-        '<section {plan_ref} class="home-section plan-section">'
-        '<div class="section-heading"><div><p class="eyebrow">NEXT STEPS</p><h2>计划与下一步</h2></div>'
-        '<span class="section-source">view model</span></div>{plan}</section>'
+        '<section {plan_ref} class="home-section plan-section plan-card">'
+        '<div class="section-heading"><div><p class="eyebrow">PLAN CARD · 计划卡</p><h2>计划与下一步</h2></div>'
+        '<span class="section-source">view model</span></div>{plan}'
+        '<ul class="plan-legend" aria-label="步骤态图例">'
+        '<li><span class="legend-dot legend-done">✓</span>已完成</li>'
+        '<li><span class="legend-dot legend-current">▸</span>进行中</li>'
+        '<li><span class="legend-dot legend-pending">·</span>待办</li>'
+        '</ul></section>'
         '<div class="home-secondary-grid">'
         '<section {artifacts_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">ARTIFACTS</p><h2>产物</h2></div></div>{artifacts}</section>'
         '<section {evidence_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">EVIDENCE</p><h2>证据</h2></div></div>{evidence}</section>'
