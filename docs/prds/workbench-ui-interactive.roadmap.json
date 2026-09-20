@@ -195,13 +195,20 @@
       "id": "1-1-6",
       "uid": "01a0bda02329-84398608e6",
       "label": "F7 运行事实检查器（渲染壳；实时值留 product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F7 落点与本轮形态",
+          "answer": "复用既有 home.run-facts inspector（matrix 固定 unit，不新增 ui-ref）。本轮只渲染壳：补齐 mode / worker(provider·model) / approval / effect / evidence-links 五组字段；值由 owner-backed 投影提供，缺失即 unknown；evidence 链接指向只读路由 /record-view?run_id=（不触碰运行时）。实时值（来自运行时/动态投影）留 1-2-3 product gate。测试覆盖：字段渲染、unknown 降级、evidence 空态、view-model 投影。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-7": {
       "id": "1-1-7",
@@ -362,7 +369,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-20 20:34:04",
+    "updated": "2026-09-20 21:19:41",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
