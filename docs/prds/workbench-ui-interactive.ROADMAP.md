@@ -1,13 +1,13 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-20 15:30:39
+> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-20 17:40:57
 
 [~][X+] 1. 完整工作台 Web-UI（含交互）执行路线图
 ├── [~][X+] 1-1. Round 1 — 纯 UI 壳 + 只读投影（本轮构建）
 │   ├── [x][X+] 1-1-1. F1 IA 方向落定：A 会话优先（D1 已决）
 │   ├── [x][X+] 1-1-2. F2 顶栏状态语义 shell（tags/pills 状态语义）
-│   ├── [ ][X+] 1-1-3. F3 侧栏工作记录导航（A 向：新建/近期/工作区）
+│   ├── [x][X+] 1-1-3. F3 侧栏工作记录导航（A 向：新建/近期/工作区）
 │   ├── [ ][X+] 1-1-4. F4 会话消息流（message/avatar/meta/plan-card 只读渲染）
 │   ├── [ ][X+] 1-1-5. F5 计划卡（done/current/pending 步骤，投影驱动）
 │   ├── [ ][X+] 1-1-6. F7 运行事实检查器（渲染壳；实时值留 product gate）

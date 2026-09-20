@@ -110,6 +110,32 @@ class HomeSurfaceMarkupTests(unittest.TestCase):
         run_markup = render_home(run_view)
         self.assertIn('class="scope-tag status-running"', run_markup)
 
+    def test_side_panel_exposes_navigation_groups_and_empty_states(self):
+        # F3: the sidebar carries a navigation panel with a new-record action
+        # and recent/workspace groups, degrading to explicit empty states when
+        # the owner-backed projection has no entries yet.
+        markup = render_home(VIEW)
+        self.assertIn('class="side-panel"', markup)
+        self.assertIn("新建工作记录", markup)
+        self.assertIn('aria-disabled="true"', markup)
+        self.assertIn("近期工作", markup)
+        self.assertIn("工作区", markup)
+        self.assertIn("暂无近期工作", markup)
+        self.assertIn("暂无工作区", markup)
+        # The sidebar wrapper keeps the records list in the same column.
+        self.assertIn('class="home-sidebar"', markup)
+
+    def test_side_panel_renders_recent_and_workspace_entries(self):
+        view = dict(VIEW)
+        view["recent"] = [{"title": "上周的会话", "updated_at": "3 天前"}]
+        view["workspaces"] = [{"name": "ZWorkbench case-local", "mode": "local_read_only"}]
+        markup = render_home(view)
+        self.assertIn('class="side-list"', markup)
+        self.assertIn("上周的会话", markup)
+        self.assertIn("ZWorkbench case-local", markup)
+        self.assertNotIn("暂无近期工作", markup)
+        self.assertNotIn("暂无工作区", markup)
+
 
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
