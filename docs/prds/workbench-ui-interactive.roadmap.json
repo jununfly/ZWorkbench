@@ -1,0 +1,353 @@
+{
+  "title": "完整工作台 Web-UI（含交互）执行路线图",
+  "description": "workbench-ui-interactive.md 的执行追踪；一张树，按 gate 层三主枝",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a0bda01599-08dd7c1e35",
+      "label": "完整工作台 Web-UI（含交互）执行路线图",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3"
+      ],
+      "decisions": [
+        {
+          "q": "路线图结构：一张树 vs 多张？",
+          "answer": "一张树（单 JSON carrier）",
+          "note": "Q2 已拍板：单 JSON 事实源"
+        },
+        {
+          "q": "一张树内的切分维度？",
+          "answer": "按 gate 层切三主枝：Round1 纯UI壳 / Product gate 触碰运行时 / B-C 变体",
+          "note": "Q1 默认按 gate 层"
+        },
+        {
+          "q": "D1 IA 方向",
+          "answer": "A 会话优先；B 画布 / C 日记留后续独立 gate，本轮不构建",
+          "note": ""
+        },
+        {
+          "q": "D2 交互深度",
+          "answer": "本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态；F6/F12 触碰 Run/Approval/Effect 留独立 product gate",
+          "note": ""
+        },
+        {
+          "q": "D3 三变体切换器",
+          "answer": "保留为开发期调试工具（?variant=A/B/C），不向最终用户暴露",
+          "note": ""
+        },
+        {
+          "q": "Q4 ?variant= 实现方式",
+          "answer": "纯 client 端 query 参数分支，不接入 ui_build 生产构建管线",
+          "note": ""
+        },
+        {
+          "q": "F18 证据 live replay",
+          "answer": "明确不做（ADR 0004；原型 no live replay）",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a0bda01756-4b1ab6ff81",
+      "label": "Round 1 — 纯 UI 壳 + 只读投影（本轮构建）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4",
+        "1-1-5",
+        "1-1-6",
+        "1-1-7",
+        "1-1-8",
+        "1-1-9",
+        "1-1-10",
+        "1-1-11",
+        "1-1-12"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a0bda01944-89b249ab06",
+      "label": "Product gate — 触碰运行时（独立 product scope gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a0bda01abf-e9b09ad645",
+      "label": "B-C 变体 — B 画布 / C 日记（后续独立 gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a0bda01c24-46b5767c5f",
+      "label": "F1 IA 方向落定：A 会话优先（D1 已决）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a0bda01d89-eb2232567b",
+      "label": "F2 顶栏状态语义 shell（tags/pills 状态语义）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "顶栏 shell 落地：补 icon-button（?aria-disabled 只读壳）+ 状态 tag 按 workspace 状态映射 status-* 颜色语义；CSS 加 .icon-button、.workspace-meta 右对齐。tests/test_ui_home_surface.py 新增断言通过，全 UI 套件无回归。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a0bda01ee2-2780fb4fc4",
+      "label": "F3 侧栏工作记录导航（A 向：新建/近期/工作区）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "uid": "01a0bda02044-24cd367205",
+      "label": "F4 会话消息流（message/avatar/meta/plan-card 只读渲染）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-5": {
+      "id": "1-1-5",
+      "uid": "01a0bda021a3-6c8339b962",
+      "label": "F5 计划卡（done/current/pending 步骤，投影驱动）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-6": {
+      "id": "1-1-6",
+      "uid": "01a0bda02329-84398608e6",
+      "label": "F7 运行事实检查器（渲染壳；实时值留 product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-7": {
+      "id": "1-1-7",
+      "uid": "01a0bda02509-7c3949306f",
+      "label": "F10 运行轨道栏（渲染壳；可执行 Run 留 product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-8": {
+      "id": "1-1-8",
+      "uid": "01a0bda02675-b1693ddb26",
+      "label": "F11 场景状态机 UI（empty/planning/approval/stopped 四态渲染）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-9": {
+      "id": "1-1-9",
+      "uid": "01a0bda027da-8123d0ef1d",
+      "label": "F13 安全停止 / reconcile（横幅 + stopped 态渲染；越界判定留 product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-10": {
+      "id": "1-1-10",
+      "uid": "01a0bda0295a-db929e4c38",
+      "label": "F14 扩展 DSH 只读投影（不引 dsh-web 运行时，ADR 0007）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-11": {
+      "id": "1-1-11",
+      "uid": "01a0bda02ac7-b7436047e1",
+      "label": "F15 r2 协同可视化（profile_status / runtime_status 呈现）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-12": {
+      "id": "1-1-12",
+      "uid": "01a0bda02c32-724b69afaa",
+      "label": "F19 三变体调试切换器（?variant=A/B/C，纯 client 端分支）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a0bda02d9d-09fb6171ba",
+      "label": "F6 输入 composer 真实发送（触发 agent Run）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a0bda02f10-428e0164fe",
+      "label": "F12 审批执行 UI（apply diff / Approval / effect receipt）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a0bda03089-1d4072fdae",
+      "label": "F7 实时值（来自投影 / 运行时）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a0bda031f8-222a690595",
+      "label": "F10 可执行 Run（按钮触发，触碰 CompositionOwner）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "uid": "01a0bda03367-4216e2bf9f",
+      "label": "F13 越界判定逻辑（identity unresolved → reconcile）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a0bda034d5-f9e6d16f1e",
+      "label": "F8 命令画布（canvas-layout：command-path/decision/artifact/run-rail）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a0bda03644-579b57e91b",
+      "label": "F9 项目日记（journal-layout：index/reading/evidence-table）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-09-20 15:03:00",
+    "updated": "2026-09-20 15:30:39",
+    "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
+  }
+}

@@ -252,6 +252,12 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
     workspace_name = workspace.get("name") or (raw_workspace if raw_workspace not in (None, "") and not workspace else "unknown")
     workspace_mode = workspace.get("mode") or "unknown"
     workspace_status = workspace.get("status") or view.get("workspace_status") or "unknown"
+    status_token = _status(workspace_status)
+    _STATUS_COLOR_TOKENS = {
+        "created", "running", "recovering", "completed",
+        "failed", "safe-stopped", "denied", "ready", "not-applicable",
+    }
+    status_class = "status-" + status_token if status_token in _STATUS_COLOR_TOKENS else "scope-target"
     intent = view.get("intent", "unknown")
     intent_title = _value_title(intent, "当前工作")
     intent_summary = _value_summary(intent)
@@ -265,7 +271,11 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<svg viewBox="0 0 24 24"><path d="M5 4h14v13H8l-3 3V4Z"/><path d="m9 9 3 3 3-3"/></svg>'
         '</span><span class="brand-name">ZWorkbench</span><span class="breadcrumb">/ workbench</span></div>'
         '<div class="workspace-meta"><span class="meta-pill"><span class="status-dot" aria-hidden="true"></span>{workspace}</span>'
-        '<span class="scope-tag scope-{scope}">{mode}</span><span class="scope-tag scope-target">{status}</span></div>'
+        '<span class="scope-tag scope-{scope}">{mode}</span>'
+        '<span class="scope-tag {status_class}">{status}</span>'
+        '<button type="button" class="icon-button" aria-disabled="true" aria-label="工作台信息（只读）">'
+        '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 11v5M12 8h.01"/></svg>'
+        '</button></div>'
         '</header>'
         '<nav class="view-nav" aria-label="工作台视图">'
         '<a href="/home" tabindex="-1" aria-current="page">工作台</a>'
@@ -310,6 +320,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         mode=_text(workspace_mode),
         scope=_scope(workspace_status),
         status=_text(workspace_status),
+        status_class=status_class,
         facts=_render_run_facts(view.get("run_facts", {})),
         items=items,
         record_count=len(records),
