@@ -358,6 +358,16 @@ main {
 .fact-row dd { max-width: 170px; overflow: hidden; margin: 0; color: var(--muted); text-align: right; text-overflow: ellipsis; white-space: nowrap; }
 .source-note { margin: 13px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
 
+/* F7 — run-facts inspector: evidence links (render shell, read-only routes) */
+.evidence-links { margin: 13px 0 0; padding-top: 12px; border-top: 1px solid var(--line); }
+.evidence-links .eyebrow { margin: 0 0 8px; }
+.evidence-link-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.evidence-link-row { display: grid; gap: 2px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-raised); }
+.evidence-link { color: var(--sage-strong); font-family: var(--mono); font-size: 10px; text-decoration: none; }
+.evidence-link:hover { text-decoration: underline; }
+.evidence-link-row small { color: var(--quiet); font-family: var(--mono); font-size: 9px; word-break: break-all; }
+.evidence-empty { color: var(--quiet); font-family: var(--mono); font-size: 10px; }
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is
