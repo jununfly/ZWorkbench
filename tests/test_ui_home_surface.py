@@ -91,6 +91,25 @@ class HomeSurfaceMarkupTests(unittest.TestCase):
         self.assertIn("source unknown", markup)
         self.assertNotIn("owner-backed", markup)
 
+    def test_top_bar_exposes_icon_button_and_status_semantics(self):
+        # F2: the workspace bar carries the icon-button shell and status color
+        # semantics on its status tag, without any run-time action.
+        markup = render_home(VIEW)
+        self.assertIn('class="icon-button"', markup)
+        self.assertIn("工作台信息（只读）", markup)
+        self.assertIn('aria-disabled="true"', markup)
+        # A non run-status workspace status keeps the amber fallback.
+        self.assertIn('class="scope-tag scope-target"', markup)
+        # A run-status workspace status maps to a status-* color class.
+        run_view = dict(VIEW)
+        run_view["workspace"] = {
+            "name": "ZWorkbench case-local",
+            "mode": "local_read_only",
+            "status": "running",
+        }
+        run_markup = render_home(run_view)
+        self.assertIn('class="scope-tag status-running"', run_markup)
+
 
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
