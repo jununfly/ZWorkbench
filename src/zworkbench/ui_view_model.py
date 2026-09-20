@@ -254,6 +254,59 @@ def _project_preflight(value: Any) -> Dict[str, Any]:
     }
 
 
+def _project_conversation(snapshot: Mapping[str, Any]) -> Any:
+    """Project the owner's runs into a read-only conversation stream.
+
+    Each message mirrors one recorded run: a role, its run identity, the status
+    and time, the recorded intent, and -- when the run carried a plan -- a
+    plan-card whose step states come straight from the owner-backed projection.
+    No message is synthesised: an owner with no runs yields ``UNKNOWN`` and the
+    view degrades to an explicit empty state.
+    """
+    messages = []
+    for run in snapshot.get("runs") or ():
+        if not isinstance(run, Mapping):
+            continue
+        run_id = run.get("run_id")
+        metadata = run.get("metadata") or {}
+        metadata = metadata if isinstance(metadata, Mapping) else {}
+        input_value = run.get("input") or {}
+        input_value = input_value if isinstance(input_value, Mapping) else {}
+        plan = metadata.get("plan")
+        if isinstance(plan, list):
+            plan_proj: Any = {
+                "steps": [
+                    {
+                        "title": display_text(step.get("title", UNKNOWN)),
+                        "status": display_text(step.get("status", UNKNOWN)),
+                        **(
+                            {"description": display_text(step["description"])}
+                            if isinstance(step, Mapping) and "description" in step
+                            else {}
+                        ),
+                    }
+                    for step in plan
+                    if isinstance(step, Mapping)
+                ]
+            }
+        else:
+            plan_proj = UNKNOWN
+        messages.append(
+            {
+                "role": "agent",
+                "avatar_label": "A",
+                "run_id": display_text(run_id),
+                "status": display_status(run.get("status", UNKNOWN)),
+                "updated_at": display_text(run.get("updated_at", UNKNOWN)),
+                "title": display_text(run.get("task_type") or run_id),
+                "intent": display_intent_summary(input_value.get("prompt", UNKNOWN)),
+                "plan": plan_proj,
+                "source": "CompositionOwner",
+            }
+        )
+    return messages or UNKNOWN
+
+
 def home_view_model(owner: Any) -> Dict[str, Any]:
     """Project the owner's runs into the home surface's presentation model.
 
@@ -340,6 +393,7 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         "artifacts": _project_artifacts(snapshot, latest.get("run_id")) if latest else UNKNOWN,
         "evidence": _project_evidence(snapshot, latest.get("run_id")) if latest else UNKNOWN,
         "preflight_result": _project_preflight(metadata.get("preflight")),
+        "conversation": _project_conversation(snapshot),
     }
 
 

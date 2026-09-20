@@ -157,13 +157,20 @@
       "id": "1-1-4",
       "uid": "01a0bda02044-24cd367205",
       "label": "F4 会话消息流（message/avatar/meta/plan-card 只读渲染）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F4 在 home-content 的落位？",
+          "answer": "作为 home-content 首段（CONVERSATION 区），A 会话优先 IA 的中央工作区；既有 intent/plan/artifacts 段保留在下方，不重建",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-5": {
       "id": "1-1-5",
@@ -348,7 +355,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-20 17:40:57",
+    "updated": "2026-09-20 20:16:25",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
