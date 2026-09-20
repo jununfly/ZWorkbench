@@ -314,6 +314,22 @@ main {
 .plan-step { display: grid; width: 20px; height: 20px; place-items: center; color: var(--quiet); border: 1px solid var(--line); border-radius: 50%; font-family: var(--mono); font-size: 9px; }
 .plan-completed, .plan-running { background: rgba(110, 111, 80, 0.055); }
 .plan-completed .plan-step, .plan-running .plan-step { color: var(--sage-strong); border-color: rgba(110, 111, 80, 0.42); background: var(--sage-wash); }
+/* F5 plan card — done / current / pending step states (owner-backed) */
+.plan-row.plan-done { color: var(--ink); }
+.plan-row.plan-done .plan-step { color: var(--sage-strong); border-color: rgba(110, 111, 80, 0.42); background: var(--sage-wash); }
+.plan-row.plan-done strong { color: var(--sage-strong); }
+.plan-row.plan-current { border-left: 3px solid var(--amber); padding-left: 9px; background: var(--amber-wash); }
+.plan-row.plan-current .plan-step { color: var(--amber); border-color: var(--amber); background: var(--surface-raised); }
+.plan-row.plan-current strong { color: var(--ink); }
+.plan-row.plan-pending { color: var(--quiet); }
+.plan-row.plan-pending .plan-step { color: var(--quiet); border-color: var(--line-soft); }
+.plan-row.plan-pending strong { color: var(--muted); }
+.plan-legend { display: flex; gap: 16px; margin: 12px 0 0; padding: 0; list-style: none; font-size: 11px; color: var(--quiet); }
+.plan-legend li { display: flex; align-items: center; gap: 6px; }
+.legend-dot { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--line); font-size: 10px; font-family: var(--mono); }
+.legend-done { color: var(--sage-strong); border-color: rgba(110, 111, 80, 0.42); background: var(--sage-wash); }
+.legend-current { color: var(--amber); border-color: var(--amber); background: var(--surface-raised); }
+.legend-pending { color: var(--quiet); border-color: var(--line-soft); }
 .section-copy { margin: 15px 0 0; color: var(--muted); line-height: 1.6; }
 .section-empty { color: var(--quiet); }
 .home-secondary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 17px; padding: 17px 0; }

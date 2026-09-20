@@ -217,6 +217,87 @@ class HomeConversationTests(unittest.TestCase):
         self.assertEqual(message["plan"]["steps"][0]["status"], "completed")
 
 
+class HomePlanCardTests(unittest.TestCase):
+    def test_plan_card_renders_done_current_pending_step_states(self):
+        # F5: the plan card renders a working-plan's done/current/pending steps,
+        # state driven by the owner-backed projection (not run-status vocabulary).
+        view = dict(VIEW)
+        view["plan"] = {
+            "steps": [
+                {"title": "锁定 IA 方向", "status": "done"},
+                {"title": "实现会话消息流", "status": "current"},
+                {"title": "接入运行轨道栏", "status": "pending"},
+            ]
+        }
+        markup = render_home(view)
+        self.assertIn('class="home-section plan-section plan-card"', markup)
+        self.assertIn("PLAN CARD", markup)
+        self.assertIn("plan-row plan-done", markup)
+        self.assertIn("plan-row plan-current", markup)
+        self.assertIn("plan-row plan-pending", markup)
+        self.assertIn(">✓<", markup)
+        self.assertIn(">▸<", markup)
+        self.assertIn(">·<", markup)
+        self.assertIn('class="plan-legend"', markup)
+        self.assertIn("已完成", markup)
+        self.assertIn("进行中", markup)
+        self.assertIn("待办", markup)
+        audit = audit_rendered_html(home_manifest(), markup)
+        self.assertEqual(audit["undeclared"], ())
+
+    def test_plan_card_maps_completed_running_to_done_current(self):
+        # Backwards-compatible: an owner projection using run-status vocabulary
+        # still lands on the right plan-card state, never plan-completed/-running.
+        view = dict(VIEW)
+        view["plan"] = {
+            "steps": [
+                {"title": "已完成的步骤", "status": "completed"},
+                {"title": "进行中的步骤", "status": "running"},
+            ]
+        }
+        markup = render_home(view)
+        self.assertIn("plan-row plan-done", markup)
+        self.assertIn("plan-row plan-current", markup)
+        self.assertNotIn("plan-row plan-completed", markup)
+        self.assertNotIn("plan-row plan-running", markup)
+
+    def test_view_model_projection_preserves_plan_step_states(self):
+        # The owner-backed facade must pass plan step states through untouched
+        # (done/current/pending) so the plan card can drive its own vocabulary.
+        class FakeOwner:
+            def snapshot(self):
+                return {
+                    "runs": [
+                        {
+                            "run_id": "r1",
+                            "status": "completed",
+                            "updated_at": "t1",
+                            "task_type": "local_read_only_run",
+                            "input": {"prompt": "do x"},
+                            "metadata": {
+                                "plan": [
+                                    {"title": "s1", "status": "done"},
+                                    {"title": "s2", "status": "current"},
+                                    {"title": "s3", "status": "pending"},
+                                ]
+                            },
+                        }
+                    ]
+                }
+
+        model = home_view_model(FakeOwner())
+        steps = model["plan"]["steps"]
+        self.assertEqual(steps[0]["status"], "done")
+        self.assertEqual(steps[1]["status"], "current")
+        self.assertEqual(steps[2]["status"], "pending")
+
+    def test_plan_card_section_renders_without_plan(self):
+        markup = render_home({})
+        self.assertIn('class="home-section plan-section plan-card"', markup)
+        self.assertIn("PLAN CARD", markup)
+        self.assertIn('class="plan-legend"', markup)
+
+
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
     def setUp(self):
