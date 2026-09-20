@@ -36,6 +36,8 @@ HOME_REFS = (
     ("home.evidence", "证据区", "region", "home.root"),
     ("home.preflight-run.action", "预检并运行", "action", "home.root"),
     ("home.preflight-result", "预检结果", "detail", "home.preflight-run.action"),
+    ("home.conversation", "会话消息流", "region", "home.root"),
+    ("home.conversation.message", "会话消息", "list-item", "home.conversation"),
 )
 
 
@@ -279,6 +281,66 @@ def _render_run_facts(value: Any) -> str:
     )
 
 
+def _render_conversation(view: Mapping[str, Any]) -> str:
+    """F4 — A-session conversation message stream, read-only.
+
+    Each message mirrors one owner-backed work record: a role avatar, a meta
+    row (run identity, status, time) and the recorded intent, with an embedded
+    plan-card whose step states come from ``ui_view_model``. The stream never
+    invents events and never reaches back into the owner; an absent projection
+    degrades to an explicit empty state.
+    """
+    messages = view.get("conversation")
+    if not isinstance(messages, (list, tuple)) or not messages:
+        return '<p class="conversation-empty">暂无会话消息</p>'
+    role_labels = {"agent": "智能体", "human": "我", "system": "系统"}
+    rows = []
+    for message in messages:
+        m = _mapping(message)
+        role = _text(m.get("role") or "agent")
+        avatar = _text((m.get("avatar_label") or role[:1].upper() or "A"))
+        run_id = m.get("run_id") or "unknown"
+        updated = m.get("updated_at") or "unknown"
+        title = m.get("title") or run_id
+        intent = m.get("intent") or "unknown"
+        plan = m.get("plan")
+        plan_html = (
+            _render_plan(plan)
+            if isinstance(plan, Mapping) and (plan.get("steps") or plan.get("items"))
+            else ""
+        )
+        article = (
+            '<article class="msg msg-{role}" data-ui-ref="home.conversation.message">'
+            '<span class="msg-avatar" aria-hidden="true">{avatar}</span>'
+            '<div class="msg-body">'
+            '<div class="msg-meta">'
+            '<span class="msg-role">{role_label}</span>'
+            '<code class="msg-run">{run_id}</code>'
+            '{status}'
+            '<time class="msg-time">{time}</time>'
+            '</div>'
+            '<div class="msg-content"><p class="msg-title">{title}</p>'
+            '<p class="msg-intent">{intent}</p></div>'
+            '{plan}'
+            '</div></article>'
+        ).format(
+            role=_text(role),
+            avatar=avatar,
+            role_label=_text(role_labels.get(role, role)),
+            run_id=_text(run_id),
+            status=_status_chip(
+                m.get("status") or "unknown",
+                source=m.get("source", "CompositionOwner"),
+            ),
+            time=_text(updated),
+            title=_text(title),
+            intent=_text(intent),
+            plan=plan_html,
+        )
+        rows.append(article)
+    return '<ol class="conversation-list">{0}</ol>'.format("".join(rows))
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -341,6 +403,10 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<p class="records-boundary">只读索引 · 不在浏览器保存 Run 状态</p></nav>'
         '</div>'
         '<section class="home-content">'
+        '<section {conv_ref} class="home-section conversation-section">'
+        '<div class="section-heading"><div><p class="eyebrow">CONVERSATION</p>'
+        '<h2>会话消息流</h2></div><span class="section-source">view model</span></div>'
+        '{conversation}</section>'
         '<section {intent_ref} class="home-section intent-section">'
         '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
         '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
@@ -364,6 +430,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),
         side_panel=_render_side_panel(view),
+        conv_ref=attribute_text(resolved, "home.conversation"),
+        conversation=_render_conversation(view),
         intent_ref=attribute_text(resolved, "home.current-intent"),
         plan_ref=attribute_text(resolved, "home.plan-next-step"),
         artifacts_ref=attribute_text(resolved, "home.artifacts"),

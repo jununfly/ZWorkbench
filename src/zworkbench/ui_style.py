@@ -459,6 +459,45 @@ body:has([data-ui-panel]:not([hidden])) {
   white-space: nowrap;
 }
 
+/* F4 — conversation message stream (A-session-first, read-only projection).
+   The avatar column is fixed; the body uses minmax(0, 1fr) so a long run id or
+   plan never forces horizontal scroll, and the whole block inherits the
+   reduced-motion rule declared last in this sheet. */
+.conversation-section { padding-bottom: 24px; }
+.conversation-empty { margin: 14px 0 0; color: var(--quiet); font-size: 12px; line-height: 1.5; }
+.conversation-list { display: flex; flex-direction: column; gap: 14px; margin: 14px 0 0; padding: 0; list-style: none; }
+.msg { display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; min-width: 0; }
+.msg-avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--sage-strong);
+  border: 1px solid rgba(110, 111, 80, 0.34);
+  border-radius: 11px;
+  background: var(--sage-wash);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+.msg-body {
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-raised);
+  box-shadow: var(--elevation-1);
+}
+.msg-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 7px; color: var(--quiet); font-family: var(--mono); font-size: 10px; }
+.msg-role { color: var(--sage-strong); font-weight: 600; }
+.msg-run { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg-time { margin-left: auto; color: var(--quiet); }
+.msg-content { min-width: 0; }
+.msg-title { margin: 0; color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: -0.02em; }
+.msg-intent { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.msg .plan-list { margin: 11px 0 0; }
+
 /* Last, deliberately. These rules have the same specificity as the ones above,
    so ordering is what decides the outcome -- a media query placed earlier is
    silently overridden, which string inspection of the stylesheet cannot show.

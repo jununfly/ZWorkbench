@@ -18,6 +18,7 @@ from browser import browser, chrome_available
 from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
+from zworkbench.ui_view_model import home_view_model, UNKNOWN
 
 
 VIEW = {
@@ -135,6 +136,85 @@ class HomeSurfaceMarkupTests(unittest.TestCase):
         self.assertIn("ZWorkbench case-local", markup)
         self.assertNotIn("暂无近期工作", markup)
         self.assertNotIn("暂无工作区", markup)
+
+
+CONVERSATION_VIEW = dict(VIEW)
+CONVERSATION_VIEW["conversation"] = [
+    {
+        "role": "agent",
+        "avatar_label": "A",
+        "run_id": "run-msg-01",
+        "status": "completed",
+        "updated_at": "刚刚",
+        "title": "为工作台建立第一条 UI seam",
+        "intent": "已记录输入",
+        "plan": {
+            "steps": [
+                {"title": "完成首页视觉壳", "status": "completed"},
+                {"title": "补齐负向状态", "status": "running"},
+            ]
+        },
+        "source": "CompositionOwner",
+    },
+]
+
+
+class HomeConversationTests(unittest.TestCase):
+    def test_conversation_stream_renders_messages_with_avatar_meta_and_plan_card(self):
+        # F4: the A-session conversation stream is the lead home section and
+        # renders each work record as a message with avatar, meta and an
+        # owner-backed plan-card.
+        markup = render_home(CONVERSATION_VIEW)
+        self.assertIn("会话消息流", markup)
+        self.assertIn('class="msg msg-agent"', markup)
+        self.assertIn('class="msg-avatar"', markup)
+        self.assertIn(">A<", markup)
+        self.assertIn('data-ui-ref="home.conversation.message"', markup)
+        self.assertIn("智能体", markup)
+        self.assertIn("run-msg-01", markup)
+        # Embedded plan-card keeps its step states from ui_view_model.
+        self.assertIn('class="plan-list"', markup)
+        self.assertIn("完成首页视觉壳", markup)
+        self.assertIn('data-status="completed"', markup)
+        audit = audit_rendered_html(home_manifest(), markup)
+        self.assertEqual(audit["undeclared"], ())
+        self.assertEqual(audit["instances"]["home.conversation.message"], 1)
+
+    def test_conversation_stream_degrades_to_explicit_empty_state(self):
+        markup = render_home({})
+        self.assertIn('class="conversation-empty"', markup)
+        self.assertIn("暂无会话消息", markup)
+        self.assertNotIn('class="msg ', markup)
+
+    def test_view_model_projects_runs_into_read_only_conversation_stream(self):
+        # The owner-backed facade composes the message stream from recorded runs
+        # without reaching back into the owner for any writable path.
+        class FakeOwner:
+            def snapshot(self):
+                return {
+                    "runs": [
+                        {
+                            "run_id": "r1",
+                            "status": "completed",
+                            "updated_at": "t1",
+                            "task_type": "local_read_only_run",
+                            "input": {"prompt": "do x"},
+                            "metadata": {
+                                "plan": [{"title": "step1", "status": "completed"}]
+                            },
+                        }
+                    ]
+                }
+
+        model = home_view_model(FakeOwner())
+        self.assertNotEqual(model["conversation"], UNKNOWN)
+        message = model["conversation"][0]
+        self.assertEqual(message["role"], "agent")
+        self.assertEqual(message["run_id"], "r1")
+        self.assertEqual(message["status"], "completed")
+        self.assertEqual(message["intent"], "已记录输入")
+        self.assertEqual(message["plan"]["steps"][0]["title"], "step1")
+        self.assertEqual(message["plan"]["steps"][0]["status"], "completed")
 
 
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
