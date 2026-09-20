@@ -196,15 +196,23 @@ main {
   grid-template-areas: "sidebar content inspector";
 }
 
+.home-sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+  background: var(--surface);
+  box-shadow: 1px 0 0 var(--line);
+  display: flex;
+  flex-direction: column;
+}
+
 .home-records, .home-inspector {
   min-width: 0;
   background: var(--surface);
 }
 
 .home-records {
-  grid-area: sidebar;
+  flex: 1 1 auto;
   padding: 17px 12px;
-  border-right: 1px solid var(--line);
 }
 
 .home-inspector {
@@ -212,6 +220,18 @@ main {
   padding: 19px 16px;
   border-left: 1px solid var(--line);
 }
+
+/* F3 — side-panel navigation: 新建 / 近期工作 / 工作区 (A-session) */
+.side-panel { padding: 12px 12px 10px; border-bottom: 1px solid var(--line); }
+.side-action { display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0 0 14px; padding: 9px 10px; color: var(--ink); border: 1px solid var(--line); border-radius: 9px; background: var(--surface-raised); box-shadow: var(--elevation-1); cursor: pointer; text-align: left; font: inherit; font-size: 12px; transition: background .18s, border-color .18s; }
+.side-action:hover { background: var(--surface-strong); border-color: color-mix(in srgb, var(--sage) 45%, var(--line)); }
+.side-action svg { width: 15px; height: 15px; stroke: var(--sage); fill: none; stroke-width: 1.8; }
+.nav-label { margin: 12px 2px 6px; font-family: var(--mono); font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: .04em; }
+.side-list { list-style: none; margin: 0; padding: 0; }
+.side-item { display: block; padding: 6px 8px; border-radius: 7px; color: var(--ink); font-size: 12px; text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.side-item:hover { background: var(--surface-strong); }
+.side-item small { display: block; color: var(--muted); font-size: 10px; margin-top: 1px; }
+.side-empty { padding: 6px 8px; color: var(--muted); font-size: 11px; }
 
 .home-content {
   grid-area: content;

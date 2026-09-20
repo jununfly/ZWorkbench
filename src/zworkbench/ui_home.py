@@ -26,6 +26,10 @@ HOME_REFS = (
     ("home.run-facts", "运行事实", "region", "home.root"),
     ("home.record-list", "工作记录列表", "list", "home.root"),
     ("home.record-list.item", "工作记录项", "list-item", "home.record-list"),
+    ("home.side-panel", "侧栏工作记录导航", "region", "home.root"),
+    ("home.side-panel.new", "新建工作记录", "action", "home.side-panel"),
+    ("home.side-panel.recent", "近期工作", "list", "home.side-panel"),
+    ("home.side-panel.workspace", "工作区", "list", "home.side-panel"),
     ("home.current-intent", "当前意图与已记录文本", "region", "home.root"),
     ("home.plan-next-step", "计划与下一步", "region", "home.root"),
     ("home.artifacts", "产物区", "region", "home.root"),
@@ -200,6 +204,51 @@ def _render_record(record: Mapping[str, Any]) -> str:
     )
 
 
+def _render_side_panel(view: Mapping[str, Any]) -> str:
+    """F3 — A-session side-panel navigation shell.
+
+    Pure navigation shell: a new-record action (read-only, aria-disabled this
+    round) plus recent-works and workspaces groups sourced from the
+    owner-backed view model. Empty groups degrade to an explicit empty state.
+    """
+    new_action = (
+        '<button type="button" class="side-action" aria-disabled="true" '
+        'aria-label="新建工作记录（只读）">'
+        '<span>新建工作记录</span>'
+        '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
+        '</button>'
+    )
+    recent = _items(view.get("recent"))
+    if recent:
+        recent_items = "".join(
+            '<li class="side-item">{title}<small>{meta}</small></li>'.format(
+                title=_text(_mapping(r).get("title") or _mapping(r).get("name") or r),
+                meta=_text(_mapping(r).get("updated_at") or _mapping(r).get("status") or ""),
+            )
+            for r in recent
+        )
+        recent_block = '<ul class="side-list">{0}</ul>'.format(recent_items)
+    else:
+        recent_block = '<p class="side-empty">暂无近期工作</p>'
+    workspaces = _items(view.get("workspaces"))
+    if workspaces:
+        ws_items = "".join(
+            '<li class="side-item">{title}<small>{meta}</small></li>'.format(
+                title=_text(_mapping(w).get("name") or w),
+                meta=_text(_mapping(w).get("mode") or _mapping(w).get("status") or ""),
+            )
+            for w in workspaces
+        )
+        ws_block = '<ul class="side-list">{0}</ul>'.format(ws_items)
+    else:
+        ws_block = '<p class="side-empty">暂无工作区</p>'
+    return (
+        '{new_action}'
+        '<p class="nav-label">近期工作</p>{recent_block}'
+        '<p class="nav-label">工作区</p>{ws_block}'
+    ).format(new_action=new_action, recent_block=recent_block, ws_block=ws_block)
+
+
 def _render_run_facts(value: Any) -> str:
     facts = _mapping(value)
     state = facts.get("status", "unknown")
@@ -283,11 +332,14 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
         '<div class="home-layout">'
         '<section {facts_ref} class="home-inspector">{facts}</section>'
+        '<div class="home-sidebar">'
+        '<aside class="side-panel" {side_panel_ref}>{side_panel}</aside>'
         '<nav {list_ref} class="home-records" aria-label="工作记录">'
         '<div class="records-heading"><div><p class="eyebrow">WORK RECORDS</p><h2>工作记录</h2></div>'
         '<span class="record-count">{record_count:02d}</span></div>'
-        '<p class="records-caption">从 Owner 恢复的上下文</p><ul class="record-list">{items}</ul>'
+        '<p class="records-caption">从 Owner 恢复的上下文中</p><ul class="record-list">{items}</ul>'
         '<p class="records-boundary">只读索引 · 不在浏览器保存 Run 状态</p></nav>'
+        '</div>'
         '<section class="home-content">'
         '<section {intent_ref} class="home-section intent-section">'
         '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
@@ -310,6 +362,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         workspace_ref=attribute_text(resolved, "home.workspace-context"),
         facts_ref=attribute_text(resolved, "home.run-facts"),
         list_ref=attribute_text(resolved, "home.record-list"),
+        side_panel_ref=attribute_text(resolved, "home.side-panel"),
+        side_panel=_render_side_panel(view),
         intent_ref=attribute_text(resolved, "home.current-intent"),
         plan_ref=attribute_text(resolved, "home.plan-next-step"),
         artifacts_ref=attribute_text(resolved, "home.artifacts"),
