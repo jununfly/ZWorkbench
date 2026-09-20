@@ -289,6 +289,14 @@ def _render_side_panel(view: Mapping[str, Any]) -> str:
 
 
 def _render_run_facts(value: Any) -> str:
+    """F7 — run-facts inspector shell (render-only; live values deferred).
+
+    The inspector exposes the F7 field set -- mode, workspace, worker,
+    approval, effect and evidence links -- as a static shell driven by the
+    owner-backed projection. Fields the projection cannot yet supply read
+    ``unknown``; the live values that would require a runtime query stay behind
+    the 1-2-3 gate.
+    """
     facts = _mapping(value)
     state = facts.get("status", "unknown")
     source = facts.get("source") or "source unknown"
@@ -296,9 +304,11 @@ def _render_run_facts(value: Any) -> str:
     rows = (
         ("run_id", facts.get("run_id", facts.get("run", "unknown"))),
         ("parent / child", facts.get("parent_child", "unknown")),
+        ("mode", facts.get("mode", "unknown")),
         ("workspace", facts.get("workspace", "unknown")),
-        ("provider", facts.get("provider", "unknown")),
-        ("evidence", facts.get("evidence", "unknown")),
+        ("worker", facts.get("worker", facts.get("provider", "unknown"))),
+        ("approval", facts.get("approval", "unknown")),
+        ("effect", facts.get("effect", "unknown")),
     )
     details = "".join(
         '<div class="fact-row"><dt>{label}</dt><dd>{value}</dd></div>'.format(
@@ -306,14 +316,39 @@ def _render_run_facts(value: Any) -> str:
         )
         for label, value in rows
     )
+    evidence_links = _items(facts.get("evidence_links"))
+    if evidence_links:
+        links = []
+        for link in evidence_links:
+            item = _mapping(link)
+            links.append(
+                '<li class="evidence-link-row">'
+                '<a class="evidence-link" href="{href}" data-evidence-id="{eid}">{title}</a>'
+                '<small>{identity}</small></li>'.format(
+                    href=_text(item.get("href") or "#"),
+                    eid=_text(item.get("event_id") or item.get("identity") or "unknown"),
+                    title=_text(item.get("title") or "evidence"),
+                    identity=_text(item.get("identity") or item.get("event_id") or "unknown"),
+                )
+            )
+        evidence_block = (
+            '<div class="evidence-links"><p class="eyebrow">EVIDENCE LINKS</p>'
+            '<ul class="evidence-link-list">{0}</ul></div>'.format("".join(links))
+        )
+    else:
+        evidence_block = '<p class="evidence-links evidence-empty">暂无证据链接</p>'
     return (
         '<div class="inspector-heading"><div><p class="eyebrow">RUNTIME FACTS</p>'
         '<h2>运行事实</h2></div><span class="source-badge">{source_badge}</span></div>'
         '<div class="state-card">{status}</div>'
         '<dl class="fact-list">{details}</dl>'
+        '{evidence_block}'
         '<p class="source-note">判断来源：{source}</p>'.format(
             source_badge=_text(source_badge),
-            status=_status_chip(state, source=source), details=details, source=_text(source)
+            status=_status_chip(state, source=source),
+            details=details,
+            evidence_block=evidence_block,
+            source=_text(source),
         )
     )
 

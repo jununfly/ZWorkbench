@@ -354,6 +354,54 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         replay = replay_rows[-1] if replay_rows else None
     provider_identity = replay.get("provider_identity") if isinstance(replay, Mapping) else None
     provider_identity = provider_identity if isinstance(provider_identity, Mapping) else {}
+
+    # F7 inspector facts — read-only projection only. Real-time values that
+    # would require a live runtime query (or dynamic projection) are deliberately
+    # left to the 1-2-3 product gate; here an absent field reads ``unknown``.
+    run_id = latest.get("run_id") if latest else None
+    approval_rows = [
+        item for item in snapshot.get("approvals", ())
+        if isinstance(item, Mapping) and (run_id is None or item.get("run_id") == run_id)
+    ]
+    latest_approval = approval_rows[-1] if approval_rows else None
+    approval_status = (
+        display_status(latest_approval.get("status")) if latest_approval else UNKNOWN
+    )
+    effect_rows = [
+        item for item in snapshot.get("effects", ())
+        if isinstance(item, Mapping) and (run_id is None or item.get("run_id") == run_id)
+    ]
+    latest_effect = effect_rows[-1] if effect_rows else None
+    effect_status = (
+        display_status(latest_effect.get("status")) if latest_effect else UNKNOWN
+    )
+    worker = " · ".join(
+        piece for piece in (provider_identity.get("provider"), provider_identity.get("model"))
+        if piece not in (None, "", UNKNOWN)
+    )
+    worker = worker if worker else UNKNOWN
+    evidence_links = []
+    if latest and run_id:
+        for event in snapshot.get("events", ()):
+            if isinstance(event, Mapping) and event.get("run_id") == run_id:
+                evidence_links.append({
+                    "title": display_text(event.get("type", UNKNOWN)),
+                    "identity": display_text(event.get("event_id", UNKNOWN)),
+                    "event_id": display_text(event.get("event_id", UNKNOWN)),
+                    "source": "CompositionOwner",
+                    "href": "/record-view?run_id=" + display_text(run_id),
+                })
+        for replay_row in snapshot.get("replays", ()):
+            if isinstance(replay_row, Mapping) and replay_row.get("run_id") == run_id:
+                evidence_links.append({
+                    "title": display_text(replay_row.get("mode", UNKNOWN)),
+                    "identity": display_text(replay_row.get("replay_id", UNKNOWN)),
+                    "event_id": display_text(replay_row.get("replay_id", UNKNOWN)),
+                    "source": "CompositionOwner",
+                    "href": "/record-view?run_id=" + display_text(run_id),
+                })
+    evidence_links = evidence_links or UNKNOWN
+
     return {
         "workspace": {
             "name": workspace_name,
@@ -373,14 +421,19 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         ],
         "run_facts": {
             "status": display_status(latest["status"]) if latest else UNKNOWN,
-            "run_id": display_text(latest["run_id"]) if latest else UNKNOWN,
+            "run_id": display_text(run_id) if run_id is not None else UNKNOWN,
             "parent_child": display_text(metadata.get("parent_child", UNKNOWN)),
+            "mode": workspace_mode,
             "workspace": display_text(metadata.get("workspace", UNKNOWN)),
+            "worker": worker,
+            "approval": approval_status,
+            "effect": effect_status,
             "provider": display_text(provider_identity.get("provider", UNKNOWN)),
             "model": display_text(provider_identity.get("model", UNKNOWN)),
             "event_digest": display_text(replay.get("source_event_digest", UNKNOWN)) if replay else UNKNOWN,
             "environment_digest": display_text(replay.get("environment_digest", UNKNOWN)) if replay else UNKNOWN,
             "evidence": display_text(replay.get("mode", UNKNOWN)) if replay else UNKNOWN,
+            "evidence_links": evidence_links,
             "source": "CompositionOwner" if latest else "source unknown",
         },
         "intent": {

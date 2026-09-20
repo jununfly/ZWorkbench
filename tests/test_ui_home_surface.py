@@ -298,6 +298,133 @@ class HomePlanCardTests(unittest.TestCase):
         self.assertIn('class="plan-legend"', markup)
 
 
+class HomeInspectorF7Tests(unittest.TestCase):
+    def test_inspector_renders_f7_field_set(self):
+        # F7: the run-facts inspector shell exposes mode, workspace, worker,
+        # approval, effect and evidence links as static structure, driven by the
+        # owner-backed projection. No runtime access.
+        view = dict(VIEW)
+        view["run_facts"] = {
+            "status": "running",
+            "run_id": "run-f7-01",
+            "parent_child": "parent-1 / child-1",
+            "mode": "local_read_only",
+            "workspace": "case-local",
+            "worker": "fake-loopback · fake-model",
+            "approval": "granted",
+            "effect": "claimed",
+            "provider": "fake-loopback",
+            "model": "fake-model",
+            "evidence": "owner snapshot",
+            "evidence_links": [
+                {"title": "run.started", "identity": "evt-1", "event_id": "evt-1",
+                 "href": "/record-view?run_id=run-f7-01"},
+                {"title": "replay", "identity": "rep-1", "event_id": "rep-1",
+                 "href": "/record-view?run_id=run-f7-01"},
+            ],
+            "source": "CompositionOwner",
+        }
+        markup = render_home(view)
+        self.assertIn("运行事实", markup)
+        self.assertIn(">mode<", markup)
+        self.assertIn(">worker<", markup)
+        self.assertIn("fake-loopback · fake-model", markup)
+        self.assertIn(">approval<", markup)
+        self.assertIn(">effect<", markup)
+        self.assertIn('class="evidence-links"', markup)
+        self.assertIn('class="evidence-link"', markup)
+        self.assertIn('data-evidence-id="evt-1"', markup)
+        self.assertIn("/record-view?run_id=run-f7-01", markup)
+        # No undeclared reference introduced by the F7 shell.
+        audit = audit_rendered_html(home_manifest(), markup)
+        self.assertEqual(audit["undeclared"], ())
+
+    def test_inspector_degrades_evidence_links_to_empty_state(self):
+        view = dict(VIEW)
+        view["run_facts"] = {
+            "status": "unknown",
+            "source": "source unknown",
+            "evidence_links": UNKNOWN,
+        }
+        markup = render_home(view)
+        self.assertIn("暂无证据链接", markup)
+        self.assertNotIn('class="evidence-link-list"', markup)
+        self.assertIn('data-status="unknown"', markup)
+
+    def test_inspector_renders_unknown_f7_facts_without_relabel(self):
+        view = dict(VIEW)
+        view["run_facts"] = {
+            "status": "unknown",
+            "source": "missing identity",
+            "mode": UNKNOWN,
+            "worker": UNKNOWN,
+            "approval": UNKNOWN,
+            "effect": UNKNOWN,
+        }
+        markup = render_home(view)
+        # F7 fields stay structurally present, showing unknown rather than a
+        # fabricated value.
+        self.assertIn(">mode<", markup)
+        self.assertIn(">worker<", markup)
+        self.assertIn(">approval<", markup)
+        self.assertIn(">effect<", markup)
+
+    def test_view_model_projects_f7_facts_from_owner(self):
+        # The owner-backed facade composes mode/worker/approval/effect/evidence
+        # links from recorded runs, approvals and effects without a writable path.
+        class FakeOwner:
+            def snapshot(self):
+                return {
+                    "runs": [
+                        {
+                            "run_id": "r1",
+                            "status": "completed",
+                            "updated_at": "t1",
+                            "task_type": "local_read_only_run",
+                            "input": {"prompt": "do x"},
+                            "metadata": {
+                                "workspace": "case-local",
+                                "workspace_mode": "local_read_only",
+                                "plan": [{"title": "step1", "status": "completed"}],
+                            },
+                        }
+                    ],
+                    "approvals": [
+                        {"run_id": "r1", "status": "granted", "operation_id": "op-1"}
+                    ],
+                    "effects": [
+                        {"run_id": "r1", "status": "claimed", "effect_id": "ef-1"}
+                    ],
+                    "events": [
+                        {"run_id": "r1", "type": "run.started", "event_id": "evt-1"}
+                    ],
+                    "replays": [
+                        {
+                            "run_id": "r1",
+                            "mode": "recorded_view",
+                            "replay_id": "rep-1",
+                            "provider_identity": {
+                                "provider": "fake-loopback",
+                                "model": "fake-model",
+                            },
+                        }
+                    ],
+                }
+
+        model = home_view_model(FakeOwner())
+        facts = model["run_facts"]
+        self.assertEqual(facts["mode"], "local_read_only")
+        self.assertEqual(facts["worker"], "fake-loopback · fake-model")
+        self.assertEqual(facts["approval"], "granted")
+        self.assertEqual(facts["effect"], "claimed")
+        self.assertNotEqual(facts["evidence_links"], UNKNOWN)
+        titles = [link["title"] for link in facts["evidence_links"]]
+        self.assertIn("run.started", titles)
+        self.assertIn("recorded_view", titles)
+        for link in facts["evidence_links"]:
+            self.assertTrue(link["href"].startswith("/record-view?run_id="))
+
+
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
     def setUp(self):
