@@ -118,7 +118,11 @@ main {
 .brand-mark svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; }
 .brand-name { color: var(--ink); font-weight: 700; letter-spacing: -0.035em; }
 .breadcrumb { color: var(--quiet); font-family: var(--mono); font-size: 11px; }
-.workspace-meta { min-width: 0; gap: 8px; }
+.workspace-meta { min-width: 0; gap: 8px; margin-left: auto; }
+.icon-button { display: grid; place-items: center; flex: 0 0 auto; width: 30px; height: 30px; padding: 0; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; transition: background .18s, border-color .18s; }
+.icon-button:hover { background: var(--surface-raised); border-color: var(--line); }
+.icon-button svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 1.7; fill: none; }
+.icon-button[aria-disabled="true"] { cursor: not-allowed; opacity: .7; }
 .meta-pill, .scope-tag, .source-badge, .section-source, .record-count {
   display: inline-flex;
   align-items: center;
