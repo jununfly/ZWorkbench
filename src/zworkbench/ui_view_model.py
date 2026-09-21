@@ -211,6 +211,50 @@ def _project_evidence(snapshot: Mapping[str, Any], run_id: Any) -> Any:
     return evidence or UNKNOWN
 
 
+def _project_evidence_timeline(snapshot: Mapping[str, Any], run_id: Any) -> Any:
+    """Chronological evidence timeline for the current run, read-only.
+
+    Each node links to the recorded view's read-only route; no node resumes a
+    session or reaches back into the owner. An absent run yields ``UNKNOWN``.
+    """
+
+    if not run_id:
+        return UNKNOWN
+    nodes = []
+    for event in snapshot.get("events", ()):
+        if not isinstance(event, Mapping) or event.get("run_id") != run_id:
+            continue
+        nodes.append(
+            {
+                "type": display_text(event.get("type", UNKNOWN)),
+                "event_id": display_text(event.get("event_id", UNKNOWN)),
+                "created_at": display_text(event.get("created_at", UNKNOWN)),
+                "href": "/record-view?run_id=" + display_text(run_id),
+                "source": "CompositionOwner",
+            }
+        )
+    if not nodes:
+        return UNKNOWN
+    nodes.sort(key=lambda n: n["created_at"])
+    return nodes
+
+
+def _project_owner_records(snapshot: Mapping[str, Any]) -> Any:
+    """Owner-backed record list for the run rail, read-only projection only."""
+
+    records = [
+        {
+            "run_id": display_text(run.get("run_id")),
+            "status": display_status(run.get("status", UNKNOWN)),
+            "updated_at": display_text(run.get("updated_at", UNKNOWN)),
+            "source": "CompositionOwner",
+        }
+        for run in snapshot.get("runs", ())
+        if isinstance(run, Mapping)
+    ]
+    return records or UNKNOWN
+
+
 def _project_preflight(value: Any) -> Dict[str, Any]:
     """Keep the admission explanation readable and limited to stable fields."""
 
@@ -401,6 +445,23 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
                     "href": "/record-view?run_id=" + display_text(run_id),
                 })
     evidence_links = evidence_links or UNKNOWN
+    evidence_timeline = _project_evidence_timeline(snapshot, run_id) if run_id else UNKNOWN
+    owner_records = _project_owner_records(snapshot) if runs else UNKNOWN
+
+    # F10 run-rail — render shell only. The "executable Run" trigger and any
+    # live projection stay behind the 1-2-3 product gate; here can_run is always
+    # False and an absent field reads ``unknown``.
+    run_rail = {
+        "status": display_status(latest["status"]) if latest else UNKNOWN,
+        "run_id": display_text(run_id) if run_id is not None else UNKNOWN,
+        "can_run": False,
+        "workspace": workspace_name,
+        "parent_child": display_text(metadata.get("parent_child", UNKNOWN)),
+        "worker": worker,
+        "owner_records": owner_records,
+        "evidence_timeline": evidence_timeline,
+        "source": "CompositionOwner" if latest else "source unknown",
+    }
 
     return {
         "workspace": {
@@ -436,6 +497,7 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
             "evidence_links": evidence_links,
             "source": "CompositionOwner" if latest else "source unknown",
         },
+        "run_rail": run_rail,
         "intent": {
             "title": display_text(latest.get("task_type", UNKNOWN)) if latest else UNKNOWN,
             "summary": display_intent_summary(input_value.get("prompt", UNKNOWN)),

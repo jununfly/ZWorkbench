@@ -24,6 +24,7 @@ HOME_REFS = (
     ("home.root", "工作台首页", "region", None),
     ("home.workspace-context", "工作区与模式上下文", "region", "home.root"),
     ("home.run-facts", "运行事实", "region", "home.root"),
+    ("home.run-rail", "运行轨道栏", "region", "home.root"),
     ("home.record-list", "工作记录列表", "list", "home.root"),
     ("home.record-list.item", "工作记录项", "list-item", "home.record-list"),
     ("home.side-panel", "侧栏工作记录导航", "region", "home.root"),
@@ -92,6 +93,36 @@ def _status(value: Any) -> str:
 def _scope(value: Any) -> str:
     candidate = str(value or "unknown").strip().lower().replace("_", "-")
     return candidate if candidate in {"implemented", "target", "unknown"} else "unknown"
+
+
+#: F10 run-rail lifecycle track. The happy path is created -> running ->
+#: completed; terminal branches (failed / safe-stopped / denied) mark the
+#: running node in red and append a terminal label. Any other status (including
+#: unknown) leaves every node pending and no terminal label.
+_RAIL_STAGES = (
+    ("created", "已创建"),
+    ("running", "进行中"),
+    ("completed", "已完成"),
+)
+_RAIL_TERMINAL = {
+    "failed": "失败",
+    "safe-stopped": "safe-stopped",
+    "denied": "已拒绝",
+}
+
+
+def _rail_stage_classes(status: str) -> "tuple":
+    """Return (active_index, terminal_label_or_None) for the run-rail track."""
+
+    if status == "created":
+        return 0, None
+    if status in ("running", "recovering"):
+        return 1, None
+    if status == "completed":
+        return 2, None
+    if status in _RAIL_TERMINAL:
+        return 1, _RAIL_TERMINAL[status]
+    return -1, None
 
 
 def _status_chip(value: Any, *, source: Any = "source unknown") -> str:
@@ -353,6 +384,103 @@ def _render_run_facts(value: Any) -> str:
     )
 
 
+def _render_run_rail(value: Any) -> str:
+    """F10 — run-rail inspector shell (render-only; executable Run deferred).
+
+    The rail shows the run's lifecycle position (created -> running -> completed,
+    terminal states flagged in red), a disabled "executable Run" button whose
+    real trigger stays behind the 1-2-3 product gate, the owner-backed record
+    list and a chronological evidence timeline. Every value comes from the
+    owner-backed projection; a missing value reads ``unknown``.
+    """
+    rail = _mapping(value)
+    state = rail.get("status", "unknown")
+    source = rail.get("source") or "source unknown"
+    source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+    active_index, terminal_label = _rail_stage_classes(_status(state))
+    stage_spans = []
+    for idx, (key, label) in enumerate(_RAIL_STAGES):
+        if active_index < 0:
+            cls = "rail-pending"
+        elif idx < active_index:
+            cls = "rail-done"
+        elif idx == active_index:
+            cls = "rail-current"
+        else:
+            cls = "rail-pending"
+        stage_spans.append(
+            '<span class="rail-node {cls}"><i aria-hidden="true"></i>{label}</span>'.format(
+                cls=cls, label=_text(label)
+            )
+        )
+    rail_track = '<div class="rail-track">{0}</div>'.format("".join(stage_spans))
+    terminal = (
+        '<span class="rail-terminal">{0}</span>'.format(_text(terminal_label))
+        if terminal_label
+        else ""
+    )
+    run_button = (
+        '<button type="button" class="rail-run-button" aria-disabled="true" '
+        'aria-label="可执行 Run（留 product gate）">'
+        '<span class="rail-run-glyph" aria-hidden="true">&#9654;</span>可执行 Run'
+        '<span>留 product gate</span></button>'
+    )
+    owner_records = _items(rail.get("owner_records"))
+    if owner_records:
+        rec_rows = "".join(
+            '<li><code>{rid}</code><span>{rstatus}</span><time>{time}</time></li>'.format(
+                rid=_text(_mapping(r).get("run_id") or "unknown"),
+                rstatus=_text(_mapping(r).get("status") or "unknown"),
+                time=_text(_mapping(r).get("updated_at") or ""),
+            )
+            for r in owner_records
+        )
+        records_block = (
+            '<div class="rail-records"><p class="eyebrow">OWNER RECORDS</p>'
+            '<ul class="rail-record-list">{0}</ul></div>'.format(rec_rows)
+        )
+    else:
+        records_block = '<p class="rail-records rail-empty">暂无 Owner 记录</p>'
+    timeline = _items(rail.get("evidence_timeline"))
+    if timeline:
+        t_rows = []
+        for node in timeline:
+            n = _mapping(node)
+            t_rows.append(
+                '<li><time>{time}</time>'
+                '<a class="rail-timeline-link" href="{href}">{type}</a>'
+                '<code>{eid}</code></li>'.format(
+                    time=_text(n.get("created_at") or ""),
+                    href=_text(n.get("href") or "#"),
+                    type=_text(n.get("type") or "evidence"),
+                    eid=_text(n.get("event_id") or "unknown"),
+                )
+            )
+        timeline_block = (
+            '<div class="rail-timeline"><p class="eyebrow">EVIDENCE TIMELINE</p>'
+            '<ol class="rail-timeline-list">{0}</ol></div>'.format("".join(t_rows))
+        )
+    else:
+        timeline_block = '<p class="rail-timeline rail-empty">暂无证据时间线</p>'
+    return (
+        '<div class="inspector-heading"><div><p class="eyebrow">RUN RAIL</p>'
+        '<h2>运行轨道栏</h2></div><span class="source-badge">{source_badge}</span></div>'
+        '{rail_track}{terminal}'
+        '{run_button}'
+        '{records_block}'
+        '{timeline_block}'
+        '<p class="source-note">判断来源：{source}</p>'.format(
+            source_badge=_text(source_badge),
+            rail_track=rail_track,
+            terminal=terminal,
+            run_button=run_button,
+            records_block=records_block,
+            timeline_block=timeline_block,
+            source=_text(source),
+        )
+    )
+
+
 def _render_conversation(view: Mapping[str, Any]) -> str:
     """F4 — A-session conversation message stream, read-only.
 
@@ -465,7 +593,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<a href="/task-detail" tabindex="-1">任务详情</a>'
         '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
         '<div class="home-layout">'
-        '<section {facts_ref} class="home-inspector">{facts}</section>'
+        '<section {facts_ref} class="home-inspector">{facts}'
+        '<div {run_rail_ref} class="run-rail">{run_rail}</div></section>'
         '<div class="home-sidebar">'
         '<aside class="side-panel" {side_panel_ref}>{side_panel}</aside>'
         '<nav {list_ref} class="home-records" aria-label="工作记录">'
@@ -504,6 +633,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         root=attribute_text(resolved, "home.root"),
         workspace_ref=attribute_text(resolved, "home.workspace-context"),
         facts_ref=attribute_text(resolved, "home.run-facts"),
+        run_rail_ref=attribute_text(resolved, "home.run-rail"),
+        run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),
         side_panel=_render_side_panel(view),

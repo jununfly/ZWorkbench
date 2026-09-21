@@ -425,6 +425,137 @@ class HomeInspectorF7Tests(unittest.TestCase):
             self.assertTrue(link["href"].startswith("/record-view?run_id="))
 
 
+class HomeRunRailF10Tests(unittest.TestCase):
+    def test_run_rail_renders_lifecycle_rail_disabled_run_and_records_timeline(self):
+        # F10: the run-rail shell exposes the lifecycle track, a disabled
+        # "executable Run" button, owner-backed records and an evidence timeline.
+        view = dict(VIEW)
+        view["run_rail"] = {
+            "status": "running",
+            "run_id": "run-f10-01",
+            "can_run": False,
+            "workspace": "case-local",
+            "parent_child": "parent-1 / child-1",
+            "worker": "fake-loopback · fake-model",
+            "owner_records": [
+                {"run_id": "run-f10-01", "status": "running", "updated_at": "刚刚"},
+                {"run_id": "run-f10-00", "status": "completed", "updated_at": "昨天"},
+            ],
+            "evidence_timeline": [
+                {"type": "run.started", "event_id": "evt-1", "created_at": "2026-09-20T10:00",
+                 "href": "/record-view?run_id=run-f10-01"},
+                {"type": "replay", "event_id": "rep-1", "created_at": "2026-09-20T10:01",
+                 "href": "/record-view?run_id=run-f10-01"},
+            ],
+            "source": "CompositionOwner",
+        }
+        markup = render_home(view)
+        self.assertIn("运行轨道栏", markup)
+        self.assertIn("RUN RAIL", markup)
+        self.assertIn('data-ui-ref="home.run-rail"', markup)
+        # Lifecycle track stages render in order.
+        self.assertIn(">已创建<", markup)
+        self.assertIn(">进行中<", markup)
+        self.assertIn(">已完成<", markup)
+        self.assertIn('rail-current', markup)
+        # The executable Run button is rendered but inert.
+        self.assertIn('class="rail-run-button"', markup)
+        self.assertIn('aria-disabled="true"', markup)
+        self.assertIn("可执行 Run", markup)
+        self.assertIn("留 product gate", markup)
+        # Owner records + evidence timeline.
+        self.assertIn("OWNER RECORDS", markup)
+        self.assertIn('class="rail-record-list"', markup)
+        self.assertIn("run-f10-01", markup)
+        self.assertIn("EVIDENCE TIMELINE", markup)
+        self.assertIn('class="rail-timeline-list"', markup)
+        self.assertIn('class="rail-timeline-link"', markup)
+        self.assertIn('href="/record-view?run_id=run-f10-01"', markup)
+        # No undeclared reference introduced by the F10 shell.
+        audit = audit_rendered_html(home_manifest(), markup)
+        self.assertEqual(audit["undeclared"], ())
+
+    def test_run_rail_degrades_owner_records_and_timeline_to_empty(self):
+        view = dict(VIEW)
+        view["run_rail"] = {
+            "status": "unknown",
+            "source": "source unknown",
+            "owner_records": UNKNOWN,
+            "evidence_timeline": UNKNOWN,
+        }
+        markup = render_home(view)
+        self.assertIn("暂无 Owner 记录", markup)
+        self.assertIn("暂无证据时间线", markup)
+        self.assertNotIn('class="rail-record-list"', markup)
+        self.assertNotIn('class="rail-timeline-list"', markup)
+        self.assertIn("source unknown", markup)
+
+    def test_run_rail_renders_terminal_status_in_red(self):
+        # A terminal status (failed / safe-stopped / denied) marks the running
+        # node red and appends a terminal label instead of completing the track.
+        view = dict(VIEW)
+        view["run_rail"] = {
+            "status": "failed",
+            "run_id": "run-f10-02",
+            "source": "CompositionOwner",
+            "owner_records": UNKNOWN,
+            "evidence_timeline": UNKNOWN,
+        }
+        markup = render_home(view)
+        self.assertIn('class="rail-terminal"', markup)
+        self.assertIn("失败", markup)
+        self.assertIn("rail-current", markup)
+
+    def test_view_model_projects_run_rail_from_owner(self):
+        # The owner-backed facade composes the run-rail (records + chronological
+        # timeline) from recorded runs and events without a writable path.
+        class FakeOwner:
+            def snapshot(self):
+                return {
+                    "runs": [
+                        {
+                            "run_id": "r1",
+                            "status": "completed",
+                            "updated_at": "t1",
+                            "task_type": "local_read_only_run",
+                            "input": {"prompt": "do x"},
+                            "metadata": {
+                                "workspace": "case-local",
+                                "workspace_mode": "local_read_only",
+                            },
+                        },
+                        {
+                            "run_id": "r2",
+                            "status": "running",
+                            "updated_at": "t2",
+                            "task_type": "local_read_only_run",
+                            "input": {"prompt": "do y"},
+                            "metadata": {"workspace": "case-local"},
+                        },
+                    ],
+                    "events": [
+                        {"run_id": "r2", "type": "run.started", "event_id": "evt-1",
+                         "created_at": "2026-09-20T10:01"},
+                        {"run_id": "r2", "type": "run.finished", "event_id": "evt-2",
+                         "created_at": "2026-09-20T10:00"},
+                    ],
+                }
+
+        model = home_view_model(FakeOwner())
+        rail = model["run_rail"]
+        self.assertEqual(rail["status"], "running")
+        self.assertIs(rail["can_run"], False)
+        # Owner records list both runs.
+        self.assertNotEqual(rail["owner_records"], UNKNOWN)
+        self.assertEqual(len(rail["owner_records"]), 2)
+        # Evidence timeline is chronological by created_at (evt-2 before evt-1).
+        self.assertNotEqual(rail["evidence_timeline"], UNKNOWN)
+        titles = [n["type"] for n in rail["evidence_timeline"]]
+        self.assertEqual(titles, ["run.finished", "run.started"])
+        for node in rail["evidence_timeline"]:
+            self.assertTrue(node["href"].startswith("/record-view?run_id="))
+
+
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
     def setUp(self):
