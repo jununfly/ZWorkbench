@@ -257,13 +257,25 @@
       "id": "1-1-9",
       "uid": "01a0bda027da-8123d0ef1d",
       "label": "F13 安全停止 / reconcile（横幅 + stopped 态渲染；越界判定留 product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F13 实现落点（模型/渲染/投影）",
+          "answer": "随 F7/F10/F11 范式：safe-stop 横幅模型+渲染放 ui_home.py、只读投影放 ui_view_model.py；PRD 依赖列虽写 ui_review，但 ui_review 实为 review annotation 状态机（无 safe-stop 逻辑），且 F11 已把 scenario_state 落在 ui_home/ui_view_model，故保持一致；ui_review 仍是 🚧 越界判定（identity unresolved 检测）的归宿。",
+          "note": ""
+        },
+        {
+          "q": "F13 触发条件与 gate 边界",
+          "answer": "本轮 safe_stop.active 仅由 owner-backed 的 scenario_state=='stopped' 派生（即 latest.status==safe-stopped）；横幅内「请求 reconcile」按钮 aria-disabled+disabled（真实触发留 gate）；identity unresolved / 越界判定仅作静态恢复路径说明，不作已检测断言，避免越权实现 gate 逻辑。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-10": {
       "id": "1-1-10",
@@ -388,7 +400,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-21 11:43:05",
+    "updated": "2026-09-21 12:08:47",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }

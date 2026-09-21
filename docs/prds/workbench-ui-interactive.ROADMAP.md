@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-21 11:43:05
+> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-21 12:08:47
 
 [~][X+] 1. 完整工作台 Web-UI（含交互）执行路线图
 ├── [~][X+] 1-1. Round 1 — 纯 UI 壳 + 只读投影（本轮构建）
@@ -13,7 +13,7 @@
 │   ├── [x][X+] 1-1-6. F7 运行事实检查器（渲染壳；实时值留 product gate）
 │   ├── [x][X+] 1-1-7. F10 运行轨道栏（渲染壳；可执行 Run 留 product gate）
 │   ├── [x][X+] 1-1-8. F11 场景状态机 UI（empty/planning/approval/stopped 四态渲染）
-│   ├── [ ][X+] 1-1-9. F13 安全停止 / reconcile（横幅 + stopped 态渲染；越界判定留 product gate）
+│   ├── [x][X+] 1-1-9. F13 安全停止 / reconcile（横幅 + stopped 态渲染；越界判定留 product gate）
 │   ├── [ ][X+] 1-1-10. F14 扩展 DSH 只读投影（不引 dsh-web 运行时，ADR 0007）
 │   ├── [ ][X+] 1-1-11. F15 r2 协同可视化（profile_status / runtime_status 呈现）
 │   └── [ ][X+] 1-1-12. F19 三变体调试切换器（?variant=A/B/C，纯 client 端分支）
