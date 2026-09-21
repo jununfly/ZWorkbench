@@ -32,6 +32,121 @@ REDACTED = "<redacted>"
 
 UNKNOWN = "unknown"
 
+#: Canonical status vocabulary shared by the r2-ui-reference-skills status
+#: reports (profile_status.py / runtime_status.py). Copied verbatim from the
+#: skill contracts so the projection can validate and pass through a status
+#: without importing the skill packages (the r2 PRD forbids implicit cross-skill
+#: imports). Treat this as a mirror of the contract, not a source of truth.
+UI_REFERENCE_STATUS_CATALOG = (
+    "implemented",
+    "target",
+    "unknown",
+    "HOLD",
+    "blocked",
+    "migrated",
+    "retired",
+    "incompatible",
+    "source-mismatch",
+    "manifest-missing",
+    "ambiguous",
+    "unavailable",
+    "expired",
+)
+
+
+def _ui_reference_status(
+    status: Any,
+    reason: str,
+    uncovered: Iterable[str] = (),
+    next_evidence: Iterable[str] = (),
+) -> Dict[str, Any]:
+    """Project one r2-ui-reference-skills status report into the view model.
+
+    Mirrors the shape emitted by ``profile_status.py`` / ``runtime_status.py``
+    (``status``, ``reason``, ``uncovered_items``, ``next_evidence``,
+    ``status_catalog``) while applying the same redaction and unknown-first
+    discipline the rest of the facade uses. A status outside the catalog is
+    collapsed to ``unknown`` rather than echoed.
+    """
+
+    token = str(status or UNKNOWN).strip()
+    if token not in UI_REFERENCE_STATUS_CATALOG:
+        token = UNKNOWN
+    return {
+        "status": token,
+        "reason": display_text(reason),
+        "uncovered_items": [display_text(item) for item in uncovered],
+        "next_evidence": [display_text(item) for item in next_evidence],
+        "status_catalog": list(UI_REFERENCE_STATUS_CATALOG),
+    }
+
+
+#: Read-only, build-time snapshot of the r2-ui-reference-skills collaboration
+#: surface. Round 1 does not invoke the skill subprocesses, so this declared
+#: catalog is the projection source. Live invocation of ``profile_status.py`` /
+#: ``runtime_status.py`` belongs to the 1-2 product gate.
+UI_REFERENCE_SKILL_COLLAB_CATALOG = (
+    {
+        "skill": "ui-reference-protocol",
+        "skill_zh": "UI 引用协议设计",
+        "profile_status": (
+            "implemented",
+            "protocol-design-skill-implemented",
+            (),
+            (),
+        ),
+        "runtime_status": (
+            "unknown",
+            "design-skill-no-runtime-evidence",
+            ("runtime-evidence",),
+            ("协议设计 skill 只产出/校验 profile；运行时证据由 runtime skill 负责",),
+        ),
+    },
+    {
+        "skill": "ui-reference-runtime",
+        "skill_zh": "UI 引用运行时实现",
+        "profile_status": (
+            "implemented",
+            "runtime-skill-profile-aligned",
+            (),
+            (),
+        ),
+        "runtime_status": (
+            "unknown",
+            "zworkbench-specific-profile-evidence-deferred",
+            ("zworkbench-specific-profile-acceptance",),
+            ("ZWorkbench 专属 profile 联调验证（按 r2 PRD 为 deferred/unknown，留 product gate 1-2）",),
+        ),
+    },
+)
+
+
+def ui_reference_collab_view_model() -> Dict[str, Any]:
+    """Project the r2-ui-reference-skills collaboration surface (F15 r2).
+
+    A read-only panel that visualises each ui-reference skill's
+    ``profile_status`` and ``runtime_status`` so a human and agent can see at a
+    glance whether the UI-reference capability is aligned to spec. No owner
+    field, no method call, no runtime dependency -- derived solely from the
+    declared catalog, exactly like the F14 ``session_references`` surface.
+    """
+
+    skills = []
+    for entry in UI_REFERENCE_SKILL_COLLAB_CATALOG:
+        skills.append(
+            {
+                "skill": display_text(entry["skill"]),
+                "skill_zh": display_text(entry["skill_zh"]),
+                "profile_status": _ui_reference_status(*entry["profile_status"]),
+                "runtime_status": _ui_reference_status(*entry["runtime_status"]),
+                "source": "r2-ui-reference-skills (declared snapshot)",
+            }
+        )
+    return {
+        "skills": skills,
+        "source": "r2-ui-reference-skills (declared snapshot)",
+    }
+
 
 def display_text(value: Any) -> str:
     """Render one owner value as display text, with credentials removed.
@@ -153,6 +268,32 @@ def _project_execution_identity(
         )
         identity["status"] = "known" if all(identity[field] != UNKNOWN for field in required) else UNKNOWN
     return identity
+
+
+def _project_session_references(identity: Mapping[str, str]) -> Dict[str, str]:
+    """DSH-aligned read-only session-reference surface (dsh-web ``/session-references`` style).
+
+    dsh-web exposes a session's reference identity -- its session/turn id and the
+    parent/child linkage that ties it into the run tree -- as a named, read-only
+    surface. ZWorkbench reuses that *idea* (ADR 0007), not its runtime: this
+    surface is derived solely from the identity the facade already projected, so
+    it adds no owner field, no method call, and no runtime dependency. Values are
+    redacted and unknown-annotated upstream; a session reference is "known" only
+    when both the DSH session and turn id resolved.
+    """
+
+    session_id = identity.get("dsh_session_id", UNKNOWN)
+    turn_id = identity.get("dsh_turn_id", UNKNOWN)
+    return {
+        "dsh_session_id": session_id,
+        "dsh_turn_id": turn_id,
+        "parent_run_id": identity.get("parent_run_id", UNKNOWN),
+        "child_run_id": identity.get("child_run_id", UNKNOWN),
+        "provider": identity.get("provider", UNKNOWN),
+        "model": identity.get("model", UNKNOWN),
+        "status": "known" if session_id != UNKNOWN and turn_id != UNKNOWN else UNKNOWN,
+        "source": "CompositionOwner",
+    }
 
 
 def _runs(owner: Any) -> List[Mapping[str, Any]]:
@@ -543,6 +684,10 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         "evidence": _project_evidence(snapshot, latest.get("run_id")) if latest else UNKNOWN,
         "preflight_result": _project_preflight(metadata.get("preflight")),
         "conversation": _project_conversation(snapshot),
+        # F15 r2 — r2-ui-reference-skills 协同可视化（read-only projection）.
+        # Declared snapshot only; live profile_status.py / runtime_status.py
+        # invocation belongs to the 1-2 product gate.
+        "ui_reference_collab": ui_reference_collab_view_model(),
     }
 
 
@@ -702,6 +847,7 @@ def task_detail_view_model(owner: Any, run_id: str) -> Dict[str, Any]:
         },
         "denial": denial,
         "identity": identity,
+        "session_references": _project_session_references(identity),
         "timeline": timeline,
         "result": latest_result_kind if latest_result and interpretable_result else UNKNOWN,
         "error": error,

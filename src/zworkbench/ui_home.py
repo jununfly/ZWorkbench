@@ -41,6 +41,7 @@ HOME_REFS = (
     ("home.preflight-result", "预检结果", "detail", "home.preflight-run.action"),
     ("home.conversation", "会话消息流", "region", "home.root"),
     ("home.conversation.message", "会话消息", "list-item", "home.conversation"),
+    ("home.ui-reference-collab", "UI 引用协同状态", "region", "home.root"),
 )
 
 
@@ -675,6 +676,101 @@ def _render_safe_stop(value: Any) -> str:
     )
 
 
+def _collab_status_token(value: Any) -> str:
+    """Map a ui-reference status to the scope-* token used for styling/labels."""
+
+    candidate = str(value or "unknown").strip().lower().replace("_", "-").replace(" ", "-")
+    allowed = {
+        "implemented", "target", "unknown", "hold", "blocked", "migrated",
+        "retired", "incompatible", "source-mismatch", "manifest-missing",
+        "ambiguous", "unavailable", "expired",
+    }
+    return candidate if candidate in allowed else "unknown"
+
+
+def _render_collab_list(items: Any) -> str:
+    """Render an uncovered_items / next_evidence list, or nothing when empty."""
+
+    items = items if isinstance(items, (list, tuple)) else ()
+    if not items:
+        return ""
+    return "<ul class=\"urc-evidence\">{0}</ul>".format(
+        "".join("<li>{0}</li>".format(_text(item)) for item in items)
+    )
+
+
+def _render_ui_reference_collab(value: Any) -> str:
+    """F15 r2 — r2-ui-reference-skills 协同可视化（read-only projection）.
+
+    Renders, per ui-reference skill, its ``profile_status`` and ``runtime_status``
+    as two status pills plus the reason and the uncovered / next-evidence the
+    collaboration still needs. ``unknown`` is shown in plain sight (rose), never
+    hidden: that is the whole point of the panel -- it tells a human and an agent
+    what evidence is still missing. No control here triggers a skill run or reads
+    a runtime; the live invocation seam is the product gate (1-2).
+    """
+
+    collab = _mapping(value)
+    skills = collab.get("skills") or ()
+    if not skills:
+        return (
+            '<div {ref} class="ui-ref-collab ui-ref-collab-empty" aria-hidden="true"></div>'
+        ).format(ref=attribute_text(home_manifest(), "home.ui-reference-collab"))
+
+    rows = []
+    for skill in skills:
+        skill = _mapping(skill)
+        profile = _mapping(skill.get("profile_status"))
+        runtime = _mapping(skill.get("runtime_status"))
+        p_status = _collab_status_token(profile.get("status"))
+        r_status = _collab_status_token(runtime.get("status"))
+        row = (
+            '<li class="urc-row">'
+            '<div class="urc-skill"><span class="urc-skill-name">{name}</span>'
+            '<span class="urc-skill-id">{sid}</span></div>'
+            '<div class="urc-statuses">'
+            '<div class="urc-status urc-profile scope-{pcls}">'
+            '<span class="urc-status-key">profile_status</span>'
+            '<span class="urc-pill">{pstatus}</span>'
+            '<span class="urc-reason">{preason}</span>'
+            '{puncovered}{pnext}</div>'
+            '<div class="urc-status urc-runtime scope-{rcls}">'
+            '<span class="urc-status-key">runtime_status</span>'
+            '<span class="urc-pill">{rstatus}</span>'
+            '<span class="urc-reason">{rreason}</span>'
+            '{runcovered}{rnext}</div>'
+            '</div></li>'
+        ).format(
+            name=_text(skill.get("skill_zh")),
+            sid=_text(skill.get("skill")),
+            pcls=p_status, rcls=r_status,
+            pstatus=_text(profile.get("status")),
+            rstatus=_text(runtime.get("status")),
+            preason=_text(profile.get("reason")),
+            rreason=_text(runtime.get("reason")),
+            puncovered=_render_collab_list(profile.get("uncovered_items")),
+            runcovered=_render_collab_list(runtime.get("uncovered_items")),
+            pnext=_render_collab_list(profile.get("next_evidence")),
+            rnext=_render_collab_list(runtime.get("next_evidence")),
+        )
+        rows.append(row)
+    return (
+        '<section {ref} class="ui-ref-collab">'
+        '<div class="section-heading"><div><p class="eyebrow">UI REFERENCE · 协同可视化</p>'
+        '<h2>UI 引用协同状态</h2></div>'
+        '<span class="section-source">{source}</span></div>'
+        '<p class="urc-caption">协议设计 / 运行时实现两 skill 的 profile_status 与 runtime_status；'
+        'unknown 须显式给出待补证据。</p>'
+        '<ul class="urc-list">{rows}</ul>'
+        '<p class="urc-boundary">只读投影 · 实时调用留 product gate（1-2）</p>'
+        '</section>'
+    ).format(
+        ref=attribute_text(home_manifest(), "home.ui-reference-collab"),
+        source=_text(collab.get("source") or "source unknown"),
+        rows="".join(rows),
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -728,6 +824,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
         '<section {scenario_state_ref} class="scenario-state-wrap">{scenario_state}</section>'
         '{safe_stop}'
+        '{ui_reference_collab}'
         '<div class="home-layout">'
         '<section {facts_ref} class="home-inspector">{facts}'
         '<div {run_rail_ref} class="run-rail">{run_rail}</div></section>'
@@ -771,8 +868,10 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         facts_ref=attribute_text(resolved, "home.run-facts"),
         run_rail_ref=attribute_text(resolved, "home.run-rail"),
         scenario_state_ref=attribute_text(resolved, "home.scenario-state"),
+        ui_reference_collab_ref=attribute_text(resolved, "home.ui-reference-collab"),
         scenario_state=_render_scenario_state(view.get("scenario_state", {})),
         safe_stop=_render_safe_stop(view.get("safe_stop", {})),
+        ui_reference_collab=_render_ui_reference_collab(view.get("ui_reference_collab", {})),
         run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),

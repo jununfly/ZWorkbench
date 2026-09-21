@@ -27,11 +27,14 @@ from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
 from zworkbench.ui_view_model import (
     REDACTED,
+    UNKNOWN,
+    UI_REFERENCE_STATUS_CATALOG,
     display_text,
     home_view_model,
     owner_view_source,
     record_view_model,
     task_detail_view_model,
+    ui_reference_collab_view_model,
 )
 
 #: See tests/test_ui_host.py: a machine-wide proxy answers loopback requests.
@@ -876,6 +879,117 @@ class ProjectingRecordViewOwnerStateTests(unittest.TestCase):
             self.assertEqual(model["artifact_metadata"], "unknown")
             self.assertEqual(model["replay_metadata"], "unknown")
             self.assertEqual(model["mode"], "recorded_view")
+
+
+class ProjectingDshSessionReferencesSurfaceTests(unittest.TestCase):
+    """F14: a named, dsh-web ``/session-references``-aligned read-only surface.
+
+    The surface is derived only from the identity the facade already projected,
+    so it proves the alignment claim without adding a runtime dependency (ADR 0007).
+    """
+
+    def _owner_with_identity(self, identity, provider_identity=None):
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        owner = CompositionOwner(Path(directory.name) / "owner.sqlite3")
+        self.addCleanup(owner.close)
+        metadata = {"identity": identity}
+        if provider_identity is not None:
+            metadata["provider_identity"] = provider_identity
+        owner.create_run("run-session", "local_read_only_run", {}, metadata=metadata)
+        return owner
+
+    def test_session_references_surface_exposes_dsh_session_and_turn_when_resolved(self):
+        owner = self._owner_with_identity(
+            {"dsh_session_id": "dsh-sess-1", "dsh_turn_id": "dsh-turn-1"},
+            provider_identity={"provider": "loopback", "model": "fixture-model"},
+        )
+
+        refs = task_detail_view_model(owner, "run-session")["session_references"]
+
+        self.assertEqual(refs["dsh_session_id"], "dsh-sess-1")
+        self.assertEqual(refs["dsh_turn_id"], "dsh-turn-1")
+        self.assertEqual(refs["provider"], "loopback")
+        self.assertEqual(refs["model"], "fixture-model")
+        self.assertEqual(refs["status"], "known")
+        self.assertEqual(refs["source"], "CompositionOwner")
+
+    def test_session_references_surface_stays_unknown_without_a_dsh_session(self):
+        owner = self._owner_with_identity({"dsh_turn_id": "dsh-turn-1"})
+
+        refs = task_detail_view_model(owner, "run-session")["session_references"]
+
+        self.assertEqual(refs["dsh_session_id"], UNKNOWN)
+        self.assertEqual(refs["dsh_turn_id"], "dsh-turn-1")
+        self.assertEqual(refs["status"], UNKNOWN)
+
+    def test_session_references_redacts_local_paths_from_the_dsh_session_id(self):
+        owner = self._owner_with_identity(
+            {"dsh_session_id": "/Users/canary/secret-session", "dsh_turn_id": "dsh-turn-1"}
+        )
+
+        refs = task_detail_view_model(owner, "run-session")["session_references"]
+
+        self.assertNotIn("/Users/canary", refs["dsh_session_id"])
+        self.assertEqual(refs["dsh_session_id"], "<local path>")
+        self.assertEqual(refs["source"], "CompositionOwner")
+
+
+class UiReferenceCollabProjectionTests(unittest.TestCase):
+    """F15 r2 — r2-ui-reference-skills 协同可视化只读投影."""
+
+    def test_home_view_model_carries_the_collab_surface_with_both_skills(self):
+        owner = CompositionOwner(Path(TemporaryDirectory().name) / "owner.db")
+
+        collab = home_view_model(owner)["ui_reference_collab"]
+
+        skills = {skill["skill"]: skill for skill in collab["skills"]}
+        self.assertIn("ui-reference-protocol", skills)
+        self.assertIn("ui-reference-runtime", skills)
+        self.assertEqual(collab["source"], "r2-ui-reference-skills (declared snapshot)")
+
+    def test_profile_status_is_implemented_and_runtime_status_is_unknown(self):
+        collab = ui_reference_collab_view_model()
+        for skill in collab["skills"]:
+            self.assertEqual(skill["profile_status"]["status"], "implemented")
+            # honest: live runtime evidence is a product-gate concern
+            self.assertEqual(skill["runtime_status"]["status"], "unknown")
+
+    def test_unknown_runtime_status_surfaces_uncovered_items_and_next_evidence(self):
+        collab = ui_reference_collab_view_model()
+        runtime = next(
+            s["runtime_status"] for s in collab["skills"] if s["skill"] == "ui-reference-runtime"
+        )
+
+        self.assertTrue(runtime["uncovered_items"])
+        self.assertTrue(runtime["next_evidence"])
+        self.assertIn("ZWorkbench 专属 profile 联调验证", runtime["next_evidence"][0])
+
+    def test_status_catalog_passthrough_matches_the_r2_skill_contract(self):
+        collab = ui_reference_collab_view_model()
+
+        for skill in collab["skills"]:
+            for dimension in ("profile_status", "runtime_status"):
+                self.assertEqual(
+                    tuple(skill[dimension]["status_catalog"]),
+                    UI_REFERENCE_STATUS_CATALOG,
+                )
+
+    def test_collab_projection_redacts_secrets_and_local_paths(self):
+        # A leaked credential or local path must not survive into the view model.
+        collab = ui_reference_collab_view_model()
+
+        payload = json.dumps(collab)
+        self.assertNotIn(LEAKED_SECRET, payload)
+        self.assertNotIn("/Users/canary", payload)
+
+    def test_collab_projection_collapses_unknown_status_vocabulary(self):
+        # An out-of-catalog status is folded to unknown rather than echoed.
+        collab = ui_reference_collab_view_model()
+
+        for skill in collab["skills"]:
+            for dimension in ("profile_status", "runtime_status"):
+                self.assertIn(skill[dimension]["status"], UI_REFERENCE_STATUS_CATALOG)
 
 
 if __name__ == "__main__":

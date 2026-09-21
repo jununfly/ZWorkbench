@@ -136,6 +136,7 @@ main {
 .meta-pill { padding: 7px 9px; color: var(--muted); border: 1px solid var(--line); background: var(--surface); }
 .scope-tag { padding: 6px 8px; color: var(--sage-strong); border: 1px solid rgba(110, 111, 80, 0.28); background: var(--sage-wash); }
 .scope-target { color: var(--amber); border-color: rgba(169, 111, 49, 0.28); background: var(--amber-wash); }
+.scope-implemented { color: var(--sage-strong); border-color: rgba(110, 111, 80, 0.28); background: var(--sage-wash); }
 .scope-unknown { color: var(--rose); border-color: rgba(143, 102, 80, 0.28); background: var(--rose-wash); }
 .status-dot { display: inline-block; width: 6px; height: 6px; flex: 0 0 auto; border-radius: 99px; background: currentColor; }
 
@@ -436,6 +437,35 @@ main {
   cursor: not-allowed; opacity: 0.7; }
 .reconcile-button[disabled] { cursor: not-allowed; }
 .safe-stop-hint { font-size: 11px; color: var(--muted); }
+
+/* F15 r2 — r2-ui-reference-skills 协同可视化面板（只读投影） */
+.ui-ref-collab { margin: 12px 0 0; padding: 16px 18px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface-raised); border-left: 4px solid var(--ink-soft); }
+.ui-ref-collab-empty { display: none; }
+.urc-caption { margin: 6px 0 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.urc-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.urc-row { display: grid; grid-template-columns: minmax(140px, 200px) 1fr; gap: 16px;
+  align-items: start; padding: 12px; border: 1px solid var(--line-soft); border-radius: 10px;
+  background: var(--surface); }
+.urc-skill { display: flex; flex-direction: column; gap: 2px; }
+.urc-skill-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+.urc-skill-id { font-family: var(--mono); font-size: 11px; color: var(--quiet); }
+.urc-statuses { display: grid; gap: 10px; }
+.urc-status { display: grid; grid-template-columns: auto auto 1fr; gap: 8px 10px; align-items: baseline;
+  padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--surface-raised); }
+.urc-status-key { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.urc-pill { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
+  font-family: var(--mono); font-size: 11px; font-weight: 600; border: 1px solid var(--line); }
+.urc-reason { font-size: 11px; color: var(--quiet); }
+.urc-evidence { list-style: disc; margin: 4px 0 0 18px; grid-column: 1 / -1; }
+.urc-evidence li { font-size: 11px; color: var(--muted); line-height: 1.45; }
+.urc-boundary { margin: 12px 0 0; font-size: 11px; color: var(--muted);
+  border-top: 1px dashed var(--line); padding-top: 8px; }
+@media (max-width: 760px) {
+  .urc-row { grid-template-columns: 1fr; }
+  .urc-status { grid-template-columns: auto auto; }
+  .urc-reason, .urc-evidence { grid-column: 1 / -1; }
+}
 
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
