@@ -233,13 +233,25 @@
       "id": "1-1-8",
       "uid": "01a0bda02675-b1693ddb26",
       "label": "F11 场景状态机 UI（empty/planning/approval/stopped 四态渲染）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F11 实现落点（模型/渲染/投影）",
+          "answer": "随 F7/F10 既有范式：四态展示模型+渲染落在 ui_home.py，owner-backed 只读投影落在 ui_view_model.py；ui_review 仍是 🚧 safe-stop/approval 真实接线的归宿（F13），本轮只渲染四态不接线。",
+          "note": ""
+        },
+        {
+          "q": "F11 四态推导范围（approval 留 gate）",
+          "answer": "本轮 owner 只读投影只派生 empty（无记录）/ planning（有 latest 且非 stopped）/ stopped（latest 为 safe-stopped）；approval 推导（safe-stop/approval 判定）明确留 1-2 product gate（F13），四态 UI 已可渲染但真实接线不在本轮。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-9": {
       "id": "1-1-9",
@@ -376,7 +388,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-20 21:46:16",
+    "updated": "2026-09-21 11:43:05",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
