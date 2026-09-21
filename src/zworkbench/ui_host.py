@@ -31,6 +31,7 @@ from .ui_style import stylesheet
 from .ui_matrix import REQUIRED_VIEWPORTS
 from .ui_token import build_token, parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
+from .ui_live import live_facts_payload, live_script
 
 #: Where the style layer is served. Styling is a separate resource rather
 #: than inline markup, so a selector can never be written against the
@@ -41,6 +42,13 @@ STYLESHEET_ROUTE = "/static/workbench.css"
 #: mode, so a normal document carries no script at all rather than a script
 #: that decides to do nothing.
 REVIEW_SCRIPT_ROUTE = "/static/review.js"
+
+#: F7/1-2-3 — the home live-values poller. Served for /home only (see the
+#: module docstring in ui_live for why this is a scoped exception to the
+#: "normal documents carry no script" convention).
+LIVE_FACTS_ROUTE = "/api/home-facts"
+LIVE_SCRIPT_ROUTE = "/static/live.js"
+LIVE_SCRIPT_TAG = '<script src="{0}" defer></script>'.format(LIVE_SCRIPT_ROUTE)
 
 
 DOCUMENT = (
@@ -441,11 +449,15 @@ def render_document(
         # the page states the mode explicitly instead. A failed link gets no
         # hint: its notice already says what happened.
         body = REVIEW_HINT + body
+    # F7/1-2-3 — the home live poller is a scoped exception to the "normal
+    # documents carry no script" convention: it is progressive enhancement for
+    # /home only. Other routes stay script-free in normal mode.
+    live_tag = LIVE_SCRIPT_TAG if route == "/home" else ""
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,
         body=body,
-        script=REVIEW_SCRIPT_TAG if review else "",
+        script=live_tag + (REVIEW_SCRIPT_TAG if review else ""),
     )
 
 
@@ -515,6 +527,20 @@ def serve_workbench(
                     "application/javascript; charset=utf-8",
                 )
                 return
+            if route == LIVE_FACTS_ROUTE:
+                # F7/1-2-3 — read-only live facts for /home. Re-projects the
+                # same owner-backed view the page renders; no write, no runtime
+                # invocation beyond the read-only projection.
+                self._respond(self._live_facts_json(), "application/json; charset=utf-8")
+                return
+            if route == LIVE_SCRIPT_ROUTE:
+                # F7/1-2-3 — the poller, served unconditionally: it is
+                # progressive enhancement for /home, not a review-mode layer.
+                self._respond(
+                    live_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -533,6 +559,14 @@ def serve_workbench(
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def _live_facts_json(self) -> bytes:
+            """Project /home's live facts through the same view source."""
+            resolver = getattr(resolve_view, "resolve_query", None)
+            view = resolver("/home", "") if callable(resolver) else resolve_view("/home")
+            return json.dumps(
+                live_facts_payload(view), ensure_ascii=False
+            ).encode("utf-8")
 
         def log_message(self, *args: Any) -> None:
             """Keep the test output clean; the host is not an evidence source."""
