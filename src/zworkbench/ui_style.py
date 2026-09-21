@@ -368,6 +368,36 @@ main {
 .evidence-link-row small { color: var(--quiet); font-family: var(--mono); font-size: 9px; word-break: break-all; }
 .evidence-empty { color: var(--quiet); font-family: var(--mono); font-size: 10px; }
 
+/* F10 — run-rail inspector: lifecycle rail + disabled Run + owner records + evidence timeline */
+.run-rail { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.rail-track { display: flex; align-items: center; margin: 2px 0 16px; }
+.rail-node { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; color: var(--quiet); white-space: nowrap; }
+.rail-node i { width: 9px; height: 9px; border-radius: 99px; background: var(--line); flex: 0 0 auto; }
+.rail-node:not(:last-child)::after { content: ""; width: 22px; height: 1px; background: var(--line); margin: 0 8px; }
+.rail-done { color: var(--muted); }
+.rail-done i { background: var(--sage); }
+.rail-current { color: var(--ink); font-weight: 600; }
+.rail-current i { background: var(--ink); box-shadow: 0 0 0 3px var(--sage-wash); }
+.rail-pending { color: var(--quiet); }
+.rail-terminal { margin-left: 10px; padding: 3px 8px; border-radius: 6px; font-family: var(--mono); font-size: 9px; color: var(--rose); background: var(--rose-wash); }
+.rail-run-button { display: flex; justify-content: space-between; align-items: center; width: 100%; margin: 0 0 16px; padding: 9px 11px; color: var(--muted); border: 1px dashed var(--line); border-radius: 9px; background: var(--surface-raised); font: inherit; font-size: 12px; cursor: not-allowed; text-align: left; }
+.rail-run-button .rail-run-glyph { color: var(--muted); font-size: 11px; margin-right: 2px; }
+.rail-run-button span { font-family: var(--mono); font-size: 9px; color: var(--quiet); }
+.rail-records, .rail-timeline { margin-top: 4px; }
+.rail-records .eyebrow, .rail-timeline .eyebrow { margin: 0 0 8px; }
+.rail-record-list, .rail-timeline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.rail-record-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 6px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-raised); font-family: var(--mono); font-size: 10px; }
+.rail-record-list code { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-record-list span { color: var(--quiet); }
+.rail-record-list time { grid-column: 1 / -1; color: var(--quiet); font-size: 9px; }
+.rail-timeline-list li { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 7px 0; border-top: 1px solid var(--line-soft); font-family: var(--mono); font-size: 10px; }
+.rail-timeline-list li:first-child { border-top: 0; }
+.rail-timeline-list time { color: var(--quiet); font-size: 9px; }
+.rail-timeline-link { color: var(--sage-strong); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rail-timeline-link:hover { text-decoration: underline; }
+.rail-timeline-list code { color: var(--quiet); font-size: 9px; word-break: break-all; }
+.rail-empty { color: var(--quiet); font-family: var(--mono); font-size: 10px; }
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is
