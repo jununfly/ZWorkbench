@@ -26,6 +26,7 @@ HOME_REFS = (
     ("home.run-facts", "运行事实", "region", "home.root"),
     ("home.run-rail", "运行轨道栏", "region", "home.root"),
     ("home.scenario-state", "场景状态", "region", "home.root"),
+    ("home.safe-stop", "安全停止", "region", "home.root"),
     ("home.record-list", "工作记录列表", "list", "home.root"),
     ("home.record-list.item", "工作记录项", "list-item", "home.record-list"),
     ("home.side-panel", "侧栏工作记录导航", "region", "home.root"),
@@ -631,6 +632,49 @@ def _render_scenario_state(value: Any) -> str:
     )
 
 
+def _render_safe_stop(value: Any) -> str:
+    """F13 — safe-stop / reconcile banner (render-only; wiring deferred).
+
+    Renders a prominent alert banner when the scenario is in the ``stopped``
+    state, carrying a disabled "请求 reconcile" CTA.  The banner is derived from
+    the owner-backed ``scenario_state`` projection (active only when stopped);
+    the actual reconcile trigger and the identity-unresolved / boundary
+    detection that motivates it are product-gate logic (F13 越界判定), not
+    exercised here.  When inactive it renders an empty section so the declared
+    ref stays audit-clean without a visible banner.
+    """
+
+    safe = _mapping(value)
+    active = bool(safe.get("active"))
+    source = safe.get("source") or "source unknown"
+    if not active:
+        return '<div {ref} class="safe-stop safe-stop-inactive" aria-hidden="true"></div>'.format(
+            ref=attribute_text(home_manifest(), "home.safe-stop")
+        )
+
+    tone = _text(safe.get("tone") or "stopped")
+    message = safe.get("message_zh") or "场景已安全停止（safe-stop）。恢复需 reconcile。"
+    reconcile_label = safe.get("reconcile_label_zh") or "请求 reconcile"
+    disabled = bool(safe.get("reconcile_disabled", True))
+    source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+    return (
+        '<div {ref} class="safe-stop ss-stopped" role="alert">'
+        '<div class="section-heading"><div><p class="eyebrow">SAFE STOP · 安全停止 / reconcile</p>'
+        '<h2>安全停止</h2></div>'
+        '<span class="section-source">{source_badge}</span></div>'
+        '<p class="safe-stop-message">{message}</p>'
+        '<div class="safe-stop-actions">'
+        '<button type="button" class="reconcile-button" aria-disabled="true" disabled>{label}</button>'
+        '<span class="safe-stop-hint">真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。</span>'
+        '</div></div>'
+    ).format(
+        ref=attribute_text(home_manifest(), "home.safe-stop"),
+        source_badge=_text(source_badge),
+        message=_text(message),
+        label=_text(reconcile_label),
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -683,6 +727,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<a href="/task-detail" tabindex="-1">任务详情</a>'
         '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
         '<section {scenario_state_ref} class="scenario-state-wrap">{scenario_state}</section>'
+        '{safe_stop}'
         '<div class="home-layout">'
         '<section {facts_ref} class="home-inspector">{facts}'
         '<div {run_rail_ref} class="run-rail">{run_rail}</div></section>'
@@ -727,6 +772,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         run_rail_ref=attribute_text(resolved, "home.run-rail"),
         scenario_state_ref=attribute_text(resolved, "home.scenario-state"),
         scenario_state=_render_scenario_state(view.get("scenario_state", {})),
+        safe_stop=_render_safe_stop(view.get("safe_stop", {})),
         run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),

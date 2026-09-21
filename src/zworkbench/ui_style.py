@@ -424,6 +424,19 @@ main {
 .ss-node.ss-unknown .ss-dot { background: var(--line); }
 .ss-blurb { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
 
+/* F13 — safe-stop / reconcile banner (render-only; trigger deferred to gate). */
+.safe-stop { margin: 12px 0 0; }
+.safe-stop-inactive { margin: 0; }
+.safe-stop.ss-stopped { padding: 16px 18px; border: 1px solid var(--rose); border-radius: 12px;
+  background: var(--rose-wash); border-left: 4px solid var(--rose); }
+.safe-stop-message { margin: 4px 0 12px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+.safe-stop-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.reconcile-button { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 14px;
+  border-radius: 8px; border: 1px solid var(--rose); background: var(--surface); color: var(--rose);
+  cursor: not-allowed; opacity: 0.7; }
+.reconcile-button[disabled] { cursor: not-allowed; }
+.safe-stop-hint { font-size: 11px; color: var(--muted); }
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is
