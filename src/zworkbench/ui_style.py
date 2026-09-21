@@ -398,6 +398,32 @@ main {
 .rail-timeline-list code { color: var(--quiet); font-size: 9px; word-break: break-all; }
 .rail-empty { color: var(--quiet); font-family: var(--mono); font-size: 10px; }
 
+/* F11 — scenario state machine: four-state banner + stepper. Tone accents reuse
+   existing palette tokens: empty=neutral, planning=sage, approval=amber,
+   stopped=rose. The shell is display-only; no control triggers a run. */
+.scenario-state-wrap { margin: 14px 0 0; }
+.scenario-state { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); border-left: 4px solid var(--line); }
+.scenario-state.ss-planning { border-left-color: var(--sage); }
+.scenario-state.ss-approval { border-left-color: var(--amber); }
+.scenario-state.ss-stopped { border-left-color: var(--rose); }
+.scenario-state.ss-empty { border-left-color: var(--line); }
+.scenario-state.ss-unknown { border-left-color: var(--line); }
+.ss-track { list-style: none; margin: 12px 0 10px; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.ss-node { display: inline-flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; color: var(--quiet); padding: 5px 10px; border: 1px solid var(--line-soft); border-radius: 99px; background: var(--surface); }
+.ss-node .ss-dot { width: 9px; height: 9px; border-radius: 99px; background: var(--line); flex: 0 0 auto; }
+.ss-node.ss-active { color: var(--ink); font-weight: 600; border-color: currentColor; }
+.ss-node.ss-planning .ss-dot { background: var(--sage); }
+.ss-node.ss-planning.ss-active { color: var(--sage-strong); }
+.ss-node.ss-planning.ss-active .ss-dot { box-shadow: 0 0 0 3px var(--sage-wash); }
+.ss-node.ss-approval .ss-dot { background: var(--amber); }
+.ss-node.ss-approval.ss-active { color: var(--amber); }
+.ss-node.ss-approval.ss-active .ss-dot { box-shadow: 0 0 0 3px var(--amber-wash); }
+.ss-node.ss-stopped .ss-dot { background: var(--rose); }
+.ss-node.ss-stopped.ss-active { color: var(--rose); }
+.ss-node.ss-stopped.ss-active .ss-dot { box-shadow: 0 0 0 3px var(--rose-wash); }
+.ss-node.ss-unknown .ss-dot { background: var(--line); }
+.ss-blurb { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is

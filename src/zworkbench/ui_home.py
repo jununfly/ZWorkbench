@@ -25,6 +25,7 @@ HOME_REFS = (
     ("home.workspace-context", "工作区与模式上下文", "region", "home.root"),
     ("home.run-facts", "运行事实", "region", "home.root"),
     ("home.run-rail", "运行轨道栏", "region", "home.root"),
+    ("home.scenario-state", "场景状态", "region", "home.root"),
     ("home.record-list", "工作记录列表", "list", "home.root"),
     ("home.record-list.item", "工作记录项", "list-item", "home.record-list"),
     ("home.side-panel", "侧栏工作记录导航", "region", "home.root"),
@@ -123,6 +124,45 @@ def _rail_stage_classes(status: str) -> "tuple":
     if status in _RAIL_TERMINAL:
         return 1, _RAIL_TERMINAL[status]
     return -1, None
+
+
+#: F11 scenario state machine — render shell only. The four canonical scenario
+#: states describe the overall workbench scenario. Real derivation of "approval"
+#: (safe-stop / approval judgment) stays behind the 1-2 product gate (F13); here
+#: the model is pure presentation: it validates a token and returns descriptors.
+#: ``tone`` drives both the node dot and the banner accent so a glance shows the
+#: live state. "empty" is the start; "stopped" is a recoverable terminal.
+_SCENARIO_STATES = (
+    ("empty", "空场景", "empty", "还没有任何工作记录或计划；完成一次本地只读运行后会出现内容。"),
+    ("planning", "规划中", "planning", "已载入计划或当前意图，正在评审 / 推进计划步骤。"),
+    ("approval", "待审批", "approval", "存在待人类审批的 Approval / Effect；真实审批交互留 product gate。"),
+    ("stopped", "已停止", "stopped", "场景被 safe-stopped；需 reconcile 后才能继续。"),
+)
+_SCENARIO_KEYS = frozenset(state[0] for state in _SCENARIO_STATES)
+_SCENARIO_LABELS = {state[0]: state[1] for state in _SCENARIO_STATES}
+_SCENARIO_TONES = {state[0]: state[2] for state in _SCENARIO_STATES}
+_SCENARIO_BLURBS = {state[0]: state[3] for state in _SCENARIO_STATES}
+
+#: Transition edges of the scenario state machine (pure data; the render shell
+#: does not enforce them). They document the intended flow for the eventual
+#: product-gate wiring, not behaviour exercised by this shell.
+_SCENARIO_TRANSITIONS = {
+    "empty": ("planning",),
+    "planning": ("approval", "stopped"),
+    "approval": ("planning", "stopped"),
+    "stopped": ("planning",),
+}
+
+
+def _scenario_state_token(state: Any) -> str:
+    """Normalise and validate a scenario-state token.
+
+    Returns the canonical token, or ``"unknown"`` for a missing or unrecognised
+    value so the shell never presents a fabricated state.
+    """
+
+    candidate = str(state or "unknown").strip().lower().replace("_", "-")
+    return candidate if candidate in _SCENARIO_KEYS else "unknown"
 
 
 def _status_chip(value: Any, *, source: Any = "source unknown") -> str:
@@ -541,6 +581,56 @@ def _render_conversation(view: Mapping[str, Any]) -> str:
     return '<ol class="conversation-list">{0}</ol>'.format("".join(rows))
 
 
+def _render_scenario_state(value: Any) -> str:
+    """F11 — scenario state machine UI (render-only; wiring deferred).
+
+    Renders a four-state stepper (empty -> planning -> approval -> stopped) with
+    the active state highlighted, a blurb describing the active state and a
+    source badge.  A missing or invalid state reads as ``unknown`` and no node
+    is marked active.  No control in this shell triggers a run, approval or
+    stop: those belong to the 1-2 product gate (F13).
+    """
+
+    scenario = _mapping(value)
+    raw_state = scenario.get("state", "unknown")
+    source = scenario.get("source") or "source unknown"
+    state = _scenario_state_token(raw_state)
+    source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+
+    nodes = []
+    for key, label_zh, tone, _blurb in _SCENARIO_STATES:
+        if state == "unknown":
+            cls = "ss-node ss-unknown"
+        elif key == state:
+            cls = "ss-node ss-active ss-{0}".format(tone)
+        else:
+            cls = "ss-node ss-{0}".format(tone)
+        nodes.append(
+            '<li class="{cls}"><span class="ss-dot" aria-hidden="true"></span>'
+            '<span class="ss-label">{label}</span></li>'.format(
+                cls=cls, label=_text(label_zh)
+            )
+        )
+    stepper = '<ol class="ss-track" aria-label="场景状态">{0}</ol>'.format("".join(nodes))
+
+    tone = _SCENARIO_TONES.get(state, "unknown")
+    blurb = _SCENARIO_BLURBS.get(state, "状态未知（真实判定留 product gate）。")
+    return (
+        '<div class="scenario-state ss-{tone}">'
+        '<div class="section-heading"><div><p class="eyebrow">SCENARIO STATE · 场景状态机</p>'
+        '<h2>场景状态</h2></div>'
+        '<span class="section-source">{source_badge}</span></div>'
+        '{stepper}'
+        '<p class="ss-blurb">{blurb}</p>'
+        '</div>'
+    ).format(
+        tone=_text(tone),
+        source_badge=_text(source_badge),
+        stepper=stepper,
+        blurb=_text(blurb),
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -592,6 +682,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<a href="/home" tabindex="-1" aria-current="page">工作台</a>'
         '<a href="/task-detail" tabindex="-1">任务详情</a>'
         '<a href="/record-view" tabindex="-1">记录视图</a></nav>'
+        '<section {scenario_state_ref} class="scenario-state-wrap">{scenario_state}</section>'
         '<div class="home-layout">'
         '<section {facts_ref} class="home-inspector">{facts}'
         '<div {run_rail_ref} class="run-rail">{run_rail}</div></section>'
@@ -634,6 +725,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         workspace_ref=attribute_text(resolved, "home.workspace-context"),
         facts_ref=attribute_text(resolved, "home.run-facts"),
         run_rail_ref=attribute_text(resolved, "home.run-rail"),
+        scenario_state_ref=attribute_text(resolved, "home.scenario-state"),
+        scenario_state=_render_scenario_state(view.get("scenario_state", {})),
         run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),

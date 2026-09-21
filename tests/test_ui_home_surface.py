@@ -556,6 +556,80 @@ class HomeRunRailF10Tests(unittest.TestCase):
             self.assertTrue(node["href"].startswith("/record-view?run_id="))
 
 
+class HomeScenarioStateF11Tests(unittest.TestCase):
+    def _view_with_state(self, state, *, source="CompositionOwner"):
+        view = dict(VIEW)
+        view["scenario_state"] = {"state": state, "source": source}
+        return view
+
+    def test_scenario_state_renders_four_state_stepper(self):
+        # F11: the shell exposes all four scenario states in order, the active
+        # one highlighted with its tone, and no undeclared reference leaks.
+        markup = render_home(self._view_with_state("planning"))
+        self.assertIn("场景状态", markup)
+        self.assertIn("SCENARIO STATE", markup)
+        self.assertIn('data-ui-ref="home.scenario-state"', markup)
+        for label in ("空场景", "规划中", "待审批", "已停止"):
+            self.assertIn(label, markup)
+        self.assertIn("ss-node ss-active ss-planning", markup)
+        self.assertNotIn("ss-node ss-active ss-empty", markup)
+        self.assertNotIn("ss-node ss-active ss-approval", markup)
+        self.assertNotIn("ss-node ss-active ss-stopped", markup)
+        audit = audit_rendered_html(home_manifest(), markup)
+        self.assertEqual(audit["undeclared"], ())
+
+    def test_scenario_state_highlights_each_valid_state(self):
+        for state, tone in (
+            ("empty", "empty"),
+            ("planning", "planning"),
+            ("approval", "approval"),
+            ("stopped", "stopped"),
+        ):
+            markup = render_home(self._view_with_state(state))
+            self.assertIn("ss-node ss-active ss-{0}".format(tone), markup)
+
+    def test_scenario_state_degrades_unknown_to_no_active(self):
+        # A missing or unrecognised state reads as unknown: no node is active
+        # and the blurb says the real judgment is deferred.
+        view = dict(VIEW)
+        view["scenario_state"] = {"state": "bogus", "source": "source unknown"}
+        markup = render_home(view)
+        self.assertNotIn("ss-active", markup)
+        self.assertIn("状态未知", markup)
+        self.assertIn("source unknown", markup)
+
+    def test_scenario_state_shows_owner_backed_source(self):
+        view = dict(VIEW)
+        view["scenario_state"] = {"state": "stopped", "source": "CompositionOwner"}
+        markup = render_home(view)
+        self.assertIn("owner-backed", markup)
+        self.assertIn('ss-node ss-active ss-stopped', markup)
+
+    def test_view_model_projects_scenario_state_from_owner(self):
+        # The owner-backed facade derives empty / stopped / planning from the
+        # recorded runs without a writable path; "approval" derivation stays
+        # behind the 1-2 product gate (F13).
+
+        class EmptyOwner:
+            def snapshot(self):
+                return {"runs": []}
+
+        class StoppedOwner:
+            def snapshot(self):
+                return {"runs": [{"run_id": "r1", "status": "safe_stopped", "updated_at": "t1"}]}
+
+        class PlanningOwner:
+            def snapshot(self):
+                return {"runs": [{"run_id": "r1", "status": "running", "updated_at": "t1"}]}
+
+        self.assertEqual(home_view_model(EmptyOwner())["scenario_state"]["state"], "empty")
+        stopped = home_view_model(StoppedOwner())["scenario_state"]
+        self.assertEqual(stopped["state"], "stopped")
+        self.assertEqual(stopped["source"], "CompositionOwner")
+        planning = home_view_model(PlanningOwner())["scenario_state"]
+        self.assertEqual(planning["state"], "planning")
+
+
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
     def setUp(self):
