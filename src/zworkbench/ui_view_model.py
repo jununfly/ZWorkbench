@@ -463,6 +463,23 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         "source": "CompositionOwner" if latest else "source unknown",
     }
 
+    # F11 scenario-state — render shell only. The "approval" derivation
+    # (safe-stop / approval judgment) stays behind the 1-2 product gate (F13);
+    # here we read only existing read-only signals: no recorded run -> empty, a
+    # safe-stopped latest run -> stopped, otherwise -> planning. An absent field
+    # reads ``unknown`` and the real state machine wiring is not exercised.
+    scenario_latest_status = display_status(latest["status"]) if latest else UNKNOWN
+    scenario_state_token = (
+        "stopped" if scenario_latest_status == "safe-stopped"
+        else "planning" if (latest or runs)
+        else "empty"
+    )
+    scenario_source = "CompositionOwner" if (latest or runs) else "source unknown"
+    scenario_state = {
+        "state": scenario_state_token,
+        "source": scenario_source,
+    }
+
     return {
         "workspace": {
             "name": workspace_name,
@@ -498,6 +515,7 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
             "source": "CompositionOwner" if latest else "source unknown",
         },
         "run_rail": run_rail,
+        "scenario_state": scenario_state,
         "intent": {
             "title": display_text(latest.get("task_type", UNKNOWN)) if latest else UNKNOWN,
             "summary": display_intent_summary(input_value.get("prompt", UNKNOWN)),
