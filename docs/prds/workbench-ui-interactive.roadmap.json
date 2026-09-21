@@ -214,13 +214,20 @@
       "id": "1-1-7",
       "uid": "01a0bda02509-7c3949306f",
       "label": "F10 运行轨道栏（渲染壳；可执行 Run 留 product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F10 落点与本轮形态",
+          "answer": "复用 home-inspector 列（matrix 固定 unit home.run-rail，不新增独立 ui-ref 族）。本轮只渲染壳：①生命周期 rail（created→running→completed，终态 failed/safe-stopped/denied 标红）；②「可执行 Run」按钮渲染但 aria-disabled（真实触发留 1-2-3 product gate）；③Owner 记录（owner-backed runs 列表）；④证据时间线（snapshot events 按 created_at 排序，链接只读路由 /record-view?run_id=）。值由 owner-backed 投影提供、缺失即 unknown；不触碰运行时。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-8": {
       "id": "1-1-8",
@@ -369,7 +376,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-20 21:19:41",
+    "updated": "2026-09-20 21:46:16",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
