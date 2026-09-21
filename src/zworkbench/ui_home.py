@@ -42,6 +42,7 @@ HOME_REFS = (
     ("home.conversation", "会话消息流", "region", "home.root"),
     ("home.conversation.message", "会话消息", "list-item", "home.conversation"),
     ("home.ui-reference-collab", "UI 引用协同状态", "region", "home.root"),
+    ("home.variant-switcher", "三变体调试切换器", "region", "home.root"),
 )
 
 
@@ -771,6 +772,51 @@ def _render_ui_reference_collab(value: Any) -> str:
     )
 
 
+def _render_variant_switcher(value: Any) -> str:
+    """Render the F19 three-variant debug switcher.
+
+    Round 1 ships the shell only: three ``?variant=A|B|C`` links (no script --
+    normal mode never loads one) with the active variant highlighted, plus a
+    read-only projection of the current selection. The actual per-variant content
+    branch is a product-gate (1-2) concern and is not performed here. An
+    out-of-range or absent value is shown honestly (default, invalid) and never
+    crashes or injects, because every echoed string passes through :func:`_text`.
+    """
+    variant = _mapping(value)
+    selected = _text(variant.get("selected"))
+    valid = bool(variant.get("valid"))
+    options = variant.get("options") or ()
+    links = "".join(
+        '<a class="vs-option{active}" href="?variant={vid}" data-variant="{vid}">{vid}</a>'.format(
+            vid=_text(opt.get("id")),
+            active=" vs-option-active" if opt.get("active") else "",
+        )
+        for opt in options
+    )
+    invalid_note = (
+        ""
+        if valid
+        else '<span class="vs-invalid">（越界/无效，已回退默认）</span>'
+    )
+    return (
+        '<section {ref} class="variant-switcher">'
+        '<div class="section-heading"><div><p class="eyebrow">DEBUG · 三变体切换器</p>'
+        '<h2>UI 变体调试切换器</h2></div>'
+        '<span class="section-source">{source}</span></div>'
+        '<p class="vs-caption">通过 ?variant=A|B|C 在客户端切换渲染变体'
+        '（纯 UI 壳，本轮仅切换器 + 只读投影，实际分支留 1-2）。</p>'
+        '<div class="vs-options">{links}</div>'
+        '<p class="vs-state">当前变体：<span class="vs-current">{selected}</span>{invalid}</p>'
+        '</section>'
+    ).format(
+        ref=attribute_text(home_manifest(), "home.variant-switcher"),
+        source=_text(variant.get("source") or "source unknown"),
+        links=links,
+        selected=selected,
+        invalid=invalid_note,
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -825,6 +871,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<section {scenario_state_ref} class="scenario-state-wrap">{scenario_state}</section>'
         '{safe_stop}'
         '{ui_reference_collab}'
+        '{variant_switcher}'
         '<div class="home-layout">'
         '<section {facts_ref} class="home-inspector">{facts}'
         '<div {run_rail_ref} class="run-rail">{run_rail}</div></section>'
@@ -872,6 +919,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         scenario_state=_render_scenario_state(view.get("scenario_state", {})),
         safe_stop=_render_safe_stop(view.get("safe_stop", {})),
         ui_reference_collab=_render_ui_reference_collab(view.get("ui_reference_collab", {})),
+        variant_switcher=_render_variant_switcher(view.get("variant", {})),
         run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),

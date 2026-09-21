@@ -32,6 +32,14 @@ REDACTED = "<redacted>"
 
 UNKNOWN = "unknown"
 
+#: Canonical debug variant vocabulary for the F19 three-variant switcher.
+#: Round 1 ships the switcher shell + read-only projection only; the actual
+#: per-variant content branch is a product-gate (1-2) concern. Anything not in
+#: this catalogue (including an absent value) resolves to ``HOME_VARIANT_DEFAULT``
+#: and is reported as ``valid: False`` so the shell never crashes or injects.
+HOME_VARIANT_CATALOG = ("A", "B", "C")
+HOME_VARIANT_DEFAULT = "default"
+
 #: Canonical status vocabulary shared by the r2-ui-reference-skills status
 #: reports (profile_status.py / runtime_status.py). Copied verbatim from the
 #: skill contracts so the projection can validate and pass through a status
@@ -492,7 +500,36 @@ def _project_conversation(snapshot: Mapping[str, Any]) -> Any:
     return messages or UNKNOWN
 
 
-def home_view_model(owner: Any) -> Dict[str, Any]:
+def _project_variant(raw: Any) -> Dict[str, Any]:
+    """Project the F19 debug variant selection into a safe, read-only shape.
+
+    The value comes from a client-supplied ``?variant=`` query param and is
+    therefore untrusted. Only the whitelisted members of ``HOME_VARIANT_CATALOG``
+    are accepted; an absent or out-of-range value falls back to
+    ``HOME_VARIANT_DEFAULT`` and is flagged ``valid: False``. The raw (untrusted)
+    input is never echoed into a value the template interpolates without going
+    through :func:`display_text`, so a stray ``?variant=<script>`` cannot inject.
+    """
+    raw_str = "" if raw is None else str(raw).strip()
+    normalized = raw_str.upper()
+    if normalized in HOME_VARIANT_CATALOG:
+        return {
+            "selected": normalized,
+            "selected_raw": "",
+            "valid": True,
+            "options": [{"id": v, "active": v == normalized} for v in HOME_VARIANT_CATALOG],
+            "source": "query param ?variant",
+        }
+    return {
+        "selected": HOME_VARIANT_DEFAULT,
+        "selected_raw": display_text(raw_str) if raw_str else "",
+        "valid": False,
+        "options": [{"id": v, "active": False} for v in HOME_VARIANT_CATALOG],
+        "source": "query param ?variant" if raw_str else "source unknown",
+    }
+
+
+def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
     """Project the owner's runs into the home surface's presentation model.
 
     Only the run identity and status are shown. The recorded input is not: it
@@ -688,6 +725,8 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         # Declared snapshot only; live profile_status.py / runtime_status.py
         # invocation belongs to the 1-2 product gate.
         "ui_reference_collab": ui_reference_collab_view_model(),
+        # F19 — three-variant debug switcher (read-only projection of ?variant=).
+        "variant": _project_variant(variant),
     }
 
 
@@ -1006,6 +1045,13 @@ def owner_view_source(owner: Any):
         if route == "/task-detail":
             selected = params.get("run_id", [None])[0] or _latest_run_id(owner)
             return task_detail_view_model(owner, selected or "")
+        if route == "/home":
+            # F19 — pure client-side branch driven by the ?variant= query param.
+            # No owner write, no runtime: the host projects the selection and the
+            # page renders three query-param links. Out-of-range values are
+            # rejected by home_view_model's projection, not here.
+            variant = params.get("variant", [None])[0]
+            return home_view_model(owner, variant=variant)
         return resolve(route)
 
     resolve.resolve_query = resolve_query  # type: ignore[attr-defined]
