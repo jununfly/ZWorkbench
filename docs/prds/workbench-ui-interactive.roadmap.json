@@ -281,25 +281,57 @@
       "id": "1-1-10",
       "uid": "01a0bda0295a-db929e4c38",
       "label": "F14 扩展 DSH 只读投影（不引 dsh-web 运行时，ADR 0007）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-1-10-1",
+        "1-1-10-2"
+      ],
+      "decisions": [
+        {
+          "q": "F14 扩展形态（open question #2 结论）",
+          "answer": "在 task-detail 视图模型新增独立命名的 session_references 只读投影，对齐 dsh-web /session-references：仅复用现有 _project_execution_identity 已投影的 dsh_session_id/dsh_turn_id + 父子 run 关联 + provider/model；不新增 owner 字段、不引 dsh-web 运行时（守 ADR 0007 止损线）。无需扩展 owner 字段，只需在 facade 层把 DSH 会话引用显式成 surface。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-11": {
       "id": "1-1-11",
       "uid": "01a0bda02ac7-b7436047e1",
       "label": "F15 r2 协同可视化（profile_status / runtime_status 呈现）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F15 r2 本轮范围",
+          "answer": "Round 1 纯 UI 壳 + 只读投影：构建协同可视化面板（profile_status / runtime_status 呈现），不触碰 dsh-web 运行时，不引实时值。",
+          "note": ""
+        },
+        {
+          "q": "数据来源",
+          "answer": "读取内置的 r2-ui-reference-skills 声明式状态目录（ui-reference-protocol / ui-reference-runtime 的已知/声明状态）；实时调用 profile_status.py / runtime_status.py 子进程留待 product gate 1-2。",
+          "note": ""
+        },
+        {
+          "q": "两个状态维度取值",
+          "answer": "每个 skill 呈现 profile_status 与 runtime_status 两维。本轮诚实取值：两 skill 的 profile_status=implemented（skill 已落地且与 profile 对齐）；runtime_status=unknown（ZWorkbench 专属 profile 联调按 r2 PRD 为 deferred/unknown，实时证据留 product gate）。unknown 须保留并显式给出 uncovered_items / next_evidence。",
+          "note": ""
+        },
+        {
+          "q": "投影与脱敏契约",
+          "answer": "沿用 F14 session_references 模式：纯投影、无 owner 字段、无运行时依赖；值经 display_text 脱敏（凭证/本地路径），unknown 优先；status_catalog 透传 r2 skill 的权威枚举。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-12": {
       "id": "1-1-12",
@@ -396,11 +428,36 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-1-10-1": {
+      "id": "1-1-10-1",
+      "uid": "01a0c2340a6b-c0009dd0bc",
+      "label": "实现 session_references 只读投影（ui_view_model，redaction+unknown）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1-10-2": {
+      "id": "1-1-10-2",
+      "uid": "01a0c2340b85-cb7fdbf122",
+      "label": "补 F14 行为测试（已知/unknown/红化）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-21 12:08:47",
+    "updated": "2026-09-21 13:16:36",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
