@@ -60,7 +60,7 @@
       "id": "1-1",
       "uid": "01a0bda01756-4b1ab6ff81",
       "label": "Round 1 — 纯 UI 壳 + 只读投影（本轮构建）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -337,13 +337,35 @@
       "id": "1-1-12",
       "uid": "01a0bda02c32-724b69afaa",
       "label": "F19 三变体调试切换器（?variant=A/B/C，纯 client 端分支）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F19 本轮范围",
+          "answer": "Round 1 纯 UI 壳 + 只读投影：变体切换器 = 三个 ?variant=A/B/C 链接 + 当前变体高亮 + 只读投影；Round 1 不做实际内容分支（留 product gate 1-2）。",
+          "note": ""
+        },
+        {
+          "q": "接入 seam",
+          "answer": "复用 owner_view_source.resolve_query（与 record-view 的 ?run_id= 同构）；home_view_model(owner, *, variant=None) 接受变体；/home 路由解析 ?variant= 透传。不新增路由、不改 host 契约。",
+          "note": ""
+        },
+        {
+          "q": "「纯 client 端分支」解释",
+          "answer": "normal mode 不载脚本（host 设计），故切换靠客户端导航改变 URL：链接 href=\"?variant=X\"，服务端按 resolve_query 投影。valid 集合 {A,B,C}，越界/缺省→default 且 valid=False，投影安全不崩溃、不注入。",
+          "note": ""
+        },
+        {
+          "q": "投影与脱敏契约",
+          "answer": "沿用 F14/F15 范式：纯投影、无 owner 写、无运行时；display_text 脱敏优先；status_catalog 透传变体枚举。源标记 'query param ?variant'。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-1": {
       "id": "1-2-1",
@@ -457,7 +479,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-21 13:16:36",
+    "updated": "2026-09-21 13:38:08",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
