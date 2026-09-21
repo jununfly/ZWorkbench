@@ -26,7 +26,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.ui_home import home_manifest
-from zworkbench.ui_host import REVIEW_SCRIPT_ROUTE, serve_workbench
+from zworkbench.ui_host import (
+    LIVE_FACTS_ROUTE,
+    LIVE_SCRIPT_ROUTE,
+    REVIEW_SCRIPT_ROUTE,
+    serve_workbench,
+)
 from zworkbench.ui_record_view import record_manifest
 from zworkbench.ui_runtime import audit_rendered_html
 from zworkbench.ui_task_detail import task_detail_manifest
@@ -241,11 +246,35 @@ class TheReviewBehaviourLayerTests(unittest.TestCase):
         status, _ = self._get(self.plain.base_url, REVIEW_SCRIPT_ROUTE)
         self.assertEqual(status, 404)
 
-    def test_normal_documents_carry_no_script_element(self):
-        for route in ("/home", "/task-detail", "/record-view"):
+    def test_normal_documents_carry_no_script_except_home_live(self):
+        # F7/1-2-3 introduces exactly one scoped exception to the "normal
+        # documents carry no script" convention: /home may load the live
+        # poller (/static/live.js). task-detail and record-view stay
+        # script-free in normal mode, and the review layer must still be absent.
+        for route in ("/task-detail", "/record-view"):
             with self.subTest(route=route):
                 _, body = self._get(self.plain.base_url, route)
                 self.assertNotIn("<script", body)
+        _, home = self._get(self.plain.base_url, "/home")
+        self.assertIn(LIVE_SCRIPT_ROUTE, home)
+        self.assertNotIn(REVIEW_SCRIPT_ROUTE, home)
+        # The live script is a separate resource, not inline executable text.
+        self.assertNotIn("setInterval", home)
+
+    def test_live_facts_endpoint_serves_read_only_json(self):
+        # The live endpoint re-projects /home's facts: it must answer JSON and
+        # never carry a business action or a script.
+        status, body = self._get(self.plain.base_url, LIVE_FACTS_ROUTE)
+        self.assertEqual(status, 200)
+        data = json.loads(body)
+        self.assertIn("evidence_count", data)
+        self.assertNotIn("<script", body)
+
+    def test_live_script_resource_is_served(self):
+        status, body = self._get(self.plain.base_url, LIVE_SCRIPT_ROUTE)
+        self.assertEqual(status, 200)
+        self.assertIn("/api/home-facts", body)
+        self.assertIn("setInterval", body)
 
     def test_the_behaviour_layer_is_a_separate_resource_not_inline_text(self):
         """The document stays free of executable text, so it can be diffed."""

@@ -376,19 +376,20 @@ def _render_run_facts(value: Any) -> str:
     source = facts.get("source") or "source unknown"
     source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
     rows = (
-        ("run_id", facts.get("run_id", facts.get("run", "unknown"))),
-        ("parent / child", facts.get("parent_child", "unknown")),
-        ("mode", facts.get("mode", "unknown")),
-        ("workspace", facts.get("workspace", "unknown")),
-        ("worker", facts.get("worker", facts.get("provider", "unknown"))),
-        ("approval", facts.get("approval", "unknown")),
-        ("effect", facts.get("effect", "unknown")),
+        ("run_id", "run_id", facts.get("run_id", facts.get("run", "unknown"))),
+        ("parent_child", "parent / child", facts.get("parent_child", "unknown")),
+        ("mode", "mode", facts.get("mode", "unknown")),
+        ("workspace", "workspace", facts.get("workspace", "unknown")),
+        ("worker", "worker", facts.get("worker", facts.get("provider", "unknown"))),
+        ("approval", "approval", facts.get("approval", "unknown")),
+        ("effect", "effect", facts.get("effect", "unknown")),
     )
     details = "".join(
-        '<div class="fact-row"><dt>{label}</dt><dd>{value}</dd></div>'.format(
-            label=_text(label), value=_text(value)
+        '<div class="fact-row"><dt>{label}</dt>'
+        '<dd data-live="{key}">{value}</dd></div>'.format(
+            label=_text(label), key=_text(key), value=_text(value)
         )
-        for label, value in rows
+        for key, label, value in rows
     )
     evidence_links = _items(facts.get("evidence_links"))
     if evidence_links:
@@ -406,7 +407,8 @@ def _render_run_facts(value: Any) -> str:
                 )
             )
         evidence_block = (
-            '<div class="evidence-links"><p class="eyebrow">EVIDENCE LINKS</p>'
+            '<div class="evidence-links"><p class="eyebrow">EVIDENCE LINKS'
+            '<span class="evidence-count" data-live="evidence_count"></span></p>'
             '<ul class="evidence-link-list">{0}</ul></div>'.format("".join(links))
         )
     else:
@@ -414,7 +416,7 @@ def _render_run_facts(value: Any) -> str:
     return (
         '<div class="inspector-heading"><div><p class="eyebrow">RUNTIME FACTS</p>'
         '<h2>运行事实</h2></div><span class="source-badge">{source_badge}</span></div>'
-        '<div class="state-card">{status}</div>'
+        '<div class="state-card" data-live="status">{status}</div>'
         '<dl class="fact-list">{details}</dl>'
         '{evidence_block}'
         '<p class="source-note">判断来源：{source}</p>'.format(
