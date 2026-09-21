@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 import urllib.request
 
 from zworkbench.composition import CompositionOwner
-from zworkbench.ui_home import home_manifest
+from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
 from zworkbench.ui_view_model import (
@@ -990,6 +990,105 @@ class UiReferenceCollabProjectionTests(unittest.TestCase):
         for skill in collab["skills"]:
             for dimension in ("profile_status", "runtime_status"):
                 self.assertIn(skill[dimension]["status"], UI_REFERENCE_STATUS_CATALOG)
+
+
+class VariantSwitcherProjectionTests(unittest.TestCase):
+    """F19 — three-variant debug switcher projection and query resolution."""
+
+    def setUp(self):
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.owner = owner_with_state(self.directory.name)
+        self.addCleanup(self.owner.close)
+
+    def test_home_view_model_carries_the_variant_projection(self):
+        view = home_view_model(self.owner)
+        self.assertIn("variant", view)
+        variant = view["variant"]
+        self.assertEqual(variant["selected"], "default")
+        self.assertFalse(variant["valid"])
+        self.assertEqual([o["id"] for o in variant["options"]], ["A", "B", "C"])
+
+    def test_explicit_variant_is_selected_and_flagged_valid(self):
+        view = home_view_model(self.owner, variant="B")
+        variant = view["variant"]
+        self.assertEqual(variant["selected"], "B")
+        self.assertTrue(variant["valid"])
+        self.assertEqual(
+            [o["active"] for o in variant["options"]], [False, True, False]
+        )
+
+    def test_lowercase_variant_is_normalised(self):
+        view = home_view_model(self.owner, variant="c")
+        self.assertEqual(view["variant"]["selected"], "C")
+        self.assertTrue(view["variant"]["valid"])
+
+    def test_out_of_range_variant_falls_back_to_default_and_invalid(self):
+        view = home_view_model(self.owner, variant="X")
+        variant = view["variant"]
+        self.assertEqual(variant["selected"], "default")
+        self.assertFalse(variant["valid"])
+        self.assertEqual(variant["selected_raw"], "X")
+
+    def test_malicious_variant_value_is_redacted_not_injected(self):
+        # A stray ?variant=<script> must never reach the document as a live tag.
+        # The projection rejects it (default/invalid) and the renderer escapes or
+        # drops the untrusted raw value, so the served HTML carries no raw <script>.
+        view = home_view_model(self.owner, variant='<script>alert(1)</script>')
+        variant = view["variant"]
+        self.assertEqual(variant["selected"], "default")
+        self.assertFalse(variant["valid"])
+        html = render_home(view)
+        self.assertNotIn("<script>alert(1)</script>", html)
+        # The malicious payload is not echoed back as a live tag anywhere.
+        self.assertNotIn("<script", html)
+
+    def test_resolve_query_parses_variant_for_home(self):
+        source = owner_view_source(self.owner)
+        view = source.resolve_query("/home", "variant=C")
+        self.assertEqual(view["variant"]["selected"], "C")
+        self.assertTrue(view["variant"]["valid"])
+
+    def test_resolve_query_rejects_unknown_variant_for_home(self):
+        source = owner_view_source(self.owner)
+        view = source.resolve_query("/home", "variant=ZZ")
+        self.assertEqual(view["variant"]["selected"], "default")
+        self.assertFalse(view["variant"]["valid"])
+
+
+class VariantSwitcherServedTests(unittest.TestCase):
+    """F19 end-to-end: ?variant= flows through the host to the served document."""
+
+    def setUp(self):
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.owner = owner_with_state(self.directory.name)
+        self.addCleanup(self.owner.close)
+        self.host = serve_workbench(view_source=owner_view_source(self.owner))
+        self.addCleanup(self.host.close)
+
+    def _home(self, query=""):
+        with DIRECT.open(self.host.base_url + "/home" + query, timeout=5) as response:
+            return response.read().decode("utf-8")
+
+    def test_served_home_carries_the_variant_switcher(self):
+        body = self._home()
+        self.assertIn('data-ui-ref="home.variant-switcher"', body)
+        self.assertIn("UI 变体调试切换器", body)
+        self.assertIn('href="?variant=A"', body)
+        self.assertIn('href="?variant=B"', body)
+        self.assertIn('href="?variant=C"', body)
+
+    def test_served_home_highlights_the_active_variant(self):
+        body = self._home("?variant=B")
+        self.assertIn("vs-option-active", body)
+        self.assertIn('data-variant="B"', body)
+        self.assertIn("当前变体", body)
+
+    def test_served_home_reports_invalid_variant_honestly(self):
+        body = self._home("?variant=ZZ")
+        self.assertIn("vs-invalid", body)
+        self.assertIn("default", body)
 
 
 if __name__ == "__main__":

@@ -467,6 +467,26 @@ main {
   .urc-reason, .urc-evidence { grid-column: 1 / -1; }
 }
 
+/* F19 — three-variant debug switcher (Round 1 shell + read-only projection). */
+.variant-switcher { margin: 12px 0 0; padding: 16px 18px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface-raised); border-left: 4px solid var(--amber); }
+.vs-caption { margin: 6px 0 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.vs-options { display: inline-flex; gap: 8px; flex-wrap: wrap; }
+.vs-option { display: inline-flex; align-items: center; justify-content: center; min-width: 38px;
+  padding: 7px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  color: var(--ink); font-family: var(--mono); font-size: 13px; font-weight: 600; text-decoration: none;
+  transition: border-color .12s ease, background .12s ease; }
+.vs-option:hover { border-color: var(--ink-soft); }
+.vs-option-active { background: var(--amber-wash); border-color: var(--amber); color: var(--amber-strong); }
+.vs-state { margin: 12px 0 0; font-size: 12px; color: var(--quiet); }
+.vs-current { font-family: var(--mono); font-weight: 700; color: var(--ink); padding: 1px 7px;
+  border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.vs-invalid { color: var(--rose); margin-left: 4px; }
+@media (max-width: 760px) {
+  .vs-options { width: 100%; }
+  .vs-option { flex: 1; }
+}
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is
