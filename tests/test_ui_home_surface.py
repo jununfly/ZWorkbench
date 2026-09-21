@@ -630,6 +630,87 @@ class HomeScenarioStateF11Tests(unittest.TestCase):
         self.assertEqual(planning["state"], "planning")
 
 
+class HomeSafeStopF13Tests(unittest.TestCase):
+    def _render(self, safe_stop):
+        return render_home({"safe_stop": safe_stop})
+
+    def test_inactive_renders_empty_section_without_banner(self):
+        # planning / empty / approval / unknown must NOT show the alert banner.
+        for state in ("planning", "empty", "approval", "unknown"):
+            html = self._render({"active": False, "state": state})
+            self.assertNotIn("role=\"alert\"", html)
+            self.assertNotIn("reconcile-button", html)
+            self.assertNotIn("安全停止", html)
+            # the declared ref still survives as an empty section (audit-clean)
+            self.assertIn("home.safe-stop", html)
+
+    def test_active_renders_banner_with_disabled_reconcile(self):
+        html = self._render({
+            "active": True,
+            "tone": "stopped",
+            "message_zh": "场景已安全停止（safe-stop）。恢复需 reconcile。",
+            "reconcile_label_zh": "请求 reconcile",
+            "reconcile_disabled": True,
+            "source": "CompositionOwner",
+        })
+        self.assertIn("role=\"alert\"", html)
+        self.assertIn("安全停止", html)
+        self.assertIn("请求 reconcile", html)
+        # reconcile trigger is a shell only; never interactive this round
+        self.assertIn("aria-disabled=\"true\"", html)
+        self.assertIn("disabled", html)
+        # owner-backed source badge present
+        self.assertIn("owner-backed", html)
+
+    def test_active_with_unknown_source_shows_source_unknown(self):
+        html = self._render({
+            "active": True,
+            "tone": "stopped",
+            "message_zh": "x",
+            "reconcile_label_zh": "请求 reconcile",
+            "source": "source unknown",
+        })
+        self.assertIn("source unknown", html)
+        self.assertNotIn("owner-backed", html)
+
+    def test_full_render_when_stopped_has_no_undeclared_ref(self):
+        class StoppedOwner:
+            def snapshot(self):
+                return {"runs": [{"run_id": "r1", "status": "safe_stopped", "updated_at": "t1"}]}
+
+        model = home_view_model(StoppedOwner())
+        html = render_home(model)
+        audit = audit_rendered_html(home_manifest(), html)
+        self.assertEqual(audit["undeclared"], ())
+        self.assertIn("role=\"alert\"", html)
+        self.assertIn("home.safe-stop", html)
+
+    def test_view_model_projects_safe_stop_active_only_when_stopped(self):
+        class EmptyOwner:
+            def snapshot(self):
+                return {"runs": []}
+
+        class StoppedOwner:
+            def snapshot(self):
+                return {"runs": [{"run_id": "r1", "status": "safe_stopped", "updated_at": "t1"}]}
+
+        class PlanningOwner:
+            def snapshot(self):
+                return {"runs": [{"run_id": "r1", "status": "running", "updated_at": "t1"}]}
+
+        empty = home_view_model(EmptyOwner())["safe_stop"]
+        self.assertFalse(empty["active"])
+        self.assertEqual(empty["source"], "source unknown")
+
+        stopped = home_view_model(StoppedOwner())["safe_stop"]
+        self.assertTrue(stopped["active"])
+        self.assertTrue(stopped["reconcile_disabled"])
+        self.assertEqual(stopped["source"], "CompositionOwner")
+
+        planning = home_view_model(PlanningOwner())["safe_stop"]
+        self.assertFalse(planning["active"])
+
+
 @unittest.skipUnless(chrome_available(), "the verification-stage browser is absent")
 class HomeSurfaceBrowserTests(unittest.TestCase):
     def setUp(self):

@@ -480,6 +480,21 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         "source": scenario_source,
     }
 
+    # F13 — safe-stop / reconcile banner projection (render-only; wiring deferred).
+    # active is derived solely from the owner-backed stopped signal
+    # (latest.status == safe-stopped); the actual identity-unresolved / boundary
+    # detection and the reconcile trigger are product-gate logic, not exercised
+    # here. The message names the recovery path without asserting a detected cause.
+    safe_stop_active = scenario_state_token == "stopped"
+    safe_stop = {
+        "active": safe_stop_active,
+        "tone": "stopped" if safe_stop_active else "neutral",
+        "message_zh": "场景已安全停止（safe-stop）。恢复需 reconcile；真实越界 / 身份未解析（identity unresolved）判定属 product gate（F13），本轮仅渲染请求入口。",
+        "reconcile_label_zh": "请求 reconcile",
+        "reconcile_disabled": True,
+        "source": "CompositionOwner" if safe_stop_active else "source unknown",
+    }
+
     return {
         "workspace": {
             "name": workspace_name,
@@ -516,6 +531,7 @@ def home_view_model(owner: Any) -> Dict[str, Any]:
         },
         "run_rail": run_rail,
         "scenario_state": scenario_state,
+        "safe_stop": safe_stop,
         "intent": {
             "title": display_text(latest.get("task_type", UNKNOWN)) if latest else UNKNOWN,
             "summary": display_intent_summary(input_value.get("prompt", UNKNOWN)),
