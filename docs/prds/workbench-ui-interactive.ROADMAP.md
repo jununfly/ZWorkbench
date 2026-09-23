@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-21 15:15:41
+> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-23 15:55:12
 
 [~][X+] 1. 完整工作台 Web-UI（含交互）执行路线图
 ├── [x][X+] 1-1. Round 1 — 纯 UI 壳 + 只读投影（本轮构建）
@@ -21,7 +21,7 @@
 │   ├── [ ][X+] 1-2-1. F6 输入 composer 真实发送（触发 agent Run）
 │   ├── [ ][X+] 1-2-2. F12 审批执行 UI（apply diff / Approval / effect receipt）
 │   ├── [x][X+] 1-2-3. F7 实时值（来自投影 / 运行时）
-│   ├── [ ][X+] 1-2-4. F10 可执行 Run（按钮触发，触碰 CompositionOwner）
+│   ├── [x][X+] 1-2-4. F10 可执行 Run（按钮触发，触碰 CompositionOwner）
 │   └── [ ][X+] 1-2-5. F13 越界判定逻辑（identity unresolved → reconcile）
 └── [ ][X+] 1-3. B-C 变体 — B 画布 / C 日记（后续独立 gate）
     ├── [ ][X+] 1-3-1. F8 命令画布（canvas-layout：command-path/decision/artifact/run-rail）
@@ -31,5 +31,5 @@
 
 - 1-2-1. F6 输入 composer 真实发送（触发 agent Run） [ ]
 - 1-2-2. F12 审批执行 UI（apply diff / Approval / effect receipt） [ ]
-- 1-2-4. F10 可执行 Run（按钮触发，触碰 CompositionOwner） [ ]
+- 1-2-5. F13 越界判定逻辑（identity unresolved → reconcile） [ ]
 <!-- ROADMAP_SECTION_END -->

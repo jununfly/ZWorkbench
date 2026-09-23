@@ -426,13 +426,25 @@
       "id": "1-2-4",
       "uid": "01a0bda031f8-222a690595",
       "label": "F10 可执行 Run（按钮触发，触碰 CompositionOwner）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "F10 可执行 Run 写 seam 机制",
+          "answer": "host 仍是只读优先：serve_workbench 新增可选 command_source=None；仅当上层控制面（DSH）注入命令门面时，/home 才注入 run 脚本且按钮可点（can_run=True）。写端点 POST /api/runs 走 owner_command_source（仅 create_and_start_run，内部生成 run_id + 串行锁），读侧零写。按钮 JS 只 POST 默认载荷，成功派发 workbench:run-created 事件让 F7 轮询立即刷新，绝不注入 JSON 中的 HTML。这是对『普通文档不带脚本』约定的第二处受控例外（仅 /home）。",
+          "note": ""
+        },
+        {
+          "q": "CLI ui-host 保持只读（不接线命令面）",
+          "answer": "cli.py 的 ui-host 命令按文档约定『不开 owner 数据库、不改 owner 状态、无 --db』，故不注入 command_source，写端点对其返回 404。F10 交付的是程序化写 seam + 命令门面 + 测试，真实接线由上层控制面（DSH）注入；不在此改动 CLI 以维护只读宿主不变式。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-5": {
       "id": "1-2-5",
@@ -498,7 +510,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-21 15:15:41",
+    "updated": "2026-09-23 15:55:12",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
