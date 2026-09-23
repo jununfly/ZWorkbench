@@ -110,6 +110,10 @@ _LIVE_SCRIPT = """\
   }
   refresh();
   setInterval(refresh, POLL_MS);
+  // F10/1-2-4 — when the run-rail trigger creates a run, refresh immediately
+  // instead of waiting for the next interval tick. The poller owns every DOM
+  // update; the trigger script only dispatches this event.
+  window.addEventListener('workbench:run-created', () => { refresh(); });
 })();
 """ % LIVE_POLL_MS
 

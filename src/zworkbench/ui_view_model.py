@@ -626,9 +626,10 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
     evidence_timeline = _project_evidence_timeline(snapshot, run_id) if run_id else UNKNOWN
     owner_records = _project_owner_records(snapshot) if runs else UNKNOWN
 
-    # F10 run-rail — render shell only. The "executable Run" trigger and any
-    # live projection stay behind the 1-2-3 product gate; here can_run is always
-    # False and an absent field reads ``unknown``.
+    # F10 run-rail — render shell. ``can_run`` defaults to False here; the host
+    # injects ``can_run = True`` for /home only when a command facade was wired
+    # at startup (F10/1-2-4). A read-only host (CLI ui-host) keeps it False, so
+    # the button degrades to a disabled placeholder rather than a broken trigger.
     run_rail = {
         "status": display_status(latest["status"]) if latest else UNKNOWN,
         "run_id": display_text(run_id) if run_id is not None else UNKNOWN,
