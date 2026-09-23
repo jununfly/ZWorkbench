@@ -430,13 +430,15 @@ def _render_run_facts(value: Any) -> str:
 
 
 def _render_run_rail(value: Any) -> str:
-    """F10 — run-rail inspector shell (render-only; executable Run deferred).
+    """F10 — run-rail inspector, with the executable Run trigger wired.
 
     The rail shows the run's lifecycle position (created -> running -> completed,
-    terminal states flagged in red), a disabled "executable Run" button whose
-    real trigger stays behind the 1-2-3 product gate, the owner-backed record
-    list and a chronological evidence timeline. Every value comes from the
-    owner-backed projection; a missing value reads ``unknown``.
+    terminal states flagged in red). When the host has a command facade wired
+    (``can_run`` is True), the "executable Run" button is a real trigger that
+    POSTs to the host's run API; otherwise it stays a read-only placeholder, so
+    a read-only host (CLI ``ui-host``, which opens no owner database) degrades
+    to the same disabled button rather than a broken one. Every value comes from
+    the owner-backed projection; a missing value reads ``unknown``.
     """
     rail = _mapping(value)
     state = rail.get("status", "unknown")
@@ -464,12 +466,23 @@ def _render_run_rail(value: Any) -> str:
         if terminal_label
         else ""
     )
-    run_button = (
-        '<button type="button" class="rail-run-button" aria-disabled="true" '
-        'aria-label="可执行 Run（留 product gate）">'
-        '<span class="rail-run-glyph" aria-hidden="true">&#9654;</span>可执行 Run'
-        '<span>留 product gate</span></button>'
-    )
+    can_run = bool(rail.get("can_run"))
+    if can_run:
+        # F10/1-2-4 — a real trigger the run.js handler wires to POST /api/runs.
+        run_button = (
+            '<button type="button" class="rail-run-button" data-run-trigger '
+            'data-task-type="interactive_run" aria-label="可执行 Run（创建并启动）">'
+            '<span class="rail-run-glyph" aria-hidden="true">&#9654;</span>可执行 Run'
+            '</button>'
+        )
+    else:
+        # Read-only host or gate not wired: same button, disabled and labelled.
+        run_button = (
+            '<button type="button" class="rail-run-button" aria-disabled="true" '
+            'aria-label="可执行 Run（当前宿主为只读，未接线命令面）">'
+            '<span class="rail-run-glyph" aria-hidden="true">&#9654;</span>可执行 Run'
+            '<span>只读宿主</span></button>'
+        )
     owner_records = _items(rail.get("owner_records"))
     if owner_records:
         rec_rows = "".join(

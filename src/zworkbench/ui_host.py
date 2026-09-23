@@ -32,6 +32,12 @@ from .ui_matrix import REQUIRED_VIEWPORTS
 from .ui_token import build_token, parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
 from .ui_live import live_facts_payload, live_script
+from .ui_run import (
+    RUN_API_ROUTE,
+    RUN_SCRIPT_ROUTE,
+    RUN_SCRIPT_TAG,
+    run_trigger_script,
+)
 
 #: Where the style layer is served. Styling is a separate resource rather
 #: than inline markup, so a selector can never be written against the
@@ -400,6 +406,7 @@ def render_document(
     query: str = "",
     review: bool = False,
     build: Optional[str] = None,
+    run_capable: bool = False,
 ) -> str:
     """Wrap one rendered view in a complete document.
 
@@ -451,13 +458,16 @@ def render_document(
         body = REVIEW_HINT + body
     # F7/1-2-3 — the home live poller is a scoped exception to the "normal
     # documents carry no script" convention: it is progressive enhancement for
-    # /home only. Other routes stay script-free in normal mode.
+    # /home only. F10/1-2-4 adds a second scoped script for /home, the run
+    # trigger, and only when the host was started with a command facade. Other
+    # routes stay script-free in normal mode.
     live_tag = LIVE_SCRIPT_TAG if route == "/home" else ""
+    run_tag = RUN_SCRIPT_TAG if (route == "/home" and run_capable) else ""
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,
         body=body,
-        script=live_tag + (REVIEW_SCRIPT_TAG if review else ""),
+        script=live_tag + run_tag + (REVIEW_SCRIPT_TAG if review else ""),
     )
 
 
@@ -482,8 +492,9 @@ def serve_workbench(
     view_source: Optional[Callable[[str], Mapping[str, Any]]] = None,
     bind: Tuple[str, int] = ("127.0.0.1", 0),
     review: bool = False,
+    command_source: Optional[Callable[..., Mapping[str, Any]]] = None,
 ) -> WorkbenchHost:
-    """Start a read-only host, by default on an ephemeral loopback port.
+    """Start a host, by default on an ephemeral loopback port.
 
     ``view_source`` supplies the redacted presentation model for a route. The
     host never reads owner storage itself; until the control-plane facade
@@ -495,8 +506,15 @@ def serve_workbench(
     ``review`` is a start-up choice on purpose. A request cannot turn the
     review layer on, so a deep link is structurally incapable of enabling it
     rather than merely lacking the parameter.
+
+    ``command_source`` is the *optional* F10/1-2-4 write seam. When supplied
+    (by the control plane, never by the read-only CLI ``ui-host``), the host
+    exposes a POST ``/api/runs`` endpoint that creates + starts a run through
+    this narrow facade. When ``None`` the endpoint answers 404, so the write
+    surface can never appear without an explicit, named wiring decision.
     """
     resolve_view = view_source or (lambda route: {})
+    cmd = command_source
 
     # ADR 0006: the build identity is computed once, here, at startup. A source
     # that cannot be read fails loudly at this line -- before the socket opens
@@ -541,6 +559,15 @@ def serve_workbench(
                     "application/javascript; charset=utf-8",
                 )
                 return
+            if route == RUN_SCRIPT_ROUTE:
+                # F10/1-2-4 — the run trigger handler. Served unconditionally
+                # like the live poller: it is progressive enhancement for /home
+                # and does nothing on a host without a run button.
+                self._respond(
+                    run_trigger_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -550,12 +577,88 @@ def serve_workbench(
                 if callable(query_resolver)
                 else resolve_view(route)
             )
-            body = render_document(route, view, query, review, build=served_build).encode("utf-8")
+            # F10/1-2-4 — a host wired with a command facade may let the run
+            # button fire. Signal that capability to the renderer by flipping
+            # ``can_run`` on /home's run-rail projection; the run script is
+            # injected by render_document from the same flag.
+            if route == "/home" and cmd is not None:
+                view = dict(view)
+                rail = dict(view.get("run_rail") or {})
+                rail["can_run"] = True
+                view["run_rail"] = rail
+            body = render_document(
+                route, view, query, review, build=served_build, run_capable=(cmd is not None)
+            ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
+
+        def do_POST(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
+            route, _, _ = self.path.partition("?")
+            if route != RUN_API_ROUTE:
+                self.send_error(404, "unknown view")
+                return
+            self._handle_create_run()
+
+        def _handle_create_run(self) -> None:
+            """F10/1-2-4 — create + start a run through the command facade.
+
+            Reached only when a command facade was wired at startup. A read-only
+            host answers 404 here, so the write surface never appears without an
+            explicit wiring decision. Input is validated at the boundary; owner
+            errors surface as 4xx rather than 500.
+            """
+            if cmd is None:
+                self.send_error(404, "read-only host: no command facade")
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0") or "0")
+            except ValueError:
+                length = 0
+            if length <= 0 or length > 1_000_000:
+                self._respond_json({"error": "bad request"}, 400)
+                return
+            raw = self.rfile.read(length) if length else b""
+            try:
+                payload = json.loads(raw.decode("utf-8")) if raw else {}
+            except (ValueError, UnicodeDecodeError):
+                self._respond_json({"error": "invalid json"}, 400)
+                return
+            if not isinstance(payload, dict):
+                self._respond_json({"error": "invalid payload"}, 400)
+                return
+            task_type = payload.get("task_type")
+            input_value = payload.get("input_value")
+            metadata = payload.get("metadata")
+            if not isinstance(task_type, str) or not task_type.strip():
+                self._respond_json({"error": "task_type required"}, 400)
+                return
+            if input_value is None:
+                self._respond_json({"error": "input_value required"}, 400)
+                return
+            if metadata is not None and not isinstance(metadata, (dict, Mapping)):
+                self._respond_json({"error": "metadata must be an object"}, 400)
+                return
+            try:
+                result = cmd(
+                    task_type=task_type,
+                    input_value=input_value,
+                    metadata=metadata,
+                )
+            except Exception as exc:  # owner raises CompositionError etc.
+                self._respond_json({"error": str(exc)}, 400)
+                return
+            self._respond_json(result, 201)
 
         def _respond(self, body: bytes, content_type: str) -> None:
             self.send_response(200)
             self.send_header("Content-Type", content_type)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _respond_json(self, obj: Any, status: int) -> None:
+            body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+            self.send_response(status)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)

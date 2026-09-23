@@ -30,6 +30,7 @@ from zworkbench.ui_host import (
     LIVE_FACTS_ROUTE,
     LIVE_SCRIPT_ROUTE,
     REVIEW_SCRIPT_ROUTE,
+    RUN_SCRIPT_ROUTE,
     serve_workbench,
 )
 from zworkbench.ui_record_view import record_manifest
@@ -258,6 +259,9 @@ class TheReviewBehaviourLayerTests(unittest.TestCase):
         _, home = self._get(self.plain.base_url, "/home")
         self.assertIn(LIVE_SCRIPT_ROUTE, home)
         self.assertNotIn(REVIEW_SCRIPT_ROUTE, home)
+        # F10/1-2-4 — a read-only host (no command facade) must not surface the
+        # run trigger script; the write surface appears only when one is wired.
+        self.assertNotIn(RUN_SCRIPT_ROUTE, home)
         # The live script is a separate resource, not inline executable text.
         self.assertNotIn("setInterval", home)
 
