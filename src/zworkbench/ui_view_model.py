@@ -659,19 +659,35 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
         "source": scenario_source,
     }
 
-    # F13 — safe-stop / reconcile banner projection (render-only; wiring deferred).
-    # active is derived solely from the owner-backed stopped signal
-    # (latest.status == safe-stopped); the actual identity-unresolved / boundary
-    # detection and the reconcile trigger are product-gate logic, not exercised
-    # here. The message names the recovery path without asserting a detected cause.
-    safe_stop_active = scenario_state_token == "stopped"
+    # F13 (1-2-5) — safe-stop / reconcile banner projection.
+    # The banner activates when the scenario is stopped OR when the owner reports
+    # an unresolved identity reference (identity unresolved). The reconcile CTA is
+    # enabled only when a concrete identity violation was detected; the structured
+    # findings name the exact broken reference so a human can act on it.
+    identity_violations = []
+    if run_id is not None:
+        try:
+            identity_violations = list(owner.detect_identity_violations(run_id))
+        except Exception:
+            identity_violations = []
+    has_identity_violation = bool(identity_violations)
+
+    safe_stop_active = scenario_state_token == "stopped" or has_identity_violation
     safe_stop = {
         "active": safe_stop_active,
         "tone": "stopped" if safe_stop_active else "neutral",
-        "message_zh": "场景已安全停止（safe-stop）。恢复需 reconcile；真实越界 / 身份未解析（identity unresolved）判定属 product gate（F13），本轮仅渲染请求入口。",
+        "reason": "identity_unresolved" if has_identity_violation else None,
+        "message_zh": (
+            "检测到身份越界：{n} 处身份引用无法解析（identity unresolved）。恢复需 reconcile。".format(n=len(identity_violations))
+            if has_identity_violation
+            else ("场景已安全停止（safe-stop）。恢复需 reconcile；真实越界 / 身份未解析（identity unresolved）判定属 product gate（F13），本轮仅渲染请求入口。"
+                  if safe_stop_active
+                  else "场景未检测到身份越界。")
+        ),
         "reconcile_label_zh": "请求 reconcile",
-        "reconcile_disabled": True,
-        "source": "CompositionOwner" if safe_stop_active else "source unknown",
+        "reconcile_disabled": not has_identity_violation,
+        "violations": identity_violations,
+        "source": "CompositionOwner" if (safe_stop_active or has_identity_violation) else "source unknown",
     }
 
     return {
@@ -709,6 +725,66 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
             "source": "CompositionOwner" if latest else "source unknown",
         },
         "run_rail": run_rail,
+        # F6/1-2-1 — input composer projection (render shell + send capability
+        # flag). ``can_send`` defaults to False here; the host injects
+        # ``can_send = True`` for /home only when a command facade was wired at
+        # startup (same condition as F10 ``can_run``). A read-only host keeps it
+        # False, so the composer degrades to a disabled input rather than a
+        # broken trigger. The composer is a UI control, not owner-backed data,
+        # so its source is the view model, not CompositionOwner.
+        "composer": {
+            "can_send": False,
+            "source": "view model",
+        },
+        # F12/1-2-2 — approval-execution console projection (read-only listing).
+        # The human-actable verbs (approve/deny/record receipt) are write actions
+        # handled by the narrow approval command facade; the console lists only
+        # what a human can act on, with no owner-backed write here.
+        # ``can_decide`` defaults to False; the host flips it for /home only when
+        # an approval command facade was wired at startup (parallel to F10
+        # ``can_run`` / F6 ``can_send``). A read-only host keeps it False, so the
+        # console degrades to disabled controls rather than broken triggers.
+        "approval_console": {
+            "can_decide": False,
+            "pending_approvals": [
+                {
+                    "approval_id": display_text(item.get("approval_id")),
+                    "operation_id": display_text(item.get("operation_id")),
+                    "action": display_text(item.get("action")),
+                    "resource": display_text(item.get("resource")),
+                    "reason": display_text(item.get("reason")),
+                    "created_at": display_text(item.get("created_at")),
+                }
+                for item in snapshot.get("approvals", ())
+                if isinstance(item, Mapping) and item.get("status") == "pending"
+            ],
+            "claimed_effects": [
+                {
+                    "effect_id": display_text(item.get("effect_id")),
+                    "operation_id": display_text(item.get("operation_id")),
+                    "action": display_text(item.get("action")),
+                    "resource": display_text(item.get("resource")),
+                    "status": display_status(item.get("status")),
+                    "attempt": item.get("attempt", UNKNOWN),
+                }
+                for item in snapshot.get("effects", ())
+                if isinstance(item, Mapping) and item.get("status") == "claimed"
+            ],
+            "source": "CompositionOwner"
+            if (
+                any(
+                    item.get("status") == "pending"
+                    for item in snapshot.get("approvals", ())
+                    if isinstance(item, Mapping)
+                )
+                or any(
+                    item.get("status") == "claimed"
+                    for item in snapshot.get("effects", ())
+                    if isinstance(item, Mapping)
+                )
+            )
+            else "source unknown",
+        },
         "scenario_state": scenario_state,
         "safe_stop": safe_stop,
         "intent": {

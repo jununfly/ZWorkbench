@@ -634,6 +634,152 @@ class CompositionOwner:
             return self._decode_row(connection.execute("SELECT * FROM effects WHERE effect_id = ?", (effect_id,)).fetchone(), {"external_receipt_json": "external_receipt"})
 
     # ------------------------------------------------------------------
+    # F13 (1-2-5) — identity-boundary judgment and reconcile routing
+    # ------------------------------------------------------------------
+
+    def detect_identity_violations(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Scan the durable identity graph for unresolved references.
+
+        A "key identity" in this owner is any cross-reference the AGENTS.md
+        long-lived constraint requires to stay queryable: the run_id link from
+        every child table, the effect_attempts -> effects link, the
+        effects.approval_id link, and the parent/child run links carried in
+        ``runs.metadata``.  Any reference that points at a row that does not
+        exist is an unresolved identity -- the boundary has been crossed.
+
+        The scan is read-only and fail-closed: it never invents a target, it
+        only reports what cannot be resolved.  Pass ``run_id`` to scope the scan
+        to one run's inbound and outbound links (as the view model does); pass
+        ``None`` for a whole-owner integrity audit.
+        """
+
+        connection = self._require_connection()
+        valid_runs = {row["run_id"] for row in connection.execute("SELECT run_id FROM runs")}
+        effect_run = {
+            row["effect_id"]: row["run_id"]
+            for row in connection.execute("SELECT effect_id, run_id FROM effects")
+        }
+        findings: List[Dict[str, Any]] = []
+
+        child_tables = ("effects", "approvals", "results", "replays", "events")
+        for table in child_tables:
+            for row in connection.execute(f"SELECT run_id FROM {table}"):
+                child_run = row["run_id"]
+                if child_run in valid_runs:
+                    continue
+                if run_id is not None and child_run != run_id:
+                    continue
+                findings.append({
+                    "kind": f"orphan_{table}_run",
+                    "run_id": child_run,
+                    "ref_table": table,
+                    "ref_id": child_run,
+                    "detail": f"{table}.run_id references missing run {child_run!r}",
+                })
+
+        for row in connection.execute("SELECT effect_id FROM effect_attempts"):
+            effect_id = row["effect_id"]
+            owner_run = effect_run.get(effect_id)
+            if owner_run is None:
+                if run_id is None:
+                    findings.append({
+                        "kind": "orphan_effect_attempt_effect",
+                        "run_id": "unknown",
+                        "ref_table": "effect_attempts",
+                        "ref_id": effect_id,
+                        "detail": f"effect_attempts.effect_id references missing effect {effect_id!r}",
+                    })
+                continue
+            if run_id is not None and owner_run != run_id:
+                continue
+
+        for row in connection.execute("SELECT effect_id, approval_id, run_id FROM effects WHERE approval_id IS NOT NULL"):
+            approval_id = row["approval_id"]
+            exists = connection.execute("SELECT 1 FROM approvals WHERE approval_id = ?", (approval_id,)).fetchone()
+            if exists:
+                continue
+            if run_id is not None and row["run_id"] != run_id:
+                continue
+            findings.append({
+                "kind": "orphan_effect_approval",
+                "run_id": row["run_id"],
+                "ref_table": "effects",
+                "ref_id": approval_id,
+                "detail": f"effects.approval_id references missing approval {approval_id!r}",
+            })
+
+        for row in connection.execute("SELECT run_id, metadata_json FROM runs"):
+            current_run = row["run_id"]
+            if run_id is not None and current_run != run_id:
+                continue
+            try:
+                metadata = json.loads(row["metadata_json"] or "{}")
+            except (ValueError, TypeError):
+                metadata = {}
+            if not isinstance(metadata, dict):
+                continue
+            for link in ("parent_run_id", "child_run_id"):
+                target = metadata.get(link)
+                if target and target not in valid_runs:
+                    findings.append({
+                        "kind": f"broken_{link}",
+                        "run_id": current_run,
+                        "ref_table": "runs.metadata",
+                        "ref_id": target,
+                        "detail": f"{current_run}.metadata.{link} references missing run {target!r}",
+                    })
+
+        return findings
+
+    def safe_stop_on_identity_violation(self, run_id: str) -> Dict[str, Any]:
+        """Fail-closed boundary enforcement for the F13 (1-2-5) judgment.
+
+        If the run's durable identity graph has an unresolved reference,
+        safe-stop it with reason ``identity_unresolved`` and record the
+        findings.  When the graph is clean the run is left untouched and
+        ``safe_stopped`` is False -- detection alone is never a reason to
+        interrupt a healthy run.
+        """
+
+        findings = self.detect_identity_violations(run_id)
+        if not findings:
+            return {"violations": [], "safe_stopped": False, "status": self.get_run(run_id)["status"]}
+        with self._transaction() as connection:
+            row = self._run_row(connection, run_id)
+            if row["status"] != "safe_stopped":
+                self._set_run_status(connection, row, "safe_stopped", "run.safe_stopped", {"reason": "identity_unresolved"})
+            self._append_event(connection, run_id, "run.identity.violation", {"reason": "identity_unresolved", "violations": findings})
+        return {"violations": findings, "safe_stopped": True, "status": "safe_stopped"}
+
+    def reconcile_identity(self, run_id: str, evidence: Any = None) -> Dict[str, Any]:
+        """Record an identity-reconciliation decision and re-check the graph.
+
+        Mirrors ``reconcile_effect``'s fail-closed spirit: a safe-stopped run is
+        terminal and is never resurrected.  If violations remain the run stays
+        safe_stopped (``outcome=unknown``); if the graph is now clean the run is
+        recorded as reconciled (``outcome=resolved``) but still terminal.  Either
+        way the decision is durable and observable through the event ledger.
+
+        ``evidence`` is accepted for caller symmetry but is not persisted in this
+        slice: the owner rejects raw credential fields, and free-text evidence
+        would need redaction before entering the ledger.
+        """
+
+        findings = self.detect_identity_violations(run_id)
+        payload = {"outcome": "unknown" if findings else "resolved", "violation_count": len(findings)}
+        if findings:
+            payload["violations"] = findings
+            with self._transaction() as connection:
+                row = self._run_row(connection, run_id)
+                if row["status"] != "safe_stopped":
+                    self._set_run_status(connection, row, "safe_stopped", "run.safe_stopped", {"reason": "identity_unresolved"})
+                self._append_event(connection, run_id, "run.identity.reconciled", payload)
+            return {"outcome": "unknown", "violations": findings, "status": "safe_stopped"}
+        with self._transaction() as connection:
+            self._append_event(connection, run_id, "run.identity.reconciled", payload)
+        return {"outcome": "resolved", "violations": [], "status": self.get_run(run_id)["status"]}
+
+    # ------------------------------------------------------------------
     # Evidence, export and portable backup
     # ------------------------------------------------------------------
 

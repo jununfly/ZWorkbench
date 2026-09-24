@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
@@ -126,6 +127,49 @@ class CompositionOwnerTests(unittest.TestCase):
         denied = self.owner.claim_effect("run-2", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
         self.assertEqual(denied.reason, "effect_belongs_to_other_run")
         self.assertEqual(self.owner.get_run("run-2")["status"], "safe_stopped")
+
+    def test_f13_detects_broken_parent_run_link_as_identity_violation(self) -> None:
+        self.owner.create_run(
+            "run-1", "unit-test", {"prompt": "x"}, metadata={"parent_run_id": "ghost-run"}
+        )
+        violations = self.owner.detect_identity_violations("run-1")
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0]["kind"], "broken_parent_run_id")
+        self.assertEqual(violations[0]["ref_id"], "ghost-run")
+
+        result = self.owner.safe_stop_on_identity_violation("run-1")
+        self.assertTrue(result["safe_stopped"])
+        self.assertEqual(self.owner.get_run("run-1")["status"], "safe_stopped")
+
+        reconciled = self.owner.reconcile_identity("run-1")
+        self.assertEqual(reconciled["outcome"], "unknown")
+        self.assertEqual(reconciled["status"], "safe_stopped")
+
+    def test_f13_reconcile_resolves_after_fixing_the_link(self) -> None:
+        self.owner.create_run(
+            "run-1", "unit-test", {"prompt": "x"}, metadata={"parent_run_id": "ghost-run"}
+        )
+        self.owner.safe_stop_on_identity_violation("run-1")
+        connection = sqlite3.connect(str(self.db))
+        connection.execute("UPDATE runs SET metadata_json = '{}' WHERE run_id = 'run-1'")
+        connection.commit()
+        connection.close()
+        reconciled = self.owner.reconcile_identity("run-1")
+        self.assertEqual(reconciled["outcome"], "resolved")
+        self.assertEqual(reconciled["violations"], [])
+        # safe-stopped is terminal: reconciliation records the decision but the
+        # run stays stopped (honest fail-closed semantics, like reconcile_effect).
+        self.assertEqual(self.owner.get_run("run-1")["status"], "safe_stopped")
+
+    def test_f13_detects_orphan_effect_run_after_run_deleted(self) -> None:
+        self._run("run-1")
+        self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
+        connection = sqlite3.connect(str(self.db))
+        connection.execute("DELETE FROM runs WHERE run_id = 'run-1'")
+        connection.commit()
+        connection.close()
+        violations = self.owner.detect_identity_violations()
+        self.assertIn("orphan_effects_run", {v["kind"] for v in violations})
 
     def test_backup_restore_validates_state_and_recovers_corrupt_target(self) -> None:
         self._run()
