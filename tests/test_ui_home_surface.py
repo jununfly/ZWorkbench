@@ -11,10 +11,12 @@ import sys
 import unittest
 import urllib.request
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from browser import browser, chrome_available
+from zworkbench.composition import CompositionOwner
 from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
@@ -750,6 +752,54 @@ class HomeSurfaceBrowserTests(unittest.TestCase):
         self.assertEqual(measured["sidebar"], measured["layoutWidth"])
         self.assertEqual(measured["inspector"], measured["layoutWidth"])
         self.assertLessEqual(measured["scrollWidth"], measured["pageWidth"])
+
+
+class HomeVariantContentF8F9Tests(unittest.TestCase):
+    """1-3 — F8/F9 variant layouts render (B canvas / C journal) and replace A-session."""
+
+    def setUp(self):
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        owner = CompositionOwner(Path(self.directory.name) / "owner.sqlite3")
+        owner.create_run(
+            "run-alpha",
+            "local_read_only_run",
+            {"prompt": "summarise the repository"},
+            metadata={
+                "workspace": "case-local",
+                "plan": [{"title": "explore", "status": "done"}],
+            },
+        )
+        owner.start_run("run-alpha")
+        owner.request_approval("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "needs ok")
+        owner.claim_effect("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "idempotent")
+        owner.record_result("run-alpha", "summary", {"text": "done"})
+        owner.record_event("run-alpha", "worker.started", {"note": "read-only"})
+        self.owner = owner
+
+    def _render(self, variant):
+        return render_home(home_view_model(self.owner, variant=variant))
+
+    def test_b_variant_renders_canvas_layout_and_replaces_a_session(self):
+        html = self._render("B")
+        self.assertIn('class="variant-canvas"', html)
+        self.assertIn("命令画布", html)
+        self.assertIn("命令路径", html)
+        self.assertIn("op-write", html)
+        self.assertNotIn("会话消息流", html)
+
+    def test_c_variant_renders_journal_layout_and_replaces_a_session(self):
+        html = self._render("C")
+        self.assertIn('class="variant-journal"', html)
+        self.assertIn("项目日记", html)
+        self.assertIn("run-alpha", html)
+        self.assertNotIn("会话消息流", html)
+
+    def test_default_variant_keeps_a_session_content(self):
+        html = self._render(None)
+        self.assertIn("会话消息流", html)
+        self.assertNotIn('class="variant-canvas"', html)
+        self.assertNotIn('class="variant-journal"', html)
 
 
 if __name__ == "__main__":

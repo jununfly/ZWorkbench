@@ -1110,5 +1110,79 @@ class VariantSwitcherServedTests(unittest.TestCase):
         self.assertIn("default", body)
 
 
+class VariantContentBranchTests(unittest.TestCase):
+    """1-3 — F8/F9 variant content branch projection (B canvas / C journal)."""
+
+    def setUp(self):
+        self.directory = TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        owner = CompositionOwner(Path(self.directory.name) / "owner.sqlite3")
+        owner.create_run(
+            "run-alpha",
+            "local_read_only_run",
+            {"prompt": "summarise the repository"},
+            metadata={
+                "workspace": "case-local",
+                "plan": [
+                    {"title": "explore", "status": "done"},
+                    {"title": "summarise", "status": "current"},
+                ],
+            },
+        )
+        owner.start_run("run-alpha")
+        owner.request_approval("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "needs human ok")
+        owner.claim_effect("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "idempotent")
+        owner.record_result("run-alpha", "summary", {"text": "done"}, source_id="op-write")
+        owner.record_event("run-alpha", "worker.started", {"note": "read-only"})
+        owner.record_replay_metadata(
+            "run-alpha", "replay-1", "recorded_view", "dig-est", "dig-env",
+            {"provider": "x", "model": "y"},
+        )
+        self.owner = owner
+
+    def test_default_variant_carries_no_variant_layout(self):
+        view = home_view_model(self.owner)
+        self.assertIsNone(view.get("variant_layout"))
+        self.assertEqual(view["variant"]["selected"], "default")
+
+    def test_b_variant_projects_the_command_canvas(self):
+        layout = home_view_model(self.owner, variant="B")["variant_layout"]
+        self.assertEqual(layout["kind"], "canvas")
+        self.assertEqual(len(layout["command_path"]), 1)
+        self.assertEqual(layout["command_path"][0]["operation_id"], "op-write")
+        self.assertEqual(layout["command_path"][0]["status"], "claimed")
+        self.assertEqual(len(layout["decisions"]), 1)
+        self.assertEqual(layout["decisions"][0]["action"], "write")
+        self.assertEqual(layout["decisions"][0]["status"], "pending")
+        self.assertEqual(len(layout["artifacts"]), 1)
+        self.assertEqual(layout["artifacts"][0]["kind"], "summary")
+        self.assertEqual(layout["run_rail"]["run_id"], "run-alpha")
+
+    def test_c_variant_projects_the_project_journal(self):
+        layout = home_view_model(self.owner, variant="C")["variant_layout"]
+        self.assertEqual(layout["kind"], "journal")
+        self.assertEqual(len(layout["index"]), 1)
+        self.assertEqual(layout["index"][0]["run_id"], "run-alpha")
+        reading = layout["reading"]
+        self.assertEqual(reading["run_id"], "run-alpha")
+        self.assertEqual(reading["prompt"], "summarise the repository")
+        self.assertEqual(reading["workspace"], "case-local")
+        self.assertIsInstance(reading["plan"], dict)
+        self.assertEqual(len(reading["plan"]["steps"]), 2)
+        self.assertEqual({e["kind"] for e in layout["evidence_table"]}, {"event", "replay", "result"})
+
+    def test_empty_owner_renders_unknown_placeholders_not_errors(self):
+        empty = CompositionOwner(Path(self.directory.name) / "empty.sqlite3")
+        canvas = home_view_model(empty, variant="B")["variant_layout"]
+        self.assertEqual(canvas["kind"], "canvas")
+        self.assertEqual(canvas["command_path"], UNKNOWN)
+        self.assertEqual(canvas["decisions"], UNKNOWN)
+        self.assertEqual(canvas["artifacts"], UNKNOWN)
+        journal = home_view_model(empty, variant="C")["variant_layout"]
+        self.assertEqual(journal["kind"], "journal")
+        self.assertEqual(journal["index"], UNKNOWN)
+        self.assertEqual(journal["evidence_table"], UNKNOWN)
+
+
 if __name__ == "__main__":
     unittest.main()

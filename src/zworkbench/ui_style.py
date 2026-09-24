@@ -537,6 +537,35 @@ main {
   .vs-option { flex: 1; }
 }
 
+/* 1-3 — B 命令画布 / C 项目日记 只读变体布局（?variant=B|C 驱动，服务端分支）。 */
+.variant-canvas, .variant-journal { margin: 0; }
+.variant-canvas > .section-heading, .variant-journal > .section-heading { margin-bottom: 14px; }
+.canvas-grid, .journal-grid { display: grid; gap: 14px; }
+.canvas-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.journal-grid { grid-template-columns: 1fr 1.4fr 1.2fr; }
+.canvas-panel, .journal-panel { padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--surface-raised); }
+.canvas-panel > .panel-heading, .journal-panel > .panel-heading { margin: 0 0 10px; }
+.canvas-panel h3, .journal-panel h3 { margin: 0; font-size: 13px; font-weight: 700;
+  color: var(--muted); letter-spacing: .02em; }
+.canvas-run-rail { grid-column: 1 / -1; }
+.run-rail-run, .run-rail-status, .journal-run, .journal-workspace, .journal-prompt {
+  margin: 4px 0; font-size: 13px; color: var(--ink); }
+.journal-prompt { color: var(--muted); line-height: 1.6; }
+.journal-workspace { color: var(--quiet); }
+.variant-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.variant-table th, .variant-table td { text-align: left; padding: 6px 8px;
+  border-bottom: 1px solid var(--line); vertical-align: top; }
+.variant-table th { color: var(--quiet); font-weight: 600; font-size: 11px;
+  text-transform: uppercase; letter-spacing: .04em; }
+.variant-table td { color: var(--ink); font-family: var(--mono); }
+.variant-table tbody tr:hover { background: var(--surface); }
+.variant-empty { margin: 6px 0; font-size: 12px; color: var(--quiet); font-style: italic; }
+.journal-plan { margin-top: 10px; }
+@media (max-width: 980px) {
+  .canvas-grid, .journal-grid { grid-template-columns: 1fr; }
+}
+
 /* The review layer covers the viewport. Covering matters: a layer with no
    area intercepts nothing, so passthrough would be vacuously true and the
    hit test in tests/test_ui_overlay.py would prove nothing. pointer-events is

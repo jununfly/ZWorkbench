@@ -529,6 +529,154 @@ def _project_variant(raw: Any) -> Dict[str, Any]:
     }
 
 
+def _project_canvas_layout(snapshot: Mapping[str, Any], latest: Optional[Mapping[str, Any]], run_id: Any) -> Dict[str, Any]:
+    """F8 (1-3-1) — B 命令画布只读投影（canvas-layout）。
+
+    Pure read-only projection of existing owner state: the command path is the
+    chain of claimed/recorded effects (operation -> resource -> status), the
+    decision notes are the approvals (pending/decided with action/resource/
+    reason), the artifact panel is the recorded results, and the run-rail is the
+    latest run. No new owner API, no write.
+    """
+
+    effects = [e for e in snapshot.get("effects", ()) if isinstance(e, Mapping)]
+    approvals = [a for a in snapshot.get("approvals", ()) if isinstance(a, Mapping)]
+    results = [r for r in snapshot.get("results", ()) if isinstance(r, Mapping)]
+
+    command_path = [
+        {
+            "effect_id": display_text(e.get("effect_id")),
+            "operation_id": display_text(e.get("operation_id")),
+            "resource": display_text(e.get("resource")),
+            "kind": display_text(e.get("kind")),
+            "status": display_status(e.get("status")),
+            "run_id": display_text(e.get("run_id")),
+            "source": "CompositionOwner",
+        }
+        for e in effects
+    ]
+    decisions = [
+        {
+            "approval_id": display_text(a.get("approval_id")),
+            "operation_id": display_text(a.get("operation_id")),
+            "action": display_text(a.get("action")),
+            "resource": display_text(a.get("resource")),
+            "reason": display_text(a.get("reason")),
+            "status": display_status(a.get("status")),
+            "source": "CompositionOwner",
+        }
+        for a in approvals
+    ]
+    artifacts = [
+        {
+            "result_id": display_text(r.get("result_id")),
+            "kind": display_text(r.get("kind")),
+            "value": display_text(r.get("value")),
+            "run_id": display_text(r.get("run_id")),
+            "source_id": display_text(r.get("source_id")),
+            "source": "CompositionOwner",
+        }
+        for r in results
+    ]
+    run_rail = {
+        "run_id": display_text(run_id) if run_id is not None else UNKNOWN,
+        "status": display_status(latest["status"]) if latest else UNKNOWN,
+        "source": "CompositionOwner" if latest else "source unknown",
+    }
+    return {
+        "kind": "canvas",
+        "command_path": command_path or UNKNOWN,
+        "decisions": decisions or UNKNOWN,
+        "artifacts": artifacts or UNKNOWN,
+        "run_rail": run_rail,
+        "source": "CompositionOwner" if (effects or approvals or results) else "source unknown",
+    }
+
+
+def _project_journal_layout(snapshot: Mapping[str, Any], latest: Optional[Mapping[str, Any]], run_id: Any) -> Dict[str, Any]:
+    """F9 (1-3-2) — C 项目日记只读投影（journal-layout）。
+
+    Pure read-only projection: the index is the runs list, the reading pane is the
+    latest run's recorded input/plan/metadata, and the evidence table is the
+    events/replays/results joined by run. No new owner API, no write.
+    """
+
+    runs = [r for r in snapshot.get("runs", ()) if isinstance(r, Mapping)]
+    events = [e for e in snapshot.get("events", ()) if isinstance(e, Mapping)]
+    replays = [rp for rp in snapshot.get("replays", ()) if isinstance(rp, Mapping)]
+    results = [r for r in snapshot.get("results", ()) if isinstance(r, Mapping)]
+
+    index = [
+        {
+            "run_id": display_text(r.get("run_id")),
+            "status": display_status(r.get("status")),
+            "updated_at": display_text(r.get("updated_at")),
+            "source": "CompositionOwner",
+        }
+        for r in runs
+    ]
+    input_value = latest.get("input") if isinstance(latest, Mapping) and isinstance(latest.get("input"), Mapping) else {}
+    metadata = latest.get("metadata") if isinstance(latest, Mapping) and isinstance(latest.get("metadata"), Mapping) else {}
+    plan = metadata.get("plan", UNKNOWN)
+    if isinstance(plan, list):
+        plan = {
+            "steps": [
+                {
+                    "title": display_text(s.get("title", UNKNOWN)),
+                    "status": display_text(s.get("status", UNKNOWN)),
+                }
+                for s in plan
+            ]
+        } if plan else UNKNOWN
+    reading = {
+        "run_id": display_text(run_id) if run_id is not None else UNKNOWN,
+        "prompt": display_text(input_value.get("prompt", UNKNOWN)),
+        "plan": plan,
+        "workspace": display_text(metadata.get("workspace", UNKNOWN)),
+        "workspace_mode": display_text(metadata.get("workspace_mode", UNKNOWN)),
+        "source": "CompositionOwner" if latest else "source unknown",
+    }
+    evidence_table = (
+        [
+            {
+                "kind": "event",
+                "id": display_text(e.get("event_id")),
+                "type": display_text(e.get("type")),
+                "run_id": display_text(e.get("run_id")),
+                "source": "CompositionOwner",
+            }
+            for e in events
+        ]
+        + [
+            {
+                "kind": "replay",
+                "id": display_text(rp.get("replay_id")),
+                "type": display_text(rp.get("mode")),
+                "run_id": display_text(rp.get("run_id")),
+                "source": "CompositionOwner",
+            }
+            for rp in replays
+        ]
+        + [
+            {
+                "kind": "result",
+                "id": display_text(r.get("result_id")),
+                "type": display_text(r.get("kind")),
+                "run_id": display_text(r.get("run_id")),
+                "source": "CompositionOwner",
+            }
+            for r in results
+        ]
+    )
+    return {
+        "kind": "journal",
+        "index": index or UNKNOWN,
+        "reading": reading,
+        "evidence_table": evidence_table or UNKNOWN,
+        "source": "CompositionOwner" if (runs or events or replays or results) else "source unknown",
+    }
+
+
 def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
     """Project the owner's runs into the home surface's presentation model.
 
@@ -690,6 +838,19 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
         "source": "CompositionOwner" if (safe_stop_active or has_identity_violation) else "source unknown",
     }
 
+    # 1-3 — variant content branch (F8 canvas / F9 journal). Read-only projection
+    # of existing owner state; only the whitelisted B/C variants produce a layout,
+    # everything else (A / default) stays None so render_home keeps the A-session
+    # main content. The F19 switcher already drives this via ?variant=.
+    variant_proj = _project_variant(variant)
+    selected = variant_proj.get("selected")
+    if selected == "B":
+        variant_layout = _project_canvas_layout(snapshot, latest, run_id)
+    elif selected == "C":
+        variant_layout = _project_journal_layout(snapshot, latest, run_id)
+    else:
+        variant_layout = None
+
     return {
         "workspace": {
             "name": workspace_name,
@@ -804,6 +965,9 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
         "ui_reference_collab": ui_reference_collab_view_model(),
         # F19 — three-variant debug switcher (read-only projection of ?variant=).
         "variant": _project_variant(variant),
+        # 1-3 — variant content branch (F8 canvas / F9 journal). ``None`` for the
+        # A-session / default variant so render_home keeps the A-session content.
+        "variant_layout": variant_layout,
     }
 
 

@@ -45,6 +45,8 @@ HOME_REFS = (
     ("home.approval-console", "审批执行控制台", "region", "home.root"),
     ("home.ui-reference-collab", "UI 引用协同状态", "region", "home.root"),
     ("home.variant-switcher", "三变体调试切换器", "region", "home.root"),
+    ("home.variant-canvas", "B 命令画布", "region", "home.root"),
+    ("home.variant-journal", "C 项目日记", "region", "home.root"),
 )
 
 
@@ -1021,6 +1023,169 @@ def _render_variant_switcher(value: Any) -> str:
     )
 
 
+def _render_variant_table(rows: Any, columns: Sequence[tuple]) -> str:
+    """Render a read-only variant table, or a muted empty state.
+
+    ``rows`` is either a list of mapping rows (projected by ui_view_model) or the
+    UNKNOWN sentinel string when the owner held nothing. Either way the render is
+    safe: every cell goes through ``_text`` / ``_status`` escaping, never echoing
+    raw owner data.
+    """
+
+    if not isinstance(rows, list) or not rows:
+        return '<p class="variant-empty">（无记录）</p>'
+    head = "".join("<th>{h}</th>".format(h=_text(header)) for header, _ in columns)
+    body = ""
+    for row in rows:
+        cells = "".join("<td>{c}</td>".format(c=render(row)) for _, render in columns)
+        body += "<tr>{cells}</tr>".format(cells=cells)
+    return (
+        '<table class="variant-table">'
+        "<thead><tr>{head}</tr></thead>"
+        "<tbody>{body}</tbody>"
+        "</table>"
+    ).format(head=head, body=body)
+
+
+#: The A-session main content, factored out so the 1-3 variant branch can splice
+#: in the B canvas / C journal layouts without duplicating the chrome or the
+#: per-section projection calls. Formatted once per render.
+A_SESSION_CONTENT_TEMPLATE = (
+    '<section {conv_ref} class="home-section conversation-section">'
+    '<div class="section-heading"><div><p class="eyebrow">CONVERSATION</p>'
+    '<h2>会话消息流</h2></div><span class="section-source">view model</span></div>'
+    '{conversation}</section>'
+    '{composer}'
+    '{approval_console}'
+    '<section {intent_ref} class="home-section intent-section">'
+    '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
+    '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
+    '<div class="intent-context"><span>mode</span><code>{mode}</code><span>workspace</span><code>{workspace}</code></div>'
+    '</section>'
+    '<section {plan_ref} class="home-section plan-section plan-card">'
+    '<div class="section-heading"><div><p class="eyebrow">PLAN CARD · 计划卡</p><h2>计划与下一步</h2></div>'
+    '<span class="section-source">view model</span></div>{plan}'
+    '<ul class="plan-legend" aria-label="步骤态图例">'
+    '<li><span class="legend-dot legend-done">✓</span>已完成</li>'
+    '<li><span class="legend-dot legend-current">▸</span>进行中</li>'
+    '<li><span class="legend-dot legend-pending">·</span>待办</li>'
+    '</ul></section>'
+    '<div class="home-secondary-grid">'
+    '<section {artifacts_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">ARTIFACTS</p><h2>产物</h2></div></div>{artifacts}</section>'
+    '<section {evidence_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">EVIDENCE</p><h2>证据</h2></div></div>{evidence}</section>'
+    '</div>'
+    '<section class="home-action-block"><div><p class="eyebrow">BOUNDARY</p><strong>下一步仍需显式预检</strong><p>当前页面只展示已记录事实；不会从页面启动 Run、写入工作区或切换 Provider。</p></div>'
+    '<button {action_ref} class="preflight-button" type="button" aria-disabled="true">预检并运行<span>只读入口</span></button></section>'
+    '<section {preflight_ref} class="preflight-result"><div class="section-heading"><div><p class="eyebrow">PREFLIGHT</p><h2>预检结果</h2></div></div>{preflight}</section>'
+)
+
+
+def _render_canvas_layout(view: Mapping[str, Any]) -> str:
+    """F8 (1-3-1) — B 命令画布（canvas-layout）渲染。
+
+    Renders the variant_layout canvas projection: a command path (effect chain),
+    decision notes (approvals), an artifact panel (results) and the run-rail.
+    Pure read-only render of owner-projected data; never touches the owner.
+    """
+
+    layout = _mapping(view.get("variant_layout"))
+    ref = attribute_text(home_manifest(), "home.variant-canvas")
+    command_columns = (
+        ("effect", lambda c: _text(c.get("effect_id"))),
+        ("operation", lambda c: _text(c.get("operation_id"))),
+        ("resource", lambda c: _text(c.get("resource"))),
+        ("status", lambda c: _status(c.get("status"))),
+        ("run", lambda c: _text(c.get("run_id"))),
+    )
+    decision_columns = (
+        ("approval", lambda d: _text(d.get("approval_id"))),
+        ("action", lambda d: _text(d.get("action"))),
+        ("resource", lambda d: _text(d.get("resource"))),
+        ("reason", lambda d: _text(d.get("reason"))),
+        ("status", lambda d: _status(d.get("status"))),
+    )
+    artifact_columns = (
+        ("result", lambda a: _text(a.get("result_id"))),
+        ("kind", lambda a: _text(a.get("kind"))),
+        ("value", lambda a: _text(a.get("value"))),
+        ("run", lambda a: _text(a.get("run_id"))),
+    )
+    run_rail = _mapping(layout.get("run_rail"))
+    return (
+        '<section {ref} class="variant-canvas">'
+        '<div class="section-heading"><div><p class="eyebrow">B · COMMAND CANVAS · 命令画布</p><h2>命令画布</h2></div>'
+        '<span class="section-source">{source}</span></div>'
+        '<div class="canvas-grid">'
+        '<section class="canvas-panel"><div class="panel-heading"><h3>命令路径 · command-path</h3></div>{command_rows}</section>'
+        '<section class="canvas-panel"><div class="panel-heading"><h3>决策备注 · decision notes</h3></div>{decision_rows}</section>'
+        '<section class="canvas-panel"><div class="panel-heading"><h3>产物面板 · artifacts</h3></div>{artifact_rows}</section>'
+        '<section class="canvas-panel canvas-run-rail"><div class="panel-heading"><h3>运行轨道 · run-rail</h3></div>'
+        '<p class="run-rail-run">run <code>{rail_run}</code></p>'
+        '<p class="run-rail-status">status <span class="status-{rail_status}">{rail_status}</span></p>'
+        '</section>'
+        '</div></section>'
+    ).format(
+        ref=ref,
+        source=_text(layout.get("source") or "source unknown"),
+        command_rows=_render_variant_table(layout.get("command_path"), command_columns),
+        decision_rows=_render_variant_table(layout.get("decisions"), decision_columns),
+        artifact_rows=_render_variant_table(layout.get("artifacts"), artifact_columns),
+        rail_run=_text(run_rail.get("run_id")),
+        rail_status=_status(run_rail.get("status")),
+    )
+
+
+def _render_journal_layout(view: Mapping[str, Any]) -> str:
+    """F9 (1-3-2) — C 项目日记（journal-layout）渲染。
+
+    Renders the variant_layout journal projection: an index (runs list), a reading
+    pane (latest run input/plan/metadata) and an evidence table (events/replays/
+    results). Pure read-only render of owner-projected data; never touches owner.
+    """
+
+    layout = _mapping(view.get("variant_layout"))
+    ref = attribute_text(home_manifest(), "home.variant-journal")
+    index_columns = (
+        ("run", lambda r: _text(r.get("run_id"))),
+        ("status", lambda r: _status(r.get("status"))),
+        ("updated", lambda r: _text(r.get("updated_at"))),
+    )
+    evidence_columns = (
+        ("kind", lambda e: _text(e.get("kind"))),
+        ("id", lambda e: _text(e.get("id"))),
+        ("type", lambda e: _text(e.get("type"))),
+        ("run", lambda e: _text(e.get("run_id"))),
+    )
+    reading = _mapping(layout.get("reading"))
+    plan = reading.get("plan")
+    plan_block = _render_plan(plan) if isinstance(plan, Mapping) else _text(plan)
+    return (
+        '<section {ref} class="variant-journal">'
+        '<div class="section-heading"><div><p class="eyebrow">C · PROJECT JOURNAL · 项目日记</p><h2>项目日记</h2></div>'
+        '<span class="section-source">{source}</span></div>'
+        '<div class="journal-grid">'
+        '<section class="journal-panel journal-index"><div class="panel-heading"><h3>索引 · index</h3></div>{index_rows}</section>'
+        '<section class="journal-panel journal-reading"><div class="panel-heading"><h3>阅读 · reading</h3></div>'
+        '<p class="journal-run">run <code>{read_run}</code></p>'
+        '<p class="journal-workspace">{read_workspace} · {read_mode}</p>'
+        '<p class="journal-prompt">{read_prompt}</p>'
+        '<div class="journal-plan">{plan_block}</div>'
+        '</section>'
+        '<section class="journal-panel journal-evidence"><div class="panel-heading"><h3>证据表 · evidence-table</h3></div>{evidence_rows}</section>'
+        '</div></section>'
+    ).format(
+        ref=ref,
+        source=_text(layout.get("source") or "source unknown"),
+        index_rows=_render_variant_table(layout.get("index"), index_columns),
+        evidence_rows=_render_variant_table(layout.get("evidence_table"), evidence_columns),
+        read_run=_text(reading.get("run_id")),
+        read_workspace=_text(reading.get("workspace")),
+        read_mode=_text(reading.get("workspace_mode")),
+        read_prompt=_text(reading.get("prompt")),
+        plan_block=plan_block,
+    )
+
+
 def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) -> str:
     """Render the home surface from a redacted view model.
 
@@ -1055,6 +1220,41 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
     preflight = _mapping(view.get("preflight_result"))
     preflight_status = preflight.get("status", view.get("preflight_result", "unknown"))
 
+    # 1-3 — variant content branch. Build the A-session main content once; if a
+    # B/C variant layout is projected, splice it in instead (shared chrome —
+    # workspace bar, nav, scenario state, safe-stop, variant switcher, run-rail
+    # sidebar and records index — stays untouched).
+    a_session_html = A_SESSION_CONTENT_TEMPLATE.format(
+        conv_ref=attribute_text(resolved, "home.conversation"),
+        conversation=_render_conversation(view),
+        composer_ref=attribute_text(resolved, "home.composer"),
+        composer=_render_composer(view),
+        approval_console_ref=attribute_text(resolved, "home.approval-console"),
+        approval_console=_render_approval_console(view),
+        intent_ref=attribute_text(resolved, "home.current-intent"),
+        intent_status=_status_chip(_mapping(intent).get("status", view.get("state", "unknown")), source=_mapping(intent).get("source", "Owner / recorded input")),
+        intent_title=_text(intent_title),
+        intent_summary=_text(intent_summary),
+        mode=workspace_mode,
+        workspace=workspace_name,
+        plan_ref=attribute_text(resolved, "home.plan-next-step"),
+        plan=_render_plan(view.get("plan", "unknown")),
+        artifacts_ref=attribute_text(resolved, "home.artifacts"),
+        artifacts=_render_items(view.get("artifacts", "unknown"), kind="artifact"),
+        evidence_ref=attribute_text(resolved, "home.evidence"),
+        evidence=_render_items(view.get("evidence", "unknown"), kind="evidence"),
+        action_ref=attribute_text(resolved, "home.preflight-run.action"),
+        preflight_ref=attribute_text(resolved, "home.preflight-result"),
+        preflight=_status_chip(preflight_status, source=preflight.get("source", "preflight not recorded")),
+    )
+    variant_layout = view.get("variant_layout")
+    if isinstance(variant_layout, Mapping) and variant_layout.get("kind") == "canvas":
+        home_content = _render_canvas_layout(view)
+    elif isinstance(variant_layout, Mapping) and variant_layout.get("kind") == "journal":
+        home_content = _render_journal_layout(view)
+    else:
+        home_content = a_session_html
+
     return (
         '<main {root} class="workbench-page">'
         '<header {workspace_ref} class="workspace-bar">'
@@ -1087,34 +1287,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<p class="records-caption">从 Owner 恢复的上下文中</p><ul class="record-list">{items}</ul>'
         '<p class="records-boundary">只读索引 · 不在浏览器保存 Run 状态</p></nav>'
         '</div>'
-        '<section class="home-content">'
-        '<section {conv_ref} class="home-section conversation-section">'
-        '<div class="section-heading"><div><p class="eyebrow">CONVERSATION</p>'
-        '<h2>会话消息流</h2></div><span class="section-source">view model</span></div>'
-        '{conversation}</section>'
-        '{composer}'
-        '{approval_console}'
-        '<section {intent_ref} class="home-section intent-section">'
-        '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
-        '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
-        '<div class="intent-context"><span>mode</span><code>{mode}</code><span>workspace</span><code>{workspace}</code></div>'
-        '</section>'
-        '<section {plan_ref} class="home-section plan-section plan-card">'
-        '<div class="section-heading"><div><p class="eyebrow">PLAN CARD · 计划卡</p><h2>计划与下一步</h2></div>'
-        '<span class="section-source">view model</span></div>{plan}'
-        '<ul class="plan-legend" aria-label="步骤态图例">'
-        '<li><span class="legend-dot legend-done">✓</span>已完成</li>'
-        '<li><span class="legend-dot legend-current">▸</span>进行中</li>'
-        '<li><span class="legend-dot legend-pending">·</span>待办</li>'
-        '</ul></section>'
-        '<div class="home-secondary-grid">'
-        '<section {artifacts_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">ARTIFACTS</p><h2>产物</h2></div></div>{artifacts}</section>'
-        '<section {evidence_ref} class="home-section compact-section"><div class="section-heading"><div><p class="eyebrow">EVIDENCE</p><h2>证据</h2></div></div>{evidence}</section>'
-        '</div>'
-        '<section class="home-action-block"><div><p class="eyebrow">BOUNDARY</p><strong>下一步仍需显式预检</strong><p>当前页面只展示已记录事实；不会从页面启动 Run、写入工作区或切换 Provider。</p></div>'
-        '<button {action_ref} class="preflight-button" type="button" aria-disabled="true">预检并运行<span>只读入口</span></button></section>'
-        '<section {preflight_ref} class="preflight-result"><div class="section-heading"><div><p class="eyebrow">PREFLIGHT</p><h2>预检结果</h2></div></div>{preflight}</section>'
-        '</section></div></main>'
+        '<section class="home-content">{home_content}</section></div></main>'
     ).format(
         root=attribute_text(resolved, "home.root"),
         workspace_ref=attribute_text(resolved, "home.workspace-context"),
@@ -1157,4 +1330,5 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         artifacts=_render_items(view.get("artifacts", "unknown"), kind="artifact"),
         evidence=_render_items(view.get("evidence", "unknown"), kind="evidence"),
         preflight=_status_chip(preflight_status, source=preflight.get("source", "preflight not recorded")),
+        home_content=home_content,
     )
