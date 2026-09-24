@@ -41,6 +41,8 @@ HOME_REFS = (
     ("home.preflight-result", "预检结果", "detail", "home.preflight-run.action"),
     ("home.conversation", "会话消息流", "region", "home.root"),
     ("home.conversation.message", "会话消息", "list-item", "home.conversation"),
+    ("home.composer", "输入 composer", "region", "home.root"),
+    ("home.approval-console", "审批执行控制台", "region", "home.root"),
     ("home.ui-reference-collab", "UI 引用协同状态", "region", "home.root"),
     ("home.variant-switcher", "三变体调试切换器", "region", "home.root"),
 )
@@ -599,6 +601,170 @@ def _render_conversation(view: Mapping[str, Any]) -> str:
     return '<ol class="conversation-list">{0}</ol>'.format("".join(rows))
 
 
+def _render_composer(view: Mapping[str, Any]) -> str:
+    """F6/1-2-1 — A-session input composer, with the real send trigger wired.
+
+    When the host has a command facade wired (``can_send`` is True), the
+    composer is a live form whose send button POSTs the typed prompt to the
+    host's run API (handled by the composer.js progressive-enhancement script).
+    Otherwise it stays a read-only disabled shell -- a read-only host (CLI
+    ``ui-host``, which opens no owner database) degrades to the same disabled
+    form rather than a broken one, preserving the Round-1 invariant. The typed
+    text is never echoed back into the page: the live poller owns all DOM
+    updates after a send.
+    """
+    composer = _mapping(view.get("composer") or {})
+    can_send = bool(composer.get("can_send"))
+    if can_send:
+        # F6/1-2-1 — a real trigger the composer.js handler wires to POST
+        # /api/runs with task_type=composer_message.
+        form = (
+            '<form class="composer" data-composer method="post" action="#">'
+            '<label class="composer-label" for="composer-input">发送给工作台</label>'
+            '<textarea id="composer-input" class="composer-input" name="prompt" rows="3" '
+            'data-composer-input aria-label="输入并发送给 agent（触发 Run）" '
+            'placeholder="描述你想让工作台执行的任务…"></textarea>'
+            '<button type="submit" class="composer-send" data-composer-send '
+            'aria-label="发送（创建并启动 Run）">发送</button>'
+            '</form>'
+        )
+    else:
+        # Read-only host or gate not wired: same form, disabled and labelled.
+        form = (
+            '<form class="composer" data-composer aria-disabled="true" method="post" action="#">'
+            '<label class="composer-label" for="composer-input">发送给工作台</label>'
+            '<textarea id="composer-input" class="composer-input" name="prompt" rows="3" '
+            'data-composer-input aria-disabled="true" disabled '
+            'aria-label="输入并发送给 agent（当前只读宿主，未接线命令面）" '
+            'placeholder="描述你想让工作台执行的任务…"></textarea>'
+            '<button type="submit" class="composer-send" data-composer-send '
+            'aria-disabled="true" disabled>发送</button>'
+            '<span class="composer-hint">只读宿主：发送未接线命令面</span>'
+            '</form>'
+        )
+    return (
+        '<section {ref} class="home-section composer-section">'
+        '<div class="section-heading"><div><p class="eyebrow">COMPOSER · 输入发送</p>'
+        '<h2>输入 composer</h2></div>'
+        '<span class="section-source">view model</span></div>'
+        '{form}</section>'
+    ).format(
+        ref=attribute_text(home_manifest(), "home.composer"),
+        form=form,
+    )
+
+
+def _render_approval_console(view: Mapping[str, Any]) -> str:
+    """F12/1-2-2 — approval-execution console, with real decide/receipt triggers.
+
+    Lists the owner-backed pending approvals (each with Approve/Deny) and the
+    claimed effects awaiting a receipt. When the host has an approval command
+    facade wired (``can_decide`` is True), the buttons are real triggers the
+    approvals.js handler wires to POST /api/approvals and /api/effects;
+    otherwise they stay disabled placeholders, so a read-only host (CLI
+    ``ui-host``, which opens no owner database) degrades to the same disabled
+    controls rather than broken ones. Every value comes from the owner-backed
+    projection; a missing value reads ``unknown``. No input is echoed back.
+    """
+    console = _mapping(view.get("approval_console") or {})
+    can_decide = bool(console.get("can_decide"))
+    source = console.get("source") or "source unknown"
+    source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+
+    pending = console.get("pending_approvals") or []
+    claimed = console.get("claimed_effects") or []
+
+    if not pending and not claimed:
+        body = '<p class="approval-empty">暂无待审批 / 待记录回执</p>'
+    else:
+        rows = []
+        for item in pending:
+            a = _mapping(item)
+            aid = _text(a.get("approval_id") or "unknown")
+            if can_decide:
+                controls = (
+                    '<div class="approval-actions">'
+                    '<button type="button" class="approval-approve" '
+                    'data-approval-approve data-approval-id="{aid}" '
+                    'aria-label="批准审批 {aid}">批准</button>'
+                    '<input class="approval-reason" type="text" '
+                    'data-approval-reason="{aid}" placeholder="拒绝理由（可选）" '
+                    'aria-label="拒绝理由 {aid}" />'
+                    '<button type="button" class="approval-deny" '
+                    'data-approval-deny data-approval-id="{aid}" '
+                    'aria-label="拒绝审批 {aid}">拒绝</button>'
+                    "</div>"
+                ).format(aid=_text(aid))
+            else:
+                controls = (
+                    '<span class="approval-disabled-hint">只读宿主：审批未接线命令面</span>'
+                )
+            rows.append(
+                '<li class="approval-row"><code class="approval-id">{aid}</code>'
+                '<span class="approval-op">{op}</span>'
+                '<span class="approval-res">{res}</span>'
+                '<span class="approval-reason-zh">{reason}</span>'
+                "{controls}</li>".format(
+                    aid=_text(aid),
+                    op=_text(a.get("action") or "unknown"),
+                    res=_text(a.get("resource") or "unknown"),
+                    reason=_text(a.get("reason") or ""),
+                    controls=controls,
+                )
+            )
+        for item in claimed:
+            e = _mapping(item)
+            eid = _text(e.get("effect_id") or "unknown")
+            if can_decide:
+                controls = (
+                    '<div class="approval-actions">'
+                    '<button type="button" class="effect-receipt" '
+                    'data-effect-receipt data-effect-id="{eid}" '
+                    'aria-label="记录 effect 回执 {eid}">记录回执</button>'
+                    "</div>"
+                ).format(eid=_text(eid))
+            else:
+                controls = (
+                    '<span class="approval-disabled-hint">只读宿主：回执未接线命令面</span>'
+                )
+            rows.append(
+                '<li class="approval-row effect-row"><code class="approval-id">{eid}</code>'
+                '<span class="approval-op">{op}</span>'
+                '<span class="approval-res">{res}</span>'
+                '<span class="approval-status-zh">{status}</span>'
+                "{controls}</li>".format(
+                    eid=_text(eid),
+                    op=_text(e.get("action") or "unknown"),
+                    res=_text(e.get("resource") or "unknown"),
+                    status=_text(e.get("status") or "unknown"),
+                    controls=controls,
+                )
+            )
+        body = '<ul class="approval-list">{0}</ul>'.format("".join(rows))
+
+    readonly_hint = (
+        '<p class="approval-readonly-hint">只读宿主：审批未接线命令面</p>'
+        if not can_decide
+        else ""
+    )
+
+    return (
+        '<section {ref} class="home-section approval-console-section">'
+        '<div class="section-heading"><div><p class="eyebrow">APPROVAL · 审批执行</p>'
+        '<h2>审批执行控制台</h2></div>'
+        '<span class="source-badge">{source_badge}</span></div>'
+        "{body}"
+        "{readonly_hint}"
+        '<p class="source-note">判断来源：{source}</p></section>'
+    ).format(
+        ref=attribute_text(home_manifest(), "home.approval-console"),
+        source_badge=_text(source_badge),
+        body=body,
+        readonly_hint=readonly_hint,
+        source=_text(source),
+    )
+
+
 def _render_scenario_state(value: Any) -> str:
     """F11 — scenario state machine UI (render-only; wiring deferred).
 
@@ -650,15 +816,14 @@ def _render_scenario_state(value: Any) -> str:
 
 
 def _render_safe_stop(value: Any) -> str:
-    """F13 — safe-stop / reconcile banner (render-only; wiring deferred).
+    """F13 (1-2-5) — safe-stop / reconcile banner.
 
-    Renders a prominent alert banner when the scenario is in the ``stopped``
-    state, carrying a disabled "请求 reconcile" CTA.  The banner is derived from
-    the owner-backed ``scenario_state`` projection (active only when stopped);
-    the actual reconcile trigger and the identity-unresolved / boundary
-    detection that motivates it are product-gate logic (F13 越界判定), not
-    exercised here.  When inactive it renders an empty section so the declared
-    ref stays audit-clean without a visible banner.
+    Renders a prominent alert banner when the scenario is stopped OR when the
+    owner reports an unresolved identity reference (identity unresolved).  The
+    reconcile CTA is enabled only when ``reconcile_disabled`` is False -- i.e. a
+    concrete identity violation was detected; otherwise it stays a disabled
+    placeholder.  When enabled, the structured ``violations`` are listed so a
+    human can see exactly which reference crossed the boundary.
     """
 
     safe = _mapping(value)
@@ -673,22 +838,46 @@ def _render_safe_stop(value: Any) -> str:
     message = safe.get("message_zh") or "场景已安全停止（safe-stop）。恢复需 reconcile。"
     reconcile_label = safe.get("reconcile_label_zh") or "请求 reconcile"
     disabled = bool(safe.get("reconcile_disabled", True))
+    reason = safe.get("reason")
+    violations = safe.get("violations") or []
     source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+    violations_html = ""
+    if violations:
+        items = "".join(
+            "<li><code>{kind}</code>: {detail}</li>".format(
+                kind=_text(v.get("kind")), detail=_text(v.get("detail"))
+            )
+            for v in violations
+            if isinstance(v, dict)
+        )
+        if items:
+            violations_html = '<ul class="safe-stop-violations">{items}</ul>'.format(items=items)
+    if disabled:
+        hint = "真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。"
+    elif reason:
+        hint = "检测到身份越界（{reason}）。点击请求 reconcile 以重新解析身份引用。".format(reason=_text(reason))
+    else:
+        hint = "点击请求 reconcile 以重新解析身份引用。"
+    button_attrs = 'aria-disabled="true" disabled' if disabled else 'aria-disabled="false"'
     return (
         '<div {ref} class="safe-stop ss-stopped" role="alert">'
         '<div class="section-heading"><div><p class="eyebrow">SAFE STOP · 安全停止 / reconcile</p>'
         '<h2>安全停止</h2></div>'
         '<span class="section-source">{source_badge}</span></div>'
         '<p class="safe-stop-message">{message}</p>'
+        '{violations_html}'
         '<div class="safe-stop-actions">'
-        '<button type="button" class="reconcile-button" aria-disabled="true" disabled>{label}</button>'
-        '<span class="safe-stop-hint">真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。</span>'
+        '<button type="button" class="reconcile-button" {button_attrs}>{label}</button>'
+        '<span class="safe-stop-hint">{hint}</span>'
         '</div></div>'
     ).format(
         ref=attribute_text(home_manifest(), "home.safe-stop"),
         source_badge=_text(source_badge),
         message=_text(message),
+        violations_html=violations_html,
+        button_attrs=button_attrs,
         label=_text(reconcile_label),
+        hint=_text(hint),
     )
 
 
@@ -903,6 +1092,8 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         '<div class="section-heading"><div><p class="eyebrow">CONVERSATION</p>'
         '<h2>会话消息流</h2></div><span class="section-source">view model</span></div>'
         '{conversation}</section>'
+        '{composer}'
+        '{approval_console}'
         '<section {intent_ref} class="home-section intent-section">'
         '<div class="section-heading"><p class="eyebrow">CURRENT WORK</p>{intent_status}</div>'
         '<h1>{intent_title}</h1><p class="intent-summary">{intent_summary}</p>'
@@ -941,6 +1132,10 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         side_panel=_render_side_panel(view),
         conv_ref=attribute_text(resolved, "home.conversation"),
         conversation=_render_conversation(view),
+        composer_ref=attribute_text(resolved, "home.composer"),
+        composer=_render_composer(view),
+        approval_console_ref=attribute_text(resolved, "home.approval-console"),
+        approval_console=_render_approval_console(view),
         intent_ref=attribute_text(resolved, "home.current-intent"),
         plan_ref=attribute_text(resolved, "home.plan-next-step"),
         artifacts_ref=attribute_text(resolved, "home.artifacts"),

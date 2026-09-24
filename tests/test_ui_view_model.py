@@ -74,6 +74,25 @@ class ProjectingOwnerStateForTheHomeViewTests(unittest.TestCase):
     def test_the_home_view_reports_the_run_status_the_owner_recorded(self):
         self.assertEqual(home_view_model(self.owner)["run_facts"]["status"], "completed")
 
+    def test_f13_identity_violation_activates_reconcile_cta(self):
+        self.owner.create_run(
+            "run-f13",
+            "local_read_only_run",
+            {"prompt": "x"},
+            metadata={"parent_run_id": "ghost-run"},
+        )
+        safe_stop = home_view_model(self.owner)["safe_stop"]
+        self.assertTrue(safe_stop["active"])
+        self.assertFalse(safe_stop["reconcile_disabled"])
+        self.assertEqual(safe_stop["reason"], "identity_unresolved")
+        self.assertTrue(safe_stop["violations"])
+        self.assertEqual(safe_stop["violations"][0]["kind"], "broken_parent_run_id")
+
+    def test_f13_clean_run_keeps_reconcile_disabled(self):
+        safe_stop = home_view_model(self.owner)["safe_stop"]
+        self.assertTrue(safe_stop["reconcile_disabled"])
+        self.assertFalse(safe_stop["violations"])
+
     def test_the_home_run_facts_use_recorded_provider_and_evidence_identity(self):
         self.owner.record_replay_metadata(
             "run-alpha",
