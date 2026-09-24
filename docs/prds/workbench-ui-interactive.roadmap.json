@@ -86,7 +86,7 @@
       "id": "1-2",
       "uid": "01a0bda01944-89b249ab06",
       "label": "Product gate — 触碰运行时（独立 product scope gate）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -378,25 +378,69 @@
       "id": "1-2-1",
       "uid": "01a0bda02d9d-09fb6171ba",
       "label": "F6 输入 composer 真实发送（触发 agent Run）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "1-2-1 scope 分类",
+          "answer": "Product execution — 复用 F10 命令面（owner_command_source）触碰 CompositionOwner 创建+启动 run；按 AGENTS.md Step 1 独立 gate 推进，本轮实现真实发送而非只读壳",
+          "note": ""
+        },
+        {
+          "q": "F6 写 seam 选型",
+          "answer": "复用 F10 的 POST /api/runs（owner_command_source），task_type=composer_message，input_value={prompt, origin:composer}；不新增写端点。守 ADR 0003 只读宿主边界，与 run-rail 按钮同源性最小面",
+          "note": ""
+        },
+        {
+          "q": "F6 触发 agent Run 语义",
+          "answer": "composer 发送 = create_and_start_run（prompt 作 input_value），仅落 durable run + status=running；真实 agent 执行由控制面（DSH）负责，与 F10 同边界，宿主不自己跑 agent",
+          "note": ""
+        },
+        {
+          "q": "F6 composer 活性",
+          "answer": "send 按钮仅在命令面注入时（cmd is not None）为真触发；只读宿主（CLI ui-host 不开库）回退 disabled 壳，保持 Round1 不变式",
+          "note": ""
+        }
+      ],
+      "notes": "F6 输入 composer 真实发送落地：复用 F10 POST /api/runs（owner_command_source），task_type=composer_message，input_value={prompt, origin:composer}。ui_run.py 新增 composer_script（/static/composer.js）+ COMPOSER_TASK_TYPE；ui_view_model 新增 composer 投影（can_send 默认 False，宿主命令面注入时翻 True）；ui_home 新增 _render_composer + HOME_REFS 的 home.composer（会话区下方插入，send 按钮仅命令面注入时为真触发，否则 disabled 壳，守 Round1 不变式）；ui_host 注入 composer 脚本/翻转 can_send；ui_matrix 注册 home.composer。真实 agent 执行由控制面（DSH）负责，宿主仅落 durable run+status=running。tests/test_ui_composer.py 7 项全过，F10/home-surface/matrix 无回归。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-2": {
       "id": "1-2-2",
       "uid": "01a0bda02f10-428e0164fe",
       "label": "F12 审批执行 UI（apply diff / Approval / effect receipt）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "1-2-2 scope 分类",
+          "answer": "Product execution — 复用 CompositionOwner 既有 approval/effect seam（approve/deny_approval/complete_effect），按 AGENTS.md Step 1 独立 gate 推进；本轮实现人类可决审批 UI 而非 Round1 只读壳",
+          "note": ""
+        },
+        {
+          "q": "F12 写 seam 选型",
+          "answer": "新增 owner_approval_source 窄门面（approve/deny/record_effect）+ POST /api/approvals（approve/deny）+ POST /api/effects（complete_effect）；不新增 owner 方法，仅暴露既有方法；守 ADR 0003 只读宿主边界（同 F10 命名例外，仅命令面注入时可见）",
+          "note": ""
+        },
+        {
+          "q": "F12 人类可决动词范围",
+          "answer": "approve/deny（核心审批执行）+ complete_effect（claimed effect 回执）。apply diff / retry 是 worker/控制面执行（批准即授权，worker 随后 apply），不进 UI 按钮，守 F10/F6 同边界；uncertain effect 的 reconcile 留 F13（1-2-5）",
+          "note": ""
+        },
+        {
+          "q": "F12 控制台活性",
+          "answer": "can_decide 默认 False；宿主 approval_source 注入时翻 True；只读宿主回退 disabled 壳，守 Round1 不变式",
+          "note": ""
+        }
+      ],
+      "notes": "F12 审批执行 UI 落地：新增 ui_approval.py（ApprovalCommandFacade + owner_approval_source 窄门面，仅暴露 approve/deny/record_effect=complete_effect；redacted 视图不回显 token_hash/明文 token，守 ADR 0003）。宿主新增 POST /api/approvals（approve/deny）+ POST /api/effects（record_effect），仅 approval_source 注入时可见，否则 404；/static/approvals.js 脚本（仅 /home + approval_capable 注入，是普通文档不带脚本约定第四处受控例外）；/home 且 approval_src 注入时翻转 can_decide=True（与 run seam 解耦，控制面可单独接审批）。ui_view_model 新增 approval_console 投影（pending_approvals/claimed_effects 来自 owner snapshot，can_decide 默认 False）；ui_home 新增 _render_approval_console + HOME_REFS 的 home.approval-console（会话区下方插入，can_decide=False 时渲染只读禁用壳 + 只读提示，守 Round1 不变式）；ui_matrix 注册 home.approval-console（visible）；ui_style 补 approval 组件样式。真实 apply diff / retry 由 worker(控制面) 在批准后执行，不进 UI 按钮（与 F10/F6 同边界）；uncertain effect reconcile 留 F13(1-2-5)。tests/test_ui_approval.py 15 项全过，F6/F10/home-surface/matrix/ref/view-model 无回归。修复点：seed 补 request_approval 的 reason 参数与 claim_effect 的 run_id+effect_class 参数；facade.approve 显式置 status=approved（owner.approve 返回无 status 字段）；宿主 can_decide 翻转条件由 cmd 改为 approval_src。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-3": {
       "id": "1-2-3",
@@ -450,13 +494,30 @@
       "id": "1-2-5",
       "uid": "01a0bda03367-4216e2bf9f",
       "label": "F13 越界判定逻辑（identity unresolved → reconcile）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Q1: identity-unresolved 检测范围如何界定？",
+          "answer": "只检测持久化身份图的 structural integrity：孤儿外键（effects/approvals/results/replays/events 的 run_id、effect_attempts.effect_id、effects.approval_id 悬空）+ runs.metadata 中 parent_run_id/child_run_id 指向不存在的 run。不检 _project_execution_identity 的语义必填字段（已在 task_detail 呈现）。原因：owner 可从自身表验证、无需猜测、fail-closed，符合 AGENTS.md 关键 identity 缺失即 unknown/safe-stopped。",
+          "note": ""
+        },
+        {
+          "q": "Q2: reconcile 是否应复活 safe-stopped run？",
+          "answer": "否。safe_stopped 是终态（状态机 safe_stopped:set()），与 reconcile_effect 一致：reconcile_identity 只记录裁决并重新检测；仍越界则保持 safe_stopped(reason=identity_unresolved)，已干净则记 run.identity.reconciled(outcome=resolved) 但 run 仍 safe_stopped（诚实终态）。",
+          "note": ""
+        },
+        {
+          "q": "Q3: UI 如何接线到 reconcile？",
+          "answer": "home_view_model 调用 owner.detect_identity_violations(run_id) 得结构化 violations；有越界时 F13 横幅 active=True、reconcile_disabled=False、携带 reason=identity_unresolved 与 violations 明细；无越界保持原 render-only 占位(disabled=True)。ui_home._render_safe_stop 尊重 reconcile_disabled 并渲染 violations 列表与 reason。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -510,7 +571,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-23 15:55:12",
+    "updated": "2026-09-24 10:01:56",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
