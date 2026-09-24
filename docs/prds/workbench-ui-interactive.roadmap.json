@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a0bda01599-08dd7c1e35",
       "label": "完整工作台 Web-UI（含交互）执行路线图",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -111,16 +111,38 @@
       "id": "1-3",
       "uid": "01a0bda01abf-e9b09ad645",
       "label": "B-C 变体 — B 画布 / C 日记（后续独立 gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
         "1-3-1",
         "1-3-2"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Q1: 1-3 范围如何界定（F8/F9 与 A 会话的关系）？",
+          "answer": "1-3 落地 F8(B 画布) 与 F9(C 日记) 两个只读内容分支，分别由子节点 1-3-1 / 1-3-2 承载；复用现有 owner.snapshot() 投影数据，不新增任何 owner 写 seam（写路径 F6/F10/F12 已完成）。F19 切换器保持 dev tool，本次让它真正驱动内容分支（?variant=B/C 渲染对应 layout，替代 A 会话主内容区）；variant=A/default 时 A 会话主内容原样保留。",
+          "note": ""
+        },
+        {
+          "q": "Q2: 内容分支在哪一层实现？",
+          "answer": "服务端分支——home_view_model(variant) 按 selected 投影出 variant_layout（canvas/journal），render_home 在 variant=B/C 时以对应布局区块替换 home-content 主内容区；workspace bar / nav / scenario_state / safe_stop / variant_switcher / run_rail 侧栏 / 工作记录索引等 chrome 共用。遵循 F19 D3：纯 server render，不接 ui_build 管线。",
+          "note": ""
+        },
+        {
+          "q": "Q3: 数据来源？",
+          "answer": "全部来自 owner.snapshot() 既有字段，无新 owner API。F8 command_path=effects(operation_id→resource→status)+所属 run；decision=approvals(pending/decided, action/resource/reason)；artifact=results(kind/value)；run-rail=latest run。F9 index=runs 列表；reading=latest run 的 input/plan/metadata；evidence-table=events/replays/results 表。",
+          "note": ""
+        },
+        {
+          "q": "Q4: 验收门槛？",
+          "answer": "每变体加行为测试——home_view_model(owner, variant=\"B\") 返回 variant_layout.kind==\"canvas\" 且含 command_path/decision/artifact/run_rail；render_home 输出含 variant-canvas 区块 class；variant=\"C\" 同理 journal；variant 缺省/A 不破坏现有测试（A 会话主内容保持）。所有 projection 走 display_text/display_status 的 unknown 红化。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-1": {
       "id": "1-1-1",
@@ -523,7 +545,7 @@
       "id": "1-3-1",
       "uid": "01a0bda034d5-f9e6d16f1e",
       "label": "F8 命令画布（canvas-layout：command-path/decision/artifact/run-rail）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
@@ -535,7 +557,7 @@
       "id": "1-3-2",
       "uid": "01a0bda03644-579b57e91b",
       "label": "F9 项目日记（journal-layout：index/reading/evidence-table）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
@@ -571,7 +593,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-24 10:01:56",
+    "updated": "2026-09-24 10:44:29",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   }
 }
