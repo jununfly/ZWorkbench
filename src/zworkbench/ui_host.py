@@ -33,10 +33,20 @@ from .ui_token import build_token, parse_deep_link
 from .ui_task_detail import render_task_detail, task_detail_manifest
 from .ui_live import live_facts_payload, live_script
 from .ui_run import (
+    COMPOSER_SCRIPT_ROUTE,
+    COMPOSER_SCRIPT_TAG,
     RUN_API_ROUTE,
     RUN_SCRIPT_ROUTE,
     RUN_SCRIPT_TAG,
+    composer_script,
     run_trigger_script,
+)
+from .ui_approval import (
+    APPROVAL_API_ROUTE,
+    APPROVAL_SCRIPT_ROUTE,
+    APPROVAL_SCRIPT_TAG,
+    EFFECT_API_ROUTE,
+    approval_script,
 )
 
 #: Where the style layer is served. Styling is a separate resource rather
@@ -407,6 +417,7 @@ def render_document(
     review: bool = False,
     build: Optional[str] = None,
     run_capable: bool = False,
+    approval_capable: bool = False,
 ) -> str:
     """Wrap one rendered view in a complete document.
 
@@ -459,15 +470,20 @@ def render_document(
     # F7/1-2-3 — the home live poller is a scoped exception to the "normal
     # documents carry no script" convention: it is progressive enhancement for
     # /home only. F10/1-2-4 adds a second scoped script for /home, the run
-    # trigger, and only when the host was started with a command facade. Other
+    # trigger, and only when the host was started with a command facade. F6/1-2-1
+    # adds a third scoped script, the composer trigger, under the same
+    # command-facade condition. F12/1-2-2 adds a fourth scoped script, the
+    # approval-console trigger, under the same approval-facade condition. Other
     # routes stay script-free in normal mode.
     live_tag = LIVE_SCRIPT_TAG if route == "/home" else ""
     run_tag = RUN_SCRIPT_TAG if (route == "/home" and run_capable) else ""
+    composer_tag = COMPOSER_SCRIPT_TAG if (route == "/home" and run_capable) else ""
+    approval_tag = APPROVAL_SCRIPT_TAG if (route == "/home" and approval_capable) else ""
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,
         body=body,
-        script=live_tag + run_tag + (REVIEW_SCRIPT_TAG if review else ""),
+        script=live_tag + run_tag + composer_tag + approval_tag + (REVIEW_SCRIPT_TAG if review else ""),
     )
 
 
@@ -493,6 +509,7 @@ def serve_workbench(
     bind: Tuple[str, int] = ("127.0.0.1", 0),
     review: bool = False,
     command_source: Optional[Callable[..., Mapping[str, Any]]] = None,
+    approval_source: Optional[Callable[..., Mapping[str, Any]]] = None,
 ) -> WorkbenchHost:
     """Start a host, by default on an ephemeral loopback port.
 
@@ -512,9 +529,17 @@ def serve_workbench(
     exposes a POST ``/api/runs`` endpoint that creates + starts a run through
     this narrow facade. When ``None`` the endpoint answers 404, so the write
     surface can never appear without an explicit, named wiring decision.
+
+    ``approval_source`` is the *optional* F12/1-2-2 write seam. When supplied,
+    the host exposes POST ``/api/approvals`` (approve/deny) and POST
+    ``/api/effects`` (record receipt) through a narrow facade that exposes only
+    the human-decidable verbs of the Approval/Effect seam. When ``None`` both
+    endpoints answer 404, so the approval-execution write surface can never
+    appear without an explicit, named wiring decision.
     """
     resolve_view = view_source or (lambda route: {})
     cmd = command_source
+    approval_src = approval_source
 
     # ADR 0006: the build identity is computed once, here, at startup. A source
     # that cannot be read fails loudly at this line -- before the socket opens
@@ -568,6 +593,25 @@ def serve_workbench(
                     "application/javascript; charset=utf-8",
                 )
                 return
+            if route == COMPOSER_SCRIPT_ROUTE:
+                # F6/1-2-1 — the composer trigger handler. Served unconditionally
+                # like the run-rail script: progressive enhancement for /home,
+                # and a no-op on a host whose composer form is disabled.
+                self._respond(
+                    composer_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
+            if route == APPROVAL_SCRIPT_ROUTE:
+                # F12/1-2-2 — the approval-console trigger handler. Served
+                # unconditionally like the run-rail/composer scripts: it is
+                # progressive enhancement for /home and does nothing on a host
+                # whose approval console is disabled.
+                self._respond(
+                    approval_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -586,17 +630,35 @@ def serve_workbench(
                 rail = dict(view.get("run_rail") or {})
                 rail["can_run"] = True
                 view["run_rail"] = rail
+                # F6/1-2-1 — the command facade also enables the composer send.
+                composer = dict(view.get("composer") or {})
+                composer["can_send"] = True
+                view["composer"] = composer
+            if route == "/home" and approval_src is not None:
+                # F12/1-2-2 — the approval command facade enables the console's
+                # Approve/Deny/Record-receipt controls, independently of the
+                # run seam (a control plane may wire approvals without runs).
+                console = dict(view.get("approval_console") or {})
+                console["can_decide"] = True
+                view["approval_console"] = console
             body = render_document(
-                route, view, query, review, build=served_build, run_capable=(cmd is not None)
+                route, view, query, review, build=served_build,
+                run_capable=(cmd is not None),
+                approval_capable=(approval_src is not None),
             ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
         def do_POST(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
             route, _, _ = self.path.partition("?")
-            if route != RUN_API_ROUTE:
+            writable = {
+                RUN_API_ROUTE: self._handle_create_run,
+                APPROVAL_API_ROUTE: self._handle_approval_decision,
+                EFFECT_API_ROUTE: self._handle_effect_receipt,
+            }
+            if route not in writable:
                 self.send_error(404, "unknown view")
                 return
-            self._handle_create_run()
+            writable[route]()
 
         def _handle_create_run(self) -> None:
             """F10/1-2-4 — create + start a run through the command facade.
@@ -647,6 +709,97 @@ def serve_workbench(
                 self._respond_json({"error": str(exc)}, 400)
                 return
             self._respond_json(result, 201)
+
+        def _read_json_payload(self) -> Any:
+            """Read + parse a JSON request body.
+
+            Returns a dict on success, or an int HTTP status (400) to return
+            when the body is missing, oversized, or not a JSON object.
+            """
+            try:
+                length = int(self.headers.get("Content-Length", "0") or "0")
+            except ValueError:
+                length = 0
+            if length <= 0 or length > 1_000_000:
+                return 400
+            raw = self.rfile.read(length) if length else b""
+            try:
+                payload = json.loads(raw.decode("utf-8")) if raw else {}
+            except (ValueError, UnicodeDecodeError):
+                return 400
+            if not isinstance(payload, dict):
+                return 400
+            return payload
+
+        def _handle_approval_decision(self) -> None:
+            """F12/1-2-2 — approve/deny a pending approval through the facade.
+
+            Reached only when an approval command facade was wired at startup. A
+            read-only host answers 404 here, so the write surface never appears
+            without an explicit wiring decision. Input is validated at the
+            boundary; owner errors surface as 4xx rather than 500.
+            """
+            if approval_src is None:
+                self.send_error(404, "read-only host: no approval facade")
+                return
+            payload = self._read_json_payload()
+            if isinstance(payload, int):
+                self._respond_json({"error": "bad request"}, payload)
+                return
+            action = payload.get("action")
+            if action not in ("approve", "deny"):
+                self._respond_json({"error": "action must be approve or deny"}, 400)
+                return
+            approval_id = payload.get("approval_id")
+            if not isinstance(approval_id, str) or not approval_id.strip():
+                self._respond_json({"error": "approval_id required"}, 400)
+                return
+            try:
+                result = approval_src(
+                    action=action,
+                    approval_id=approval_id,
+                    reason=payload.get("reason"),
+                )
+            except Exception as exc:  # owner raises ApprovalError/NotFoundError
+                self._respond_json({"error": str(exc)}, 400)
+                return
+            self._respond_json(result, 200)
+
+        def _handle_effect_receipt(self) -> None:
+            """F12/1-2-2 — record a claimed effect's receipt through the facade.
+
+            Reached only when an approval command facade was wired. A read-only
+            host answers 404 here. The receipt commits the physical effect
+            exactly once; owner errors (e.g. effect not claimable) surface as
+            4xx rather than 500.
+            """
+            if approval_src is None:
+                self.send_error(404, "read-only host: no approval facade")
+                return
+            payload = self._read_json_payload()
+            if isinstance(payload, int):
+                self._respond_json({"error": "bad request"}, payload)
+                return
+            effect_id = payload.get("effect_id")
+            if not isinstance(effect_id, str) or not effect_id.strip():
+                self._respond_json({"error": "effect_id required"}, 400)
+                return
+            external_receipt = payload.get("external_receipt")
+            if external_receipt is not None and not isinstance(
+                external_receipt, (dict, Mapping)
+            ):
+                self._respond_json({"error": "external_receipt must be an object"}, 400)
+                return
+            try:
+                result = approval_src(
+                    action="complete_effect",
+                    effect_id=effect_id,
+                    external_receipt=external_receipt,
+                )
+            except Exception as exc:  # owner raises InvalidTransition etc.
+                self._respond_json({"error": str(exc)}, 400)
+                return
+            self._respond_json(result, 200)
 
         def _respond(self, body: bytes, content_type: str) -> None:
             self.send_response(200)

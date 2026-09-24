@@ -399,6 +399,56 @@ main {
 .rail-timeline-list code { color: var(--quiet); font-size: 9px; word-break: break-all; }
 .rail-empty { color: var(--quiet); font-family: var(--mono); font-size: 10px; }
 
+/* F6/1-2-1 — input composer: A-session prompt box + send. Disabled shell and
+   live form share one component; the disabled state mirrors the run-rail
+   button's read-only treatment (dashed border, not-allowed cursor). */
+.composer-section { margin-top: 16px; }
+.composer { display: grid; gap: 8px; padding: 12px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-raised); }
+.composer[aria-disabled="true"] { border-style: dashed; background: var(--surface); }
+.composer-label { font-family: var(--mono); font-size: 10px; color: var(--quiet); text-transform: uppercase; letter-spacing: 0.04em; }
+.composer-input { width: 100%; resize: vertical; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 13px; line-height: 1.5; }
+.composer-input:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-wash); }
+.composer-input:disabled { color: var(--quiet); cursor: not-allowed; }
+.composer-send { justify-self: start; padding: 8px 18px; border: 1px solid var(--sage); border-radius: 8px; background: var(--sage-wash); color: var(--sage-strong); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.composer-send:hover:not(:disabled) { background: var(--sage); color: #fff; }
+.composer-send:disabled { border-style: dashed; color: var(--quiet); background: var(--surface); cursor: not-allowed; }
+.composer-hint { font-family: var(--mono); font-size: 9px; color: var(--quiet); }
+
+/* F12/1-2-2 — approval-execution console: pending-approval + claimed-effect
+   lists with Approve/Deny/Record-receipt controls. Disabled shell and the
+   command-facade-wired form share one component; the disabled state mirrors
+   the run-rail button's read-only treatment (dashed border, not-allowed). */
+.approval-console-section { margin-top: 16px; }
+.approval-empty { color: var(--quiet); font-family: var(--mono); font-size: 11px; padding: 12px 0; }
+.approval-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.approval-row { display: grid; grid-template-columns: minmax(0, auto) auto auto auto; grid-auto-flow: column; align-items: center; gap: 10px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-raised); font-family: var(--mono); font-size: 11px; }
+.approval-id { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approval-op { color: var(--ink); }
+.approval-res { color: var(--quiet); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approval-reason-zh { color: var(--quiet); font-size: 10px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approval-status-zh { color: var(--amber); }
+.approval-actions { display: inline-flex; align-items: center; gap: 6px; }
+.approval-approve, .approval-deny, .effect-receipt { padding: 6px 12px; border-radius: 7px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.approval-approve { border: 1px solid var(--sage); background: var(--sage-wash); color: var(--sage-strong); }
+.approval-approve:hover:not(:disabled) { background: var(--sage); color: #fff; }
+.approval-deny { border: 1px solid var(--rose); background: var(--rose-wash); color: var(--rose); }
+.approval-deny:hover:not(:disabled) { background: var(--rose); color: #fff; }
+.effect-receipt { border: 1px solid var(--amber); background: var(--amber-wash, #fdf3e0); color: var(--amber-strong, #8a5a00); }
+.effect-receipt:hover:not(:disabled) { background: var(--amber, #e0a200); color: #fff; }
+.approval-reason { width: 130px; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); font: inherit; font-size: 11px; }
+.approval-reason:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px var(--sage-wash); }
+.approval-reason:disabled { color: var(--quiet); cursor: not-allowed; }
+.approval-approve:disabled, .approval-deny:disabled, .effect-receipt:disabled { border-style: dashed; color: var(--quiet); background: var(--surface); cursor: not-allowed; }
+.approval-disabled-hint { font-family: var(--mono); font-size: 9px; color: var(--quiet); }
+.approval-readonly-hint { margin: 8px 0 0; font-family: var(--mono); font-size: 9px; color: var(--quiet); }
+.approval-row { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--hairline); border-radius: 8px; background: var(--surface); }
+.approval-row .approval-id { grid-column: 1; font-family: var(--mono); font-size: 11px; color: var(--ink); }
+.approval-row .approval-op { grid-column: 2; font-size: 12px; color: var(--ink); }
+.approval-row .approval-res { grid-column: 3; font-family: var(--mono); font-size: 10px; color: var(--quiet); }
+.approval-row .approval-reason-zh, .approval-row .approval-status-zh { grid-column: 1 / -1; font-family: var(--mono); font-size: 10px; color: var(--quiet); }
+.approval-row .approval-actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
+.approval-reason { flex: 1; max-width: 220px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--hairline); font: inherit; font-size: 11px; }
+
 /* F11 — scenario state machine: four-state banner + stepper. Tone accents reuse
    existing palette tokens: empty=neutral, planning=sage, approval=amber,
    stopped=rose. The shell is display-only; no control triggers a run. */

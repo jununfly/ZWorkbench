@@ -59,6 +59,8 @@ MATRIX: Dict[str, Dict[str, Tuple[str, ...]]] = {
             "home.preflight-result",
             "home.conversation",
             "home.conversation.message",
+            "home.composer",
+            "home.approval-console",
         ),
         "scenarios": (
             "no-records",
@@ -159,6 +161,8 @@ UNIT_VISIBILITY: Dict[str, Dict[str, str]] = {
         "home.preflight-result": "visible",
         "home.conversation": "visible",
         "home.conversation.message": "conditional",
+        "home.composer": "visible",
+        "home.approval-console": "visible",
     },
     "task-detail": {
         "task-detail.root": "visible",
