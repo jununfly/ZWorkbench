@@ -643,7 +643,7 @@
       "id": "1-2-8",
       "uid": "01a0d887d3f9-ba2ea16e55",
       "label": "F13 reconcile 按钮 HTTP 路由接线（owner.reconcile_identity，接 issue-1 PRD product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
@@ -660,12 +660,13 @@
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-25 20:28:06",
+    "updated": "2026-09-25 21:14:52",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   },
   "edges": [
