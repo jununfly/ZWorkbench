@@ -248,4 +248,5 @@ evaluation/
 - **默认在 `main` 上直接开发**：不创建 feature 分支，不提交 PR，不等待 review/merge 流程。改动直接在 `main` 工作树上完成。
 - **commit / push 仍需用户显式触发**：沿用 Section 6「未经用户明确要求，不执行 commit、push…」。当用户明确给出 `commit` / `push` / `commit+push` 等 checkpoint 指令时，直接在 `main` 上提交 / 推送；分支 + PR + merge 流程在当前阶段关闭，不再使用。
 - **本地工具目录不纳入提交**：`.codex/`、`.workbuddy/` 等 agent / 工具生成的本地目录保持未跟踪，永不提交。
+- **路线图节点状态不早于实现代码**：`feat`（实现）commit 必须先于该节点的 `chore(roadmap)`（status 翻转）提交；feat/chore 分离不变。收尾（neat-freak）前用 `scripts/verify_roadmap_code_sync.py <roadmap.json>` 自动校验——任一 `completed` 节点若无对应已提交实现（含节点 id 或 F-number 的 feat commit，时序在 status 翻转前）即报错阻断。背景：F6/F12 曾发生「状态先提交、代码后补」单点缺口，治理路线见 `docs/prds/zworkbench-governance-closeout.roadmap.json`。
 - **历史约定说明**：早期开发曾采用「分支 + PR + merge」流程（PR #33–#38，已合入）。当前阶段已切换为 main 直推；旧 PR 历史保留在 git log 中，不代表当前工作流。
