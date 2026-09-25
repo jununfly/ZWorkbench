@@ -828,12 +828,21 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
         "message_zh": (
             "检测到身份越界：{n} 处身份引用无法解析（identity unresolved）。恢复需 reconcile。".format(n=len(identity_violations))
             if has_identity_violation
-            else ("场景已安全停止（safe-stop）。恢复需 reconcile；真实越界 / 身份未解析（identity unresolved）判定属 product gate（F13），本轮仅渲染请求入口。"
+            else ("场景已安全停止（safe-stop）。可请求 reconcile 重新解析身份引用。"
                   if safe_stop_active
                   else "场景未检测到身份越界。")
         ),
         "reconcile_label_zh": "请求 reconcile",
         "reconcile_disabled": not has_identity_violation,
+        # F13/1-2-8 — reconcile trigger capability. Defaults to False here; the
+        # host flips it to True for /home only when a reconcile command facade
+        # was wired at startup (parallel to F10 can_run / F6 can_send / F12
+        # can_decide). A read-only host keeps it False, so the banner degrades to
+        # the disabled reconcile placeholder rather than a broken trigger.
+        "reconcile_capable": False,
+        # Carried so the progressive-enhancement script can target the right run
+        # without the browser ever inventing identity.
+        "run_id": run_id,
         "violations": identity_violations,
         "source": "CompositionOwner" if (safe_stop_active or has_identity_violation) else "source unknown",
     }

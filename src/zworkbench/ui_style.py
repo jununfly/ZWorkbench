@@ -475,7 +475,9 @@ main {
 .ss-node.ss-unknown .ss-dot { background: var(--line); }
 .ss-blurb { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
 
-/* F13 — safe-stop / reconcile banner (render-only; trigger deferred to gate). */
+/* F13/1-2-8 — safe-stop / reconcile banner. The reconcile trigger is wired via
+   POST /api/reconcile when a control-plane reconcile facade is injected; a
+   read-only host keeps the button disabled (see _render_safe_stop). */
 .safe-stop { margin: 12px 0 0; }
 .safe-stop-inactive { margin: 0; }
 .safe-stop.ss-stopped { padding: 16px 18px; border: 1px solid var(--rose); border-radius: 12px;
@@ -483,9 +485,9 @@ main {
 .safe-stop-message { margin: 4px 0 12px; font-size: 13px; color: var(--ink); line-height: 1.5; }
 .safe-stop-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .reconcile-button { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 8px 14px;
-  border-radius: 8px; border: 1px solid var(--rose); background: var(--surface); color: var(--rose);
-  cursor: not-allowed; opacity: 0.7; }
-.reconcile-button[disabled] { cursor: not-allowed; }
+  border-radius: 8px; border: 1px solid var(--rose); background: var(--surface); color: var(--rose); }
+.reconcile-button[disabled] { cursor: not-allowed; opacity: 0.7; }
+.reconcile-button:not([disabled]) { cursor: pointer; opacity: 1; }
 .safe-stop-hint { font-size: 11px; color: var(--muted); }
 
 /* F15 r2 — r2-ui-reference-skills 协同可视化面板（只读投影） */

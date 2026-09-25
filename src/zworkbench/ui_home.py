@@ -854,13 +854,28 @@ def _render_safe_stop(value: Any) -> str:
         )
         if items:
             violations_html = '<ul class="safe-stop-violations">{items}</ul>'.format(items=items)
+    # F13/1-2-8 — the button is only a real trigger when (a) a concrete
+    # identity violation was detected (reconcile_disabled is False) AND (b) a
+    # reconcile command facade is wired into the host (reconcile_capable). Without
+    # both, it stays the disabled render-only placeholder: on a read-only host
+    # there is no /api/reconcile to POST to, so enabling it would be a dead click.
+    capable = bool(safe.get("reconcile_capable", False))
+    run_id = safe.get("run_id")
+    enabled = (not disabled) and capable
     if disabled:
         hint = "真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。"
-    elif reason:
-        hint = "检测到身份越界（{reason}）。点击请求 reconcile 以重新解析身份引用。".format(reason=_text(reason))
+    elif not capable:
+        hint = (
+            "检测到身份越界（{reason}）。reconcile 需由控制面注入（product gate）。".format(reason=_text(reason))
+            if reason
+            else "reconcile 需由控制面注入（product gate）。"
+        )
     else:
         hint = "点击请求 reconcile 以重新解析身份引用。"
-    button_attrs = 'aria-disabled="true" disabled' if disabled else 'aria-disabled="false"'
+    if enabled:
+        button_attrs = 'data-reconcile-button data-reconcile-run-id="{rid}"'.format(rid=_text(run_id))
+    else:
+        button_attrs = 'aria-disabled="true" disabled'
     return (
         '<div {ref} class="safe-stop ss-stopped" role="alert">'
         '<div class="section-heading"><div><p class="eyebrow">SAFE STOP · 安全停止 / reconcile</p>'
