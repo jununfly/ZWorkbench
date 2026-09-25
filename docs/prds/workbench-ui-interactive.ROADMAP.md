@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-25 20:28:06
+> 数据文件: `workbench-ui-interactive.roadmap.json` | 最后更新: 2026-09-25 21:14:52
 
 [~][X+] 1. 完整工作台 Web-UI（含交互）执行路线图
 ├── [x][X+] 1-1. Round 1 — 纯 UI 壳 + 只读投影（本轮构建）
@@ -25,7 +25,7 @@
 │   ├── [x][X+] 1-2-5. F13 越界判定逻辑（identity unresolved → reconcile）
 │   ├── [ ][X+] 1-2-6. F7 运行事实检查器真实接线（live value 运行时路由，接 issue-1 PRD product gate）
 │   ├── [ ][X+] 1-2-7. F11 场景状态机真实接线（approval/safe-stop 触发，接 issue-1 PRD product gate）
-│   └── [ ][X+] 1-2-8. F13 reconcile 按钮 HTTP 路由接线（owner.reconcile_identity，接 issue-1 PRD product gate）
+│   └── [x][X+] 1-2-8. F13 reconcile 按钮 HTTP 路由接线（owner.reconcile_identity，接 issue-1 PRD product gate）
 └── [x][X+] 1-3. B-C 变体 — B 画布 / C 日记（后续独立 gate）
     ├── [x][X+] 1-3-1. F8 命令画布（canvas-layout：command-path/decision/artifact/run-rail）
     └── [x][X+] 1-3-2. F9 项目日记（journal-layout：index/reading/evidence-table）
@@ -34,5 +34,4 @@
 
 - 1-2-6. F7 运行事实检查器真实接线（live value 运行时路由，接 issue-1 PRD product gate） [ ]
 - 1-2-7. F11 场景状态机真实接线（approval/safe-stop 触发，接 issue-1 PRD product gate） [ ]
-- 1-2-8. F13 reconcile 按钮 HTTP 路由接线（owner.reconcile_identity，接 issue-1 PRD product gate） [ ]
 <!-- ROADMAP_SECTION_END -->
