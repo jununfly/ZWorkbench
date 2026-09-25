@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a0bda01599-08dd7c1e35",
       "label": "完整工作台 Web-UI（含交互）执行路线图",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -86,7 +86,7 @@
       "id": "1-2",
       "uid": "01a0bda01944-89b249ab06",
       "label": "Product gate — 触碰运行时（独立 product scope gate）",
-      "status": "completed",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -94,7 +94,10 @@
         "1-2-2",
         "1-2-3",
         "1-2-4",
-        "1-2-5"
+        "1-2-5",
+        "1-2-6",
+        "1-2-7",
+        "1-2-8"
       ],
       "decisions": [
         {
@@ -589,11 +592,101 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-2-6": {
+      "id": "1-2-6",
+      "uid": "01a0d887b309-44558b3349",
+      "label": "F7 运行事实检查器真实接线（live value 运行时路由，接 issue-1 PRD product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "F7 deferred wiring 具体是什么？",
+          "answer": "1-1-6 渲染了 run-facts inspector 壳（mode/worker/approval/effect/evidence 字段），但 _render_run_facts 仍标注 'live values deferred'（ui_home.py:370）——实时值（来自运行时/动态投影）未真正接到 owner-backed 运行时查询。1-2-3 已落 /api/home-facts 轮询刷新标量，但 inspector 内部的运行时查询 hook 仍占位。本节点收尾：把 run-facts 实时值真正接到 Control Plane façade 的运行时投影，并清理 1-1-6/1-2-3 遗留的 'deferred' 占位注释。",
+          "note": ""
+        },
+        {
+          "q": "验收门槛（接 issue-1 PRD product gate）？",
+          "answer": "实时值经 Control Plane façade 投影脱敏 Owner 数据；缺失即 unknown/safe-stopped，不伪造成功；副作用走 request→policy→decision→claim→execute→complete/reconcile；保留 1-2-3 的 /api/home-facts 轮询契约（仅 textContent 更新，不注入 HTML，防 XSS）；readonly 宿主（CLI ui-host 不接库）回退静态壳。更新 ui_home.py:370 的 stale 'deferred' 注释。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-7": {
+      "id": "1-2-7",
+      "uid": "01a0d887d31d-8034ee2df9",
+      "label": "F11 场景状态机真实接线（approval/safe-stop 触发，接 issue-1 PRD product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "F11 deferred wiring 具体是什么？",
+          "answer": "_render_scenario_state 渲染了四态 stepper（empty/planning/approval/stopped）但明确 'No control in this shell triggers a run, approval or stop'（ui_home.py:771）——approval/safe-stop 真实触发留在 product gate。本节点接上这些控制：四态 stepper 的 approval/stopped 动作经 Control Plane façade 接到 owner 的 approval/safe-stop 流程，readonly 宿主不注入命令面时回退 disabled 壳（守 Round1 不变式）。",
+          "note": ""
+        },
+        {
+          "q": "验收门槛（接 issue-1 PRD product gate）？",
+          "answer": "触发经 Control Plane façade 投影脱敏；未注入命令面时保持 Round1 只读 disabled 不变式；未知类别默认 deny；不伪造 approval/写入；状态文本/来源/非颜色线索齐全（issue-1 PRD State and presentation）。approval 判定与 1-2-5 F13 越界检测解耦但共享 owner 真相源。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-8": {
+      "id": "1-2-8",
+      "uid": "01a0d887d3f9-ba2ea16e55",
+      "label": "F13 reconcile 按钮 HTTP 路由接线（owner.reconcile_identity，接 issue-1 PRD product gate）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "F13 deferred wiring 具体是什么？",
+          "answer": "1-2-5 激活了 F13 横幅（owner.detect_identity_violations + reconcile_disabled=False 时显示 violations），但 reconcile 按钮仍是 render-only 占位：_render_safe_stop 的 button 在 enabled 时也无 HTTP 路由——'reconcile 按钮 HTTP 路由未接'（ui_style.py:478 注释 'trigger deferred to gate'）。本节点把按钮接到 owner.reconcile_identity 的真实路由（新增受控 POST 端点，仅命令面注入时可见），否则 404/disabled。",
+          "note": ""
+        },
+        {
+          "q": "验收门槛（接 issue-1 PRD product gate）？",
+          "answer": "端点仅当上层控制面注入 reconcile_source 时可见，否则 404（守 Round1 只读宿主 + ADR 0003）；点击走 owner.reconcile_identity 重新检测，仍越界则保持 safe_stopped(reason=identity_unresolved)，已干净记 reconciled(outcome=resolved) 但 run 仍 safe_stopped（诚实终态，与 1-2-5 Q2 一致）；不复活 safe-stopped run；副作用走 request→policy→decision→…→reconcile；更新 ui_style.py:478 的 'trigger deferred to gate' 注释。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-24 10:44:29",
+    "updated": "2026-09-25 20:28:06",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
-  }
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a0bda02329-84398608e6",
+      "to": "01a0d887b309-44558b3349",
+      "type": "derives-from"
+    },
+    {
+      "id": "e2",
+      "from": "01a0bda02675-b1693ddb26",
+      "to": "01a0d887d31d-8034ee2df9",
+      "type": "derives-from"
+    },
+    {
+      "id": "e3",
+      "from": "01a0bda027da-8123d0ef1d",
+      "to": "01a0d887d3f9-ba2ea16e55",
+      "type": "derives-from"
+    }
+  ],
+  "edge_seq": 3
 }
