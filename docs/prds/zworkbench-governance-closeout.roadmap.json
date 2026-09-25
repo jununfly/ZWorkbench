@@ -1,0 +1,244 @@
+{
+  "title": "ZWorkbench 治理收尾 — 路线图状态/代码同步化",
+  "description": "治理 F6/F12「状态先提交、代码后补」类遗留项：根因→审计→预防→规则沉淀→收尾闭环",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a0d15bac7c-e0630b8deb",
+      "label": "ZWorkbench 治理收尾 — 路线图状态/代码同步化",
+      "status": "completed",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a0d15c2338-3b601b2d96",
+      "label": "根因与判定规则",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a0d15c245b-a5512f6676",
+      "label": "现状审计",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a0d15c2579-e6788b16bd",
+      "label": "预防机制",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a0d15c2693-1faeb09f5d",
+      "label": "规则沉淀",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a0d15c27ac-6f6e661621",
+      "label": "收尾闭环",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a0d15c28c6-e4460cfb07",
+      "label": "复盘 F6/F12 desync 实例（commit 证据）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q: F6/F12 desync 的 commit 证据？",
+          "answer": "1-2-1(F6)/1-2-2(F12) 的 status 在 aa05286（1-2-5 的 chore(roadmap)）之前已是 completed（首次出现于更早的打包提交），但其实现代码直到 677d18c（feat(ui): 1-2-1 F6 + 1-2-2 F12）才提交并推送——存在 status 先于代码的时间窗。其余 22 个 completed 节点均为 feat 先于 chore(roadmap)（如 1-2-3: 66b7364→061ed59；1-2-4: 3600aa9→2a40677；1-2-5: 3c015c4→aa05286；1-3: 01592bb→63d3e22），无时间窗。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a0d15c29e0-eae084a2cb",
+      "label": "定义 desync 判定规则（feat 先于 chore(roadmap)）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q: desync 判定规则如何定义？",
+          "answer": "desync = 路线图某节点 status==completed，但其对应实现代码（src/ 改动 + 含节点 id 或 F-number 的 feat commit）晚于 status 翻转提交才落地。等价于违反「feat 先于 chore(roadmap)」约定。判定以 git 历史时序为准，不靠人工记忆。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a0d15c2afa-fa1dd45f82",
+      "label": "全量扫描 workbench-ui-interactive completed 节点核对代码落地",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a0d15c2c15-2f901e79f7",
+      "label": "产出 desync 清单（结论：仅 F6/F12）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q: 现状审计结论？",
+          "answer": "全量扫描 workbench-ui-interactive 24 个 completed 节点：唯一 desync = 1-2-1(F6)/1-2-2(F12)，其余 22 个顺序正确。结论：这是单点过程缺口（状态翻转早于代码提交），非系统性；代码已于 677d18c 补齐，当前仓库已无实际 desync，缺口在「预防机制」而非「现状」。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a0d15c2d42-b201ea6fad",
+      "label": "设计 commit 顺序门禁（feat → chore(roadmap) 硬顺序）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q: commit 顺序门禁设计？",
+          "answer": "硬性约定：实现代码 feat commit 必须先于该节点的 chore(roadmap) status 翻转提交；feat/chore 分离不变。closeout 前用 scripts/verify_roadmap_code_sync.py 自动校验——任一 completed 节点若无对应已提交 feat（时序在 status 翻转前）即报错，阻断收尾。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a0d15c2e64-18880eaf25",
+      "label": "实现校验脚本（closeout 前 verify completed 节点均有对应已提交代码）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q: 校验脚本如何避免 F-number 复用导致的误报？",
+          "answer": "F7/F10/F13 各出现在两个节点（1-1 壳 + 1-2 product gate），若按 F-number 匹配会把后者的后代代码 commit 误判为前者的 desync。改用节点 id 为唯一键：仅当节点 id 命中的代码 commit 是 status 翻转的【后代】才判真 desync；节点 id 祖先命中 / flip 自带代码 / F-number 祖先命中 → 同步；全无命中 → UNVERIFIED（人工确认，不计入失败）。经实测：不带 --allow 仅报 1-2-1/1-2-2（F6/F12），带 --allow 1-2-1 1-2-2 即 exit 0。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a0d15c2f7e-7ad270ed3f",
+      "label": "把『代码先于状态』写入 AGENTS.md 收尾约定",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a0d15c30a4-a4ce5b923a",
+      "label": "更新本仓库 MEMORY / 今日 log",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a0d15c31c3-71d2d47c1e",
+      "label": "跑一次全量 closeout verify，确认无遗留 desync，报告两阶段结果",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-09-24 11:00:41",
+    "updated": "2026-09-24 11:12:34",
+    "md_file": "docs/prds/zworkbench-governance-closeout.ROADMAP.md"
+  }
+}
