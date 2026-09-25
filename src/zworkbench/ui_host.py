@@ -48,6 +48,12 @@ from .ui_approval import (
     EFFECT_API_ROUTE,
     approval_script,
 )
+from .ui_reconcile import (
+    RECONCILE_API_ROUTE,
+    RECONCILE_SCRIPT_ROUTE,
+    RECONCILE_SCRIPT_TAG,
+    reconcile_script,
+)
 
 #: Where the style layer is served. Styling is a separate resource rather
 #: than inline markup, so a selector can never be written against the
@@ -418,6 +424,7 @@ def render_document(
     build: Optional[str] = None,
     run_capable: bool = False,
     approval_capable: bool = False,
+    reconcile_capable: bool = False,
 ) -> str:
     """Wrap one rendered view in a complete document.
 
@@ -479,11 +486,12 @@ def render_document(
     run_tag = RUN_SCRIPT_TAG if (route == "/home" and run_capable) else ""
     composer_tag = COMPOSER_SCRIPT_TAG if (route == "/home" and run_capable) else ""
     approval_tag = APPROVAL_SCRIPT_TAG if (route == "/home" and approval_capable) else ""
+    reconcile_tag = RECONCILE_SCRIPT_TAG if (route == "/home" and reconcile_capable) else ""
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,
         body=body,
-        script=live_tag + run_tag + composer_tag + approval_tag + (REVIEW_SCRIPT_TAG if review else ""),
+        script=live_tag + run_tag + composer_tag + approval_tag + reconcile_tag + (REVIEW_SCRIPT_TAG if review else ""),
     )
 
 
@@ -510,6 +518,7 @@ def serve_workbench(
     review: bool = False,
     command_source: Optional[Callable[..., Mapping[str, Any]]] = None,
     approval_source: Optional[Callable[..., Mapping[str, Any]]] = None,
+    reconcile_source: Optional[Callable[..., Mapping[str, Any]]] = None,
 ) -> WorkbenchHost:
     """Start a host, by default on an ephemeral loopback port.
 
@@ -536,10 +545,19 @@ def serve_workbench(
     the human-decidable verbs of the Approval/Effect seam. When ``None`` both
     endpoints answer 404, so the approval-execution write surface can never
     appear without an explicit, named wiring decision.
+
+    ``reconcile_source`` is the *optional* F13/1-2-8 write seam. When supplied
+    (by the control plane, never by the read-only CLI ``ui-host``), the host
+    exposes POST ``/api/reconcile`` which re-runs identity reconciliation for one
+    run through ``owner.reconcile_identity``. When ``None`` the endpoint answers
+    404, so the reconcile write surface can never appear without an explicit,
+    named wiring decision -- and the safe-stop banner's button degrades to its
+    disabled render-only placeholder on a read-only host.
     """
     resolve_view = view_source or (lambda route: {})
     cmd = command_source
     approval_src = approval_source
+    reconcile_src = reconcile_source
 
     # ADR 0006: the build identity is computed once, here, at startup. A source
     # that cannot be read fails loudly at this line -- before the socket opens
@@ -612,6 +630,17 @@ def serve_workbench(
                     "application/javascript; charset=utf-8",
                 )
                 return
+            if route == RECONCILE_SCRIPT_ROUTE:
+                # F13/1-2-8 — the safe-stop reconcile handler. Served
+                # unconditionally like the run-rail/composer/approval scripts: it
+                # is progressive enhancement for /home and a no-op on a host whose
+                # reconcile button is disabled (the /api/reconcile endpoint answers
+                # 404 without a reconcile facade).
+                self._respond(
+                    reconcile_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -641,10 +670,18 @@ def serve_workbench(
                 console = dict(view.get("approval_console") or {})
                 console["can_decide"] = True
                 view["approval_console"] = console
+            if route == "/home" and reconcile_src is not None:
+                # F13/1-2-8 — the reconcile command facade enables the safe-stop
+                # banner's reconcile button, independently of the run/approval
+                # seams (a control plane may wire reconcile without runs/approvals).
+                safe_stop = dict(view.get("safe_stop") or {})
+                safe_stop["reconcile_capable"] = True
+                view["safe_stop"] = safe_stop
             body = render_document(
                 route, view, query, review, build=served_build,
                 run_capable=(cmd is not None),
                 approval_capable=(approval_src is not None),
+                reconcile_capable=(reconcile_src is not None),
             ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
@@ -654,6 +691,7 @@ def serve_workbench(
                 RUN_API_ROUTE: self._handle_create_run,
                 APPROVAL_API_ROUTE: self._handle_approval_decision,
                 EFFECT_API_ROUTE: self._handle_effect_receipt,
+                RECONCILE_API_ROUTE: self._handle_reconcile,
             }
             if route not in writable:
                 self.send_error(404, "unknown view")
@@ -797,6 +835,33 @@ def serve_workbench(
                     external_receipt=external_receipt,
                 )
             except Exception as exc:  # owner raises InvalidTransition etc.
+                self._respond_json({"error": str(exc)}, 400)
+                return
+            self._respond_json(result, 200)
+
+        def _handle_reconcile(self) -> None:
+            """F13/1-2-8 — re-run identity reconciliation through the facade.
+
+            Reached only when a reconcile command facade was wired at startup. A
+            read-only host answers 404 here, so the write surface never appears
+            without an explicit, naming wiring decision. Input is validated at the
+            boundary; owner errors (e.g. unknown run_id) surface as 4xx rather
+            than 500.
+            """
+            if reconcile_src is None:
+                self.send_error(404, "read-only host: no reconcile facade")
+                return
+            payload = self._read_json_payload()
+            if isinstance(payload, int):
+                self._respond_json({"error": "bad request"}, payload)
+                return
+            run_id = payload.get("run_id")
+            if not isinstance(run_id, str) or not run_id.strip():
+                self._respond_json({"error": "run_id required"}, 400)
+                return
+            try:
+                result = reconcile_src(run_id=run_id)
+            except Exception as exc:  # owner raises NotFoundError etc.
                 self._respond_json({"error": str(exc)}, 400)
                 return
             self._respond_json(result, 200)
