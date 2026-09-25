@@ -367,13 +367,15 @@ def _render_side_panel(view: Mapping[str, Any]) -> str:
 
 
 def _render_run_facts(value: Any) -> str:
-    """F7 — run-facts inspector shell (render-only; live values deferred).
+    """F7 — run-facts inspector shell with live values hooked to owner data.
 
-    The inspector exposes the F7 field set -- mode, workspace, worker,
-    approval, effect and evidence links -- as a static shell driven by the
-    owner-backed projection. Fields the projection cannot yet supply read
-    ``unknown``; the live values that would require a runtime query stay behind
-    the 1-2-3 gate.
+    The inspector exposes the F7 field set -- run_id, parent/child, mode,
+    workspace, worker, approval and effect -- plus evidence links. Every value
+    comes from the owner-backed projection (the Control Plane facade re-projects
+    the same ``run_facts`` view). Each scalar carries a ``data-live`` hook, so
+    the 1-2-3 live poller (``/api/home-facts``) refreshes them in place through
+    ``textContent`` without re-rendering markup. A value the projection cannot
+    supply reads ``unknown``; the poller never fabricates a success state.
     """
     facts = _mapping(value)
     state = facts.get("status", "unknown")
