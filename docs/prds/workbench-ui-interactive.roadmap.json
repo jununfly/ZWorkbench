@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a0bda01599-08dd7c1e35",
       "label": "完整工作台 Web-UI（含交互）执行路线图",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -86,7 +86,7 @@
       "id": "1-2",
       "uid": "01a0bda01944-89b249ab06",
       "label": "Product gate — 触碰运行时（独立 product scope gate）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -626,7 +626,7 @@
       "id": "1-2-7",
       "uid": "01a0d887d31d-8034ee2df9",
       "label": "F11 场景状态机真实接线（approval/safe-stop 触发，接 issue-1 PRD product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
@@ -643,7 +643,8 @@
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-8": {
       "id": "1-2-8",
@@ -672,7 +673,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-25 23:09:38",
+    "updated": "2026-09-26 11:37:48",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   },
   "edges": [
