@@ -597,7 +597,7 @@
       "id": "1-2-6",
       "uid": "01a0d887b309-44558b3349",
       "label": "F7 运行事实检查器真实接线（live value 运行时路由，接 issue-1 PRD product gate）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
@@ -611,10 +611,16 @@
           "q": "验收门槛（接 issue-1 PRD product gate）？",
           "answer": "实时值经 Control Plane façade 投影脱敏 Owner 数据；缺失即 unknown/safe-stopped，不伪造成功；副作用走 request→policy→decision→claim→execute→complete/reconcile；保留 1-2-3 的 /api/home-facts 轮询契约（仅 textContent 更新，不注入 HTML，防 XSS）；readonly 宿主（CLI ui-host 不接库）回退静态壳。更新 ui_home.py:370 的 stale 'deferred' 注释。",
           "note": ""
+        },
+        {
+          "q": "1-2-6 实际收尾内容（与规划的差异）？",
+          "answer": "规划时假定 inspector 内部运行时查询 hook 仍占位，但实查发现 1-2-3 已完整落地 F7 live-values 层：ui_live.live_facts_payload 从 owner-backed 视图投影标量、ui_host /api/home-facts 每次轮询都经 resolve_view('/home') 重新投影（真·运行时、非缓存快照）、_render_run_facts 已带 data-live 钩子、poller 仅 textContent 更新、test_ui_live/test_ui_host:268/277/test_ui_run:119 已覆盖。故 1-2-6 的真实收尾 = ①清理 ui_home.py:370 的 stale 'live values deferred' 注释（已不实）；②新增一致性回归测试，断言 inspector 壳的 F7 标量 data-live 初值与 /api/home-facts 载荷同源（owner-backed），防未来任一侧漂移。验收门槛其余项（缺失即 unknown 不伪造、/api/home-facts 仅 textContent、readonly 宿主回退静态壳）已由 1-2-3 满足。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-7": {
       "id": "1-2-7",
@@ -666,7 +672,7 @@
   },
   "metadata": {
     "created": "2026-09-20 15:03:00",
-    "updated": "2026-09-25 21:14:52",
+    "updated": "2026-09-25 23:09:38",
     "md_file": "docs/prds/workbench-ui-interactive.ROADMAP.md"
   },
   "edges": [
