@@ -790,14 +790,19 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
         "source": "CompositionOwner" if latest else "source unknown",
     }
 
-    # F11 scenario-state — render shell only. The "approval" derivation
-    # (safe-stop / approval judgment) stays behind the 1-2 product gate (F13);
-    # here we read only existing read-only signals: no recorded run -> empty, a
-    # safe-stopped latest run -> stopped, otherwise -> planning. An absent field
-    # reads ``unknown`` and the real state machine wiring is not exercised.
+    # F11 scenario-state — owner-backed derivation. A run with no recorded
+    # history reads empty; a safe-stopped latest run reads stopped; a latest run
+    # carrying a pending approval reads approval (the honest owner-backed signal
+    # that human judgment is outstanding); otherwise planning. An absent field
+    # reads ``unknown`` and the state machine never fabricates a state.
     scenario_latest_status = display_status(latest["status"]) if latest else UNKNOWN
+    pending_approvals = [
+        a for a in (snapshot.get("approvals") or [])
+        if isinstance(a, Mapping) and a.get("status") == "pending" and a.get("run_id") == run_id
+    ] if run_id is not None else []
     scenario_state_token = (
         "stopped" if scenario_latest_status == "safe-stopped"
+        else "approval" if pending_approvals
         else "planning" if (latest or runs)
         else "empty"
     )
@@ -805,6 +810,15 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
     scenario_state = {
         "state": scenario_state_token,
         "source": scenario_source,
+        # Carried so the progressive-enhancement script can target the right run
+        # without the browser ever inventing identity.
+        "run_id": run_id,
+        # F11/1-2-7 — scenario-state trigger capability. Defaults to False here;
+        # the host flips it to True for /home only when a scenario command facade
+        # was wired at startup (parallel to F10 can_run / F12 can_decide / F13
+        # reconcile_capable). A read-only host keeps it False, so the stepper's
+        # controls degrade to disabled placeholders rather than broken triggers.
+        "scenario_capable": False,
     }
 
     # F13 (1-2-5) — safe-stop / reconcile banner projection.

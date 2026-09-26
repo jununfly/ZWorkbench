@@ -54,6 +54,13 @@ from .ui_reconcile import (
     RECONCILE_SCRIPT_TAG,
     reconcile_script,
 )
+from .ui_scenario_state import (
+    SCENARIO_API_ROUTE,
+    SCENARIO_SCRIPT_ROUTE,
+    SCENARIO_SCRIPT_TAG,
+    owner_scenario_source,
+    scenario_script,
+)
 
 #: Where the style layer is served. Styling is a separate resource rather
 #: than inline markup, so a selector can never be written against the
@@ -425,6 +432,7 @@ def render_document(
     run_capable: bool = False,
     approval_capable: bool = False,
     reconcile_capable: bool = False,
+    scenario_capable: bool = False,
 ) -> str:
     """Wrap one rendered view in a complete document.
 
@@ -480,18 +488,22 @@ def render_document(
     # trigger, and only when the host was started with a command facade. F6/1-2-1
     # adds a third scoped script, the composer trigger, under the same
     # command-facade condition. F12/1-2-2 adds a fourth scoped script, the
-    # approval-console trigger, under the same approval-facade condition. Other
-    # routes stay script-free in normal mode.
+    # approval-console trigger, under the same approval-facade condition. F13/1-2-8
+    # adds a fifth scoped script, the reconcile trigger, under the reconcile-facade
+    # condition. F11/1-2-7 adds a sixth scoped script, the scenario-state trigger,
+    # under the scenario-facade condition. Other routes stay script-free in normal
+    # mode.
     live_tag = LIVE_SCRIPT_TAG if route == "/home" else ""
     run_tag = RUN_SCRIPT_TAG if (route == "/home" and run_capable) else ""
     composer_tag = COMPOSER_SCRIPT_TAG if (route == "/home" and run_capable) else ""
     approval_tag = APPROVAL_SCRIPT_TAG if (route == "/home" and approval_capable) else ""
     reconcile_tag = RECONCILE_SCRIPT_TAG if (route == "/home" and reconcile_capable) else ""
+    scenario_tag = SCENARIO_SCRIPT_TAG if (route == "/home" and scenario_capable) else ""
     return DOCUMENT.format(
         title=title,
         stylesheet=STYLESHEET_ROUTE,
         body=body,
-        script=live_tag + run_tag + composer_tag + approval_tag + reconcile_tag + (REVIEW_SCRIPT_TAG if review else ""),
+        script=live_tag + run_tag + composer_tag + approval_tag + reconcile_tag + scenario_tag + (REVIEW_SCRIPT_TAG if review else ""),
     )
 
 
@@ -519,6 +531,7 @@ def serve_workbench(
     command_source: Optional[Callable[..., Mapping[str, Any]]] = None,
     approval_source: Optional[Callable[..., Mapping[str, Any]]] = None,
     reconcile_source: Optional[Callable[..., Mapping[str, Any]]] = None,
+    scenario_source: Optional[Callable[..., Mapping[str, Any]]] = None,
 ) -> WorkbenchHost:
     """Start a host, by default on an ephemeral loopback port.
 
@@ -553,11 +566,21 @@ def serve_workbench(
     404, so the reconcile write surface can never appear without an explicit,
     named wiring decision -- and the safe-stop banner's button degrades to its
     disabled render-only placeholder on a read-only host.
+
+    ``scenario_source`` is the *optional* F11/1-2-7 write seam. When supplied
+    (by the control plane, never by the read-only CLI ``ui-host``), the host
+    exposes POST ``/api/scenario-state`` which drives the scenario state machine
+    for the latest run -- ``request_approval`` creates a pending approval through
+    ``owner.request_approval``, ``request_stop`` calls ``owner.safe_stop_run``.
+    When ``None`` the endpoint answers 404, so the scenario-state write surface
+    can never appear without an explicit, named wiring decision -- and the
+    stepper's controls degrade to disabled placeholders on a read-only host.
     """
     resolve_view = view_source or (lambda route: {})
     cmd = command_source
     approval_src = approval_source
     reconcile_src = reconcile_source
+    scenario_src = scenario_source
 
     # ADR 0006: the build identity is computed once, here, at startup. A source
     # that cannot be read fails loudly at this line -- before the socket opens
@@ -641,6 +664,17 @@ def serve_workbench(
                     "application/javascript; charset=utf-8",
                 )
                 return
+            if route == SCENARIO_SCRIPT_ROUTE:
+                # F11/1-2-7 — the scenario-state handler. Served unconditionally
+                # like the run-rail/composer/approval/reconcile scripts: it is
+                # progressive enhancement for /home and a no-op on a host whose
+                # scenario controls are disabled (the /api/scenario-state endpoint
+                # answers 404 without a scenario facade).
+                self._respond(
+                    scenario_script().encode("utf-8"),
+                    "application/javascript; charset=utf-8",
+                )
+                return
             if route not in ROUTES:
                 self.send_error(404, "unknown view")
                 return
@@ -677,11 +711,20 @@ def serve_workbench(
                 safe_stop = dict(view.get("safe_stop") or {})
                 safe_stop["reconcile_capable"] = True
                 view["safe_stop"] = safe_stop
+            if route == "/home" and scenario_src is not None:
+                # F11/1-2-7 — the scenario command facade enables the stepper's
+                # request-approval / request-stop controls, independently of the
+                # run/approval/reconcile seams (a control plane may wire scenario
+                # state without the others).
+                scenario_state = dict(view.get("scenario_state") or {})
+                scenario_state["scenario_capable"] = True
+                view["scenario_state"] = scenario_state
             body = render_document(
                 route, view, query, review, build=served_build,
                 run_capable=(cmd is not None),
                 approval_capable=(approval_src is not None),
                 reconcile_capable=(reconcile_src is not None),
+                scenario_capable=(scenario_src is not None),
             ).encode("utf-8")
             self._respond(body, "text/html; charset=utf-8")
 
@@ -692,6 +735,7 @@ def serve_workbench(
                 APPROVAL_API_ROUTE: self._handle_approval_decision,
                 EFFECT_API_ROUTE: self._handle_effect_receipt,
                 RECONCILE_API_ROUTE: self._handle_reconcile,
+                SCENARIO_API_ROUTE: self._handle_scenario_state,
             }
             if route not in writable:
                 self.send_error(404, "unknown view")
@@ -861,6 +905,46 @@ def serve_workbench(
                 return
             try:
                 result = reconcile_src(run_id=run_id)
+            except Exception as exc:  # owner raises NotFoundError etc.
+                self._respond_json({"error": str(exc)}, 400)
+                return
+            self._respond_json(result, 200)
+
+        def _handle_scenario_state(self) -> None:
+            """F11/1-2-7 — drive the scenario state machine through the facade.
+
+            Reached only when a scenario command facade was wired at startup. A
+            read-only host answers 404 here, so the write surface never appears
+            without an explicit, named wiring decision. Input is validated at the
+            boundary; owner errors (e.g. unknown run_id) surface as 4xx rather
+            than 500. Unknown actions surface as 4xx too (default-deny).
+            """
+            if scenario_src is None:
+                self.send_error(404, "read-only host: no scenario facade")
+                return
+            payload = self._read_json_payload()
+            if isinstance(payload, int):
+                self._respond_json({"error": "bad request"}, payload)
+                return
+            action = payload.get("action")
+            if action not in ("request_approval", "request_stop"):
+                self._respond_json(
+                    {"error": "action must be request_approval or request_stop"}, 400
+                )
+                return
+            run_id = payload.get("run_id")
+            if not isinstance(run_id, str) or not run_id.strip():
+                self._respond_json({"error": "run_id required"}, 400)
+                return
+            try:
+                # The facade dispatches on ``action`` and forwards the remaining
+                # payload fields. Missing required fields raise ValueError -> 400.
+                fields = dict(payload)
+                fields.pop("action", None)
+                result = scenario_src(action=action, **fields)
+            except ValueError as exc:  # missing required field
+                self._respond_json({"error": str(exc)}, 400)
+                return
             except Exception as exc:  # owner raises NotFoundError etc.
                 self._respond_json({"error": str(exc)}, 400)
                 return
