@@ -449,9 +449,11 @@ main {
 .approval-row .approval-actions { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; }
 .approval-reason { flex: 1; max-width: 220px; padding: 5px 8px; border-radius: 6px; border: 1px solid var(--hairline); font: inherit; font-size: 11px; }
 
-/* F11 — scenario state machine: four-state banner + stepper. Tone accents reuse
-   existing palette tokens: empty=neutral, planning=sage, approval=amber,
-   stopped=rose. The shell is display-only; no control triggers a run. */
+/* F11/1-2-7 — scenario state machine: four-state banner + stepper + controls.
+   Tone accents reuse existing palette tokens: empty=neutral, planning=sage,
+   approval=amber, stopped=rose. The controls are real triggers only when a
+   scenario command facade is wired (scenario_capable=True); otherwise they
+   render disabled (read-only host invariant). */
 .scenario-state-wrap { margin: 14px 0 0; }
 .scenario-state { padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); border-left: 4px solid var(--line); }
 .scenario-state.ss-planning { border-left-color: var(--sage); }
@@ -474,6 +476,13 @@ main {
 .ss-node.ss-stopped.ss-active .ss-dot { box-shadow: 0 0 0 3px var(--rose-wash); }
 .ss-node.ss-unknown .ss-dot { background: var(--line); }
 .ss-blurb { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.scenario-controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+.scenario-readonly-hint { margin: 8px 0 0; font-size: 11px; color: var(--muted); }
+.scenario-control { font-family: var(--mono); font-size: 12px; font-weight: 600; padding: 7px 13px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.scenario-control[disabled] { cursor: not-allowed; opacity: 0.6; color: var(--muted); }
+.scenario-control-request-approval:not([disabled]) { cursor: pointer; border-color: var(--amber); color: var(--amber); }
+.scenario-control-request-stop:not([disabled]) { cursor: pointer; border-color: var(--rose); color: var(--rose); }
 
 /* F13/1-2-8 — safe-stop / reconcile banner. The reconcile trigger is wired via
    POST /api/reconcile when a control-plane reconcile facade is injected; a

@@ -133,12 +133,14 @@ def _rail_stage_classes(status: str) -> "tuple":
     return -1, None
 
 
-#: F11 scenario state machine — render shell only. The four canonical scenario
-#: states describe the overall workbench scenario. Real derivation of "approval"
-#: (safe-stop / approval judgment) stays behind the 1-2 product gate (F13); here
-#: the model is pure presentation: it validates a token and returns descriptors.
-#: ``tone`` drives both the node dot and the banner accent so a glance shows the
-#: live state. "empty" is the start; "stopped" is a recoverable terminal.
+#: F11 scenario state machine — owner-backed derivation. The four canonical
+#: scenario states describe the overall workbench scenario. "approval" is derived
+#: from a pending owner approval on the latest run (F11/1-2-7); "stopped" from a
+#: safe-stopped latest run; otherwise "planning" once any run exists, "empty"
+#: before that. ``tone`` drives both the node dot and the banner accent so a
+#: glance shows the live state. "empty" is the start; "stopped" is a recoverable
+#: terminal. The stepper's controls are wired through a scenario command facade
+#: (F11/1-2-7), not faked here.
 _SCENARIO_STATES = (
     ("empty", "空场景", "empty", "还没有任何工作记录或计划；完成一次本地只读运行后会出现内容。"),
     ("planning", "规划中", "planning", "已载入计划或当前意图，正在评审 / 推进计划步骤。"),
@@ -770,13 +772,22 @@ def _render_approval_console(view: Mapping[str, Any]) -> str:
 
 
 def _render_scenario_state(value: Any) -> str:
-    """F11 — scenario state machine UI (render-only; wiring deferred).
+    """F11 — scenario state machine UI (owner-backed; controls wired).
 
     Renders a four-state stepper (empty -> planning -> approval -> stopped) with
     the active state highlighted, a blurb describing the active state and a
-    source badge.  A missing or invalid state reads as ``unknown`` and no node
-    is marked active.  No control in this shell triggers a run, approval or
-    stop: those belong to the 1-2 product gate (F13).
+    source badge. A missing or invalid state reads as ``unknown`` and no node is
+    marked active.
+
+    The stepper also carries two progressive-enhancement controls: a
+    "request approval" trigger (on the planning state) that creates a pending
+    approval for the latest run through the owner's approval seam, and a
+    "request stop" trigger (on the planning / approval states) that calls the
+    owner's safe-stop for the latest run. Both are real triggers only when a
+    scenario command facade was wired into the host (``scenario_capable`` is
+    True); otherwise they degrade to disabled placeholders, preserving the Round1
+    read-only host invariant (a read-only host serves no /api/scenario-state, so
+    an enabled control would be a dead click).
     """
 
     scenario = _mapping(value)
@@ -784,6 +795,8 @@ def _render_scenario_state(value: Any) -> str:
     source = scenario.get("source") or "source unknown"
     state = _scenario_state_token(raw_state)
     source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
+    run_id = scenario.get("run_id")
+    capable = bool(scenario.get("scenario_capable", False))
 
     nodes = []
     for key, label_zh, tone, _blurb in _SCENARIO_STATES:
@@ -803,6 +816,21 @@ def _render_scenario_state(value: Any) -> str:
 
     tone = _SCENARIO_TONES.get(state, "unknown")
     blurb = _SCENARIO_BLURBS.get(state, "状态未知（真实判定留 product gate）。")
+
+    # F11/1-2-7 — the controls are real triggers only when a scenario command
+    # facade is wired. On a read-only host they degrade to disabled placeholders.
+    is_live = state in ("planning", "approval")
+    request_approval = _render_scenario_control(
+        state == "planning", capable, "request_approval", "request-approval", run_id, "请求审批"
+    )
+    request_stop = _render_scenario_control(
+        is_live, capable, "request_stop", "request-stop", run_id, "请求停止"
+    )
+    readonly_hint = (
+        '<p class="scenario-readonly-hint">只读宿主：场景状态机未接线命令面</p>'
+        if not capable
+        else ""
+    )
     return (
         '<div class="scenario-state ss-{tone}">'
         '<div class="section-heading"><div><p class="eyebrow">SCENARIO STATE · 场景状态机</p>'
@@ -810,13 +838,46 @@ def _render_scenario_state(value: Any) -> str:
         '<span class="section-source">{source_badge}</span></div>'
         '{stepper}'
         '<p class="ss-blurb">{blurb}</p>'
+        '<div class="scenario-controls">{request_approval}{request_stop}</div>'
+        '{readonly_hint}'
         '</div>'
     ).format(
         tone=_text(tone),
         source_badge=_text(source_badge),
         stepper=stepper,
         blurb=_text(blurb),
+        request_approval=request_approval,
+        request_stop=request_stop,
+        readonly_hint=readonly_hint,
     )
+
+
+def _render_scenario_control(
+    visible: bool, capable: bool, action: str, slug: str, run_id: Any, label_zh: str
+) -> str:
+    """Render one scenario-state control as a real trigger or disabled placeholder.
+
+    ``visible`` is the state-derived condition for showing this control at all;
+    ``capable`` is whether a scenario command facade was wired into the host.
+    ``action`` is the POST payload action (Python-style, e.g. ``request_approval``);
+    ``slug`` is the HTML/CSS/JS-friendly hyphenated form (e.g. ``request-approval``)
+    used for the class and ``data-scenario-*`` attribute so the progressive-
+    enhancement script can target it. A control that is visible but not capable
+    shows as a disabled placeholder; a control that is not visible at all renders
+    nothing (no dead affordance).
+    """
+
+    if not visible:
+        return ""
+    if not capable or not run_id:
+        return (
+            '<button class="scenario-control scenario-control-{slug}" disabled '
+            'aria-disabled="true" title="只读宿主：场景状态机未接线命令面">{label}</button>'
+        ).format(slug=slug, label=_text(label_zh))
+    return (
+        '<button class="scenario-control scenario-control-{slug}" '
+        'data-scenario-{slug} data-scenario-run-id="{rid}">{label}</button>'
+    ).format(slug=slug, rid=_text(run_id), label=_text(label_zh))
 
 
 def _render_safe_stop(value: Any) -> str:
