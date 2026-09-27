@@ -150,6 +150,41 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     ui_host.set_defaults(handler=_ui_host_command)
+
+    ui = commands.add_parser(
+        "ui",
+        help="serve the writable workbench UI backed by a real owner DB (dogfood)",
+        description=(
+            "Serve the workbench UI wired to a real CompositionOwner. Unlike "
+            "ui-host, this opens --db, renders real runs through owner_view_source, "
+            "and wires every write seam (composer send, approval execution, "
+            "scenario state, reconcile). It changes owner state, so point it at a "
+            "scratch DB you can discard."
+        ),
+    )
+    ui.add_argument(
+        "--db",
+        required=True,
+        type=Path,
+        help="path to the CompositionOwner sqlite database; created if absent",
+    )
+    ui.add_argument(
+        "--host",
+        default=LOOPBACK,
+        help="bind address; only loopback is accepted",
+    )
+    ui.add_argument(
+        "--port",
+        type=int,
+        default=0,
+        help="bind port; the default asks the OS for a free one",
+    )
+    ui.add_argument(
+        "--review",
+        action="store_true",
+        help="enable the local review annotation mode",
+    )
+    ui.set_defaults(handler=_ui_command)
     return parser
 
 
@@ -519,7 +554,79 @@ def _ui_host_command(args: argparse.Namespace) -> int:
         for number, handler in previous.items():
             signal_module.signal(number, handler)
         host.close()
-    _announce({"event": "stopped", "base_url": host.base_url})
+        _announce({"event": "stopped", "base_url": host.base_url})
+    return 0
+
+
+def _ui_command(args: argparse.Namespace) -> int:
+    """Serve the writable workbench UI against a real owner DB (dogfood).
+
+    Opens ``--db`` as a CompositionOwner, renders real runs through
+    ``owner_view_source``, and wires every write seam so the composer send,
+    approval execution, scenario state machine and reconcile controls are live.
+    This is the dogfood entry the read-only ``ui-host`` deliberately is not.
+    """
+
+    import signal as signal_module
+
+    from .ui_approval import owner_approval_source
+    from .ui_host import serve_workbench
+    from .ui_reconcile import owner_reconcile_source
+    from .ui_run import owner_command_source
+    from .ui_scenario_state import owner_scenario_source
+    from .ui_view_model import owner_view_source
+
+    if args.host not in LOOPBACK_ADDRESSES:
+        raise SystemExit(
+            "ui binds loopback only; {0!r} would expose owner state "
+            "on the network".format(args.host)
+        )
+
+    owner = CompositionOwner(args.db)
+    stopping = threading.Event()
+    host = None
+    try:
+        host = serve_workbench(
+            view_source=owner_view_source(owner),
+            command_source=owner_command_source(owner),
+            approval_source=owner_approval_source(owner),
+            reconcile_source=owner_reconcile_source(owner),
+            scenario_source=owner_scenario_source(owner),
+            bind=(args.host, args.port),
+            review=args.review,
+        )
+        _announce(
+            {
+                "event": "serving",
+                "mode": "dogfood",
+                "db": str(owner.database),
+                "review": bool(args.review),
+                "base_url": host.base_url,
+            }
+        )
+
+        def _stop(signum: int, frame: Any) -> None:
+            stopping.set()
+
+        previous = {
+            number: signal_module.signal(number, _stop)
+            for number in (signal_module.SIGINT, signal_module.SIGTERM)
+        }
+        try:
+            stopping.wait()
+        finally:
+            for number, handler in previous.items():
+                signal_module.signal(number, handler)
+            if host is not None:
+                host.close()
+            _announce(
+                {
+                    "event": "stopped",
+                    "base_url": host.base_url if host is not None else None,
+                }
+            )
+    finally:
+        owner.close()
     return 0
 
 
