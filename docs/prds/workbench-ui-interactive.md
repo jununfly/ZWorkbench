@@ -1,6 +1,6 @@
 ---
 title: 完整工作台 Web-UI（含交互）
-status: draft
+status: active
 type: prd
 depends_on:
   - docs/prds/issue-1-workbench-ui.md
@@ -14,8 +14,9 @@ decisions_resolved:
   - D2: 交互深度 = 本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态（F6 发送 / F12 审批执行 另开 product scope gate）
   - D3: 三变体切换器 = 保留为开发期调试工具（?variant=A/B/C）
   - Q4: ?variant= 调试切换器 = 纯 client 端 query 参数分支，不接入 ui_build 生产构建管线
-review_note: DRAFT，存于 docs/prds/ 供 review 后修改。
-review_note: 本文档为 DRAFT，保存于 docs/prds/ 便于 review 后直接修改；尚未发布到 issue tracker。所有已决决策见 frontmatter decisions_resolved 与 §4。
+  - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经交互路线图 1-2 / 1-3 节点全部 completed（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）。
+review_note: 2026-09-27 刷新——原 DRAFT 的 §3 分类与 §3b Round-1 范围已与交互路线图（1-2/1-3 completed）对齐；除 F18 外 F1–F13 均已交付。本文档反映已交付状态，仍可按 review 意见修订。
+review_note: 本 PRD 与 issue-1 实现规格、交互路线图三者对"交互/写入能力"的口径曾不一致；现以交互路线图（workbench-ui-interactive.roadmap.json）为唯一事实源，本 PRD 补 §3c / §9 登记已交付写 seam。
 ---
 
 # 完整工作台 Web-UI（含交互）
@@ -64,14 +65,14 @@ review_note: 本文档为 DRAFT，保存于 docs/prds/ 便于 review 后直接�
 | F3 | 侧栏工作记录导航（side-panel：新建 / 近期工作 / 工作区） | 🔨 构建（A 已定） | 纯导航壳，数据来自 owner-backed 投影 | `ui_view_model` |
 | F4 | 会话消息流（message / avatar / meta / plan-card） | 🔨 构建（A 已定） | 只读渲染既有工作记录消息；plan-card 步骤态来自 `ui_view_model` | `ui_view_model` |
 | F5 | 计划卡（working plan：done/current/pending 步骤） | 🔨 构建 | 同 F4 内聚，状态由投影驱动 | `ui_view_model` |
-| F6 | 输入 composer 由只读 → 真实发送 | ⏭ 后续 gate | **D2 已拍板：本轮只渲染只读壳 + disabled 态**；真实发送（触发 agent Run）留独立 product gate | CompositionOwner/Run |
-| F7 | 运行事实检查器（inspector：mode/workspace/approval/worker、effect/approval、evidence links） | 🔨 渲染 + ⏭ 实时值 | 壳与态纯 UI（本轮做）；实时值来自投影/运行时，**留 gate** | `ui_view_model` |
-| F8 | 命令画布（canvas-layout：command-path 节点 / decision notes / artifact panel / run-rail） | ⏭ 后续 gate（B 留后续） | **D1 已拍板：B 留后续**，本轮不构建 | `ui_view_model` |
-| F9 | 项目日记（journal-layout：index / reading / evidence-table） | ⏭ 后续 gate（C 留后续） | **D1 已拍板：C 留后续**，本轮不构建 | `ui_view_model` |
-| F10 | 运行轨道栏（run-rail：状态 / 可执行 Run / Owner 记录 / 证据时间线） | 🔨 渲染 + ⏭ 实时 | 渲染壳纯 UI（本轮做）；"可执行 Run"按钮触发 🚧，**留 gate** | CompositionOwner |
-| F11 | 场景状态机 UI（empty / planning / approval / stopped） | 🔨 渲染 | 四态切换纯 UI；映射到真实 safe-stop/approval 逻辑属 🚧 | `ui_review` |
-| F12 | 审批执行 UI（apply diff / Approval / retry / effect receipt） | ⏭ 后续 gate | **D2 已拍板：写能力交互留独立 gate**；Issue #1 明确 NON-GOAL | Approval/Effect |
-| F13 | 安全停止 / reconcile UI（identity unresolved → 停 + 请求 reconcile） | 🔨 渲染 + ⏭ 逻辑 | 横幅/停止卡壳 + stopped 态纯 UI（本轮做）；越界判定逻辑部分已在 `ui_review`，**留 gate** | `ui_review` |
+| F6 | 输入 composer 由只读 → 真实发送 | ✅ 已交付 | **D2 原拍板留 gate**；后续经交互路线图 1-2-1 交付（ui_run composer，POST /api/runs 真实建 Run） | CompositionOwner/Run |
+| F7 | 运行事实检查器（inspector：mode/workspace/approval/worker、effect/approval、evidence links） | ✅ 已交付 | 渲染壳（1-1-6）+ 实时值（1-2-3 / 1-2-6，每次轮询重投影） | `ui_view_model` |
+| F8 | 命令画布（canvas-layout：command-path 节点 / decision notes / artifact panel / run-rail） | ✅ 已交付 | **D1 原拍板留后续**；后续经交互路线图 1-3-1 交付（?variant=B canvas 变体） | `ui_view_model` |
+| F9 | 项目日记（journal-layout：index / reading / evidence-table） | ✅ 已交付 | **D1 原拍板留后续**；后续经交互路线图 1-3-2 交付（?variant=C journal 变体） | `ui_view_model` |
+| F10 | 运行轨道栏（run-rail：状态 / 可执行 Run / Owner 记录 / 证据时间线） | ✅ 已交付 | 渲染壳（1-1-7）+ 可执行 Run（1-2-4，POST /api/runs 触发） | CompositionOwner |
+| F11 | 场景状态机 UI（empty / planning / approval / stopped） | ✅ 已交付 | 四态渲染（1-1-8）+ 真实控制（1-2-7，POST /api/scenario-state：request_stop→safe_stopped、request_approval→pending approval） | `ui_review` |
+| F12 | 审批执行 UI（apply diff / Approval / retry / effect receipt） | ✅ 已交付 | **D2 原拍板留 gate**；后续经交互路线图 1-2-2 交付（ui_approval，POST /api/approvals：approve→approved、deny→denied，deny 强制非空理由） | Approval/Effect |
+| F13 | 安全停止 / reconcile UI（identity unresolved → 停 + 请求 reconcile） | ✅ 已交付 | 横幅/stopped 态（1-1-9）+ 越界判定（1-2-5）+ reconcile 路由（1-2-8，POST /api/reconcile 触发 owner.reconcile_identity） | `ui_review` |
 | F14 | DSH 对齐只读 surface（`/session-references` 身份投影） | ✅ 部分已落地 | `ui_view_model` 已有 Host Capability Facade + DSH 身份投影；本轮仅**扩展只读投影**，不引 dsh-web 运行时 | ADR 0007 |
 | F15 | r2-ui-reference-skills 协同 UI（profile_status / runtime_status 可视化调用与结果呈现） | 🔨 构建 | 元 UI：把 `skills/ui-reference-*` 的状态检查可视化，提升 human↔agent 协同 | `ui_reference` skills |
 | F16 | 响应式 & 降级（≤760px / reduced-motion） | ✅ 已落地 | Issue #1 已覆盖，勿重建 | — |
@@ -101,11 +102,31 @@ review_note: 本文档为 DRAFT，保存于 docs/prds/ 便于 review 后直接�
 **不做（⛔）：**
 - F18 live replay
 
+> 上述 ⏭ / 🚧 原标"留 gate"项，已在下方 §3c 全部交付。
+
+## 3c. 越过 Round-1 的已交付项（交互写 seam）
+
+D2/D1 原把以下项标为"留 gate"，交互路线图（docs/prds/workbench-ui-interactive.roadmap.json）已开 1-2（Product gate）/ 1-3（变体）节点并全部 completed：
+
+| 项 | 路线图节点 | 写 seam / 宿主契约 |
+|---|---|---|
+| F6 composer 真实发送 | 1-2-1 | 宿主注入 command facade → POST /api/runs 真实建 Run；无 facade 则 404 |
+| F10 可执行 Run | 1-2-4 | 复用 command facade |
+| F11 场景真实控制 | 1-2-7 | 宿主注入 scenario facade → POST /api/scenario-state（request_stop / request_approval）；无 facade 则 404 |
+| F12 审批执行 | 1-2-2 | 宿主注入 approval facade → POST /api/approvals（approve / deny）；deny 强制非空理由；无 facade 则 404 |
+| F13 越界判定 + reconcile | 1-2-5 / 1-2-8 | 宿主注入 reconcile facade → POST /api/reconcile 触发 owner.reconcile_identity；无 facade 则 404 |
+| F7 实时值 | 1-2-3 / 1-2-6 | 每次轮询经 resolve_view 重投影，只读无副作用 |
+| F8 ?variant=B | 1-3-1 | canvas 变体布局 |
+| F9 ?variant=C | 1-3-2 | journal 变体布局 |
+
+不变式（沿用 Round-1 + ADR 0003）：**所有真实写入 / 审批 / reconcile 仅在宿主注入对应 facade 时暴露**；只读宿主（CLI `ui-host`）一律 disabled 占位 + POST 404。可写宿主由 CLI `ui --db <path>`（dogfood）提供，接真实 CompositionOwner + 四 facade。
+
 ## 4. 决策（D）—— 已拍板
 
 - **D1 — IA 方向**：✅ **A 会话优先**。B 画布 / C 日记 留后续独立 gate，本轮不构建。
 - **D2 — 交互深度**：✅ **本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态**。F6（发送）与 F12（审批执行）触碰 Run/Approval/Effect，转为 ⏭ 后续 product scope gate；F7/F10/F13 的运行时部分（实时值 / 可执行 Run / 越界判定）同理留 gate。
 - **D3 — 三变体切换器**：✅ **保留为开发期调试工具**（`?variant=A/B/C`），不向最终用户暴露。
+- **D4 — 交互深度 gate 已开并交付**：✅ D2 原留的 gate（F6/F12 product scope、F7-live/F10-exec/F13-logic 🚧）与 D1 留后续的 B/C 变体（F8/F9），经交互路线图 1-2 / 1-3 节点全部 completed，不再是"留 gate"待办。真实副作用仅在宿主注入对应 facade 时可用，只读宿主仍守 Round-1 契约（POST 404）。
 
 ## 5. dsh-web 对齐映射（只读，不引入运行时）
 
@@ -124,11 +145,18 @@ review_note: 本文档为 DRAFT，保存于 docs/prds/ 便于 review 后直接�
 
 ## 7. 验收方式
 
-- 复用 `ui_matrix.py` 覆盖清单（从 R1 PRD 转录），新增交互项回填覆盖矩阵。
-- 扩展既有测试：横滚动/reduced-motion（`test_ui_no_horizontal_scroll.py` / `test_ui_style.py`）、Review/safe-stop 态（`test_ui_review.py`）。
-- 新交互（composer disabled、scenario 切换、safe-stop 横幅、`?variant=` 切换）补 CDP 驱动断言（复用 `tests/browser.py` 的 `reduced_motion` 机制）。
+- 复用 `ui_matrix.py` 覆盖清单（从 R1 PRD 转录），新增交互项已回填覆盖矩阵（home.scenario-state / home.composer / home.approval-console / task-detail.reconcile）。
+- 既有测试：横滚动/reduced-motion（`test_ui_no_horizontal_scroll.py` / `test_ui_style.py`）、Review/safe-stop 态（`test_ui_review.py`）、宿主脱敏/边界（`test_ui_host.py` / `test_ui_redaction_host.py`）。
+- **CDP 端到端断言已交付**：`tests/test_ui_interactive_cdp.py`（12 项，真实 headless Chrome 经 loopback 驱动）覆盖 PRD 点名的 composer 发送 / scenario 切换（request_stop / request_approval）/ safe-stop 横幅 / ?variant=B·C，加 F12 approval approve·deny 真实点击，以及只读宿主不暴露任何写触发的不变式。无 Chrome 时按 ADR 0004 自动 skip。
+- 可写宿主冒烟测试：`tests/test_ui_dogfood_cli.py`（2 项）起真实 `ui --db` 子进程验证 GET /home 200、composer 触发 live、POST /api/runs 201；并断言 --host 0.0.0.0 被拒（loopback-only）。
 
 ## 8. 开放问题
 
 1. 三视图（Issue #1）与 A 会话优先 IA 如何共存——替换还是嵌套？（建议：A 会话流作 home 主区，三视图作 task-detail / record-view 子投影，不替换。）
 2. `ui_view_model` 的 DSH 身份投影是否需扩展字段满足 F14「对齐」诉求？（F14 实现时确认。）
+
+## 9. 进一步说明 / 跨文档口径
+
+- **事实源**：交互 / 写入能力的唯一事实源是交互路线图 `docs/prds/workbench-ui-interactive.roadmap.json`（1-1 / 1-2 / 1-3 全部 completed）。本 PRD 与 `docs/designs/issue-1-workbench-ui-implementation.md` 曾只描述 Round-1 只读范围、未登记 1-2/1-3 写 seam；本刷新已在 §3c 补登。
+- **issue-1 实现规格待同步**：该文档仍 `implementation-status: implemented` 且 Code boundaries 未登记 ui_approval / ui_reconcile / ui_scenario_state / ui_run(composer)；若把它当"UI 现在能做什么"真相源会误判，需另开刷新（不在本 PRD 范围）。
+- **F18 仍为 ⛔ 不做**：证据 live replay 明确排除，未交付也不计划交付。

@@ -3,10 +3,20 @@ doc-kind: design
 authority: supporting
 status: target
 implementation-status: implemented
+coverage: round-1-readonly
 # Core views + no-side-effects + host/review boundaries shipped and tested;
 # prefers-reduced-motion and all-three-views no-horizontal-scroll acceptance
 # now covered (test_ui_style / test_ui_no_horizontal_scroll). Flipped from
 # "partial" on 2026-09-19 after closing both acceptance gaps.
+#
+# SCOPE: This spec is authoritative for the Round-1 READ-ONLY workbench UI only.
+# The interactive write seams (composer send, approval execute, scenario control,
+# safe-stop/reconcile) that post-date this spec are governed by
+# ../prds/workbench-ui-interactive.md (status: active) and the roadmap
+# docs/prds/workbench-ui-interactive.roadmap.json (1-2 / 1-3 product gates,
+# all completed). Those modules are registered in the
+# "Interactive write seams (post-Round-1)" subsection below so this document
+# does not drift from the shipped surface.
 ---
 
 # Issue #1：Workbench UI 实现规格
@@ -170,6 +180,12 @@ fixture 应标为 `prototype` 或 `fixture`。
 评审模式只选择和标注元素，不向业务元素派发点击；overlay 不拦截指针；token 只携带白名单
 定位信息；关闭评审模式后监听器、overlay 和后台资源归零。
 
+> 范围说明：本节约束的是 Round-1 只读宿主（`ui-host`）。交互写入能力（真实发送 /
+> Approval 执行 / 场景控制 / reconcile）已由后续 product gate 交付，受
+> `workbench-ui-interactive.md` 管辖，且仅在宿主显式注入控制面 façade 时启用
+> （默认只读宿主仍对所有写路由返回 `404`）。详见上文「Interactive write seams
+> (post-Round-1)」小节。
+
 ## Verification loop
 
 实现顺序固定为：
@@ -230,6 +246,13 @@ reference-protocol layer around them. The nine modules below are not in the
 original six; recording each one's authority and hard owner boundary is what
 keeps the reference protocol from drifting without a paper trail.
 
+A later wave of work opened the interactive product gates and landed four
+*control-plane write seams* (`ui_run`, `ui_approval`, `ui_scenario_state`,
+`ui_reconcile`). They are Round-1-external but shipped, and are registered in
+the "Interactive write seams (post-Round-1)" subsection below — kept distinct
+from the read-only reference protocol so the no-second-durable-owner invariant
+stays legible.
+
 | Module | Authority (owns) | Hard owner boundary (must not) | Governing ADR |
 |---|---|---|---|
 | `ui_ref.py` | Single source of UI reference metadata: code declares each semantic element once; the build derives the manifest from those declarations. No hand-maintained mapping table. | Holds no run/attempt/event/effect/approval/replay state; never reads or writes the composition owner. | 0002 |
@@ -241,6 +264,35 @@ keeps the reference protocol from drifting without a paper trail.
 | `ui_token.py` | `ui-ref/v1` review token and local deep link: locates a semantic element for discussion. Every field whitelisted; `build`/`parse` round-trips are validated and reject unknown/duplicate/oversized input. | NOT a credential, approval, state-restoration instruction or execution entry point. Prompts, run titles, full run ids, raw events, owner snapshots, credentials, input contents and local absolute paths must never reach a token; free-form context is not accepted. | — |
 | `ui_script.py` | Review-mode behaviour layer (ADR 0005), served only when review mode is on. Mirrors the decisions `ReviewMode` has already made (preview, lock, copy, focus restore). | Adds none of its own: no request, no storage, no telemetry, no business activation, and no token minted here (tokens arrive pre-built from the server, one per viewport). Inert outside review mode — not linked at all in normal mode. | 0005 |
 | `ui_review.py` | Local review annotation mode: panel state, gestures and exit. `ReviewMode` owns the *decisions* review mode makes. Tracks host-dependent evidence in `HOST_SURFACES` / `HOST_UNKNOWNS`. | Holds no run/effect/approval state, performs no network or telemetry call, and never dispatches a business action of its own (business activation is delivered by the host and merely observed here). A green state-machine test in this module is never the host evidence the table names. | 0004, 0005 |
+
+### Interactive write seams (post-Round-1)
+
+The spec above was frozen at the Round-1 read-only UI. After it shipped, the
+interactive roadmap opened the product gates for real writes and landed four
+control-plane write seams. They are **not** part of the Round-1 read-only
+surface, but they are part of the shipped product and must be tracked here to
+prevent drift. Each seam is a narrow façade: it is wired into the host **only**
+when an explicit control-plane source is injected, and the default read-only
+host (`ui-host`) continues to serve `404` for every write route — so the "host
+must stay a read-only projection" invariant (ADR 0001/0003) is preserved by
+default.
+
+| Module | Authority (owns) | Hard owner boundary (must not) | Governing ADR |
+|---|---|---|---|
+| `ui_run.py` | Composer send façade (`owner_command_source`): `POST /api/runs` → `owner.create_run` for `composer_message`. | No other writes; never mutates approvals/effects/identity; payload validated (`input_value` required). | 0003 |
+| `ui_approval.py` | Approval decision façade (`owner_approval_source`): `POST /api/approvals` → `owner.approve` / `owner.deny_approval`. | Only flips an existing pending approval's status. `deny` **requires** a non-empty reason (`_require_text`); the UI placeholder must read 必填, not 可选. | 0003 |
+| `ui_scenario_state.py` | Scenario control façade (`owner_scenario_source`): `POST /api/scenario-state` → `owner.request_approval` / `owner.safe_stop_run`. | Unknown `action` → `400` (default deny); never reaches the owner for unrecognised verbs. | 0003 |
+| `ui_reconcile.py` | Identity reconcile façade (`owner_reconcile_source`): `POST /api/reconcile` → `owner.reconcile_identity(run_id)`. | Triggers reconcile only; otherwise read-only; no other mutation. | 0003 |
+
+Control-plane injection point. The default CLI `ui-host` (Round-1 read-only)
+deliberately passes **no** `command_source` / `approval_source` /
+`reconcile_source` / `scenario_source` and no `view_source`, so the write
+buttons render as disabled placeholders and every write POST returns `404`. The
+writable surface is reachable only via the dogfood command
+`zworkbench ui --db <path>` (`cli.py`), which opens a real `CompositionOwner(db)`
+and injects all four facades plus `owner_view_source`. End-to-end coverage:
+`tests/test_ui_interactive_cdp.py` (12 real-browser assertions) and
+`tests/test_ui_dogfood_cli.py` (2 smoke assertions).
 
 Cross-cutting owner boundary. Every module above is a presentation/reference
 layer. None of them may become a second durable owner (ADR 0001): they read an
