@@ -5,7 +5,7 @@ status: target
 implementation-status: unknown
 ---
 
-# R3 真实可用路线图（草稿）
+# R3 真实可用路线图
 
 > 本文件是产品规划草稿，不是实现事实。所有未由 owner-backed 证据证实的能力标 `target` 或 `unknown`。
 > 评测脚手架（H1–H5 / C1–C7 runner）通过 **不等于** 产品能力已实现；二者必须分开计账。
@@ -14,14 +14,14 @@ implementation-status: unknown
 
 ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 唯一 durable CompositionOwner。当前产品入口仍是 **Codex-only 本地只读回退基线**（`local_read_only_run`），目标架构未产品化。
 
-对单人开发者而言，"真实可用"的判据是：能在**真实项目**上产生**可追溯写副作用**（改文件 + commit + push），并接入**真实 Provider**（而非 loopback/fake）。
+对单人开发者而言，"真实可用"的终态判据是：能在**真实项目**上产生**可追溯写副作用**（改文件 + commit + push，其中 push 为单独门），并接入**真实 Provider**（而非 loopback/fake）——且须同时满足下文三层判据 AND 门。
 
 现状缺口（来自 AGENTS.md / 架构 wiki / evaluation runners）：
 
 - 写边界（`ta-reversible-write-boundary`）显式 `HOLD`：case-local fake sink 能验证合同，但推不出真实项目写入 / Git push / 部署 / live replay 已获准。
 - Provider 仅 loopback/fake；真实网络、凭证、远端 effect 全部 deferred。
 - DSH 仅实现 H1 bootstrap seam；完整主 Harness 驱动未产品化。
-- 验证矩阵 H1–H8 + C1–C7 中，**H6–H8 连单独 scope 都未定义**（只在文案里作范围引用出现）。
+- 验证矩阵 H1–H8 + C1–C7 中，**H6–H8 scope 缺口已于 2026-09-27 收敛**（H6 首版 = 单 Provider 子集；H7/H8 标 `deferred-until-demand`；详见下文切片顺序与"产品定位与架构约束"节）。
 
 核心风险：评测脚手架很多，但 `zworkbench run` 实际只做 case-local 只读任务。进度最易被误判为"快好了"。
 
@@ -50,9 +50,9 @@ ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 
 
 ## 真实可用缺口（缺失 stage）
 
-从回退基线到"真实可用"，必须跨越以下缺口。当前全部为 `HOLD` / deferred / 未定义。
+从回退基线到"真实可用"，必须跨越以下缺口。当前状态：1–3 / 5–6 为 `HOLD` / deferred / 未产品化；4（scope 缺口）已收敛为终态条款。
 
-1. **真实写副作用**（最核心缺口）：diff apply + commit + push 到真实项目。对应 C3/C4/C5/C6 的*产品化*，而非 fixture。必须带 host enforcement 证明（路径 / 进程 / 网络边界的实际强制），不能靠配置声明假装。
+1. **真实写副作用**（最核心缺口）：隔离 worktree 上 diff apply + local commit（**push 为单独门 S4，默认关**）。对应 C3/C4/C5/C6 的*产品化*，而非 fixture。必须带 host enforcement 证明（路径 / 进程 / 网络边界的实际强制），不能靠配置声明假装。
 2. **真实 Provider**：当前 loopback/fake → 真实 Codex/API + 网络 + 凭证。对应 `docs/references/optional-real-provider-staging.md` 与 `optional-real-codex-provider-staging.md`（两份 references 仍为 "optional" deferred）。
 3. **完整 DSH 主 Harness 驱动**：当前 Codex-only 回退，仅 H1 bootstrap；H2–H8 的 DSH 全 runtime / plugin 组合 / 路由未产品化。
 4. **H6–H8 scope 已定义（2026-09-27 收敛）**：solo 真实可用的依赖闭包只含两条并行 seam——**写副作用 seam + 单真实 Provider seam**；H7/H8 不在闭包内，标 `deferred-until-demand`（不定 scope、不建）。结论同时确立切片顺序 S0–S4（见下）与架构负约束（见"产品定位与架构约束"节）。
@@ -125,7 +125,7 @@ ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 
 
 **Lane A — 最小可用（优先，即上方 S0–S4 切片顺序）**
 1. S0 host-enforcement spike（fail-closed 判据见 ADR 0008，判据须可测试断言，防退化成 demo）。
-2. S1 单 Provider 产品化：把已验证的 Ark 只读路径从 `scripts/` 收进默认入口 + owner 记录失败分类 / safe-stop；env+stdin 注入凭证、secret 0 落盘；经 Host Capability Facade 接入。
+2. S1 单 Provider 产品化：把已验证的 Ark 只读路径从 `scripts/` 收进默认入口 + owner 记录失败分类 / safe-stop；env+stdin 注入凭证、secret 0 落盘；经 Host Capability Facade 接入。**Provider-side 退出记账**：对真实 Ark 发请求即产生远端 retention / 任务，沿用 staging runbook 的 `unknown / delegated` 口径如实记账、不假装已清除（非阻塞，见 `docs/references/optional-provider-exit-inventory.md`）。
 3. S2 写 seam 产品化：approval 精确绑定 operation/action/resource/idempotency key；隔离 worktree；diff apply + local commit only；receipt（= owner-backed 审计最小单元）。
 4. S3 dogfood N=10 闸门（含价值基线出数）。
 5. S4 push 单独门：单独审批 + push，幂等防重复物理副作用。
@@ -184,4 +184,5 @@ scope 已收敛、R3/ADR 0008 已沉淀、工程切片 S0–S4 已锁定。作�
 - `README.md`：当前 `local_read_only_run` 入口与默认边界。
 - `docs/zj-adr/0008-host-enforcement-is-fail-closed-and-testable.md`：S0 host enforcement 决策与 fail-closed 三判据。
 - `docs/references/optional-real-provider-staging.md` / `optional-real-codex-provider-staging.md`：真实 Provider staging 合同（Ark 5/5 + Codex turn 1/1、`raw_credential_persisted=false` 已验证）。
+- `docs/references/optional-provider-exit-inventory.md` / `optional-provider-exit-primary-sources.md`：Provider-side 退出责任记账口径。
 - H6–H8 scope 收敛过程（Human+AI 第一遍 + Agent B/C/A 三视角观点 + 拍板）原记录于 `docs/discussions/h6-h8-scope-kickoff.md`（已按 `_POLICY.md` 删除；结论已沉淀至本文件与 ADR 0008）。
