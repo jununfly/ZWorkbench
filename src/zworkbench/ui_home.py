@@ -694,7 +694,7 @@ def _render_approval_console(view: Mapping[str, Any]) -> str:
                     'data-approval-approve data-approval-id="{aid}" '
                     'aria-label="批准审批 {aid}">批准</button>'
                     '<input class="approval-reason" type="text" '
-                    'data-approval-reason="{aid}" placeholder="拒绝理由（可选）" '
+                    'data-approval-reason="{aid}" placeholder="拒绝理由（必填）" '
                     'aria-label="拒绝理由 {aid}" />'
                     '<button type="button" class="approval-deny" '
                     'data-approval-deny data-approval-id="{aid}" '
