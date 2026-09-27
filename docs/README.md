@@ -37,6 +37,7 @@ authority: supporting
 - [ADR 0005：评审模式携带一层最小行为脚本](zj-adr/0005-review-mode-carries-a-minimal-behaviour-layer.md) — 评审模式只镜像状态机决策的长期决定；authority-id: adr.ui-host.review-mode-behaviour-layer
 - [ADR 0006：宿主服务的 manifest 只有一个 build 身份](zj-adr/0006-one-build-identity-for-served-manifests.md) — served manifest 全树单一 build 身份的长期决定；authority-id: adr.ui-host.one-build-identity
 - [ADR 0007：dsh-web 作为外部能力参考而非可安装依赖](zj-adr/0007-dsh-web-treated-as-external-capability-reference.md) — 对外部 UI 能力源的复用边界长期决定；authority-id: adr.dsh-web.external-capability-reference
+- [ADR 0008：host enforcement 必须 fail-closed 且可测试](zj-adr/0008-host-enforcement-is-fail-closed-and-testable.md) — 真实写副作用第 0 切片（S0 spike）与 fail-closed 三判据的长期决定；authority-id: adr.host-enforcement.fail-closed-and-testable
 
 ## Product requirements
 
