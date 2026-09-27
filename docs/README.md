@@ -34,6 +34,8 @@ authority: supporting
 - [ADR 0002：映射版本只摘要引用语义](zj-adr/0002-ui-map-digests-reference-semantics-only.md) — 界面引用身份与迁移的长期决定；authority-id: adr.ui-reference.semantic-only-mapping-version
 - [ADR 0003：工作台宿主是经回环提供的服务端渲染 HTML](zj-adr/0003-workbench-host-is-server-rendered-html-over-loopback.md) — 宿主形态的长期决定；authority-id: adr.ui-host.server-rendered-html-over-loopback
 - [ADR 0004：宿主交互证据来自经 CDP 驱动的本机浏览器](zj-adr/0004-host-interaction-evidence-comes-from-a-local-browser-over-cdp.md) — 交互取证方式的长期决定；authority-id: adr.ui-host.interaction-evidence-via-local-cdp
+- [ADR 0005：评审模式携带一层最小行为脚本](zj-adr/0005-review-mode-carries-a-minimal-behaviour-layer.md) — 评审模式只镜像状态机决策的长期决定；authority-id: adr.ui-host.review-mode-behaviour-layer
+- [ADR 0006：宿主服务的 manifest 只有一个 build 身份](zj-adr/0006-one-build-identity-for-served-manifests.md) — served manifest 全树单一 build 身份的长期决定；authority-id: adr.ui-host.one-build-identity
 - [ADR 0007：dsh-web 作为外部能力参考而非可安装依赖](zj-adr/0007-dsh-web-treated-as-external-capability-reference.md) — 对外部 UI 能力源的复用边界长期决定；authority-id: adr.dsh-web.external-capability-reference
 
 ## Product requirements
@@ -62,9 +64,8 @@ authority: supporting
 | Wiki | `ZJ-CONTEXT.md`、`docs/methods/`、`docs/architecture/`、`docs/zj-adr/` | 实体、关系、事实、规则、稳定决策 | 单次运行结果或进度面板 |
 | References | [docs/references/](references/README.md) | 外部合同、账户 owner 操作边界、受控 runbook | 默认产品配置或自动授权 |
 | Fixture documentation | `evaluation/fixtures/**/README.md` | 隔离输入、oracle、版本和安全约束 | 产品使用或架构权威 |
-| Plans | `docs/plans/` | 研究包、路线状态、过程材料与证据 sidecar（历史归档） | 长期权威页或 ADR |
 
-> **已知缺口（local-only，非仓库缺陷）**：`evaluation/evidence/` 存放本地评测记录（按 AGENTS.md 永不入库）。其中部分记录引用 `docs/plans/research/<study>.request.json` / `.collection-status.json` / `.ledger-response.json` 等证据 sidecar，但这些 sidecar 从未生成——对应正式 zj-research 采集被阻塞（证据记录内 `formal_collection.state: "collection-blocked"`、`fresh_sealed_ledger_produced: false`）。此类悬空引用是「采集被阻塞」的诚实记载，并非文档断链；仓库治理校验只扫描 docs 地图、不触及 `evaluation/evidence/`，故对仓库不可见。处理方式：保持原样，不伪造 sidecar、不删除过期本地记录。
+> **本地评测记录（local-only，非仓库缺陷）**：`evaluation/evidence/` 存放本地评测记录（按 AGENTS.md 永不入库）。部分记录曾引用 `docs/plans/research/<study>/*` 证据 sidecar，但对应正式 zj-research 采集已被阻塞（`formal_collection.state: "collection-blocked"`），sidecar 从未生成；本仓库已不再保留 `docs/plans/` 过程材料目录，这些悬空引用随研究包一并退役。处理方式：本地记录保持原样不入库，不伪造 sidecar。
 
 文档中的目标和规则与代码/测试表达的是不同维度：代码、测试和运行产物证明当前实现事实，
 文档权威页表达目标约束与稳定语义。发生差异时必须标记 target / implemented / unknown，
