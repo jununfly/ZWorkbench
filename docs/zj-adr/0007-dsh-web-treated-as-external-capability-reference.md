@@ -7,9 +7,9 @@ authority-id: adr.dsh-web.external-capability-reference
 
 # ADR 0007：dsh-web 作为外部能力参考而非可安装依赖
 
-> 状态为 `accepted`：2026-09-19 经 `research/dsh-web-capability-fit`（结论报告 + PoC 设计 +
-> sealed-ledger，证据锚点 commit `2629c3f` / tag v0.3.22）收敛确认；原始研究包与证据归档于
-> `docs/plans/research/dsh-web-capability-fit/`。
+> 状态为 `accepted`：2026-09-19 经 dsh-web-capability-fit 研究（结论报告 + PoC 设计 +
+> sealed-ledger，证据锚点 commit `2629c3f` / tag v0.3.22）收敛确认；原始研究包与证据已退役，
+> 不再随仓库分发，本 ADR 为唯一 durable 落点。
 
 ## Context
 

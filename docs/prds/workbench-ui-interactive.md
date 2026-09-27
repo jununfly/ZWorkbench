@@ -5,7 +5,6 @@ type: prd
 depends_on:
   - docs/prds/issue-1-workbench-ui.md
   - docs/designs/issue-1-workbench-ui-implementation.md
-  - docs/plans/research/dsh-web-capability-fit/2026-09-19-conclusion-report.md
   - docs/zj-adr/0007-dsh-web-treated-as-external-capability-reference.md
   - docs/prds/r2-ui-reference-skills.md
 style_reference: docs/designs/assets/zworkbench-workbench-prototype.html
@@ -15,8 +14,8 @@ decisions_resolved:
   - D3: 三变体切换器 = 保留为开发期调试工具（?variant=A/B/C）
   - Q4: ?variant= 调试切换器 = 纯 client 端 query 参数分支，不接入 ui_build 生产构建管线
   - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经交互路线图 1-2 / 1-3 节点全部 completed（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）。
-review_note: 2026-09-27 刷新——原 DRAFT 的 §3 分类与 §3b Round-1 范围已与交互路线图（1-2/1-3 completed）对齐；除 F18 外 F1–F13 均已交付。本文档反映已交付状态，仍可按 review 意见修订。
-review_note: 本 PRD 与 issue-1 实现规格、交互路线图三者对"交互/写入能力"的口径曾不一致；现以交互路线图（workbench-ui-interactive.roadmap.json）为唯一事实源，本 PRD 补 §3c / §9 登记已交付写 seam。
+review_note: 2026-09-27 刷新——原 DRAFT 的 §3 分类与 §3b Round-1 范围已与 issue-1 实现规格的「Interactive write seams」小节对齐；除 F18 外 F1–F13 均已交付。本文档反映已交付状态，仍可按 review 意见修订。
+review_note: 本 PRD 与 issue-1 实现规格对"交互/写入能力"的口径已对齐；交互/写入能力的 durable 事实源是 issue-1 实现规格「Interactive write seams (post-Round-1)」小节与 ADR 0003（宿主只读边界），本 PRD 在 §3c / §9 登记已交付写 seam。
 ---
 
 # 完整工作台 Web-UI（含交互）
@@ -106,7 +105,7 @@ review_note: 本 PRD 与 issue-1 实现规格、交互路线图三者对"交互/
 
 ## 3c. 越过 Round-1 的已交付项（交互写 seam）
 
-D2/D1 原把以下项标为"留 gate"，交互路线图（docs/prds/workbench-ui-interactive.roadmap.json）已开 1-2（Product gate）/ 1-3（变体）节点并全部 completed：
+D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付（落地于 issue-1 实现规格「Interactive write seams」小节与对应宿主契约）：
 
 | 项 | 路线图节点 | 写 seam / 宿主契约 |
 |---|---|---|
@@ -157,6 +156,5 @@ D2/D1 原把以下项标为"留 gate"，交互路线图（docs/prds/workbench-ui
 
 ## 9. 进一步说明 / 跨文档口径
 
-- **事实源**：交互 / 写入能力的唯一事实源是交互路线图 `docs/prds/workbench-ui-interactive.roadmap.json`（1-1 / 1-2 / 1-3 全部 completed）。本 PRD 与 `docs/designs/issue-1-workbench-ui-implementation.md` 曾只描述 Round-1 只读范围、未登记 1-2/1-3 写 seam；本刷新已在 §3c 补登。
-- **issue-1 实现规格待同步**：该文档仍 `implementation-status: implemented` 且 Code boundaries 未登记 ui_approval / ui_reconcile / ui_scenario_state / ui_run(composer)；若把它当"UI 现在能做什么"真相源会误判，需另开刷新（不在本 PRD 范围）。
+- **事实源**：交互 / 写入能力的 durable 事实源是 `docs/designs/issue-1-workbench-ui-implementation.md` 的「Interactive write seams (post-Round-1)」小节（四写 seam + 宿主契约）与 ADR 0003（宿主只读边界）；本 PRD 的 §3c 与之对齐，不再另设路线图为事实源。
 - **F18 仍为 ⛔ 不做**：证据 live replay 明确排除，未交付也不计划交付。

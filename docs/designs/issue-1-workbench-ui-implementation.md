@@ -12,9 +12,7 @@ coverage: round-1-readonly
 # SCOPE: This spec is authoritative for the Round-1 READ-ONLY workbench UI only.
 # The interactive write seams (composer send, approval execute, scenario control,
 # safe-stop/reconcile) that post-date this spec are governed by
-# ../prds/workbench-ui-interactive.md (status: active) and the roadmap
-# docs/prds/workbench-ui-interactive.roadmap.json (1-2 / 1-3 product gates,
-# all completed). Those modules are registered in the
+# ../prds/workbench-ui-interactive.md (status: active) and registered in the
 # "Interactive write seams (post-Round-1)" subsection below so this document
 # does not drift from the shipped surface.
 ---

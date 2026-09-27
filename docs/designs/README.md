@@ -1,5 +1,5 @@
 ---
-doc-kind: architecture-map
+doc-kind: design
 authority: supporting
 ---
 
