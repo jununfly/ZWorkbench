@@ -24,3 +24,4 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0005：评审模式携带一层最小行为脚本](0005-review-mode-carries-a-minimal-behaviour-layer.md)（`accepted`）
 - [ADR 0006：宿主服务的 manifest 只有一个 build 身份——全树 receipt](0006-one-build-identity-for-served-manifests.md)（`accepted`）
 - [ADR 0008：host enforcement 必须 fail-closed 且可测试](0008-host-enforcement-is-fail-closed-and-testable.md)（`accepted`）
+- [ADR 0009：v1 是 Codex-only 回退基线的合法延伸；写入边界按 R3 序列逐步放松](0009-v1-codex-only-fallback-and-write-boundary-sequencing.md)（`accepted`）

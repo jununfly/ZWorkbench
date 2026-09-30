@@ -38,6 +38,7 @@ authority: supporting
 - [ADR 0006：宿主服务的 manifest 只有一个 build 身份](zj-adr/0006-one-build-identity-for-served-manifests.md) — served manifest 全树单一 build 身份的长期决定；authority-id: adr.ui-host.one-build-identity
 - [ADR 0007：dsh-web 作为外部能力参考而非可安装依赖](zj-adr/0007-dsh-web-treated-as-external-capability-reference.md) — 对外部 UI 能力源的复用边界长期决定；authority-id: adr.dsh-web.external-capability-reference
 - [ADR 0008：host enforcement 必须 fail-closed 且可测试](zj-adr/0008-host-enforcement-is-fail-closed-and-testable.md) — 真实写副作用第 0 切片（S0 spike）与 fail-closed 三判据的长期决定；authority-id: adr.host-enforcement.fail-closed-and-testable
+- [ADR 0009：v1 是 Codex-only 回退基线的合法延伸；写入边界按 R3 序列逐步放松](zj-adr/0009-v1-codex-only-fallback-and-write-boundary-sequencing.md) — v1 绕开 DSH 出货决策、C1 六条挂接约束 + C1-补、R3 序列每档 DoD 四字段、(a) 两档制预授权、C5 提升为已决；authority-id: adr.v1.codex-only-fallback-and-write-boundary-sequencing
 
 ## Product requirements
 
