@@ -96,6 +96,26 @@ ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 
 - **S3 dogfood 闸门 N=10**：连续 10 次默认入口完成"只读分析→审批→apply→local commit"，零越界、零 secret 落盘、receipt 100% 可复核，才开 S4 push 门。**价值基线测量与 S0 并行启动、有效出数挂在 S3 与 N=10 合并测**（量化"比裸 Codex 省时"）——S0 阶段产品默认路径尚不存在，单独测只能测到裸 Codex vs 裸 Codex。
 - 残留前提：单 Provider 无 failover 以"Ark 对 zj 足够稳"为前提；若要求"被限流 / 封号不断活"，failover 前移至 S2/S3 之间。
 
+## S0–S4 切片 DoD（逐档验收清单）
+
+> 2026-09-30 沉淀（ADR 0009 / sub-02 conclusion）：切片顺序沿用上方「已锁定的切片顺序」，不重编号。每档补四字段 DoD，作为 sub-02 增量；details 见 ADR 0009。
+
+**关键路径 owner（验收判据主语）= zj 本人**（R3 三层 AND 门 + N=10）；MASTER「非作者陌生人 <5 分钟」已降为 deferred-until-demand（C1 约束4）。本路线图所有切片以此主语为验收基准。
+
+| 切片 | 放行副作用（类别） | 依赖强制层 | 验收命令（机械可判定） | 验收人 | `exercises_default_product_path` |
+|---|---|---|---|---|---|
+| S0 | 无（只补 L3 强制） | L3 | 三断言 + 一否定测试：enforcer 不可用 → Worker 拒绝启动 | zj + 承接 Agent | false |
+| S1 | 单 Provider 网络出口（无写） | L1 deny 写 + L2 | identity↔transport 绑定测试（issue #39 第 0 步前置闸门）；preflight 三 deny 分支断言全绿；词表映射测试通过 | zj + 承接 Agent | 视出口而定 |
+| S2 | 隔离 worktree diff apply + local commit | L1(owner claim) + L3 | approval 精确绑定 operation/action/resource/idempotency key；`external_receipt` 独立证据源；执行级幂等测试（同 effect_id+key 两次 apply 仅一次 digest 变化） | zj + 承接 Agent | 视 L3 出证 |
+| S3 | 无新副作用（dogfood N=10 闸门） | 全栈 | 连续 10 次默认入口全链路、零越界、零 secret 落盘、receipt 100% 可复核；价值基线出数 | zj（N=10 被试） | true |
+| S4 | Git push（单独门，默认关） | L1 + L3 | 单独审批 + push，幂等防重复物理副作用 | zj + 承接 Agent | true（仅 S4 切片） |
+
+- **S0 未出证 → S2 不得标 `implemented`**（ADR 0008 L28 已定；本路线图交叉引用，不重述）。
+- **S1 第 0 步前置闸门（R-A5 / issue #39）**：先建 identity↔transport 单一来源绑定 + 删 `setdefault` 反向回填 + 补 4 条 fail-closed 测试；否则真实 Provider 接入会把未证实 identity 写进 receipt（违反 AGENTS.md L191-192 / ZJ-CONTEXT.md L21）。
+- **安全洞补强**（sub-02 S 视角）：loopback 写面 Host/Origin 校验 + nonce；approval decision 绑定 `decided_by`；脱敏下沉存储层；token 通道绑定 + TTL 下调；以上登记为 S1/S2 前置 DoD（非阻塞但须实施）。
+- **前置 DoD（阻塞 S1 开工）**：preflight 三条 deny 分支各一条负路径断言；唯一词表映射表落 owner 侧作 SSOT + 一致性测试。
+- **S0 排期硬门**：S0 是唯一无上界项（host enforcement 当前 0 行实现）；v1 出货时间由 S0 决定，不由 DSH 决定（ADR 0009）。
+
 ## 产品定位与架构约束（2026-09-27 随 scope 收敛新增）
 
 - **品类定位句**：ZWorkbench = "owner-backed、fail-closed 的 AI 写真实 repo 工作台"。差异化在可复核审计 / replay / safe-stop，而非 coding 能力本身（与 Claude Code / Aider / Cursor 区分）。所有 stage 讨论以此为前提。
