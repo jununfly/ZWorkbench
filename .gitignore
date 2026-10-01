@@ -30,3 +30,7 @@ docs/plans/research/*-map-v2/
 # state and compiled output are reproducible artifacts, not source.
 node_modules/
 packages/dsh-zworkbench-bootstrap/lib/
+
+# Local Python venv (created by S0 spike validation on a non-sandboxed host).
+# Reproducible install state, never source.
+.venv/
