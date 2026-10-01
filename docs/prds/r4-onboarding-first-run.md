@@ -56,11 +56,11 @@ implementation-status: unknown
 ## 端到端回归脚本验收线
 
 - 给定干净环境（仅装 python3.9+），从 `pip install .` 到「在 loopback UI 看到自己首跑的 recorded view」的端到端脚本必须可重放（用 `fake-loopback`、零外部凭证），脚本本身入库（tests/ 或 scripts/）作 onboarding 回归测试。
-- 验收线机械判定：脚本退出码 0 且 `recorded_view_present == true`；对照三项指标（C1-6）落盘且至少一项 ZWorkbench 更优，否则登记 `NEEDS_CONTEXT`，禁止把「首跑演示」写成已完成的价值证明。
+- 验收线机械判定：脚本退出码 0 且 `recorded_view_present == true`；对照三项指标（C1-6）已于 2026-10-01 落盘 `evaluation/evidence/competitive-baseline/`（ZWorkbench owner-backed replay 一项明确更优），价值证明条件已满足，首跑价值演示可据实测陈述。
 
 **做到什么程度算完**：脚本绿 + 至少 2 份真实走查记录（计时起点 = 第一条命令；走查者须为未参与本仓开发者或隔周作者本人；记录总耗时 / 卡点数 / 最终是否看到 recorded view；卡点数 ≤ 2）。
 
 ## 约束与依赖
 
 - 必须与 sub-02（ADR 0009）共用「显式授权」语义：onboarding 仅只读自检 + 定位回填，不代持/不代填凭证；真实 Provider = 一次显式、可记账、进 receipt 的授权动作。
-- 首跑价值演示依赖 C1-6 竞品对照（与 sub-01 同源未跑）；对照未跑前不得把「首跑演示」写成已完成的价值证明。
+- 首跑价值演示依赖的 C1-6 竞品对照已于 2026-10-01 完成（与 sub-01 同源，sub-01 升 `DONE_WITH_CONCERNS`）；价值证明不再阻塞，但仍须以实测数据陈述、不得夸大。

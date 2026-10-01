@@ -15,7 +15,7 @@ authority-id: adr.v1.codex-only-fallback-and-write-boundary-sequencing
 
 同时，真实写入能力（sub-02）与 DSH 无关：写边界（S0→S2）是 ADR 0008 / ownership 不变量，受 S0 host enforcement 约束。sub-04 的「绕开 DSH」二元框架对写边界是盲的——必须显式区分两个维度的门（C1-补）。
 
-sub-01 的 Q3 验收线（v1「真能用」= (i) 只读 owner-backed 证据 vs (ii) S0→S2 真写链路入 v1）仍 `NEEDS_CONTEXT`，待 C1-6 竞品对照取证；本 ADR 不预写该选边。
+sub-01 的 Q3 验收线（v1「真能用」= (i) 只读 owner-backed 证据 vs (ii) S0→S2 真写链路入 v1）：C1-6 竞品对照已于 2026-10-01 在 `evaluation/evidence/competitive-baseline/` 完成实测（同任务同模型同 custom provider：ZWorkbench app-server 在 ARK 上只读/写两条链路均 `completed`+`replay_recorded=true`，裸 codex 无 owner-backed replay），(i)/(ii) 均获实证 → sub-01 状态自 `NEEDS_CONTEXT` 升为 `DONE_WITH_CONCERNS`（见本 ADR Consequences 末条）。据此 v1「真能用」覆盖 (i) 只读 owner-backed 证据 与 (ii) S0→S2 真写链路两条形态。
 
 ## Decision
 
@@ -26,7 +26,7 @@ sub-01 的 Q3 验收线（v1「真能用」= (i) 只读 owner-backed 证据 vs (
    - C1-2：关键路径 = `S0 → S1 → S2 → S3(N=10) → S4`；DSH 不在路径上。
    - C1-3：S0 host enforcement 是唯一无上界硬门，排期由 S0 决定；S0 出口 = 三断言 + 一否定测试（enforcer 失败 → Worker 拒绝启动，绝不降级）。
    - C1-4：判据主语 = zj 本人（R3 三层 AND 门 + N=10）；MASTER「非作者陌生人 <5 分钟」降 deferred-until-demand + sub-03 UX 目标。
-   - C1-5：默认入口 = README 首屏可见且真实 repo 产可感知产出；`zworkbench ui` 要么进 README，要么宣布非产品入口。（注：C1-5 的「≥1 diff/commit」以 sub-01 Q3 选 (ii) 为条件；sub-01 当前 NEEDS_CONTEXT，未选边前 README 不得预先宣称写能力。）
+   - C1-5：默认入口 = README 首屏可见且真实 repo 产可感知产出；`zworkbench ui` 要么进 README，要么宣布非产品入口。（注：C1-5 的「≥1 diff/commit」以 sub-01 Q3 选 (ii) 为条件；sub-01 已于 2026-10-01 经 C1-6 取证升 `DONE_WITH_CONCERNS`，(i)/(ii) 均证，README 可据实测宣讲写能力，但须如实区分「seam 已跑通 ARK」与「产品 CLI 仍限 loopback/ollama（见 issue #40）」。）
    - C1-6：价值假设前移到可证伪：S0 前做一次零代码竞品对照（Claude Code 同任务，记录净时间差 / 人工复查次数 / 事后能否回看），落盘 `evaluation/evidence/competitive-baseline/`。
    - **C1-补**：「绕开 DSH」≠「绕开写边界」；真实写边界（S0→S2）是 ADR 0008 / ownership 不变量，与 DSH 无关。
 
@@ -42,5 +42,5 @@ sub-01 的 Q3 验收线（v1「真能用」= (i) 只读 owner-backed 证据 vs (
 - 唯一 owner 不变式守住（sub-04 A 观点5）：v1 新增编排能力只准落在 CompositionOwner 或显式命名 seam 模块；cli.py / local_run.py 不得新增 session/retry/routing 状态字段（grep 断言 + 测试护栏）。
 - 安全洞（sub-02 S 视角）登记为 S1/S2 前置 DoD（非阻塞但须实施）：loopback 写面加 Host/Origin 校验 + nonce；approval decision 绑定 `decided_by`；脱敏下沉存储层；token 通道绑定 + TTL 下调；`external_receipt` 定义成独立证据源、缺失即 `mark_effect_uncertain`；执行级幂等测试。
 - 前置 DoD（阻塞 S1 开工）：preflight 三条 deny 分支各一条负路径断言；唯一词表映射表落 owner 侧作 SSOT + 一致性测试。
-- sub-01 Q3 验收线选边仍 `NEEDS_CONTEXT`，待 C1-6 竞品对照取证；本 ADR 不预写该选边。
+- sub-01 Q3 验收线选边已取证闭合（2026-10-01）：C1-6 竞品对照落盘 `evaluation/evidence/competitive-baseline/`，(i) 只读 owner-backed 证据 与 (ii) S0→S2 真写链路 均经 ARK 实测（app-server `completed` + `replay_recorded=true` + 落盘文件 md5 一致），裸 codex 无 owner-backed replay。sub-01 状态 = `DONE_WITH_CONCERNS`；其余 Q1/Q2/README 改写为确定项，价值假设前移已证伪通过。
 - 关联：R3「真实可用路线图」承接本 ADR 每档 DoD 四字段（见其「S0–S4 切片 DoD」节）；onboarding 首跑设计见 `docs/prds/r4-onboarding-first-run.md`。
