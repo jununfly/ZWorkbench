@@ -26,6 +26,8 @@ from .local_run import (
     LocalReadOnlyRunResult,
     PreflightResult,
     PreflightViolation,
+    ProviderProfile,
+    load_provider_profiles,
     preflight,
 )
 from .ui_ref import (
@@ -150,6 +152,8 @@ __all__ = [
     "LocalReadOnlyRunResult",
     "PreflightResult",
     "PreflightViolation",
+    "ProviderProfile",
+    "load_provider_profiles",
     "preflight",
     "KNOWN_EFFECT_CLASSES",
     "KNOWN_MESSAGE_TYPES",

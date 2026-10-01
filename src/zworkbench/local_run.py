@@ -18,6 +18,11 @@ import re
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 from urllib.parse import urlsplit
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
+    import tomli as tomllib  # type: ignore
+
 from .codex_adapter import CodexAppServerAdapter, CodexExecution
 from .composition import CompositionOwner
 
@@ -26,6 +31,11 @@ LOCAL_READ_ONLY_MODE = "local_read_only"
 READ_ONLY_SANDBOX = "read-only"
 NO_APPROVAL_POLICY = "never"
 REQUIRED_DISABLED_FEATURES = frozenset({"plugins", "apps"})
+
+#: Provider identity names permitted to use a non-loopback endpoint. Populated
+#: from the user's Codex-style config.toml; empty by default so any remote
+#: endpoint stays fail-closed until an explicit profile is selected.
+DEFAULT_AUTHORIZED_PROVIDERS: frozenset = frozenset()
 
 _SENSITIVE_KEY = re.compile(
     r"(?:api[_-]?key|access[_-]?token|auth(?:orization)?|credential|password|private[_-]?key|secret|token)$",
@@ -49,6 +59,8 @@ class LocalReadOnlyRunConfig:
     sandbox: str = READ_ONLY_SANDBOX
     approval_policy: str = NO_APPROVAL_POLICY
     disabled_features: Tuple[str, ...] = ("plugins", "apps")
+    authorized_providers: frozenset = DEFAULT_AUTHORIZED_PROVIDERS
+    provider_profile: Optional[ProviderProfile] = None
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -66,6 +78,8 @@ class LocalReadOnlyRunConfig:
         object.__setattr__(self, "event_log", event_log)
         object.__setattr__(self, "provider_identity", dict(self.provider_identity or {}))
         object.__setattr__(self, "disabled_features", tuple(self.disabled_features))
+        object.__setattr__(self, "authorized_providers", frozenset(self.authorized_providers or ()))
+        object.__setattr__(self, "provider_profile", self.provider_profile)
 
 
 @dataclass(frozen=True)
@@ -142,6 +156,26 @@ class LocalReadOnlyRunResult:
 AdapterFactory = Callable[[CompositionOwner, LocalReadOnlyRunConfig], Any]
 
 
+@dataclass(frozen=True)
+class ProviderProfile:
+    """An explicitly configured remote/custom Provider, read from a Codex-style config.toml.
+
+    Only non-secret, auditable fields are captured. Credential values (bearer
+    tokens, api keys) are never read into this profile: the Codex app-server reads
+    its own local config at runtime, or a credential is injected through the hidden
+    ``extra_environment`` seam named by ``env_ref`` (never recorded in owner state
+    or the config digest).
+    """
+
+    name: str
+    model_provider: str
+    model: str
+    base_url: str
+    wire_api: str = ""
+    requires_openai_auth: bool = False
+    env_ref: Optional[str] = None
+
+
 class LocalReadOnlyRunOrchestrator:
     """Run the first local slice through one owner and one Codex adapter."""
 
@@ -194,19 +228,50 @@ class LocalReadOnlyRunOrchestrator:
 
 
 def _default_adapter_factory(owner: CompositionOwner, config: LocalReadOnlyRunConfig) -> CodexAppServerAdapter:
-    """Build the fixed Codex adapter after preflight has admitted the case."""
+    """Build the Codex adapter after preflight has admitted the case.
 
+    When an explicit real Provider profile is selected, the adapter is wired to
+    that provider: the profile's ``model_provider`` (e.g. ``custom``), an empty
+    ``config_overrides`` so Codex honours its own ``[model_providers.<name>]``
+    table, and an optional credential read from a local env var named by
+    ``env_ref``. Otherwise the historical ollama default is used for backward
+    compatibility (loopback, ``model_provider="ollama"``).
+    """
+
+    if config.provider_profile is None:
+        return CodexAppServerAdapter(
+            owner,
+            config.codex_executable,
+            config.code_home,
+            config.workspace,
+            model=str(config.provider_identity["model"]),
+            model_provider="ollama",
+            provider_identity=config.provider_identity,
+            sandbox=config.sandbox,
+            approval_policy=config.approval_policy,
+            disabled_features=config.disabled_features,
+            event_log=config.event_log,
+        )
+
+    profile = config.provider_profile
+    extra_environment: Dict[str, str] = {}
+    if profile.env_ref:
+        credential = os.environ.get(profile.env_ref)
+        if credential:
+            extra_environment[profile.env_ref] = credential
     return CodexAppServerAdapter(
         owner,
         config.codex_executable,
         config.code_home,
         config.workspace,
-        model=str(config.provider_identity["model"]),
-        model_provider="ollama",
+        model=profile.model or str(config.provider_identity.get("model", "")),
+        model_provider=profile.model_provider,
         provider_identity=config.provider_identity,
         sandbox=config.sandbox,
         approval_policy=config.approval_policy,
         disabled_features=config.disabled_features,
+        config_overrides=(),
+        extra_environment=extra_environment,
         event_log=config.event_log,
     )
 
@@ -314,11 +379,14 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         "provider_identity_missing_or_invalid",
         "provider identity must include provider, model and endpoint strings",
     )
+    provider_name = config.provider_identity.get("provider")
+    authorized_provider = bool(provider_name) and provider_name in config.authorized_providers
     check(
         "provider_loopback",
-        provider_valid[1],
+        provider_valid[1] or authorized_provider,
         "provider_not_loopback",
-        "Provider endpoint must resolve to localhost or a loopback IP",
+        "Provider endpoint must resolve to localhost/loopback, or name an "
+        "explicitly authorized remote provider from config",
     )
     violations.extend(provider_violations)
     provider_json_safe = _is_json_serializable(config.provider_identity)
@@ -459,3 +527,38 @@ def _config_digest(config: LocalReadOnlyRunConfig) -> str:
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def load_provider_profiles(config_path: Path) -> Dict[str, ProviderProfile]:
+    """Read authorized remote/custom providers from a Codex-style config.toml.
+
+    Supports both the Codex-native ``[model_providers.<name>]`` tables and the
+    project ``[provider.<name>]`` tables. Returns a mapping of provider identity
+    name -> :class:`ProviderProfile`. Credential *values* are intentionally
+    never returned: a Codex bearer token sitting in the user's config is the
+    local credential path read by the app-server itself, and an ``env`` field is
+    captured only as the env var *name* (``env_ref``) for hidden injection.
+    """
+
+    path = Path(config_path).expanduser().resolve(strict=True)
+    with path.open("rb") as handle:
+        data = tomllib.load(handle)
+    top_level_model = data.get("model") if isinstance(data.get("model"), str) else ""
+    profiles: Dict[str, ProviderProfile] = {}
+    for table_key in ("model_providers", "provider"):
+        section = data.get(table_key)
+        if not isinstance(section, Mapping):
+            continue
+        for name, raw in section.items():
+            if not isinstance(raw, Mapping):
+                continue
+            profiles[str(name)] = ProviderProfile(
+                name=str(name),
+                model_provider=str(name),
+                model=str(raw.get("model") or top_level_model or ""),
+                base_url=str(raw.get("base_url") or ""),
+                wire_api=str(raw.get("wire_api") or ""),
+                requires_openai_auth=bool(raw.get("requires_openai_auth", False)),
+                env_ref=str(raw["env"]) if isinstance(raw.get("env"), str) else None,
+            )
+    return profiles
