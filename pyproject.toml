@@ -23,3 +23,6 @@ where = ["src"]
 # repo root fails imports that are not product failures.
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+markers = [
+    "exercises_default_product_path: test exercises the default product path (real OS enforcement), per ADR 0008 acceptance gate",
+]
