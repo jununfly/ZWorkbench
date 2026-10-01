@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-01 22:24:54
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-01 22:44:21
 
 [~][X+] 1. ZWorkbench v1 真实可用推进路线图
 ├── [x][X+] 1-1. 已闭环结论（讨论沉淀 · 参考锚点）
@@ -19,9 +19,10 @@
 │   ├── [x][X+] 1-4-1. 建 identity↔transport 单一来源绑定
 │   ├── [x][X+] 1-4-2. 删 setdefault 反向回填
 │   └── [x][X+] 1-4-3. 补 4 条 fail-closed 测试
-├── [ ][X+] 1-5. S0 host-enforcement spike（最长板）
-│   ├── [ ][X+] 1-5-1. 技术选型（seatbelt/容器/VM/bwrap）
-│   └── [ ][X+] 1-5-2. fail-closed 三判据可测试断言
+├── [x][X+] 1-5. S0 host-enforcement spike（最长板）
+│   ├── [x][X+] 1-5-1. 技术选型（seatbelt/容器/VM/bwrap）
+│   ├── [x][X+] 1-5-2. fail-closed 三判据可测试断言
+│   └── [x][X+] 1-5-3. 真机 OS 强制验证（非沙箱宿主 mac Terminal / CI runner）
 ├── [ ][X+] 1-6. S1 单 Provider 产品化（无 failover）
 ├── [!][X+] 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit）
 ├── [!][X+] 1-8. S3 dogfood N=10 闸门（含价值基线正式出数）
@@ -29,7 +30,7 @@
 └── [ ][X+] 1-10. U5 v1 验收 checklist（codex identity UNKNOWN）
 <details><summary>阻塞链：3 个节点被阻塞</summary>
 
-- 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） ← e3: 1-5. S0 host-enforcement spike（最长板） [ ], e5: 1-6. S1 单 Provider 产品化（无 failover） [ ]
+- 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） ← e5: 1-6. S1 单 Provider 产品化（无 failover） [ ]
 - 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） ← e6: 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） [ ]
 - 1-9. S4 Git push 单独门 ← e7: 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） [ ]
 
@@ -40,5 +41,5 @@
 
 - 1-10. U5 v1 验收 checklist（codex identity UNKNOWN） [ ]
 - 1-2-1. 选项A：v1 维持 Codex-only 只读回退基线 [ ]
-- 1-5. S0 host-enforcement spike（最长板） [ ]
+- 1-6. S1 单 Provider 产品化（无 failover） [ ]
 <!-- ROADMAP_SECTION_END -->

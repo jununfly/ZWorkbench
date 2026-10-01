@@ -136,16 +136,24 @@
       "id": "1-5",
       "uid": "01a0f786dfd5-42ee4b536a",
       "label": "S0 host-enforcement spike（最长板）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
         "1-5-1",
-        "1-5-2"
+        "1-5-2",
+        "1-5-3"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "S0 真机 OS 强制验证在本 Agent 宿主能否完成？",
+          "answer": "不能：本 Agent 进程已被 macOS sandbox 包裹，嵌套 sandbox_apply 返回 EPERM（exit 71），sandbox-exec 不 exec 子进程；fail-closed 仍成立（子进程未无沙箱运行）。真机验证须在非沙箱宿主（真实 Terminal / mac CI runner）跑 tests/test_host_enforcer_s0.py 中带 exercises_default_product_path 标记的 3 个 gated 测试（判据1/3）。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6": {
       "id": "1-6",
@@ -355,19 +363,44 @@
       "id": "1-5-1",
       "uid": "01a0f7872515-3a0b022c93",
       "label": "技术选型（seatbelt/容器/VM/bwrap）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "S0 enforcer 技术选型（macOS 单机先行）？",
+          "answer": "首选 macOS sandbox-exec（seatbelt）：OS 内置、零依赖、匹配 ADR 0008「先 macOS 单机」。容器/VM 过重、启动慢、网络 deny 语义复杂，作备选；Linux 跨平台用 bubblewrap。seatbelt 配置面风险已在 host_enforcer.build_seatbelt_profile 收敛为 deny-all + 显式白名单。集成点 = host_enforcer.spawn_sandboxed 接缝，尚未接入 worker_bridge，随 S2 写 seam 产品化落地。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-2": {
       "id": "1-5-2",
       "uid": "01a0f78725e9-1d1069d52d",
       "label": "fail-closed 三判据可测试断言",
-      "status": "pending",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [
+        {
+          "q": "fail-closed 三判据如何落成可测试断言？",
+          "answer": "tests/test_host_enforcer_s0.py：判据1 默认拒绝全部写+网络（白名单显式开）；判据2 enforcer 缺失/apply 失败→EnforcerUnavailable 且不执行命令（本环境已全过）；判据3 每次越界产出可复核 violation 事件（含 path/errno）入 receipt。断言带 exercises_default_product_path 标记（pyproject 注册）。判据1/3 真机验证门禁：无法 apply 时显式 skip，绝不静默通过。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "uid": "01a0f7e47ca4-d04a6364a7",
+      "label": "真机 OS 强制验证（非沙箱宿主 mac Terminal / CI runner）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -378,7 +411,7 @@
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-01 22:24:54",
+    "updated": "2026-10-01 22:44:21",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
