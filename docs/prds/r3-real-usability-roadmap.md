@@ -190,6 +190,25 @@ scope 已收敛、R3/ADR 0008 已沉淀、工程切片 S0–S4 已锁定。作�
 ### 价值判据（硬门 · 须等出数）
 - 价值基线测量（与 S0 并行启动、有效出数挂在 S3 与 N=10 合并测）给出量化结果：证明"比裸 Codex 省 X% 时间 / 少 Y 次人工复查"，作为继续投安全外壳的前置论证。
 
+#### 价值基线实证（C1-6 竞品对照 · 2026-10-01 初测 · seam 级）
+> C1-6 是价值基线测量设计在 S0 之前的可行形态：**绕过产品 CLI**（直连 `codex app-server` + ARK `custom` provider），在 seam 层测对称三指标。原始数据与脚本见 `evaluation/evidence/competitive-baseline/README.md`（local-only，不入库）。
+
+**同任务 / 同模型（ark-code-latest）/ 同 custom provider（时间戳 20261001-201153，只读任务：列出 CompositionOwner 公共方法）：**
+
+| 指标 | 裸 Codex（`codex exec`） | ZWorkbench（`codex app-server`） |
+|---|---|---|
+| 净时间 | 47.04s（rc=0，正确，10133 tokens） | **12.64s**（completed，正确） |
+| 人工复查 | 0（一次性自动出正确结果） | 0（一次性自动出正确结果） |
+| 事后回看 | **NO**（仅 transcript，无 durable ledger） | **YES**（`replay_recorded=true`：owner run 持久化 + recorded_view receipt + event/环境 digest） |
+
+**真实写任务实测（U1(ii) 闭合 · 时间戳 20261001-202135）：** 用 Write 工具在 gitignore 保护目录下写入 sentinel，ZW **status=completed / owner_run_status=completed / replay_recorded=true**，落盘文件 30B、**md5 与裸 codex 完全一致**（`50bc0ef0…`）；ZW 墙钟 19.49s vs 裸 codex 21.8s。
+
+**判读（严守 AND 门纪律，R3 仍 `target`）：**
+- 净时间：seam 级 ZW 明显更省（约 1/3.7 耗时），但 n=1/侧、墙钟受 ARK 抖动影响，仅作趋势前证；
+- 回看性：ZW **YES** vs 裸 Codex **NO** 是**结构性、可复现**差异（owner-backed receipt/replay 是裸 codex 完全没有的 durable ledger）——直接对应 **PG-3 护城河**，非单次耗时偶然；
+- 写链路 md5 一致：seam 层 **S0→S2 真写链路可驱动且可审计**（文件变更 + owner completed run + recorded-view 双证据）→ 写能力可行性已闭；但产品 CLI 默认路径仍被 **#40** 挡（CLI 硬编码 ollama + 拒非 loopback provider），**v1 是否默认出货写是产品/节奏决策，不归 U1 阻塞**。
+- **不替代 S3 闸门**：本数据在 seam 级、非默认产品路径、n=1；S3 dogfood N=10 的"默认入口价值基线 + 零越界 + receipt 100% 可复核"仍待 #40 解后补测。本实证作 PG-2/PG-3 的可行性前证，不提前宣告 R3 `implemented`。
+
 满足以上**全部**三层，R3 标 `implemented`（产品可用达成）；任一不满足，R3 维持 `target`。
 
 ## 证据来源
@@ -206,3 +225,4 @@ scope 已收敛、R3/ADR 0008 已沉淀、工程切片 S0–S4 已锁定。作�
 - `docs/references/optional-real-provider-staging.md` / `optional-real-codex-provider-staging.md`：真实 Provider staging 合同（Ark 5/5 + Codex turn 1/1、`raw_credential_persisted=false` 已验证）。
 - `docs/references/optional-provider-exit-inventory.md` / `optional-provider-exit-primary-sources.md`：Provider-side 退出责任记账口径。
 - H6–H8 scope 收敛过程（Human+AI 第一遍 + Agent B/C/A 三视角观点 + 拍板）原记录于 `docs/discussions/h6-h8-scope-kickoff.md`（已按 `_POLICY.md` 删除；结论已沉淀至本文件与 ADR 0008）。
+- `evaluation/evidence/competitive-baseline/README.md`（local-only，不入库）：C1-6 价值基线竞品对照实证（2026-10-01，ARK，对称三指标 + 写链路 md5 一致），见「价值判据」节实证子块。
