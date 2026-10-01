@@ -23,6 +23,8 @@ from .local_run import (
     LocalReadOnlyRunOrchestrator,
     PreflightResult,
     PreflightViolation,
+    ProviderProfile,
+    load_provider_profiles,
     preflight,
 )
 
@@ -64,6 +66,20 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--provider", default="fake-loopback", help="non-secret Provider identity")
     run.add_argument("--model", default="fake-model", help="non-secret model identity")
     run.add_argument("--endpoint", default="http://127.0.0.1:11434", help="loopback Provider endpoint")
+    run.add_argument(
+        "--provider-profile",
+        default=None,
+        help=(
+            "select an explicitly configured remote/custom Provider by name from "
+            "--provider-config; authorizes its non-loopback endpoint and switches "
+            "the adapter off the ollama default. Omit to keep the ollama fallback"
+        ),
+    )
+    run.add_argument(
+        "--provider-config",
+        default=None,
+        help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
+    )
     run.add_argument("--timeout", type=float, default=45.0, help="maximum turn wait in seconds")
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
@@ -276,11 +292,29 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
         "code_home": _resolve(args.code_home or case_root / "codex-home"),
         "event_log": _resolve(args.event_log or case_root / "events" / "codex.jsonl"),
     }
-    provider_identity = {
-        "provider": args.provider,
-        "model": args.model,
-        "endpoint": args.endpoint,
-    }
+    authorized_providers = frozenset()
+    provider_profile: Optional[ProviderProfile] = None
+    if args.provider_profile:
+        config_path = _resolve(Path(args.provider_config)) if args.provider_config else (Path.home() / ".codex" / "config.toml")
+        profiles = load_provider_profiles(config_path)
+        if args.provider_profile not in profiles:
+            raise ValueError(
+                "provider profile {0!r} not found in {1}".format(args.provider_profile, config_path)
+            )
+        profile = profiles[args.provider_profile]
+        provider_profile = profile
+        authorized_providers = frozenset(profiles.keys())
+        provider_identity = {
+            "provider": profile.name,
+            "model": profile.model,
+            "endpoint": profile.base_url,
+        }
+    else:
+        provider_identity = {
+            "provider": args.provider,
+            "model": args.model,
+            "endpoint": args.endpoint,
+        }
     config = LocalReadOnlyRunConfig(
         case_root=paths["case_root"],
         workspace=paths["workspace"],
@@ -289,6 +323,8 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
         codex_executable=_resolve(args.codex),
         event_log=paths["event_log"],
         provider_identity=provider_identity,
+        authorized_providers=authorized_providers,
+        provider_profile=provider_profile,
     )
     return config
 

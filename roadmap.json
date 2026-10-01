@@ -80,7 +80,7 @@
       "id": "1-3",
       "uid": "01a0f786de24-a6b884277b",
       "label": "产品 CLI 放开真实 Provider（#40）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -93,10 +93,16 @@
           "q": "根因？",
           "answer": "local_run.py:205 硬编码 model_provider=ollama 无视 provider_identity；:317-322 provider_loopback 硬门拒所有非 loopback provider",
           "note": "与 #39 identity 问题正交，不合并"
+        },
+        {
+          "q": "实现策略？",
+          "answer": "默认 ollama 回退 + provider_profile 显式选择真实 provider，preflight 改 allowlist 且 fail-closed",
+          "note": "allowlist 来自 config.toml [model_providers.<name>]/[provider.<name>]；凭据不经 ZWorkbench 注入，由 codex 自身 config 或 env_ref 隐藏注入"
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4": {
       "id": "1-4",
@@ -265,7 +271,7 @@
       "id": "1-3-1",
       "uid": "01a0f7871ffa-f6511ec25d",
       "label": "local_run.py factory 读 provider_identity 替代 ollama 硬编码",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
@@ -277,7 +283,7 @@
       "id": "1-3-2",
       "uid": "01a0f78720d3-7ed3cfc838",
       "label": "preflight 对 remote/custom provider 显式授权放行",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
@@ -289,7 +295,7 @@
       "id": "1-3-3",
       "uid": "01a0f78721a8-3a71cb8839",
       "label": "回归测试：三 deny 分支 + 配置读取",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
@@ -360,7 +366,7 @@
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-01 21:13:46",
+    "updated": "2026-10-01 21:41:11",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
