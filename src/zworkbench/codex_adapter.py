@@ -90,15 +90,40 @@ class CodexAppServerAdapter:
         self.executable = self._resolve_executable(executable)
         self.code_home = Path(code_home).expanduser().resolve()
         self.cwd = Path(cwd).expanduser().resolve()
-        self.model = self._require_text(model, "model")
-        self.model_provider = self._require_text(model_provider, "model_provider")
         self.sandbox = self._require_text(sandbox, "sandbox")
         self.approval_policy = self._require_text(approval_policy, "approval_policy")
         self.config_overrides = tuple(self._require_text(item, "config_override") for item in config_overrides)
         self.disabled_features = tuple(self._require_text(item, "disabled_feature") for item in disabled_features)
-        self.provider_identity = dict(provider_identity or {})
-        self.provider_identity.setdefault("provider", self.model_provider)
-        self.provider_identity.setdefault("model", self.model)
+        # Identity↔transport single-source binding (issue #39, S1 step-0 gate).
+        # provider_identity is the sole source of truth: the transport-facing
+        # model/model_provider are DERIVED from it and are never back-filled in.
+        # An incomplete identity fails closed instead of being silently defaulted.
+        # The historical loopback default is used only when no identity is given
+        # (no real provider receipt is produced on that path).
+        identity = dict(provider_identity or {})
+        if not identity:
+            identity = {
+                "provider": model_provider,
+                "model": model,
+                "endpoint": "loopback",
+                "transport": "loopback-only",
+            }
+        else:
+            # The adapter binds transport to provider/model and records endpoint,
+            # so these three are required. ``transport`` itself is validated
+            # upstream by the DSH runtime (issue #39 / #40 are kept orthogonal),
+            # not re-checked here.
+            missing = {"provider", "model", "endpoint"} - set(identity)
+            if missing:
+                raise CodexAdapterError(
+                    "provider_identity must include {0} "
+                    "(identity↔transport single-source binding, issue #39)".format(
+                        ", ".join(sorted(missing))
+                    )
+                )
+        self.provider_identity = identity
+        self.model = self._require_text(str(identity["model"]), "model")
+        self.model_provider = self._require_text(str(identity["provider"]), "model_provider")
         self.event_log = Path(event_log).expanduser().resolve() if event_log else self.code_home.parent / "codex-events.jsonl"
         self.client_name = self._require_text(client_name, "client_name")
         self.client_version = self._require_text(client_version, "client_version")

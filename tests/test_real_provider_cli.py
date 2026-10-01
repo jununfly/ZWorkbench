@@ -86,6 +86,7 @@ class _ConfigFixture:
                 "provider": "fake-loopback",
                 "model": "fake-model",
                 "endpoint": "http://127.0.0.1:11434",
+                "transport": "loopback-only",
             },
         )
 
@@ -155,15 +156,17 @@ class OllamaDefaultFallbackTests(unittest.TestCase):
             self.assertTrue(result.allowed)
             self.assertTrue(result.checks["provider_loopback"])
 
-    def test_factory_uses_ollama_default_when_no_profile(self) -> None:
+    def test_factory_binds_transport_to_provider_identity(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             config = _ConfigFixture().make_case(Path(temporary))
             db = config.database
             with CompositionOwner(db) as owner:
                 adapter = _default_adapter_factory(owner, config)
                 try:
-                    self.assertEqual(adapter.model_provider, "ollama")
-                    self.assertEqual(adapter.model, "fake-model")
+                    # After issue #39 the transport-facing model_provider is derived
+                    # from provider_identity, not the historical "ollama" default.
+                    self.assertEqual(adapter.model_provider, config.provider_identity["provider"])
+                    self.assertEqual(adapter.model, config.provider_identity["model"])
                     self.assertEqual(adapter.config_overrides, DEFAULT_CONFIG_OVERRIDES)
                     self.assertEqual(adapter.extra_environment, {})
                 finally:
@@ -185,8 +188,9 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
                 provider_identity={
                     "provider": "ark",
                     "model": "ark-code-latest",
-                    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                },
+                "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+                "transport": "remote",
+            },
                 authorized_providers=frozenset({"ark", "custom"}),
             )
             result = preflight(config)
@@ -214,8 +218,9 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
                 provider_identity={
                     "provider": "custom",
                     "model": "ark-code-latest",
-                    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                },
+                "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+                "transport": "remote",
+            },
                 authorized_providers=frozenset({"custom"}),
                 provider_profile=profile,
             )
@@ -250,8 +255,9 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
                 provider_identity={
                     "provider": "ark",
                     "model": "ark-code-latest",
-                    "endpoint": "https://ark.example.com/v1",
-                },
+                "endpoint": "https://ark.example.com/v1",
+                "transport": "remote",
+            },
                 authorized_providers=frozenset({"ark"}),
                 provider_profile=profile,
             )
@@ -279,8 +285,9 @@ class UnknownProviderFailClosedTests(unittest.TestCase):
                 provider_identity={
                     "provider": "rogue",
                     "model": "rogue-model",
-                    "endpoint": "https://rogue.example.invalid/v1",
-                },
+                "endpoint": "https://rogue.example.invalid/v1",
+                "transport": "remote",
+            },
                 authorized_providers=frozenset({"ark"}),
             )
             result = preflight(config)
@@ -305,8 +312,9 @@ class UnknownProviderFailClosedTests(unittest.TestCase):
                 provider_identity={
                     "provider": "ark",
                     "model": "ark-code-latest",
-                    "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
-                },
+                "endpoint": "https://ark.cn-beijing.volces.com/api/coding/v3",
+                "transport": "remote",
+            },
                 authorized_providers=frozenset(),
             )
             result = preflight(config)
