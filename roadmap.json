@@ -1,0 +1,411 @@
+{
+  "title": "ZWorkbench v1 真实可用推进路线图",
+  "description": "",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a0f786541c-8cde611ff7",
+      "label": "ZWorkbench v1 真实可用推进路线图",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8",
+        "1-9",
+        "1-10"
+      ],
+      "decisions": [
+        {
+          "q": "本路线图 scope 分类？",
+          "answer": "Product execution（项目推进路线图）；本 turn 仅编排节点，不实现项目代码",
+          "note": "依据 AGENTS.md scope gate"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a0f7867bb5-c02c2b818b",
+      "label": "已闭环结论（讨论沉淀 · 参考锚点）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a0f7867cc4-00d0e810b2",
+      "label": "开放产品决策：v1 写能力出货口径（S0→S2）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2"
+      ],
+      "decisions": [
+        {
+          "q": "v1 是否默认出货写能力（S0→S2）？",
+          "answer": "未决：A 保守（v1 维持只读回退，写 seam 不默认出货，等 S0 后再开）/ B 激进（#40 解后 zworkbench run 即接 ARK 默认开放写，靠 S0/S2 receipt + N=10 闸门控险）",
+          "note": "U1 故意不归此决策，为产品/节奏 call，待 zj 拍板"
+        },
+        {
+          "q": "v1 写能力出货口径（S0→S2）选哪条？",
+          "answer": "选B：#40 解后 zworkbench run 即接 ARK 默认开放写，靠 S0 host-enforcement + S2 receipt + S3 N=10 闸门控险",
+          "note": "U1 故意不归此决策（产品/节奏 call），zj 已拍板"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a0f786de24-a6b884277b",
+      "label": "产品 CLI 放开真实 Provider（#40）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [
+        {
+          "q": "根因？",
+          "answer": "local_run.py:205 硬编码 model_provider=ollama 无视 provider_identity；:317-322 provider_loopback 硬门拒所有非 loopback provider",
+          "note": "与 #39 identity 问题正交，不合并"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a0f786df00-45adfe7bd4",
+      "label": "identity↔transport 绑定（#39 · S1 前置闸门）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a0f786dfd5-42ee4b536a",
+      "label": "S0 host-enforcement spike（最长板）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a0f786e0b0-264a25bc5e",
+      "label": "S1 单 Provider 产品化（无 failover）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a0f786e189-1954069c0a",
+      "label": "S2 写 seam 产品化（隔离 worktree + apply + local commit）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8": {
+      "id": "1-8",
+      "uid": "01a0f786e262-04085ef8b1",
+      "label": "S3 dogfood N=10 闸门（含价值基线正式出数）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9": {
+      "id": "1-9",
+      "uid": "01a0f786e34f-590190bc0c",
+      "label": "S4 Git push 单独门",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10": {
+      "id": "1-10",
+      "uid": "01a0f786e424-58db85363d",
+      "label": "U5 v1 验收 checklist（codex identity UNKNOWN）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a0f7871bca-01e7389f78",
+      "label": "make-it-usable 四子文档全 DONE_WITH_CONCERNS",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a0f7871ca1-3a7ccc30a4",
+      "label": "sub-01 Q3 选边 (i)/(ii) ARK 实测闭合",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "sub-01 Q3 验收线结论？",
+          "answer": "ARK 实测 (i) 只读 owner-backed 证据 与 (ii) S0→S2 真写链路 均闭合，sub-01 升 DONE_WITH_CONCERNS",
+          "note": "写链路 md5 与裸 codex 一致 50bc0ef0；U1/U3 全闭"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a0f7871d77-dfdc892a80",
+      "label": "U1/U3 竞品对照实证 + R3 回填完成",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a0f7871e4d-ffcd42e4fb",
+      "label": "选项A：v1 维持 Codex-only 只读回退基线",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "选项A 是否被采用？",
+          "answer": "否，已选 B；A 作为保守回退保留不采用",
+          "note": "v1 不维持只读回退基线"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a0f7871f22-ab6aa9fdb6",
+      "label": "选项B：#40 解后默认开放写（S0/S2 receipt + N=10 控险）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "已选 B：#40 解后默认开放写（S0/S2 receipt + N=10 控险）",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a0f7871ffa-f6511ec25d",
+      "label": "local_run.py factory 读 provider_identity 替代 ollama 硬编码",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a0f78720d3-7ed3cfc838",
+      "label": "preflight 对 remote/custom provider 显式授权放行",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a0f78721a8-3a71cb8839",
+      "label": "回归测试：三 deny 分支 + 配置读取",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a0f7872280-ba3c0aa161",
+      "label": "建 identity↔transport 单一来源绑定",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a0f7872366-0e706e0455",
+      "label": "删 setdefault 反向回填",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a0f787243e-fb31b0504d",
+      "label": "补 4 条 fail-closed 测试",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a0f7872515-3a0b022c93",
+      "label": "技术选型（seatbelt/容器/VM/bwrap）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a0f78725e9-1d1069d52d",
+      "label": "fail-closed 三判据可测试断言",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-10-01 20:52:50",
+    "updated": "2026-10-01 21:13:46",
+    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a0f786de24-a6b884277b",
+      "to": "01a0f786e0b0-264a25bc5e",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a0f786df00-45adfe7bd4",
+      "to": "01a0f786e0b0-264a25bc5e",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a0f786dfd5-42ee4b536a",
+      "to": "01a0f786e189-1954069c0a",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a0f7867cc4-00d0e810b2",
+      "to": "01a0f786e189-1954069c0a",
+      "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a0f786e0b0-264a25bc5e",
+      "to": "01a0f786e189-1954069c0a",
+      "type": "blocks"
+    },
+    {
+      "id": "e6",
+      "from": "01a0f786e189-1954069c0a",
+      "to": "01a0f786e262-04085ef8b1",
+      "type": "blocks"
+    },
+    {
+      "id": "e7",
+      "from": "01a0f786e262-04085ef8b1",
+      "to": "01a0f786e34f-590190bc0c",
+      "type": "blocks"
+    }
+  ],
+  "edge_seq": 7
+}
