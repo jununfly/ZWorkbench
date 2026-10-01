@@ -108,7 +108,7 @@
       "id": "1-4",
       "uid": "01a0f786df00-45adfe7bd4",
       "label": "identity↔transport 绑定（#39 · S1 前置闸门）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -116,9 +116,21 @@
         "1-4-2",
         "1-4-3"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "identity↔transport 单一来源绑定如何落地（#39 S1 前置闸门）？",
+          "answer": "provider_identity 为唯一事实源；transport 面向的 self.model/self.model_provider 由 provider_identity 派生（model←identity['model'], model_provider←identity['provider']），禁止反向回填；provider_identity 不完整（缺 provider/model/endpoint/transport）时 fail-closed 抛 CodexAdapterError；空 identity 走历史 loopback 默认（不产出真实 receipt）",
+          "note": "正交 #40（local_run 硬编码 / preflight 拦截）不在此节点改；ctor model/model_provider 仅作空 identity 回退，传入 provider_identity 时其 transport 由 identity 派生、ctor 参数被忽略"
+        },
+        {
+          "q": "adapter 闸门要求哪些字段？",
+          "answer": "适配器层只 gate {provider,model,endpoint} 三字段；transport 由上游 dsh_runtime 校验（#39/#40 正交，不在本节点改 local_run 构造）。这样 CLI 真实链路不被本节点改动打断，且仍 fail-closed 拦截缺字段的 identity",
+          "note": "初版决策写'缺 transport 也 fail-closed'会倒逼改 local_run 的 provider_identity 构造，越界到 #40；收敛为只 gate 适配器实际绑定的 provider/model/endpoint"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5": {
       "id": "1-5",
@@ -307,7 +319,7 @@
       "id": "1-4-1",
       "uid": "01a0f7872280-ba3c0aa161",
       "label": "建 identity↔transport 单一来源绑定",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
@@ -319,7 +331,7 @@
       "id": "1-4-2",
       "uid": "01a0f7872366-0e706e0455",
       "label": "删 setdefault 反向回填",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
@@ -331,7 +343,7 @@
       "id": "1-4-3",
       "uid": "01a0f787243e-fb31b0504d",
       "label": "补 4 条 fail-closed 测试",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
@@ -366,7 +378,7 @@
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-01 21:41:11",
+    "updated": "2026-10-01 22:24:54",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
