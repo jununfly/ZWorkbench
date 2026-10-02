@@ -107,6 +107,7 @@ def _base_config(**overrides) -> LocalReadOnlyRunConfig:
             "provider": "fake-loopback",
             "model": "fake-model",
             "endpoint": "http://127.0.0.1:11434",
+            "model_provider": "fake-loopback",
         },
     )
     for key, value in overrides.items():
@@ -118,11 +119,10 @@ class S1ArkReadonlyEgressTests(unittest.TestCase):
     def test_facade_wires_ark_profile_for_single_provider(self) -> None:
         # The default entry must wire the selected single Provider (ARK) profile
         # into the adapter: the remote egress endpoint is preserved on the
-        # wired adapter. model_provider is DERIVED from the provider identity by
-        # the #39 identity<->transport binding (see codex_adapter.py:126), so it
-        # equals identity["provider"] ("ark-test"), NOT the profile's declared
-        # model_provider ("custom"). That divergence is a tracked deviation, not
-        # silently corrected here.
+        # wired adapter. Per the #39 identity<->transport single-source binding,
+        # model_provider is the profile's declared model_provider ("custom"), NOT
+        # the profile NAME used as the identity provider field ("ark-test"). The
+        # adapter must not silently conflate the two.
         config = _base_config(
             provider_identity={
                 "provider": "ark-test",
@@ -140,16 +140,15 @@ class S1ArkReadonlyEgressTests(unittest.TestCase):
             adapter.provider_identity["endpoint"],
             "https://ark.example.com/api/coding/v3",
         )
-        # #39 binding: adapter.model_provider derived from identity, not profile.
-        self.assertEqual(adapter.model_provider, "ark-test")
-        # Deviation captured: the profile declares model_provider="custom", which
-        # the adapter currently ignores. For a real OpenAI-compatible ARK endpoint
-        # Codex needs model_provider="custom", so this must be reconciled later.
+        # #39 binding: adapter.model_provider is the profile's declared value,
+        # not identity["provider"].
+        self.assertEqual(adapter.model_provider, "custom")
         self.assertEqual(config.provider_profile.model_provider, "custom")
 
     def test_facade_derives_model_provider_from_identity(self) -> None:
-        # Without an explicit profile, the loopback fixture identity's provider
-        # becomes the adapter model_provider (no silent ollama default injected).
+        # Without an explicit profile, the loopback fixture's provider_identity is
+        # the single source of model_provider (no silent ollama default injected,
+        # and no conflation with provider_identity["provider"]).
         config = _base_config()
         with CompositionOwner(config.database) as owner:
             adapter = HostCapabilityFacade.acquire_provider(owner, config)
