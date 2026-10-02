@@ -152,7 +152,7 @@ evaluation/
 
 ### Ownership and state
 
-- 只允许一个 ZWorkbench durable owner。所有跨 Run 的 run、attempt、event、effect、result、approval、replay metadata、backup/restore 和 exit ledger 必须归 CompositionOwner。
+- 只允许一个 ZWorkbench durable owner。所有跨 Run 的 run、attempt、event、effect、result、approval、replay metadata、backup/restore 和 exit ledger 必须归 CompositionOwner。exit ledger 现由 CompositionOwner 的 `provider_exit_ledger` 表承载（[composition.py](src/zworkbench/composition.py) 的 `record_provider_exit_ledger()` / `get_provider_exit_ledger()`；1-6-6 完成），默认路径（loopback/fake provider）记账口径硬编码为 unknown/delegated，绝不声称远端零残留证明。
 - DSH session、DSH plugin state、Codex thread/turn/rollout、Provider router state 和 observability projection 不能被升级为第二个事实源。
 - 插件配置迁移、Harness session 导入和 CompositionOwner backup/restore 是不同合同，必须分别验证和分别记录。
 - 关键身份至少维持 run_id → parent/child run → dsh session/turn → worker run → codex thread/turn → event/effect/artifact 的可查询关系。字段不暴露时记录 unknown，不猜测填值。
