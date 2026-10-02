@@ -159,7 +159,7 @@
       "id": "1-6",
       "uid": "01a0f786e0b0-264a25bc5e",
       "label": "S1 单 Provider 产品化（无 failover）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -546,18 +546,45 @@
       "id": "1-6-6",
       "uid": "01a0f7fc5f65-a5afe96978",
       "label": "Provider-side 退出记账接入默认路径（unknown/delegated 口径）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-6-6 属于哪类范围？",
+          "answer": "Product execution：实现 owner 拥有的 provider-exit ledger 并接入默认(loopback/fake)路径，口径 unknown/delegated；不改 opt-in Ark wizard 行为、不声称任何 Provider-side 证明",
+          "note": ""
+        },
+        {
+          "q": "退出记账事实源归谁？",
+          "answer": "归 CompositionOwner：新增 provider_exit_ledger 表 + record_provider_exit_ledger() 方法，落实 AGENTS.md『exit ledger 必须归 CompositionOwner』当前未实现约束；默认路径记账不再写到 owner 之外的 evaluation/evidence/provider-exit/",
+          "note": ""
+        },
+        {
+          "q": "默认路径的退出记账口径？",
+          "answer": "unknown/delegated：loopback/fake provider 无真实远端，所有资源状态=unknown、provider_remote_zero_residue=unknown/delegated、exit_status=unknown/safe-stop、exit_mode=inventory-only；绝不声称远端零残留证明",
+          "note": ""
+        },
+        {
+          "q": "与现有 Ark opt-in wizard 的关系？",
+          "answer": "不合并：Ark 专属 wizard(region=cn-beijing、endpoint 硬编码) 仍是真实 Provider 的 owner-authorized 证据流、保持独立；默认路径用 provider-agnostic 的 unknown/delegated ledger，不套用 Ark schema。落实 doc §7『默认路径继续 loopback/fake，真实 inventory 是独立证据流』",
+          "note": ""
+        },
+        {
+          "q": "记账写入触发点(默认)？",
+          "answer": "run closure 时由 owner 在 complete/safe_stop/fail 路径触发 record_provider_exit_ledger(run_id, provider_identity)，使每次默认路径 run 都有一条 unknown/delegated 记账；备选(待确认)：仅在显式 safe-stop/exit 时记录。落点保持 owner-owned、fail-closed",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-02 18:11:06",
+    "updated": "2026-10-02 18:22:04",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
