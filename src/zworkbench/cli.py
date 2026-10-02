@@ -28,6 +28,8 @@ from .local_run import (
     load_provider_profiles,
     preflight,
 )
+from .write_run import WriteRunOrchestrator
+from .write_seam import WriteSeamError
 
 
 CLI_SCHEMA = "zworkbench-cli/v1"
@@ -86,6 +88,84 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
     run.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
     run.set_defaults(handler=_run_command)
+
+    # ------------------------------------------------------------------
+    # write — the S2 reversible write boundary, driven from the control plane.
+    # push is intentionally absent: it is the S4 separate gate and stays off.
+    # ------------------------------------------------------------------
+    write = commands.add_parser(
+        "write",
+        help="S2 reversible write boundary (isolated worktree + local commit)",
+        description=(
+            "Apply a Codex-generated unified diff to an isolated git worktree "
+            "and commit it locally through the owner-backed write seam. Push is "
+            "never performed: it is the separate S4 gate and stays off by "
+            "default. The diff is generated elsewhere and piped in; this "
+            "command only applies it."
+        ),
+    )
+    write_commands = write.add_subparsers(dest="write_command", required=True)
+
+    write_request = write_commands.add_parser(
+        "request-approval",
+        help="create a pending approval for one write operation",
+        description=(
+            "Create a pending owner approval bound to one operation/action/"
+            "resource/idempotency key. The resulting approval_id is later "
+            "approved to obtain the one-use token consumed by `write apply`."
+        ),
+    )
+    write_request.add_argument("--db", required=True, type=Path, help="case-local SQLite owner path")
+    write_request.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
+    write_request.add_argument("--run-id", required=True, help="durable run identity that owns the approval")
+    write_request.add_argument("--operation-id", required=True, help="operation identity the approval binds to")
+    write_request.add_argument("--action", default="apply_diff", help="effect action the approval binds to")
+    write_request.add_argument("--resource", required=True, help="effect resource the approval binds to")
+    write_request.add_argument("--idempotency-key", required=True, help="idempotency key the approval binds to")
+    write_request.add_argument("--reason", default="S2 write seam approval", help="human-readable reason")
+    write_request.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    write_request.set_defaults(handler=_write_request_approval_command)
+
+    write_approve = write_commands.add_parser(
+        "approve",
+        help="approve a pending approval and print the one-use token",
+        description=(
+            "Approve one pending approval and print the one-use bearer token. "
+            "The token is shown on stdout for the caller to copy; it is never "
+            "written to a summary file in plaintext."
+        ),
+    )
+    write_approve.add_argument("--db", required=True, type=Path, help="case-local SQLite owner path")
+    write_approve.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
+    write_approve.add_argument("--approval-id", required=True, help="pending approval identity to approve")
+    write_approve.add_argument("--ttl", type=int, default=300, help="token lifetime in seconds (default 300)")
+    write_approve.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    write_approve.set_defaults(handler=_write_approve_command)
+
+    write_apply = write_commands.add_parser(
+        "apply",
+        help="apply a unified diff to an isolated worktree and commit locally",
+        description=(
+            "Apply a unified diff to an isolated worktree and commit it locally "
+            "through the owner-backed write seam. Push is never performed (S4 "
+            "separate gate, off by default). The diff is read from --diff (a "
+            "file path) or `-` for stdin."
+        ),
+    )
+    write_apply.add_argument("--db", required=True, type=Path, help="case-local SQLite owner path")
+    write_apply.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
+    write_apply.add_argument("--repo", required=True, type=Path, help="existing git repo to branch the worktree from")
+    write_apply.add_argument("--worktree-root", required=True, type=Path, help="case-local directory for isolated worktrees")
+    write_apply.add_argument("--run-id", help="durable run identity; generated when omitted")
+    write_apply.add_argument("--diff", required=True, help="unified diff file path, or `-` to read from stdin")
+    write_apply.add_argument("--approval-token", required=True, help="one-use token from `write approve`")
+    write_apply.add_argument("--operation-id", required=True, help="operation identity bound to the approval")
+    write_apply.add_argument("--resource", required=True, help="effect resource bound to the approval")
+    write_apply.add_argument("--idempotency-key", required=True, help="idempotency key bound to the approval")
+    write_apply.add_argument("--action", default="apply_diff", help="effect action (default apply_diff)")
+    write_apply.add_argument("--base-ref", default="HEAD", help="base ref the worktree is checked out from")
+    write_apply.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    write_apply.set_defaults(handler=_write_apply_command)
 
     snapshot = commands.add_parser("snapshot", help="print the durable owner snapshot")
     snapshot.add_argument("--db", required=True, type=Path, help="SQLite composition state path")
@@ -470,6 +550,172 @@ def _run_command(args: argparse.Namespace) -> int:
         _write_json(_resolve(args.summary), payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 1 if artifact_error else (0 if result.status == "completed" else 1)
+
+
+def _ensure_run_for_approval(owner: CompositionOwner, run_id: str) -> None:
+    """Create the run if absent so the approval has a durable home."""
+
+    from .composition import CompositionError
+
+    try:
+        owner.create_run(run_id, "write_seam", {"driver": "cli-write"})
+    except CompositionError:
+        # Reuse an existing run (e.g. a read-only run that produced the diff).
+        pass
+
+
+def _write_request_approval_command(args: argparse.Namespace) -> int:
+    """Create a pending owner approval bound to one write operation."""
+
+    case_root = _resolve(args.case_root)
+    db = _resolve(args.db)
+    summary = _resolve(args.summary) if args.summary else None
+    violations = _case_local_violations(case_root, (("database", db), ("summary", summary)))
+    if violations:
+        print(json.dumps(_denied_payload(args.run_id, violations=violations), ensure_ascii=False, indent=2))
+        return 2
+    with CompositionOwner(db) as owner:
+        _ensure_run_for_approval(owner, args.run_id)
+        approval = owner.request_approval(
+            args.run_id,
+            args.operation_id,
+            args.action,
+            args.resource,
+            args.idempotency_key,
+            args.reason,
+        )
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "write-request-approval",
+        "status": "completed",
+        "approval_id": approval["approval_id"],
+        "operation_id": approval["operation_id"],
+        "status_detail": approval["status"],
+        "owner": _owner_projection(db, args.run_id),
+    }
+    if summary:
+        _write_json(summary, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _write_approve_command(args: argparse.Namespace) -> int:
+    """Approve a pending approval and print the one-use token."""
+
+    case_root = _resolve(args.case_root)
+    db = _resolve(args.db)
+    summary = _resolve(args.summary) if args.summary else None
+    violations = _case_local_violations(case_root, (("database", db), ("summary", summary)))
+    if violations:
+        print(json.dumps(_denied_payload(args.approval_id, violations=violations), ensure_ascii=False, indent=2))
+        return 2
+    with CompositionOwner(db) as owner:
+        granted = owner.approve(args.approval_id, ttl_seconds=args.ttl)
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "write-approve",
+        "status": "completed",
+        "approval_id": granted["approval_id"],
+        "operation_id": granted["operation_id"],
+        "token": granted["token"],
+        "expires_at": granted["expires_at"],
+    }
+    if summary:
+        # The bearer token must never be persisted in plaintext.
+        _write_json(summary, {**payload, "token": "<redacted>"})
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _write_apply_command(args: argparse.Namespace) -> int:
+    """Apply a unified diff to an isolated worktree and commit it locally.
+
+    Push is never performed here — it is the S4 separate gate and stays off.
+    """
+
+    import uuid as _uuid
+
+    case_root = _resolve(args.case_root)
+    db = _resolve(args.db)
+    repo = _resolve(args.repo)
+    worktree_root = _resolve(args.worktree_root)
+    summary = _resolve(args.summary) if args.summary else None
+    run_id = args.run_id or "zworkbench-write-" + _uuid.uuid4().hex
+
+    violations = _case_local_violations(
+        case_root,
+        (("database", db), ("repo", repo), ("worktree_root", worktree_root), ("summary", summary)),
+    )
+    if violations:
+        print(json.dumps(_denied_payload(run_id, violations=violations), ensure_ascii=False, indent=2))
+        return 2
+
+    # The diff is generated elsewhere; this command only applies it.
+    if args.diff == "-":
+        patch_text = sys.stdin.read()
+    else:
+        patch_text = Path(args.diff).read_text(encoding="utf-8")
+
+    orchestrator = WriteRunOrchestrator(db, worktree_root=worktree_root)
+    try:
+        receipt = orchestrator.apply(
+            run_id,
+            repo,
+            patch_text,
+            approval_token=args.approval_token,
+            operation_id=args.operation_id,
+            action=args.action,
+            resource=args.resource,
+            idempotency_key=args.idempotency_key,
+            base_ref=args.base_ref,
+        )
+    except WriteSeamError as exc:
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-apply",
+            "status": "denied",
+            "run_id": run_id,
+            "reason": str(exc),
+            "owner": _owner_projection(db, run_id),
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 2
+    except Exception as exc:
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-apply",
+            "status": "failed",
+            "run_id": run_id,
+            "error": {"type": type(exc).__name__},
+            "owner": _owner_projection(db, run_id),
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1
+
+    receipt_data = {
+        "effect_id": receipt.effect_id,
+        "status": receipt.status,
+        "worktree_path": receipt.worktree_path,
+        "commit_hash": receipt.commit_hash,
+        "diff_digest": receipt.diff_digest,
+        "external_receipt": dict(receipt.external_receipt),
+    }
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "write-apply",
+        "status": "completed",
+        "run_id": run_id,
+        "receipt": receipt_data,
+        "owner": _owner_projection(db, run_id),
+    }
+    if summary:
+        _write_json(summary, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
 
 
 def _ui_ref_command(args: argparse.Namespace) -> int:
