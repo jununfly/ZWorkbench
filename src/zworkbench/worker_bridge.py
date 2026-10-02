@@ -24,6 +24,8 @@ import re
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
+from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
+
 from .composition import CompositionError, CompositionOwner
 from .worker_contract import (
     ComponentIdentity,
@@ -1226,7 +1228,7 @@ class WorkerBridge:
         endpoint = urlsplit(self.provider_identity.endpoint)
         if endpoint.hostname not in {"127.0.0.1", "localhost", "::1"}:
             raise ValueError("H2 Provider endpoint must be loopback")
-        if self.provider_identity.transport != "loopback-only":
+        if self.provider_identity.transport != TRANSPORT_LOOPBACK_ONLY:
             raise ValueError("H2 Provider transport must be loopback-only")
 
     @staticmethod

@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .composition import CompositionOwner, InvalidTransition
+from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 
 
 ADAPTER_SCHEMA = "zworkbench-codex-app-server-adapter/v1"
@@ -106,7 +107,7 @@ class CodexAppServerAdapter:
                 "provider": model_provider,
                 "model": model,
                 "endpoint": "loopback",
-                "transport": "loopback-only",
+                "transport": TRANSPORT_LOOPBACK_ONLY,
             }
         else:
             # The adapter binds transport to provider/model and records endpoint,
