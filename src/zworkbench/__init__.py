@@ -30,6 +30,10 @@ from .local_run import (
     load_provider_profiles,
     preflight,
 )
+from .provider_facade import (
+    FACADE_SCHEMA,
+    HostCapabilityFacade,
+)
 from .ui_ref import (
     UI_REF_SCHEMA,
     SourceAnchor,
@@ -155,6 +159,8 @@ __all__ = [
     "ProviderProfile",
     "load_provider_profiles",
     "preflight",
+    "FACADE_SCHEMA",
+    "HostCapabilityFacade",
     "KNOWN_EFFECT_CLASSES",
     "KNOWN_MESSAGE_TYPES",
     "REPLAY_MODES",

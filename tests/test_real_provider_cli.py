@@ -28,10 +28,8 @@ from zworkbench import (
 )
 from zworkbench.cli import main
 from zworkbench.codex_adapter import DEFAULT_CONFIG_OVERRIDES
-from zworkbench.local_run import (
-    _default_adapter_factory,
-    load_provider_profiles,
-)
+from zworkbench.local_run import load_provider_profiles
+from zworkbench.provider_facade import HostCapabilityFacade
 
 
 FAKE_CODEX = """
@@ -161,7 +159,7 @@ class OllamaDefaultFallbackTests(unittest.TestCase):
             config = _ConfigFixture().make_case(Path(temporary))
             db = config.database
             with CompositionOwner(db) as owner:
-                adapter = _default_adapter_factory(owner, config)
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
                 try:
                     # After issue #39 the transport-facing model_provider is derived
                     # from provider_identity, not the historical "ollama" default.
@@ -225,7 +223,7 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
                 provider_profile=profile,
             )
             with CompositionOwner(config.database) as owner:
-                adapter = _default_adapter_factory(owner, config)
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
                 try:
                     self.assertEqual(adapter.model_provider, "custom")
                     self.assertEqual(adapter.model, "ark-code-latest")
@@ -263,10 +261,10 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
             )
             with CompositionOwner(config.database) as owner:
                 with patch.dict(os.environ, {"ARK_API_KEY": "local-secret-value"}):
-                    with _default_adapter_factory(owner, config) as adapter:
+                    with HostCapabilityFacade.acquire_provider(owner, config) as adapter:
                         self.assertEqual(adapter.extra_environment, {"ARK_API_KEY": "local-secret-value"})
                 with patch.dict(os.environ, {}, clear=True):
-                    with _default_adapter_factory(owner, config) as adapter:
+                    with HostCapabilityFacade.acquire_provider(owner, config) as adapter:
                         self.assertEqual(adapter.extra_environment, {})
 
 

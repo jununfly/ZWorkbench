@@ -23,8 +23,9 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11
     import tomli as tomllib  # type: ignore
 
-from .codex_adapter import CodexAppServerAdapter, CodexExecution
+from .codex_adapter import CodexExecution
 from .composition import CompositionOwner
+from .provider_facade import HostCapabilityFacade
 
 
 LOCAL_READ_ONLY_MODE = "local_read_only"
@@ -186,7 +187,7 @@ class LocalReadOnlyRunOrchestrator:
         adapter_factory: Optional[AdapterFactory] = None,
     ) -> None:
         self.config = config
-        self.adapter_factory = adapter_factory or _default_adapter_factory
+        self.adapter_factory = adapter_factory or HostCapabilityFacade.acquire_provider
 
     def run(self, run_id: str, prompt: str, *, timeout: float = 45.0) -> LocalReadOnlyRunResult:
         """Preflight and execute one local read-only run.
@@ -225,55 +226,6 @@ class LocalReadOnlyRunOrchestrator:
                 )
             finally:
                 adapter.close()
-
-
-def _default_adapter_factory(owner: CompositionOwner, config: LocalReadOnlyRunConfig) -> CodexAppServerAdapter:
-    """Build the Codex adapter after preflight has admitted the case.
-
-    When an explicit real Provider profile is selected, the adapter is wired to
-    that provider: the profile's ``model_provider`` (e.g. ``custom``), an empty
-    ``config_overrides`` so Codex honours its own ``[model_providers.<name>]``
-    table, and an optional credential read from a local env var named by
-    ``env_ref``. Otherwise the historical ollama default is used for backward
-    compatibility (loopback, ``model_provider="ollama"``).
-    """
-
-    if config.provider_profile is None:
-        return CodexAppServerAdapter(
-            owner,
-            config.codex_executable,
-            config.code_home,
-            config.workspace,
-            model=str(config.provider_identity["model"]),
-            model_provider="ollama",
-            provider_identity=config.provider_identity,
-            sandbox=config.sandbox,
-            approval_policy=config.approval_policy,
-            disabled_features=config.disabled_features,
-            event_log=config.event_log,
-        )
-
-    profile = config.provider_profile
-    extra_environment: Dict[str, str] = {}
-    if profile.env_ref:
-        credential = os.environ.get(profile.env_ref)
-        if credential:
-            extra_environment[profile.env_ref] = credential
-    return CodexAppServerAdapter(
-        owner,
-        config.codex_executable,
-        config.code_home,
-        config.workspace,
-        model=profile.model or str(config.provider_identity.get("model", "")),
-        model_provider=profile.model_provider,
-        provider_identity=config.provider_identity,
-        sandbox=config.sandbox,
-        approval_policy=config.approval_policy,
-        disabled_features=config.disabled_features,
-        config_overrides=(),
-        extra_environment=extra_environment,
-        event_log=config.event_log,
-    )
 
 
 def _require_text(value: str, name: str) -> str:
