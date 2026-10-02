@@ -34,6 +34,15 @@ from .provider_facade import (
     FACADE_SCHEMA,
     HostCapabilityFacade,
 )
+from .write_seam import (
+    WRITE_SEAM_SCHEMA,
+    EFFECT_CLASS_WRITE,
+    WriteSeam,
+    WriteSeamError,
+    WorktreeCreationError,
+    DiffApplyError,
+    WriteReceipt,
+)
 from .ui_ref import (
     UI_REF_SCHEMA,
     SourceAnchor,
@@ -161,6 +170,13 @@ __all__ = [
     "preflight",
     "FACADE_SCHEMA",
     "HostCapabilityFacade",
+    "WRITE_SEAM_SCHEMA",
+    "EFFECT_CLASS_WRITE",
+    "WriteSeam",
+    "WriteSeamError",
+    "WorktreeCreationError",
+    "DiffApplyError",
+    "WriteReceipt",
     "KNOWN_EFFECT_CLASSES",
     "KNOWN_MESSAGE_TYPES",
     "REPLAY_MODES",
