@@ -119,6 +119,8 @@ src/zworkbench/
   codex_adapter.py     Codex app-server/CLI adapter
   local_run.py         local_read_only_run orchestration and preflight
   cli.py               installed user-facing CLI
+  write_run.py         S2 write-seam orchestrator: owner-backed control-plane driver (create_worktree + apply_diff)
+  write_seam.py        S2 write seam: isolated worktree + local commit, no push, single owner
   composition_cli.py   owner snapshot/backup/restore CLI
   ui_ref.py            UI reference declarations, lifecycle and manifest digest
   ui_manifest.py       build receipt, local artifact store and code location
