@@ -10,12 +10,14 @@ event-stream digest in that owner.
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import os
 from pathlib import Path
 import selectors
 import shutil
+import socket
 import subprocess
 import time
 from dataclasses import dataclass
@@ -41,6 +43,70 @@ class CodexAdapterError(RuntimeError):
 
 class CodexProtocolError(CodexAdapterError):
     """The app-server returned an invalid or unsuccessful JSON-RPC result."""
+
+
+# ----------------------------------------------------------------------
+# Failure classification (issue #39 S1 / node 1-6-4)
+# ----------------------------------------------------------------------
+
+FAILURE_NETWORK = "network"
+FAILURE_RATE_LIMIT = "rate_limit"
+FAILURE_UNKNOWN = "unknown"
+
+# S1 is single-Provider with no failover: a network / rate-limit / unknown
+# provider failure is terminal and fail-closed here.  The recorded bucket is
+# the durable signal a future S2 failover would consume to choose policy
+# (network -> try a second Provider, rate_limit -> backoff, unknown -> stop).
+SAFE_STOP_CATEGORIES = frozenset({FAILURE_NETWORK, FAILURE_RATE_LIMIT, FAILURE_UNKNOWN})
+
+# errno values that signal a transient transport/network failure rather than a
+# local filesystem or programming error.
+_NETWORK_ERRNOS = frozenset({
+    errno.ECONNRESET,
+    errno.ECONNABORTED,
+    errno.ECONNREFUSED,
+    errno.ETIMEDOUT,
+    errno.EHOSTUNREACH,
+    errno.ENETUNREACH,
+    errno.ENETDOWN,
+    errno.ENETRESET,
+    errno.EPIPE,
+})
+
+
+def classify_provider_failure(exc: BaseException) -> str:
+    """Map a provider/transport exception to a coarse failure bucket.
+
+    Buckets:
+
+    * ``network``    — transport timeouts, dropped/refused connections, broken
+                       pipes, and DNS resolution failures.
+    * ``rate_limit`` — the Provider signalled throttling (HTTP 429 or rate-limit
+                       phrasing in the JSON-RPC error payload).
+    * ``unknown``    — anything else (protocol errors, unexpected exceptions,
+                       process death).  Unclassified == not safely retryable.
+
+    The owner records this bucket so the failure is observable and a future S2
+    failover can route on it; see
+    :meth:`CodexAppServerAdapter._handle_owner_failure` for the S1 terminal
+    policy.
+    """
+
+    message = str(exc).lower()
+    if "429" in message or ("rate" in message and ("limit" in message or "throttl" in message)):
+        return FAILURE_RATE_LIMIT
+
+    if isinstance(exc, (TimeoutError, ConnectionError, socket.timeout)):
+        return FAILURE_NETWORK
+
+    if isinstance(exc, OSError):
+        if getattr(exc, "errno", None) in _NETWORK_ERRNOS:
+            return FAILURE_NETWORK
+        # socket.gaierror / herror are DNS resolution failures (OSError subclass).
+        if isinstance(exc, (socket.gaierror, socket.herror)):
+            return FAILURE_NETWORK
+
+    return FAILURE_UNKNOWN
 
 
 @dataclass(frozen=True)
@@ -401,7 +467,7 @@ class CodexAppServerAdapter:
                 len(self.messages),
             )
         except Exception as exc:
-            self._fail_owner_run(run_id, exc)
+            self._handle_owner_failure(run_id, exc)
             raise
         finally:
             self.active_run_id = None
@@ -447,10 +513,49 @@ class CodexAppServerAdapter:
             event = self.wait_for(predicate, timeout=max(0.1, timeout - (time.monotonic() - started)))
         return dict(event.get("params", {}).get("turn") or {})
 
-    def _fail_owner_run(self, run_id: str, error: Exception) -> None:
+    def _handle_owner_failure(self, run_id: str, error: Exception) -> None:
+        """Classify a provider/transport failure, record it, and fail-closed.
+
+        In S1 (single Provider, no failover) a network / rate-limit / unknown
+        failure is terminal: the run is safe-stopped with a
+        ``provider_failure:<category>`` reason and the classification is recorded
+        as a durable ``failure_classification`` result (category + raw
+        ``exc_type`` + message) so the failure is observable and a future S2
+        failover can route on it.  Anything outside the three buckets falls back
+        to the historical ``fail_run`` (recorded error, ``failed`` status).
+
+        The original exception is re-raised by the caller so the CLI/UI still
+        observe the error; recording here must never mask it.
+        """
+
+        category = classify_provider_failure(error)
+        try:
+            self.owner.record_result(
+                run_id,
+                "failure_classification",
+                {
+                    "category": category,
+                    "exc_type": type(error).__name__,
+                    "message": str(error),
+                    "provider_identity": dict(self.provider_identity),
+                    "safe_stopped": category in SAFE_STOP_CATEGORIES,
+                },
+                f"{run_id}:failure_classification",
+            )
+        except Exception:
+            # Recording must never mask the original provider failure.
+            return
         try:
             run = self.owner.get_run(run_id)
-            if run["status"] in {"created", "running", "waiting_approval", "recovering"}:
+        except Exception:
+            return
+        if run["status"] not in {"created", "running", "waiting_approval", "recovering"}:
+            # Already terminal (e.g. safe-stopped by an effect rule); do not override.
+            return
+        try:
+            if category in SAFE_STOP_CATEGORIES:
+                self.owner.safe_stop_run(run_id, f"provider_failure:{category}")
+            else:
                 self.owner.fail_run(run_id, {"type": type(error).__name__, "message": str(error)})
         except Exception:
             # Preserve the original adapter failure.  The owner is fail-closed
