@@ -493,13 +493,25 @@
       "id": "1-6-4",
       "uid": "01a0f7fc5dcf-88853c2ecf",
       "label": "owner 记录失败分类 / safe-stop（网络/限流/unknown→safe-stop）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-6-4 属于哪类范围？",
+          "answer": "Product execution：继承父节点 1-6 判定；实现 owner 侧失败分类记录与 safe-stop 行为（网络/限流/unknown→safe-stop），可修改 ZWorkbench 产品代码",
+          "note": ""
+        },
+        {
+          "q": "失败分类与 safe-stop 设计？",
+          "answer": "classify_provider_failure(exc) 返回 network/rate_limit/unknown 三桶（落 codex_adapter 传输接缝，记录进 owner）。network=传输超时/断连/破管/DNS失败；rate_limit=HTTP429或限流措辞；unknown=其余（协议错/进程死/未分类）。S1 无 failover，三桶均 safe-stop（terminal, fail-closed），reason=provider_failure:<category>；分类+原始 exc_type/message 以 failure_classification result 持久化。非三桶(理论上不出现)回退 fail_run。execute 仍 re-raise，CLI 已 try/except 返回 failed payload + owner.run_status 投影",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6-5": {
       "id": "1-6-5",
@@ -545,7 +557,7 @@
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-02 10:36:06",
+    "updated": "2026-10-02 18:11:06",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
