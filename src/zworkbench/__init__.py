@@ -43,6 +43,7 @@ from .write_seam import (
     DiffApplyError,
     WriteReceipt,
 )
+from .write_run import WriteRunOrchestrator
 from .ui_ref import (
     UI_REF_SCHEMA,
     SourceAnchor,
@@ -174,6 +175,7 @@ __all__ = [
     "EFFECT_CLASS_WRITE",
     "WriteSeam",
     "WriteSeamError",
+    "WriteRunOrchestrator",
     "WorktreeCreationError",
     "DiffApplyError",
     "WriteReceipt",
