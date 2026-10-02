@@ -196,6 +196,87 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
             with CompositionOwner(config.database) as owner:
                 self.assertEqual(owner.get_run("run-failed")["status"], "running")
 
+    def test_default_path_records_unknown_delegated_exit_ledger_on_success(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RecordingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-1",
+                "inspect the local project and return fixture-ok",
+            )
+
+            with CompositionOwner(config.database) as owner:
+                ledger = owner.provider_exit_ledger_for_run("run-1")
+                self.assertEqual(len(ledger), 1)
+                entry = ledger[0]
+                self.assertEqual(entry["provider"], "fake-loopback")
+                self.assertEqual(entry["endpoint"], "http://127.0.0.1:11434")
+                self.assertEqual(entry["provider_remote_zero_residue"], "unknown/delegated")
+                self.assertEqual(entry["exit_status"], "unknown/safe-stop")
+                self.assertEqual(entry["exit_mode"], "inventory-only")
+
+    def test_default_path_records_unknown_delegated_exit_ledger_on_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RaisingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            with self.assertRaisesRegex(RuntimeError, "controlled adapter failure"):
+                LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                    "run-failed",
+                    "controlled failure",
+                )
+
+            self.assertTrue(adapters[0].closed)
+            with CompositionOwner(config.database) as owner:
+                ledger = owner.provider_exit_ledger_for_run("run-failed")
+                self.assertEqual(len(ledger), 1)
+                self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
+
 
 if __name__ == "__main__":
     unittest.main()

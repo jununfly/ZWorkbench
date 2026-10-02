@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from zworkbench.composition import CompositionOwner, IntegrityError, InvalidTransition
+from zworkbench.composition import CompositionOwner, IntegrityError, InvalidTransition, NotFoundError
 
 
 class CompositionOwnerTests(unittest.TestCase):
@@ -253,6 +253,82 @@ class CompositionOwnerTests(unittest.TestCase):
                 "env-sha",
                 {"provider": "fake", "api_key": "secret"},
             )
+
+
+class ProviderExitLedgerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name)
+        self.db = self.root / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self, run_id: str = "run-1") -> None:
+        self.owner.create_run(run_id, "unit-test", {"prompt": "fixture"})
+        self.owner.start_run(run_id)
+
+    def test_default_path_ledger_is_unknown_delegated_and_never_claims_remote_zero_residue(self) -> None:
+        self._run()
+        entry = self.owner.record_provider_exit_ledger(
+            "run-1",
+            {"provider": "fake-loopback", "model": "fake-model", "endpoint": "http://127.0.0.1:11434"},
+        )
+        self.assertEqual(entry["provider"], "fake-loopback")
+        self.assertEqual(entry["endpoint"], "http://127.0.0.1:11434")
+        self.assertEqual(entry["account_scope"], "unknown")
+        self.assertEqual(entry["exit_mode"], "inventory-only")
+        self.assertEqual(entry["exit_status"], "unknown/safe-stop")
+        self.assertEqual(entry["provider_remote_zero_residue"], "unknown/delegated")
+        self.assertEqual(set(entry["statuses"].values()), {"unknown"})
+        self.assertEqual(entry["unknown_fields"], sorted(entry["statuses"].keys()))
+        events = self.owner.events("run-1")
+        self.assertTrue(any(e["type"] == "provider.exit.ledger.recorded" for e in events))
+
+    def test_ledger_rejects_raw_credentials_in_provider_identity(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_exit_ledger("run-1", {"provider": "fake", "api_key": "sk-secret"})
+
+    def test_local_state_fingerprint_must_be_hex_or_unknown(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_exit_ledger("run-1", {"provider": "fake"}, local_state_fingerprint="not-hex")
+        entry = self.owner.record_provider_exit_ledger(
+            "run-1", {"provider": "fake"}, local_state_fingerprint="a" * 64
+        )
+        self.assertEqual(entry["local_state_fingerprint"], "a" * 64)
+
+    def test_ledger_survives_reopen_and_appears_in_snapshot(self) -> None:
+        self._run()
+        self.owner.record_provider_exit_ledger(
+            "run-1", {"provider": "fake-loopback", "endpoint": "http://127.0.0.1:11434"}
+        )
+        digest_before = self.owner.state_digest()
+        self.owner.close()
+        with CompositionOwner(self.db) as reopened:
+            ledger = reopened.provider_exit_ledger_for_run("run-1")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
+            self.assertEqual(reopened.snapshot()["provider_exit_ledger"][0]["provider"], "fake-loopback")
+            self.assertEqual(reopened.state_digest(), digest_before)
+
+    def test_ledger_for_run_returns_all_entries_in_order(self) -> None:
+        self._run()
+        self.owner.record_provider_exit_ledger(
+            "run-1", {"provider": "fake-loopback", "endpoint": "http://127.0.0.1:11434"}
+        )
+        self.owner.record_provider_exit_ledger(
+            "run-1", {"provider": "fake-loopback", "endpoint": "http://127.0.0.1:11434"}
+        )
+        entries = self.owner.provider_exit_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 2)
+
+    def test_get_missing_ledger_entry_raises_not_found(self) -> None:
+        with self.assertRaises(NotFoundError):
+            self.owner.get_provider_exit_ledger("missing")
 
 
 if __name__ == "__main__":
