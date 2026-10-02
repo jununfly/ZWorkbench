@@ -13,7 +13,6 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import selectors
 import signal
 import subprocess
 import sys
@@ -26,7 +25,9 @@ from urllib.parse import urlsplit
 
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 
+from ._digest import sha256_json as _sha256_json
 from .composition import CompositionError, CompositionOwner
+from .subprocess_supervisor import LineStreamSupervisor, terminate_process
 from .worker_contract import (
     ComponentIdentity,
     IdentityChain,
@@ -164,7 +165,6 @@ class WorkerBridge:
         self._validate_provider()
         self._state_lock = threading.RLock()
         self.process: Optional[subprocess.Popen[bytes]] = None
-        self.selector = selectors.DefaultSelector()
         self.active_child_run_id: Optional[str] = None
         self._active_parent_run_id: Optional[str] = None
         self._active_attempt_id: Optional[str] = None
@@ -711,8 +711,6 @@ class WorkerBridge:
             raise WorkerBridgeError("Worker failed to start", code="worker_start_failed") from exc
         if self.process.stdin is None or self.process.stdout is None or self.process.stderr is None:
             raise WorkerBridgeError("Worker streams are unavailable", code="worker_stream_missing")
-        self.selector.register(self.process.stdout, selectors.EVENT_READ, "stdout")
-        self.selector.register(self.process.stderr, selectors.EVENT_READ, "stderr")
         try:
             self.process.stdin.write((request.to_json() + "\n").encode("utf-8"))
             self.process.stdin.flush()
@@ -720,47 +718,29 @@ class WorkerBridge:
         except OSError as exc:
             raise WorkerBridgeError("Worker handshake request could not be sent", code="worker_request_failed") from exc
 
-        stdout_buffer = bytearray()
         response: Optional[WorkerEnvelope] = None
-        open_streams = 2
+
+        def on_line(line: bytes) -> None:
+            nonlocal response
+            if response is not None:
+                raise WorkerBridgeError("Worker emitted more than one handshake response", code="handshake_extra_message")
+            response = self._parse_response(line)
+
+        supervisor = LineStreamSupervisor(
+            on_line=on_line,
+            line_cap_bytes=MAX_WORKER_LINE_BYTES,
+            stderr_cap_bytes=MAX_WORKER_STDERR_BYTES,
+            on_timeout=lambda: WorkerBridgeError("Worker handshake timed out", code="worker_timeout"),
+            on_line_too_large=lambda: WorkerBridgeError("Worker handshake message exceeds size limit", code="handshake_message_too_large"),
+            on_stderr_too_large=lambda: WorkerBridgeError("Worker stderr exceeds size limit", code="worker_stderr_too_large"),
+            on_incomplete_line=lambda: WorkerBridgeError("Worker emitted incomplete JSONL", code="handshake_incomplete_jsonl"),
+            on_empty_line=lambda: WorkerBridgeError("Worker emitted an empty JSONL message", code="handshake_empty_line"),
+            on_iteration=self._raise_if_stop_requested,
+        )
         deadline = time.monotonic() + timeout
-        while open_streams:
-            self._raise_if_stop_requested()
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise WorkerBridgeError("Worker handshake timed out", code="worker_timeout")
-            selected_streams = self.selector.select(min(0.25, remaining))
-            if not selected_streams:
-                continue
-            for selected, _ in selected_streams:
-                stream_name = selected.data
-                data = os.read(selected.fileobj.fileno(), 64 * 1024)
-                if not data:
-                    try:
-                        self.selector.unregister(selected.fileobj)
-                    except Exception:
-                        pass
-                    open_streams -= 1
-                    if stream_name == "stdout" and stdout_buffer:
-                        raise WorkerBridgeError("Worker emitted incomplete JSONL", code="handshake_incomplete_jsonl")
-                    continue
-                if stream_name == "stderr":
-                    self._stderr_bytes += len(data)
-                    if self._stderr_bytes > MAX_WORKER_STDERR_BYTES:
-                        raise WorkerBridgeError("Worker stderr exceeds size limit", code="worker_stderr_too_large")
-                    self._stderr_digest.update(data)
-                    continue
-                stdout_buffer.extend(data)
-                if len(stdout_buffer) > MAX_WORKER_LINE_BYTES:
-                    raise WorkerBridgeError("Worker handshake message exceeds size limit", code="handshake_message_too_large")
-                while b"\n" in stdout_buffer:
-                    line, _, remainder = stdout_buffer.partition(b"\n")
-                    stdout_buffer = bytearray(remainder)
-                    if not line:
-                        raise WorkerBridgeError("Worker emitted an empty JSONL message", code="handshake_empty_line")
-                    if response is not None:
-                        raise WorkerBridgeError("Worker emitted more than one handshake response", code="handshake_extra_message")
-                    response = self._parse_response(line)
+        supervisor.read(self.process, deadline=deadline)
+        self._stderr_digest = supervisor.stderr_digest
+        self._stderr_bytes = supervisor.stderr_bytes
         if response is None:
             self._raise_if_stop_requested()
             exit_code = self._wait_for_exit(deadline)
@@ -805,8 +785,6 @@ class WorkerBridge:
             raise WorkerBridgeError("Worker failed to start", code="worker_start_failed") from exc
         if self.process.stdin is None or self.process.stdout is None or self.process.stderr is None:
             raise WorkerBridgeError("Worker streams are unavailable", code="worker_stream_missing")
-        self.selector.register(self.process.stdout, selectors.EVENT_READ, "stdout")
-        self.selector.register(self.process.stderr, selectors.EVENT_READ, "stderr")
         try:
             self.process.stdin.write((request.to_json() + "\n").encode("utf-8"))
             self.process.stdin.flush()
@@ -814,47 +792,28 @@ class WorkerBridge:
         except OSError as exc:
             raise WorkerBridgeError("Worker coding request could not be sent", code="worker_request_failed") from exc
 
-        stdout_buffer = bytearray()
         responses: list[WorkerEnvelope] = []
-        open_streams = 2
+
+        def on_line(line: bytes) -> None:
+            if len(responses) >= 2:
+                raise WorkerBridgeError("Worker emitted more than two coding messages", code="coding_extra_message")
+            responses.append(self._parse_response(line))
+
+        supervisor = LineStreamSupervisor(
+            on_line=on_line,
+            line_cap_bytes=MAX_WORKER_LINE_BYTES,
+            stderr_cap_bytes=MAX_WORKER_STDERR_BYTES,
+            on_timeout=lambda: WorkerBridgeError("Worker coding timed out", code="worker_timeout"),
+            on_line_too_large=lambda: WorkerBridgeError("Worker coding message exceeds size limit", code="coding_message_too_large"),
+            on_stderr_too_large=lambda: WorkerBridgeError("Worker stderr exceeds size limit", code="worker_stderr_too_large"),
+            on_incomplete_line=lambda: WorkerBridgeError("Worker emitted incomplete JSONL", code="coding_incomplete_jsonl"),
+            on_empty_line=lambda: WorkerBridgeError("Worker emitted an empty JSONL message", code="coding_empty_line"),
+            on_iteration=self._raise_if_stop_requested,
+        )
         deadline = time.monotonic() + timeout
-        while open_streams:
-            self._raise_if_stop_requested()
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise WorkerBridgeError("Worker coding timed out", code="worker_timeout")
-            selected_streams = self.selector.select(min(0.25, remaining))
-            if not selected_streams:
-                continue
-            for selected, _ in selected_streams:
-                stream_name = selected.data
-                data = os.read(selected.fileobj.fileno(), 64 * 1024)
-                if not data:
-                    try:
-                        self.selector.unregister(selected.fileobj)
-                    except Exception:
-                        pass
-                    open_streams -= 1
-                    if stream_name == "stdout" and stdout_buffer:
-                        raise WorkerBridgeError("Worker emitted incomplete JSONL", code="coding_incomplete_jsonl")
-                    continue
-                if stream_name == "stderr":
-                    self._stderr_bytes += len(data)
-                    if self._stderr_bytes > MAX_WORKER_STDERR_BYTES:
-                        raise WorkerBridgeError("Worker stderr exceeds size limit", code="worker_stderr_too_large")
-                    self._stderr_digest.update(data)
-                    continue
-                stdout_buffer.extend(data)
-                if len(stdout_buffer) > MAX_WORKER_LINE_BYTES:
-                    raise WorkerBridgeError("Worker coding message exceeds size limit", code="coding_message_too_large")
-                while b"\n" in stdout_buffer:
-                    line, _, remainder = stdout_buffer.partition(b"\n")
-                    stdout_buffer = bytearray(remainder)
-                    if not line:
-                        raise WorkerBridgeError("Worker emitted an empty JSONL message", code="coding_empty_line")
-                    if len(responses) >= 2:
-                        raise WorkerBridgeError("Worker emitted more than two coding messages", code="coding_extra_message")
-                    responses.append(self._parse_response(line))
+        supervisor.read(self.process, deadline=deadline)
+        self._stderr_digest = supervisor.stderr_digest
+        self._stderr_bytes = supervisor.stderr_bytes
         if len(responses) < 2:
             exit_code = self._wait_for_exit(deadline)
             self._last_exit_receipt = self._exit_receipt(exit_code, command)
@@ -1152,33 +1111,25 @@ class WorkerBridge:
             pid = process.pid
         try:
             if process.poll() is None:
-                if self._termination_signal is None:
-                    self._termination_signal = signal.SIGTERM
-                try:
-                    os.killpg(pid, signal.SIGTERM)
-                except (ProcessLookupError, PermissionError):
-                    process.terminate()
-                try:
-                    process.wait(timeout=DEFAULT_PROCESS_STOP_TIMEOUT)
-                except subprocess.TimeoutExpired:
-                    with self._state_lock:
+                returncode, forced_kill = terminate_process(
+                    process,
+                    term_timeout=DEFAULT_PROCESS_STOP_TIMEOUT,
+                    kill_timeout=DEFAULT_PROCESS_STOP_TIMEOUT,
+                )
+                with self._state_lock:
+                    if self._termination_signal is None:
+                        self._termination_signal = signal.SIGTERM
+                    if forced_kill:
                         self._termination_signal = signal.SIGKILL
                         self._termination_forced = True
-                    try:
-                        os.killpg(pid, signal.SIGKILL)
-                    except (ProcessLookupError, PermissionError):
-                        process.kill()
-                    try:
-                        process.wait(timeout=DEFAULT_PROCESS_STOP_TIMEOUT)
-                    except subprocess.TimeoutExpired:
-                        # The group verification below remains the source of
-                        # truth; an un-reaped leader is never reported as a
-                        # clean lifecycle completion.
-                        with self._state_lock:
-                            self._process_group_clean = False
+            else:
+                returncode = process.returncode
+            # _ensure_process_group_clean is the authoritative source of truth
+            # for process_group_clean; it re-checks the group and may SIGKILL
+            # stragglers, never reporting an un-reaped leader as clean.
             self._ensure_process_group_clean(pid)
-            if process.returncode is not None and self._active_command is not None:
-                self._last_exit_receipt = self._exit_receipt(process.returncode, self._active_command)
+            if returncode is not None and self._active_command is not None:
+                self._last_exit_receipt = self._exit_receipt(returncode, self._active_command)
             for stream in (process.stdin, process.stdout, process.stderr):
                 if stream is not None:
                     try:
@@ -1186,11 +1137,6 @@ class WorkerBridge:
                     except Exception:
                         pass
         finally:
-            for key in list(self.selector.get_map().values()):
-                try:
-                    self.selector.unregister(key.fileobj)
-                except Exception:
-                    pass
             with self._state_lock:
                 self.process = None
                 self._active_command = None
@@ -1247,11 +1193,6 @@ class WorkerBridge:
     @classmethod
     def _require_arg(cls, value: str) -> str:
         return cls._require_text(value, "worker_arg")
-
-
-def _sha256_json(value: Any) -> str:
-    encoded = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
 def _is_sha256(value: str) -> bool:

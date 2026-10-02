@@ -14,8 +14,6 @@ import json
 import os
 from pathlib import Path
 import platform
-import selectors
-import signal
 import subprocess
 import sys
 import time
@@ -23,7 +21,9 @@ from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
+from ._digest import canonical_json as _canonical_json, file_digest as _file_digest, sha256_json as _sha256_json
 from .composition import CompositionOwner, InvalidTransition
+from .subprocess_supervisor import LineStreamSupervisor, terminate_process
 
 
 RUNTIME_ADAPTER_SCHEMA = "zworkbench-dsh-runtime-adapter/v1"
@@ -368,7 +368,6 @@ class DshRuntimeAdapter:
         self.manifest_path = Path(manifest_path).expanduser().resolve(strict=False)
         self.case_root = Path(case_root).expanduser().resolve(strict=False)
         self.process: Optional[subprocess.Popen[bytes]] = None
-        self._selector = selectors.DefaultSelector()
         self._stderr_digest = hashlib.sha256()
         self._stderr_bytes = 0
         self._active_command: Optional[Tuple[str, ...]] = None
@@ -500,90 +499,63 @@ class DshRuntimeAdapter:
         if self.process.stdout is None or self.process.stderr is None:
             raise DshProcessError("DSH process streams are unavailable", code="process_stream_missing")
 
-        self._selector.register(self.process.stdout, selectors.EVENT_READ, "stdout")
-        self._selector.register(self.process.stderr, selectors.EVENT_READ, "stderr")
-        stdout_buffer = bytearray()
         event_digest = hashlib.sha256()
         raw_event_count = 0
         dsh_session_id: Optional[str] = None
         started = False
         ready = False
-        open_streams = 2
-        deadline = time.monotonic() + timeout
-        try:
-            while open_streams:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0:
-                    raise DshProcessError("DSH bootstrap timed out", code="bootstrap_timeout")
-                ready_streams = self._selector.select(min(0.25, remaining))
-                if not ready_streams:
-                    continue
-                for selected, _ in ready_streams:
-                    stream_name = selected.data
-                    data = os.read(selected.fileobj.fileno(), 64 * 1024)
-                    if not data:
-                        try:
-                            self._selector.unregister(selected.fileobj)
-                        except Exception:
-                            pass
-                        open_streams -= 1
-                        if stream_name == "stdout" and stdout_buffer:
-                            raise DshBootstrapProtocolError(
-                                "DSH emitted an incomplete JSONL message",
-                                code="bootstrap_incomplete_jsonl",
-                            )
-                        continue
-                    if stream_name == "stderr":
-                        self._stderr_digest.update(data)
-                        self._stderr_bytes += len(data)
-                        continue
-                    stdout_buffer.extend(data)
-                    if len(stdout_buffer) > MAX_BOOTSTRAP_LINE_BYTES:
-                        raise DshBootstrapProtocolError(
-                            "DSH bootstrap message exceeds size limit",
-                            code="bootstrap_message_too_large",
-                        )
-                    while b"\n" in stdout_buffer:
-                        line, _, remainder = stdout_buffer.partition(b"\n")
-                        stdout_buffer = bytearray(remainder)
-                        if not line:
-                            raise DshBootstrapProtocolError("DSH emitted an empty bootstrap line", code="bootstrap_empty_line")
-                        if raw_event_count >= MAX_BOOTSTRAP_EVENTS:
-                            raise DshBootstrapProtocolError("DSH emitted too many bootstrap events", code="bootstrap_event_limit")
-                        message = self._parse_bootstrap_message(line, run_id, manifest)
-                        canonical = _canonical_json(message).encode("utf-8") + b"\n"
-                        event_digest.update(canonical)
-                        raw_event_count += 1
-                        identity = message["identity"]
-                        if dsh_session_id is None:
-                            dsh_session_id = identity["dsh_session_id"]
-                        elif identity["dsh_session_id"] != dsh_session_id:
-                            raise DshBootstrapProtocolError("DSH session identity changed", code="dsh_session_identity_changed")
-                        message_type = message["message_type"]
-                        if message_type == "bootstrap.started":
-                            if started or ready:
-                                raise DshBootstrapProtocolError("bootstrap.started was out of order", code="bootstrap_state_invalid")
-                            started = True
-                        elif message_type == "bootstrap.ready":
-                            if not started or ready:
-                                raise DshBootstrapProtocolError("bootstrap.ready was out of order", code="bootstrap_state_invalid")
-                            ready = True
-                        self.owner.record_event(
-                            run_id,
-                            f"dsh.{message_type}",
-                            {
-                                "schema": message["schema"],
-                                "message_type": message_type,
-                                "identity": dict(identity),
-                                "status": message["payload"]["status"],
-                                "profile_id": message["payload"]["profile_id"],
-                            },
-                        )
-        finally:
-            self._unregister_streams()
 
-        if stdout_buffer:
-            raise DshBootstrapProtocolError("DSH emitted an incomplete JSONL message", code="bootstrap_incomplete_jsonl")
+        def on_line(line: bytes) -> None:
+            nonlocal raw_event_count, dsh_session_id, started, ready
+            if raw_event_count >= MAX_BOOTSTRAP_EVENTS:
+                raise DshBootstrapProtocolError("DSH emitted too many bootstrap events", code="bootstrap_event_limit")
+            message = self._parse_bootstrap_message(line, run_id, manifest)
+            canonical = _canonical_json(message).encode("utf-8") + b"\n"
+            event_digest.update(canonical)
+            raw_event_count += 1
+            identity = message["identity"]
+            if dsh_session_id is None:
+                dsh_session_id = identity["dsh_session_id"]
+            elif identity["dsh_session_id"] != dsh_session_id:
+                raise DshBootstrapProtocolError("DSH session identity changed", code="dsh_session_identity_changed")
+            message_type = message["message_type"]
+            if message_type == "bootstrap.started":
+                if started or ready:
+                    raise DshBootstrapProtocolError("bootstrap.started was out of order", code="bootstrap_state_invalid")
+                started = True
+            elif message_type == "bootstrap.ready":
+                if not started or ready:
+                    raise DshBootstrapProtocolError("bootstrap.ready was out of order", code="bootstrap_state_invalid")
+                ready = True
+            self.owner.record_event(
+                run_id,
+                f"dsh.{message_type}",
+                {
+                    "schema": message["schema"],
+                    "message_type": message_type,
+                    "identity": dict(identity),
+                    "status": message["payload"]["status"],
+                    "profile_id": message["payload"]["profile_id"],
+                },
+            )
+
+        supervisor = LineStreamSupervisor(
+            on_line=on_line,
+            line_cap_bytes=MAX_BOOTSTRAP_LINE_BYTES,
+            stderr_cap_bytes=None,
+            on_timeout=lambda: DshProcessError("DSH bootstrap timed out", code="bootstrap_timeout"),
+            on_line_too_large=lambda: DshBootstrapProtocolError(
+                "DSH bootstrap message exceeds size limit", code="bootstrap_message_too_large"
+            ),
+            on_incomplete_line=lambda: DshBootstrapProtocolError(
+                "DSH emitted an incomplete JSONL message", code="bootstrap_incomplete_jsonl"
+            ),
+            on_empty_line=lambda: DshBootstrapProtocolError("DSH emitted an empty bootstrap line", code="bootstrap_empty_line"),
+        )
+        deadline = time.monotonic() + timeout
+        supervisor.read(self.process, deadline=deadline)
+        self._stderr_digest = supervisor.stderr_digest
+        self._stderr_bytes = supervisor.stderr_bytes
         exit_code = self._wait_for_exit(deadline)
         exit_receipt = self._exit_receipt(exit_code, command)
         self._last_exit_receipt = exit_receipt
@@ -718,31 +690,13 @@ class DshRuntimeAdapter:
         self.owner.record_result(run_id, "dsh.exit", self._last_exit_receipt, f"{run_id}:dsh-exit")
         self._exit_receipt_recorded = True
 
-    def _unregister_streams(self) -> None:
-        for key in list(self._selector.get_map().values()):
-            try:
-                self._selector.unregister(key.fileobj)
-            except Exception:
-                pass
-
     def _stop_process(self) -> None:
         process = self.process
         if process is None:
             return
         try:
             if process.poll() is None:
-                try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except (ProcessLookupError, PermissionError):
-                    process.terminate()
-                try:
-                    process.wait(timeout=2)
-                except subprocess.TimeoutExpired:
-                    try:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except (ProcessLookupError, PermissionError):
-                        process.kill()
-                    process.wait(timeout=2)
+                terminate_process(process, term_timeout=2.0, kill_timeout=2.0)
             if process.returncode is not None and self._last_exit_receipt is None and self._active_command is not None:
                 self._last_exit_receipt = self._exit_receipt(process.returncode, self._active_command)
             for stream in (process.stdin, process.stdout, process.stderr):
@@ -752,7 +706,6 @@ class DshRuntimeAdapter:
                     except Exception:
                         pass
         finally:
-            self._unregister_streams()
             self.process = None
             self._active_command = None
 
@@ -819,23 +772,6 @@ def _case_path(case_root: Path, relative: str, name: str) -> Path:
     if resolved != case_root and case_root not in resolved.parents:
         raise DshManifestError(f"{name} escapes case root", code="case_path_escape")
     return resolved
-
-
-def _file_digest(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return f"{SHA256_PREFIX}{digest.hexdigest()}"
-
-
-def _canonical_json(value: Any) -> str:
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-
-
-def _sha256_json(value: Any) -> str:
-    encoded = _canonical_json(value).encode("utf-8")
-    return f"{SHA256_PREFIX}{hashlib.sha256(encoded).hexdigest()}"
 
 
 def _reject_raw_credentials(value: Any, field_name: str) -> None:
