@@ -190,19 +190,52 @@
       "id": "1-7",
       "uid": "01a0f786e189-1954069c0a",
       "label": "S2 写 seam 产品化（隔离 worktree + apply + local commit）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
-      "children": [],
+      "children": [
+        "1-7-1",
+        "1-7-2",
+        "1-7-3",
+        "1-7-4",
+        "1-7-5",
+        "1-7-6"
+      ],
       "decisions": [
         {
           "q": "1-7 在依赖模型里被 1-6(e5) 阻塞，如何推进？",
           "answer": "先做 1-6(S1 单 Provider 产品化)收口，再开 1-7(S2 写 seam)；2026-10-01 用户拍板",
           "note": ""
+        },
+        {
+          "q": "S2 的 diff 从哪来？Codex 执行沙箱是否改为可写？",
+          "answer": "S2 write seam 合同=接收已生成的 unified diff，apply 到隔离 worktree 后 local commit；本节点不改 Codex 执行为可写（保 S0 read-only 默认与 ADR 0008 fail-closed）；生成 diff 与应用 diff 分离由本 seam 显式实现",
+          "note": ""
+        },
+        {
+          "q": "写副作用落在何处，主工作区是否被触碰？",
+          "answer": "隔离 git worktree 建在 case_root/worktrees/run_id（git worktree add），主工作区零触碰；worktree 路径归 owner result 记录",
+          "note": ""
+        },
+        {
+          "q": "S2 是否包含 push 副作用？",
+          "answer": "不含；S2 仅 local commit（可 reset 回退）；push 是 S4 单独门默认关（R3 切片顺序 S0→S1→S2→S3→S4）",
+          "note": ""
+        },
+        {
+          "q": "写 seam 是否引入第二个 durable owner？",
+          "answer": "否；复用同一 CompositionOwner 的 approval/effects 表，receipt 即 owner-backed 审计最小单元（PG-3 搭车，满足 R3 架构负约束第2条：不得引入第二 durable owner）",
+          "note": ""
+        },
+        {
+          "q": "写操作爆炸半径如何分级？",
+          "answer": "apply(diff 可 revert) → commit(可 reset) → push(难撤回) 三级；S2 实现前两级，push 边界留 S4",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8": {
       "id": "1-8",
@@ -580,11 +613,83 @@
       "notes": "",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-7-1": {
+      "id": "1-7-1",
+      "uid": "01a0fc33a0b8-eceed4b5da",
+      "label": "S2-① 隔离 worktree 创建 seam（主工作区零触碰，路径归 owner 记录）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-2": {
+      "id": "1-7-2",
+      "uid": "01a0fc33a170-c81a1b3fe2",
+      "label": "S2-② diff apply（接收 unified diff，非法 patch 拒绝并保留 worktree 干净）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-3": {
+      "id": "1-7-3",
+      "uid": "01a0fc33a225-7461b52b27",
+      "label": "S2-③ local commit（worktree 内 git commit，无 push，reset 可回退）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-4": {
+      "id": "1-7-4",
+      "uid": "01a0fc33a2da-d559505be3",
+      "label": "S2-④ owner-backed receipt（operation/action/resource/idempotency key 绑定 + external_receipt，无第二 owner）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-5": {
+      "id": "1-7-5",
+      "uid": "01a0fc33a394-ea76f933a5",
+      "label": "S2-⑤ approval 精确绑定 + 执行级幂等（同 key 两次 apply 仅一次 digest 变化）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-6": {
+      "id": "1-7-6",
+      "uid": "01a0fc33a44e-bfd4642988",
+      "label": "S2-⑥ Control Plane / CLI 集成（orchestrator 接 write seam，push 默认关）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-02 18:22:04",
+    "updated": "2026-10-02 18:44:21",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
