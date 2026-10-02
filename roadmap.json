@@ -190,7 +190,7 @@
       "id": "1-7",
       "uid": "01a0f786e189-1954069c0a",
       "label": "S2 写 seam 产品化（隔离 worktree + apply + local commit）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -678,18 +678,55 @@
       "id": "1-7-6",
       "uid": "01a0fc33a44e-bfd4642988",
       "label": "S2-⑥ Control Plane / CLI 集成（orchestrator 接 write seam，push 默认关）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-7-6 scope 分类？（roadmap-driven scope gate）",
+          "answer": "Product execution：实现产品代码（orchestrator + CLI 接 write seam），完成标准=orchestrator 驱动 seam + CLI 暴露 + push 默认关 + 测试通过；不触碰读-only run 路径",
+          "note": ""
+        },
+        {
+          "q": "集成形态：orchestrator 如何接 write seam？",
+          "answer": "新增 WriteRunOrchestrator（write_run.py）包 CompositionOwner + WriteSeam 作 owner-backed 驱动；WriteSeam 保持无状态工具、不构造第二 owner（沿用 1-7 父决策 R3 负约束）",
+          "note": ""
+        },
+        {
+          "q": "CLI 是否需补齐 approval 取 token 路径？",
+          "answer": "补齐 write request-approval / write approve 薄封装（复用 owner 既有方法），使 S2 写流程可从控制平面端到端驱动与可测；token 仅打印到 stdout 不落 summary（bearer 不持久化）",
+          "note": ""
+        },
+        {
+          "q": "push 默认关如何落地为硬保证？",
+          "answer": "write apply 无 --push 开关；receipt 恒 pushed=False；help 明示 push 属 S4 单独门；由 write_seam 不配 remote/不 push 的既有保证 + 控制平面不暴露任何 push 接口实现",
+          "note": ""
+        },
+        {
+          "q": "diff 来源与输入方式？",
+          "answer": "write apply --diff <文件|- stdin> 读 unified diff；生成与应用分离（沿用父决策），CLI 仅做 apply 侧",
+          "note": ""
+        },
+        {
+          "q": "run 生命周期？",
+          "answer": "orchestrator 对 run_id 做 create-if-absent（捕获已存在 CompositionError），task_type=write_seam；与读-only run 共用同一 owner",
+          "note": ""
+        },
+        {
+          "q": "orchestrator 是否收口 run 生命周期？",
+          "answer": "apply 成功后 orchestrator 调用 owner.complete_run 把 run 置 completed（seam 只管 effect 完成）；run 的 created→running→completed 由控制平面收口，denied/uncertain 路径不关闭 run（保持 waiting_approval/safe_stopped 由 claim_effect 定）",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-02 18:44:21",
+    "updated": "2026-10-02 18:59:45",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
