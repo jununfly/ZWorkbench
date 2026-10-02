@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-01 22:44:21
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-02 10:36:06
 
 [~][X+] 1. ZWorkbench v1 真实可用推进路线图
 ├── [x][X+] 1-1. 已闭环结论（讨论沉淀 · 参考锚点）
@@ -23,14 +23,20 @@
 │   ├── [x][X+] 1-5-1. 技术选型（seatbelt/容器/VM/bwrap）
 │   ├── [x][X+] 1-5-2. fail-closed 三判据可测试断言
 │   └── [x][X+] 1-5-3. 真机 OS 强制验证（非沙箱宿主 mac Terminal / CI runner）
-├── [ ][X+] 1-6. S1 单 Provider 产品化（无 failover）
+├── [~][X+] 1-6. S1 单 Provider 产品化（无 failover）
+│   ├── [x][X+] 1-6-1. S1 前置 DoD①：preflight 三 deny 分支各一条负路径断言（校验/补齐）
+│   ├── [x][X+] 1-6-2. S1 前置 DoD②：唯一词表映射表落 owner 侧作 SSOT + 一致性测试
+│   ├── [x][X+] 1-6-3. 已验证 Ark 只读路径从 scripts/ 收进默认入口 zworkbench run（端到端，含 secret 0 落盘/stdin 注入核验）
+│   ├── [ ][X+] 1-6-4. owner 记录失败分类 / safe-stop（网络/限流/unknown→safe-stop）
+│   ├── [x][X+] 1-6-5. Provider 接入经 Host Capability Facade（架构负约束，不直连）
+│   └── [ ][X+] 1-6-6. Provider-side 退出记账接入默认路径（unknown/delegated 口径）
 ├── [!][X+] 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit）
 ├── [!][X+] 1-8. S3 dogfood N=10 闸门（含价值基线正式出数）
 ├── [!][X+] 1-9. S4 Git push 单独门
 └── [ ][X+] 1-10. U5 v1 验收 checklist（codex identity UNKNOWN）
 <details><summary>阻塞链：3 个节点被阻塞</summary>
 
-- 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） ← e5: 1-6. S1 单 Provider 产品化（无 failover） [ ]
+- 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） ← e5: 1-6. S1 单 Provider 产品化（无 failover） [~]
 - 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） ← e6: 1-7. S2 写 seam 产品化（隔离 worktree + apply + local commit） [ ]
 - 1-9. S4 Git push 单独门 ← e7: 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） [ ]
 
@@ -41,5 +47,5 @@
 
 - 1-10. U5 v1 验收 checklist（codex identity UNKNOWN） [ ]
 - 1-2-1. 选项A：v1 维持 Codex-only 只读回退基线 [ ]
-- 1-6. S1 单 Provider 产品化（无 failover） [ ]
+- 1-6-4. owner 记录失败分类 / safe-stop（网络/限流/unknown→safe-stop） [ ]
 <!-- ROADMAP_SECTION_END -->

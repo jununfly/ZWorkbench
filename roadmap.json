@@ -159,13 +159,32 @@
       "id": "1-6",
       "uid": "01a0f786e0b0-264a25bc5e",
       "label": "S1 单 Provider 产品化（无 failover）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3",
+        "1-6-4",
+        "1-6-5",
+        "1-6-6"
+      ],
+      "decisions": [
+        {
+          "q": "1-6 属于哪类范围？",
+          "answer": "Product execution：实现 S1 单 Provider 产品化，可修改 ZWorkbench 产品代码（local_run.py/codex_adapter.py/cli.py/composition.py）；按 R3 Lane A + ADR 0009 DoD 逐档验收",
+          "note": ""
+        },
+        {
+          "q": "Provider 接入是否经 Host Capability Facade？",
+          "answer": "是，列为 1-6-5 架构负约束（R3 架构负约束第1条）；当前 cli/local_run 直连 adapter，需重构为经 Facade，不可静默吸收为已完成",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-7": {
       "id": "1-7",
@@ -175,7 +194,13 @@
       "mode": "explore",
       "parent": "1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-7 在依赖模型里被 1-6(e5) 阻塞，如何推进？",
+          "answer": "先做 1-6(S1 单 Provider 产品化)收口，再开 1-7(S2 写 seam)；2026-10-01 用户拍板",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -407,11 +432,120 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "uid": "01a0f7fc5b36-3abbc01bfe",
+      "label": "S1 前置 DoD①：preflight 三 deny 分支各一条负路径断言（校验/补齐）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "uid": "01a0f7fc5c35-87a7d4b366",
+      "label": "S1 前置 DoD②：唯一词表映射表落 owner 侧作 SSOT + 一致性测试",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-2 词表映射表 SSOT 的 schema 与边界如何定？",
+          "answer": "SSOT 模块=src/zworkbench/provider_vocabulary.py：① transport 词表{loopback-only,network-egress}；② provider 词表{fake-loopback→ollama/loopback-only, ollama→ollama/loopback-only, ark→custom/network-egress(需profile授权), custom→custom/network-egress}；③ preflight deny code 词表(23个,来自local_run.py+cli.py静态扫描)；④ classify_provider_transport(name,authorized)单源推导、fail-closed降loopback-only。一致性测试：静态扫描PreflightViolation code⊂SSOT + 运行时preflight emit code⊂SSOT + classify fail-closed + CLI/adapter默认值解析。硬编码'loopback-only'改引SSOT常量。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "uid": "01a0f7fc5d04-0e47c24a0d",
+      "label": "已验证 Ark 只读路径从 scripts/ 收进默认入口 zworkbench run（端到端，含 secret 0 落盘/stdin 注入核验）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-3 字面前提'把Ark只读路径从scripts/收进zworkbench run'是否成立？",
+          "answer": "不成立：scripts/ 仅有 staging/probe 脚本（failover/staging 类），grep ark/read_only/provider_profile/zworkbench run/local_read_only 全 0 命中，无独立 Ark 只读路径脚本待收编。该路径当前已在默认入口实现：cli.py L69-82(--provider-profile/--provider-config) + local_run.preflight 放行 authorized_providers + _default_adapter_factory 接 model_provider=profile.model_provider 并经 env_ref 注入凭证。重新界定1-6-3=端到端验证默认入口的Ark只读出口路径 + 补 stdin 注入；'from scripts/'视为已满足（无此脚本）。",
+          "note": ""
+        },
+        {
+          "q": "S1 单Provider egress 验证中发现 adapter.model_provider 派生偏差，如何处理？",
+          "answer": "追踪偏差(不在此节点改行为)：_default_adapter_factory 把 profile.model_provider='custom' 传给 CodexAppServerAdapter，但 codex_adapter.py:126 按 #39 identity<->transport 绑定忽略该参数、改用 identity['provider']='ark-test' 派生 model_provider；CLI _run_config 用 profile.name 作 provider 字段。后果：真实 OpenAI 兼容 ARK 端点需 model_provider='custom'，当前会得到 'ark-test'，且若改 provider 字段为 'custom' 会破坏 preflight authorized_provider 判定。修复需在 cli profile->identity 映射与 preflight authorized 判定间对齐，属 #39 绑定设计，超 1-6-3 范围，留 1-6-5/1-6-6 或独立节点。1-6-3 仅验证 egress 链路+stdin 注入已通过。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-6-4": {
+      "id": "1-6-4",
+      "uid": "01a0f7fc5dcf-88853c2ecf",
+      "label": "owner 记录失败分类 / safe-stop（网络/限流/unknown→safe-stop）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-5": {
+      "id": "1-6-5",
+      "uid": "01a0f7fc5e99-8c89f4fd36",
+      "label": "Provider 接入经 Host Capability Facade（架构负约束，不直连）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-6-5 属于哪类范围？",
+          "answer": "Product execution：重构产品代码让 Provider 接入（Control Plane / local_run 编排层）经 Host Capability Facade；tests/fixtures/scripts 仍可直接构造 adapter（非产品代码，约束不覆盖）",
+          "note": ""
+        },
+        {
+          "q": "Facade 设计：缝落哪、产品代码改哪里？",
+          "answer": "新增 src/zworkbench/provider_facade.py::HostCapabilityFacade 作 Control Plane→Provider 唯一运行时缝（与 worker_contract.CapabilityFacade 策略门职责分离：本类只负责产出 adapter、不鉴权）。local_run._default_adapter_factory 改为委托 HostCapabilityFacade.acquire_provider；删除 local_run 对 CodexAppServerAdapter 的直接 import，仅保留结果值类型 CodexExecution 的导入。负约束由静态测试守护：local_run.py 不得 import CodexAppServerAdapter；cli.py 已只走 Orchestrator，不动。",
+          "note": ""
+        },
+        {
+          "q": "完成证据与残留例外？",
+          "answer": "完成：新增 provider_facade.py::HostCapabilityFacade（唯一运行时缝），local_run 删除对 CodexAppServerAdapter 的直接 import、_default_adapter_factory 迁至 facade，Orchestrator 默认 factory 指向 HostCapabilityFacade.acquire_provider；cli.py 只走 Orchestrator 不变。静态测试 test_local_run_must_not_directly_import_provider_adapter 守护“不直连”；行为测试覆盖 ollama 默认路径(config_overrides=DEFAULT)与 custom profile(env 凭证注入、config_overrides=())。tests/test_provider_facade + test_local_run + test_codex_adapter + test_real_provider_cli + test_s1_ark_readonly_egress 全绿。残留例外（已知、非违反）：__init__.py 仍 re-export CodexAppServerAdapter 作公共 API，供 tests/scripts/fixtures 直接构造 adapter 用——约束只禁产品编排代码直连，公共导出不在此列；H6 多 Provider 时扩展此 facade 即可。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-6-6": {
+      "id": "1-6-6",
+      "uid": "01a0f7fc5f65-a5afe96978",
+      "label": "Provider-side 退出记账接入默认路径（unknown/delegated 口径）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-01 22:44:21",
+    "updated": "2026-10-02 10:36:06",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
