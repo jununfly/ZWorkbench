@@ -39,7 +39,8 @@ describe('zworkbench bootstrap bundle', () => {
     } as never)
     ctx.provide('loader', { await: async () => {} } as never)
 
-    apply(ctx)
+    const disposer = apply(ctx)
+    expect(typeof disposer).toBe('function')
     await tick()
 
     const messages = output.trimEnd().split('\n').map(line => JSON.parse(line) as Record<string, unknown>)
@@ -61,5 +62,38 @@ describe('zworkbench bootstrap bundle', () => {
     ctx.provide('appExit', () => {})
     ctx.provide('sessions', { create: () => ({}) } as never)
     expect(() => apply(ctx)).toThrow('ZWORKBENCH_RUN_ID must be set')
+  })
+
+  it('returns a Cordis disposer that does not delete the durable Session (AGENTS §4)', async () => {
+    process.env.ZWORKBENCH_RUN_ID = 'parent-run-2'
+    process.env.ZWORKBENCH_DSH_PROFILE = 'zworkbench-bootstrap'
+    let output = ''
+    const exits: number[] = []
+    internals.stdout = { write: chunk => { output += chunk; return true } }
+    internals.stderr = { write: () => true }
+    const flushed: unknown[] = []
+    const removed: string[] = []
+    const session = { id: 'dsh-session-2' }
+    const ctx = new Context()
+    ctx.provide('appExit', (code: number) => { exits.push(code) })
+    ctx.provide('sessions', {
+      create: () => session,
+      flush: async (value: unknown) => { flushed.push(value) },
+      // a real SessionStore removes the in-process entry on fiber dispose; the
+      // bootstrap must never delete the durable Session itself.
+      delete: (id: string) => { removed.push(id) },
+    } as never)
+    ctx.provide('loader', { await: async () => {} } as never)
+
+    const disposer = apply(ctx)
+    expect(typeof disposer).toBe('function')
+    await tick()
+
+    // dispose the plugin fiber; the returned disposer must run without deleting
+    // the flushed (durable) Session, whose residual owner is the external runtime.
+    disposer()
+    expect(removed).toEqual([])
+    expect(flushed).toEqual([session])
+    expect(exits).toEqual([0])
   })
 })
