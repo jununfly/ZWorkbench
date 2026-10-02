@@ -144,10 +144,12 @@ class CodexIdentityTransportBindingTests(unittest.TestCase):
                 provider_identity={"model": "m", "endpoint": "http://127.0.0.1:11434", "transport": "loopback-only"}
             )
 
-    def test_transport_derived_from_identity_not_ctor_args(self) -> None:
-        # C5 points 1, 2, 4: no setdefault reverse backfill. The transport-facing
-        # model/model_provider are derived from provider_identity, and ctor args
-        # must NOT be injected into the recorded identity.
+    def test_model_provider_sourced_from_ctor_arg_not_silently_from_provider_name(self) -> None:
+        # #39 single-source binding: model_provider is taken from the explicit
+        # constructor argument when provider_identity carries none, and is NEVER
+        # silently derived from provider_identity["provider"] (the profile NAME).
+        # Doing so would conflate name with the model-provider CATEGORY. The ctor
+        # arg is never injected into the recorded identity.
         adapter = self._new_adapter(
             model="injected-model",
             model_provider="injected-provider",
@@ -164,7 +166,24 @@ class CodexIdentityTransportBindingTests(unittest.TestCase):
         self.assertNotIn("injected", adapter.provider_identity.get("provider", ""))
         self.assertNotIn("injected", adapter.provider_identity.get("model", ""))
         self.assertEqual(adapter.model, "real-model")
-        self.assertEqual(adapter.model_provider, "real-provider")
+        # identity carries no model_provider, so the explicit ctor arg is the
+        # legitimate source -- NOT identity["provider"] ("real-provider").
+        self.assertEqual(adapter.model_provider, "injected-provider")
+
+    def test_model_provider_prefers_identity_when_present(self) -> None:
+        # When provider_identity carries model_provider, it is the single source
+        # and overrides the constructor argument.
+        adapter = self._new_adapter(
+            model_provider="ctor-ignored",
+            provider_identity={
+                "provider": "real-provider",
+                "model": "real-model",
+                "model_provider": "identity-provider",
+                "endpoint": "http://127.0.0.1:11434",
+                "transport": "loopback-only",
+            },
+        )
+        self.assertEqual(adapter.model_provider, "identity-provider")
 
 
 if __name__ == "__main__":

@@ -161,9 +161,10 @@ class OllamaDefaultFallbackTests(unittest.TestCase):
             with CompositionOwner(db) as owner:
                 adapter = HostCapabilityFacade.acquire_provider(owner, config)
                 try:
-                    # After issue #39 the transport-facing model_provider is derived
-                    # from provider_identity, not the historical "ollama" default.
-                    self.assertEqual(adapter.model_provider, config.provider_identity["provider"])
+                    # #39 single-source binding: model_provider is the profile's
+                    # declared model_provider (here the loopback "ollama" default),
+                    # never silently derived from provider_identity["provider"].
+                    self.assertEqual(adapter.model_provider, "ollama")
                     self.assertEqual(adapter.model, config.provider_identity["model"])
                     self.assertEqual(adapter.config_overrides, DEFAULT_CONFIG_OVERRIDES)
                     self.assertEqual(adapter.extra_environment, {})

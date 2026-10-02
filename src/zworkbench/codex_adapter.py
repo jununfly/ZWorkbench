@@ -16,7 +16,6 @@ import os
 from pathlib import Path
 import selectors
 import shutil
-import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -24,6 +23,7 @@ from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .composition import CompositionOwner, InvalidTransition
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
+from .subprocess_supervisor import terminate_process
 
 
 ADAPTER_SCHEMA = "zworkbench-codex-app-server-adapter/v1"
@@ -113,7 +113,10 @@ class CodexAppServerAdapter:
             # The adapter binds transport to provider/model and records endpoint,
             # so these three are required. ``transport`` itself is validated
             # upstream by the DSH runtime (issue #39 / #40 are kept orthogonal),
-            # not re-checked here.
+            # not re-checked here. ``model_provider`` is sourced from the identity
+            # when present (see the assignment below) and is not part of this
+            # completeness gate, because the loopback-default path builds the
+            # identity from the constructor argument instead.
             missing = {"provider", "model", "endpoint"} - set(identity)
             if missing:
                 raise CodexAdapterError(
@@ -124,7 +127,17 @@ class CodexAppServerAdapter:
                 )
         self.provider_identity = identity
         self.model = self._require_text(str(identity["model"]), "model")
-        self.model_provider = self._require_text(str(identity["provider"]), "model_provider")
+        # #39 single-source binding (S1 step-0 gate): model_provider is sourced from
+        # provider_identity when present, otherwise from the explicit constructor
+        # argument (which is what built the loopback-default identity). It is NEVER
+        # silently derived from identity["provider"]: doing so conflates the
+        # profile/provider NAME with the model-provider CATEGORY and breaks the
+        # identity<->transport binding. E.g. a profile named "ark-test" with
+        # model_provider "custom" must record model_provider "custom", not "ark-test".
+        model_provider_value = identity.get("model_provider")
+        if model_provider_value is None:
+            model_provider_value = model_provider
+        self.model_provider = self._require_text(str(model_provider_value), "model_provider")
         self.event_log = Path(event_log).expanduser().resolve() if event_log else self.code_home.parent / "codex-events.jsonl"
         self.client_name = self._require_text(client_name, "client_name")
         self.client_version = self._require_text(client_version, "client_version")
@@ -490,18 +503,7 @@ class CodexAppServerAdapter:
         stderr = ""
         try:
             if process.poll() is None:
-                try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
-                try:
-                    process.wait(timeout=6)
-                except subprocess.TimeoutExpired:
-                    try:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
-                    process.wait(timeout=6)
+                terminate_process(process, term_timeout=6.0, kill_timeout=6.0)
             stderr_bytes = process.stderr.read() if process.stderr else b""
             stderr = stderr_bytes.decode("utf-8", errors="replace") if isinstance(stderr_bytes, bytes) else stderr_bytes
             stderr_path = self.event_log.with_name("codex-stderr.log")

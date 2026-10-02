@@ -309,12 +309,14 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
             "provider": profile.name,
             "model": profile.model,
             "endpoint": profile.base_url,
+            "model_provider": profile.model_provider,
         }
     else:
         provider_identity = {
             "provider": args.provider,
             "model": args.model,
             "endpoint": args.endpoint,
+            "model_provider": "ollama",
         }
     config = LocalReadOnlyRunConfig(
         case_root=paths["case_root"],
