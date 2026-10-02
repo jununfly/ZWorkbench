@@ -94,9 +94,17 @@ async function settle(
 
 /**
  * Create the DSH Session identity and announce the two-phase bootstrap.
+ *
+ * Returns a Cordis disposer (AGENTS §4: every plugin contribution needs an
+ * explicit disposer). This bundle is a one-shot process — the Session it
+ * creates is flushed to DSH_HOME and owned by the external ZWorkbench runtime
+ * (the residual owner), so the disposer only releases the in-process handle.
+ * No background tasks or listeners are registered by this plugin.
+ *
  * @param ctx - the profile context carrying Session, Loader, and launcher exit services.
+ * @returns the disposer Cordis invokes when this plugin's fiber is disposed.
  */
-export function apply(ctx: Context): void {
+export function apply(ctx: Context): () => void {
   const exit = ctx.get('appExit')
   if (exit === undefined) {
     throw new Error('zworkbench-bootstrap: the launcher must provide ctx.appExit before the tree mounts')
@@ -120,4 +128,13 @@ export function apply(ctx: Context): void {
     payload: { status: 'started', profile_id: profileId },
   })
   void settle(ctx, session, profileId, identity, exit).catch(error => { fail(error, exit) })
+
+  // Cordis disposer. The Session is durable in DSH_HOME; its residual owner is
+  // the external ZWorkbench runtime, not this fiber. There are no background
+  // tasks or listeners to tear down, so the only in-process action is releasing
+  // the local handle. We must NOT delete the flushed Session here.
+  return () => {
+    // intentionally nothing to tear down in-process: the durable Session's
+    // residual owner is the external ZWorkbench runtime.
+  }
 }
