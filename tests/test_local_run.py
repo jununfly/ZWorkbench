@@ -204,5 +204,108 @@ class LocalReadOnlyRunPreflightTests(unittest.TestCase):
             )
 
 
+    def test_provider_remote_endpoint_without_authorization_is_denied(self) -> None:
+        # Isolated negative-path assertion for the `provider_not_loopback` branch
+        # (ADR 0009 L44: every deny branch needs its own negative assertion).
+        # All other inputs are valid; only the remote, unauthorized endpoint fires.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "ark",
+                    "model": "coding-model",
+                    "endpoint": "https://ark.example.com/api/coding/v3",
+                },
+            )
+
+            result = preflight(config)
+
+            self.assertEqual(result.status, "deny")
+            self.assertEqual(
+                {violation.code for violation in result.violations},
+                {"provider_not_loopback"},
+            )
+
+    def test_provider_credential_value_in_config_is_denied(self) -> None:
+        # Isolated negative-path assertion for the `provider_credentials_present`
+        # branch. A credential *value* must be denied even when the endpoint is a
+        # safe loopback (so no other branch should co-fire).
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                    "api_key": "sk-secret-value-must-not-be-recorded",
+                },
+            )
+
+            result = preflight(config)
+
+            self.assertEqual(result.status, "deny")
+            self.assertEqual(
+                {violation.code for violation in result.violations},
+                {"provider_credentials_present"},
+            )
+            self.assertNotIn(
+                "sk-secret-value-must-not-be-recorded",
+                json.dumps(result.to_dict(), sort_keys=True),
+            )
+
+    def test_provider_identity_missing_required_field_is_denied(self) -> None:
+        # Negative-path assertion for the `provider_identity_missing_or_invalid`
+        # branch. A missing required field must fail closed. (Note: the loopback
+        # check is coupled to identity validity, so `provider_not_loopback` may
+        # co-fire; the assertion only requires this branch to be present.)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "ark",
+                    "endpoint": "http://127.0.0.1:11434",
+                    # `model` intentionally absent
+                },
+            )
+
+            result = preflight(config)
+
+            self.assertEqual(result.status, "deny")
+            self.assertIn(
+                "provider_identity_missing_or_invalid",
+                {violation.code for violation in result.violations},
+            )
+
+
 if __name__ == "__main__":
     unittest.main()
