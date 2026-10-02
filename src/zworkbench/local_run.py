@@ -217,15 +217,29 @@ class LocalReadOnlyRunOrchestrator:
                     },
                     timeout=timeout,
                 )
-                return LocalReadOnlyRunResult(
+                result = LocalReadOnlyRunResult(
                     "completed",
                     run_id,
                     admission,
                     execution,
                     owner.state_digest(),
                 )
+            except Exception:
+                # Even a failed run engaged the provider; record the owner-owned,
+                # unknown/delegated exit accounting before re-raising.
+                try:
+                    owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
+                except Exception:
+                    pass
+                raise
             finally:
                 adapter.close()
+            # Run closure: record the owner-owned provider-exit accounting. The
+            # default (loopback/fake) path has no real remote provider, so the
+            # caliber is unknown/delegated by construction — no remote zero-residue
+            # proof is ever claimed.
+            owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
+            return result
 
 
 def _require_text(value: str, name: str) -> str:

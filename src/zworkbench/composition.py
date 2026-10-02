@@ -26,6 +26,7 @@ import datetime as _datetime
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -44,6 +45,8 @@ RUN_STATES = frozenset(
     {"created", "running", "waiting_approval", "recovering", "completed", "failed", "safe_stopped"}
 )
 EFFECT_STATES = frozenset({"claimed", "completed", "uncertain", "retryable", "unknown"})
+
+_HEX64 = re.compile(r"[0-9a-fA-F]{64}\Z")
 
 
 class CompositionError(Exception):
@@ -661,7 +664,7 @@ class CompositionOwner:
         }
         findings: List[Dict[str, Any]] = []
 
-        child_tables = ("effects", "approvals", "results", "replays", "events")
+        child_tables = ("effects", "approvals", "results", "replays", "events", "provider_exit_ledger")
         for table in child_tables:
             for row in connection.execute(f"SELECT run_id FROM {table}"):
                 child_run = row["run_id"]
@@ -905,6 +908,136 @@ class CompositionOwner:
             )
             return self._decode_row(connection.execute("SELECT * FROM replays WHERE replay_id = ?", (replay_id,)).fetchone(), {"provider_identity_json": "provider_identity", "metadata_json": "metadata"})
 
+    # ------------------------------------------------------------------
+    # Provider-side exit ledger (1-6-6) — owner-owned, unknown/delegated caliber
+    # ------------------------------------------------------------------
+
+    def record_provider_exit_ledger(
+        self,
+        run_id: str,
+        provider_identity: Mapping[str, Any],
+        *,
+        caliber: str = "unknown/delegated",
+        local_state_fingerprint: str = "unknown",
+    ) -> Dict[str, Any]:
+        """Record the owner-owned provider-side exit accounting for a run.
+
+        The default (loopback/fake) product path has no real remote provider,
+        so the caliber is ``unknown/delegated`` by construction: this ledger
+        never claims a remote zero-residue proof.  It records only that the run
+        used the named provider, with every resource status ``unknown`` and the
+        remote residue explicitly ``unknown/delegated``.  This satisfies the
+        AGENTS.md constraint that the exit ledger belongs to the single durable
+        owner, and keeps the default-path accounting distinct from the opt-in
+        Ark inventory wizard (which remains the separate owner-authorized
+        evidence flow for real providers).
+        """
+
+        self._require_text(run_id, "run_id")
+        provider_identity_value = dict(provider_identity or {})
+        self._reject_raw_credentials(provider_identity_value, "provider_identity")
+        if local_state_fingerprint != "unknown":
+            self._require_text(local_state_fingerprint, "local_state_fingerprint")
+            if not _HEX64.fullmatch(local_state_fingerprint):
+                raise ValueError("local_state_fingerprint must be 64-char SHA-256 hex or 'unknown'")
+        provider = str(provider_identity_value.get("provider") or "unknown")
+        endpoint = str(provider_identity_value.get("endpoint") or "unknown")
+        statuses = {
+            "task_or_run": "unknown",
+            "webhook_or_integration": "unknown",
+            "backup_or_snapshot": "unknown",
+            "coding_data": "unknown",
+            "api_key": "unknown",
+            "billing": "unknown",
+            "subscription": "unknown",
+            "account": "unknown",
+            "local_case": "unknown",
+            "exit_action": "unknown",
+        }
+        surface_observations = {
+            "task_or_run": "unknown",
+            "backup_or_snapshot": "unknown",
+            "retention_policy": "unknown",
+        }
+        unknown_fields = sorted(statuses.keys())
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            connection.execute(
+                """
+                INSERT INTO provider_exit_ledger(
+                    ledger_id, run_id, provider, endpoint, account_scope,
+                    exit_mode, exit_status, provider_remote_zero_residue,
+                    surface_observations_json, statuses_json, unknown_fields_json,
+                    local_state_fingerprint, recorded_at
+                ) VALUES (?, ?, ?, ?, 'unknown', 'inventory-only', 'unknown/safe-stop',
+                          'unknown/delegated', ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    provider,
+                    endpoint,
+                    self._canonical_json(surface_observations),
+                    self._canonical_json(statuses),
+                    self._canonical_json(unknown_fields),
+                    local_state_fingerprint,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "provider.exit.ledger.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "provider": provider,
+                    "caliber": caliber,
+                    "provider_remote_zero_residue": "unknown/delegated",
+                },
+            )
+        return self.get_provider_exit_ledger(ledger_id)
+
+    def get_provider_exit_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one provider-exit ledger entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM provider_exit_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider exit ledger entry not found: {ledger_id}")
+        return self._decode_row(
+            row,
+            {
+                "surface_observations_json": "surface_observations",
+                "statuses_json": "statuses",
+                "unknown_fields_json": "unknown_fields",
+            },
+        )
+
+    def provider_exit_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all provider-exit ledger entries for a run, in recorded order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM provider_exit_ledger WHERE run_id = ? ORDER BY recorded_at, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [
+            self._decode_row(
+                row,
+                {
+                    "surface_observations_json": "surface_observations",
+                    "statuses_json": "statuses",
+                    "unknown_fields_json": "unknown_fields",
+                },
+            )
+            for row in rows
+        ]
+
     def events(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return recorded events; this is a recorded view, not live replay."""
 
@@ -936,6 +1069,17 @@ class CompositionOwner:
             "results": [cls._decode_row(row, {"value_json": "value"}) for row in connection.execute("SELECT * FROM results ORDER BY created_at, result_id")],
             "replays": [cls._decode_row(row, {"provider_identity_json": "provider_identity", "metadata_json": "metadata"}) for row in connection.execute("SELECT * FROM replays ORDER BY created_at, replay_id")],
             "events": [cls._decode_row(row, {"payload_json": "payload"}) for row in connection.execute("SELECT * FROM events ORDER BY seq")],
+            "provider_exit_ledger": [
+                cls._decode_row(
+                    row,
+                    {
+                        "surface_observations_json": "surface_observations",
+                        "statuses_json": "statuses",
+                        "unknown_fields_json": "unknown_fields",
+                    },
+                )
+                for row in connection.execute("SELECT * FROM provider_exit_ledger ORDER BY recorded_at, ledger_id")
+            ],
         }
 
     def state_digest(self) -> str:
@@ -1152,6 +1296,22 @@ class CompositionOwner:
             );
             CREATE INDEX IF NOT EXISTS events_by_run ON events(run_id, seq);
             CREATE INDEX IF NOT EXISTS results_by_run ON results(run_id, created_at);
+            CREATE TABLE IF NOT EXISTS provider_exit_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                provider TEXT NOT NULL,
+                endpoint TEXT NOT NULL,
+                account_scope TEXT NOT NULL,
+                exit_mode TEXT NOT NULL,
+                exit_status TEXT NOT NULL,
+                provider_remote_zero_residue TEXT NOT NULL,
+                surface_observations_json TEXT NOT NULL,
+                statuses_json TEXT NOT NULL,
+                unknown_fields_json TEXT NOT NULL,
+                local_state_fingerprint TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS provider_exit_ledger_by_run ON provider_exit_ledger(run_id, recorded_at);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             PRAGMA user_version = 1;
             """
@@ -1372,7 +1532,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events"}
+        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
