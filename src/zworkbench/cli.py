@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import threading
 from pathlib import Path
 import re
@@ -359,6 +360,11 @@ def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
 
 def _run_command(args: argparse.Namespace) -> int:
     run_id = args.run_id or "zworkbench-run-" + uuid.uuid4().hex
+    # `--prompt -` reads the task prompt from stdin so it never lands in the
+    # process argument list (which is world-readable via ps). The prompt is
+    # still subject to the same credential-pattern admission check below.
+    if args.prompt == "-":
+        args.prompt = sys.stdin.read()
     if args.timeout <= 0:
         payload = _denied_payload(
             run_id,
