@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a0f786541c-8cde611ff7",
       "label": "ZWorkbench v1 真实可用推进路线图",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -290,7 +290,7 @@
       "id": "1-9",
       "uid": "01a0f786e34f-590190bc0c",
       "label": "S4 Git push 单独门",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -311,13 +311,27 @@
       "id": "1-10",
       "uid": "01a0f786e424-58db85363d",
       "label": "U5 v1 验收 checklist（codex identity UNKNOWN）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
-      "children": [],
-      "decisions": [],
+      "children": [
+        "1-10-1"
+      ],
+      "decisions": [
+        {
+          "q": "1-10 的 codex identity UNKNOWN 卡点具体指什么？如何解？",
+          "answer": "指 U5 v1 验收中 codex worker 身份在真实 ark 读路径下尚未端到端确认完全解析。两层绑定需验证：(1) provider_identity 单源绑定(issue #39, codex_adapter：provider/model/endpoint 缺失即 fail-closed, model_provider 不反向派生)；(2) composition durable identity graph 解析(F13/1-2-5：detect_identity_violations 扫描未解析引用, safe_stop_on_identity_violation 触发 identity_unresolved)。最近真实 ark 读 run 已 status=completed、provider_identity model_provider=custom、无 safe_stopped，但需对其实跑 detect_identity_violations 确认零 unresolved reference 才能把 UNKNOWN 翻 PASS。属 1-10 验收活动(读/核验,不改产品代码),scope=acceptance。",
+          "note": ""
+        },
+        {
+          "q": "真实 ark 读 run 下 codex identity 是否解析（U5 卡点验证结果）",
+          "answer": "PASS。run_id=zw-ark-read-r2（真实 ark 读, provider_profile=custom, --host-enforcement），owner.detect_identity_violations 返回 [], VIOLATION_COUNT=0；provider_identity={provider:custom, model:ark-code-latest, endpoint:ark.cn-beijing.volces.com/api/coding/v3, model_provider:custom}。codex identity 在真实 ark 读路径下端到端解析，无 unresolved reference，UNKNOWN→PASS。残留观察(与 identity 无关)：本机外部 seatbelt 下 codex 子进程报 sandbox_apply EPERM、无法读 workspace 文件，属 host sandbox 边界问题，建议单独立项，不阻塞 U5 identity 判据。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-1": {
       "id": "1-1-1",
@@ -887,11 +901,23 @@
       "notes": "【症状·精确报错】真实 ark 读阶段已接通(1-9-1)，但模型执行 shell 读命令时被拦：模型原文='无法列出目录：当前只读沙箱在执行命令前报错：sandbox-exec: sandbox_apply: Operation not permitted'。即 ls/cat 等只读文件读取全部失败。【根因】codex 给自己的 shell 子进程套 macOS seatbelt(sandbox-exec)；当 codex 进程树已被外层 seatbelt 限制时，嵌套 sandbox_apply 返回 EPERM，所有基于 shell 的文件读取失败。这正是 host_enforcer.py:17-21 记录的嵌套沙箱 EPERM（进程自身已 seatbelt 则不能再 nest）。本机外层 seatbelt 来自 Bash 工具沙箱层；即便 dangerouslyDisableSandbox 也只绕过 WorkBuddy 命令决策层，codex 仍处受限进程树。【关键约束·已验证】codex_adapter 用 'codex app-server --listen stdio://' 启动；app-server 模式下全局 -s/--sandbox 标志不被接受(error: unexpected argument '-s')，沙箱策略只能经 config 覆盖(sandbox_permissions / sandbox_mode，即 -c 'key=value' 或 config.toml)控制。【修复方向 A·codex 内部最小改】-c 'sandbox_permissions=[\"disk-full-read-access\"]' 或 sandbox_mode='read-only' 放开读。仅当 codex 完全非 seatbelt 时有效；对本机嵌套 EPERM 无效。【修复方向 B·对齐产品架构·推荐】让 ZWorkbench 成为唯一沙箱权威：把已写但未接线的 host_enforcer.py(ADR 0008) seatbelt(read-only) 包到 codex 子进程(spawn 处接线)，并给 codex 传 --dangerously-bypass-approvals-and-sandbox(全局标志，需验证 app-server 调用位置)关闭其内部嵌套沙箱。外层 seatbelt=唯一事实源，既解 EPERM 又符合只读强制不变式；host_enforcer 已有拒绝写/网测试可复用。【验收】重跑真实 ark 读阶段(读任务如'列文件为 JSON')，模型经 ls/cat 成功、run 完成、无 safe_stopped、外层 seatbelt 证明无写/网；preflight 不变。【实测结论·2026-10-05】方向 B 代码已全链落地：CLI→LocalReadOnlyRunConfig→HostCapabilityFacade→CodexAppServerAdapter 透传 host_enforcement；command() 在 host_enforcement 时前置 --dangerously-bypass-approvals-and-sandbox；_build_spawn_argv 探测 enforcer(本机 EPERM→回退纯 bypass 标志并记 adapter.host_enforcer_unavailable)；45 单测全绿。真实 ark run 验证：(1) 确认 --dangerously-bypass 标志确实进入 spawn argv；(2) baseline(workspace 未信任) 与 trust(workspace 加 [projects.<ws>] trust_level=trusted) 两次 run 均报 sandbox-exec: sandbox_apply: Operation not permitted(exit 71)，模型 ls/cat 全部失败、README 内唯一标记未读出。结论：该 EPERM 为结构性环境限制——codex 进程树已被外层 seatbelt(WorkBuddy.app macOS App Sandbox / Bash 工具沙箱层)限制，macOS 禁止已 seatbelt 进程再 sandbox_apply 嵌套沙箱；codex shell 工具无论项目是否信任、有无 bypass 标志都 sandbox-exec，故 EPERM 必现。故 1-9-2 原始验收(模型能 ls/cat 读文件)在本 session 沙箱上下文下不可达。方向 B 代码正确且为必要架构改进(单一沙箱权威 + 只读强制不变式 + fail-closed 回退)，但不足以恢复 shell 读。【处置·2026-10-05·zj 拍板 a】尊重本机 seatbelt，将 EPERM 记为可接受环境约束(非 ZWorkbench 缺陷)。机制已交付：host_enforcement 全链透传 + 单一沙箱权威 + 只读强制不变式 + fail-closed 回退均已落地并通过单测；真实 shell 读受 Host seatbelt 嵌套限制属 Host OS 保护生效，不在 ZWorkbench 责任域。1-9-2 标记为 completed(机制/架构闭环)，真实 ark 读阶段在本会话沙箱上下文退回 loopback-only。若未来确需真实 shell 读，承接方式为独立切片'harness 读能力'(codex 经 RPC 回调 adapter 读文件，不产生嵌套 sandbox_apply)，不在此节点重开。改动均未提交，等 checkpoint。",
       "layer": "plan",
       "rounds": 2
+    },
+    "1-10-1": {
+      "id": "1-10-1",
+      "uid": "01a10ae7d180-aa1d235e68",
+      "label": "codex identity 解析验证（★ 卡点）：真实 ark 读路径 durable identity graph 零 unresolved reference",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-05 14:30:00",
+    "updated": "2026-10-05 15:26:33",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
