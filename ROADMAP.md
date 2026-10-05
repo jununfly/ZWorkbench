@@ -1,9 +1,9 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-05 14:30:00
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-05 15:26:33
 
-[~][X+] 1. ZWorkbench v1 真实可用推进路线图
+[x][X+] 1. ZWorkbench v1 真实可用推进路线图
 ├── [x][X+] 1-1. 已闭环结论（讨论沉淀 · 参考锚点）
 │   ├── [x][X+] 1-1-1. make-it-usable 四子文档全 DONE_WITH_CONCERNS
 │   ├── [x][X+] 1-1-2. sub-01 Q3 选边 (i)/(ii) ARK 实测闭合
@@ -42,13 +42,13 @@
 │   ├── [x][X+] 1-8-2. 价值基线测量工具（采集模板 + 聚合器，n=10 默认路径，与 C1-6 并表）
 │   ├── [x][X+] 1-8-3. N=10 dogfood 实测执行（zj 手动，逐轮填采集表）
 │   └── [x][X+] 1-8-4. 闸门判定（三层 AND 门 → 开/不开 S4，R3 标 implemented 或维持 target）
-├── [~][X+] 1-9. S4 Git push 单独门
+├── [x][X+] 1-9. S4 Git push 单独门
 │   ├── [x][X+] 1-9-1. 接通本机真实 ark 读阶段执行路径（解 CodexProtocolError safe_stopped）
 │   └── [x][X+] 1-9-2. 让真实 ark 读阶段能真正读取文件（解 codex 内部 sandbox-exec 限制）
-└── [ ][X+] 1-10. U5 v1 验收 checklist（codex identity UNKNOWN）
+└── [x][X+] 1-10. U5 v1 验收 checklist（codex identity UNKNOWN）
+    └── [x][X+] 1-10-1. codex identity 解析验证（★ 卡点）：真实 ark 读路径 durable identity graph 零 unresolved reference
 
 ### 下一步可开工（ready 前 3）
 
-- 1-10. U5 v1 验收 checklist（codex identity UNKNOWN） [ ]
 - 1-2-1. 选项A：v1 维持 Codex-only 只读回退基线 [ ]
 <!-- ROADMAP_SECTION_END -->
