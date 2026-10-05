@@ -84,6 +84,18 @@ def _parser() -> argparse.ArgumentParser:
         help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
     )
     run.add_argument("--timeout", type=float, default=45.0, help="maximum turn wait in seconds")
+    run.add_argument(
+        "--host-enforcement",
+        action="store_true",
+        default=False,
+        help=(
+            "make ZWorkbench the single sandbox authority (ADR 0008): wrap the "
+            "Codex child in a macOS seatbelt and disable Codex's internal nested "
+            "sandbox. On hosts already under an external seatbelt (e.g. the agent "
+            "exec sandbox) the seatbelt wrap is skipped and only Codex's internal "
+            "sandbox is disabled, leaving the outer seatbelt as the boundary."
+        ),
+    )
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
     run.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
@@ -375,9 +387,11 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
     }
     authorized_providers = frozenset()
     provider_profile: Optional[ProviderProfile] = None
+    provider_config_path: Optional[Path] = None
     if args.provider_profile:
         config_path = _resolve(Path(args.provider_config)) if args.provider_config else (Path.home() / ".codex" / "config.toml")
         profiles = load_provider_profiles(config_path)
+        provider_config_path = config_path
         if args.provider_profile not in profiles:
             raise ValueError(
                 "provider profile {0!r} not found in {1}".format(args.provider_profile, config_path)
@@ -408,6 +422,8 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
         provider_identity=provider_identity,
         authorized_providers=authorized_providers,
         provider_profile=provider_profile,
+        provider_config_path=provider_config_path,
+        host_enforcement=args.host_enforcement,
     )
     return config
 

@@ -20,10 +20,12 @@ import shutil
 import socket
 import subprocess
 import time
+import tomllib
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .composition import CompositionOwner, InvalidTransition
+from .host_enforcer import _enforcer_binary, build_seatbelt_profile
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 from .subprocess_supervisor import terminate_process
 
@@ -152,6 +154,8 @@ class CodexAppServerAdapter:
         client_name: str = "zworkbench-codex-adapter",
         client_version: str = ADAPTER_SCHEMA,
         extra_environment: Optional[Mapping[str, str]] = None,
+        provider_config_path: Optional[os.PathLike[str] | str] = None,
+        host_enforcement: bool = False,
     ) -> None:
         self.owner = owner
         self.executable = self._resolve_executable(executable)
@@ -208,6 +212,21 @@ class CodexAppServerAdapter:
         self.client_name = self._require_text(client_name, "client_name")
         self.client_version = self._require_text(client_version, "client_version")
         self.extra_environment = dict(extra_environment or {})
+        # Explicit Codex config path (the real Provider's config.toml). When set,
+        # start() stages it into CODEX_HOME (the case-local code_home dir) so Codex
+        # discovers the [model_providers.<name>] table. Codex has no --config <file>
+        # flag (its -c is key=value only); it reads $CODEX_HOME/config.toml. So we
+        # must place the provider config there. Without this, a custom
+        # model_provider is unknown to Codex and the turn fails closed
+        # (CodexProtocolError -> safe_stopped). See roadmap node 1-9-1.
+        self.provider_config_path = Path(provider_config_path).expanduser().resolve() if provider_config_path else None
+        # ADR 0008 host enforcement (roadmap 1-9-2): when set, ZWorkbench becomes
+        # the single sandbox authority. command() disables Codex's own nested
+        # sandbox (bypass flag) and start() tries to wrap Codex in a macOS
+        # seatbelt; if the OS enforcer cannot apply (process tree already
+        # seatbelt-sandboxed), it falls back to the bypass flag alone, leaving
+        # the external seatbelt as the boundary. Never launch unsandboxed.
+        self.host_enforcement = bool(host_enforcement)
         self.process: Optional[subprocess.Popen[bytes]] = None
         self.selector = selectors.DefaultSelector()
         self.stdout_buffer = bytearray()
@@ -228,8 +247,14 @@ class CodexAppServerAdapter:
         self.code_home.mkdir(parents=True, exist_ok=True)
         self.cwd.mkdir(parents=True, exist_ok=True)
         self.event_log.parent.mkdir(parents=True, exist_ok=True)
+        # Stage the real Provider's config into CODEX_HOME so Codex can discover
+        # [model_providers.<name>]. Codex reads $CODEX_HOME/config.toml; it has no
+        # --config <file> flag. Keeps CODEX_HOME case-local (state isolation) while
+        # still giving Codex the provider config + inline token. See node 1-9-1.
+        if self.provider_config_path is not None:
+            self._stage_provider_config()
         environment = self._build_environment()
-        command = self.command()
+        command = self._build_spawn_argv()
         try:
             self.process = subprocess.Popen(
                 command,
@@ -256,15 +281,124 @@ class CodexAppServerAdapter:
             self.close()
             raise
 
+    def _stage_provider_config(self) -> None:
+        """Copy the resolved provider config into CODEX_HOME/config.toml.
+
+        Codex reads its base config from ``$CODEX_HOME/config.toml``; there is no
+        ``--config <file>`` flag, so the only way to hand Codex a custom provider
+        (and its inline bearer token) while keeping CODEX_HOME case-local is to
+        stage the file there. Idempotent: never clobbers an existing staged file.
+        Relative sibling files referenced by the config (e.g. ``model_catalog_json``)
+        are copied alongside so Codex does not error on a missing path.
+        """
+
+        assert self.provider_config_path is not None
+        staged = self.code_home / "config.toml"
+        if staged.exists():
+            return
+        shutil.copyfile(self.provider_config_path, staged)
+        try:
+            with self.provider_config_path.open("rb") as handle:
+                data = tomllib.load(handle)
+            catalog = data.get("model_catalog_json")
+            if isinstance(catalog, str) and not os.path.isabs(catalog):
+                src = self.provider_config_path.parent / catalog
+                if src.is_file():
+                    shutil.copyfile(src, self.code_home / catalog)
+        except Exception:
+            # Staging the catalog is best-effort; a missing catalog is non-fatal
+            # for the read-only coding task and Codex will warn, not abort.
+            pass
+
     def command(self) -> list[str]:
         """Return the exact argv used to launch the fixed app-server."""
 
-        command = [str(self.executable), "app-server", "--listen", "stdio://"]
+        command = [str(self.executable)]
+        if self.host_enforcement:
+            # Roadmap node 1-9-2 (direction B): make ZWorkbench the single
+            # sandbox authority. This global flag tells Codex it is externally
+            # sandboxed so it should not re-seatbelt its own shell children via
+            # ``sandbox-exec`` (which fails with EPERM when the Codex process
+            # tree is already seatbelt-sandboxed). It additionally bypasses
+            # approvals. NOTE: in app-server mode the sandbox policy is NOT
+            # overridable with a ``-s/--sandbox`` flag (unexpected argument) and
+            # there is no ``sandbox_mode="dangerously-disable"`` value — the only
+            # lever is this global bypass flag plus the outer seatbelt wrap done
+            # in ``_build_spawn_argv``. Empirically the flag is necessary but not
+            # sufficient to restore shell file reads when Codex itself is launched
+            # under a host seatbelt (macOS forbids nested ``sandbox_apply``).
+            command.append("--dangerously-bypass-approvals-and-sandbox")
+        command.extend(("app-server", "--listen", "stdio://"))
         for value in self.config_overrides:
             command.extend(("-c", value))
         for feature in self.disabled_features:
             command.extend(("--disable", feature))
         return command
+
+    def _build_spawn_argv(self) -> list[str]:
+        """Return the argv used to launch the app-server process.
+
+        When ``host_enforcement`` is set, Codex's internal sandbox is already
+        disabled in :meth:`command` (bypass flag). We additionally try to make
+        ZWorkbench the single sandbox authority by wrapping Codex in a macOS
+        seatbelt (ADR 0008). If the OS enforcer cannot apply (e.g. the process
+        tree is already seatbelt-sandboxed by an external host), we fall back to
+        launching Codex with only the bypass flag, leaving the external seatbelt
+        as the enforcement boundary. This is exactly Codex's documented
+        "externally sandboxed" use. We never launch Codex unsandboxed in the
+        absolute sense: either the ZWorkbench seatbelt or the outer seatbelt
+        applies.
+        """
+
+        command = self.command()
+        if not self.host_enforcement:
+            return command
+        profile = build_seatbelt_profile(
+            allow_writes=[str(self.code_home), str(self.event_log.parent)],
+            allow_network=True,
+        )
+        enforcer_bin = _enforcer_binary()
+        if self._host_enforcer_can_apply(profile, enforcer_bin):
+            return [enforcer_bin, "-p", profile, *command]
+        self._record(
+            "adapter.host_enforcer_unavailable",
+            "warning",
+            {
+                "detail": (
+                    "OS enforcer could not apply (nested sandbox EPERM); "
+                    "relying on the external seatbelt as the boundary"
+                ),
+                "codex_sandbox_disabled": True,
+            },
+        )
+        return command
+
+    @staticmethod
+    def _host_enforcer_can_apply(profile: str, enforcer_bin: str) -> bool:
+        """Probe whether the OS enforcer can apply ``profile`` to a child.
+
+        Mirrors host_enforcer.spawn_sandboxed's fail-closed detection: a
+        ``sandbox_apply`` error in stderr means the process tree is already
+        seatbelt-sandboxed and the enforcer cannot nest.
+        """
+
+        if not os.access(enforcer_bin, os.X_OK):
+            return False
+        # /bin/true is missing on macOS (true lives at /usr/bin/true); use a
+        # portable probe target so the apply-check works cross-platform.
+        probe_cmd = shutil.which("true") or "/usr/bin/true"
+        try:
+            proc = subprocess.run(
+                [enforcer_bin, "-p", profile, probe_cmd],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            return False
+        if proc.returncode != 0 and "sandbox_apply" in proc.stderr:
+            return False
+        return proc.returncode == 0
 
     def notify(self, method: str, params: Mapping[str, Any]) -> None:
         message = {"jsonrpc": "2.0", "method": method, "params": dict(params)}

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
+import os
 import sys
 import tempfile
 import textwrap
@@ -353,6 +355,277 @@ class CodexFailureClassificationTests(unittest.TestCase):
                 with self.assertRaises(CodexProtocolError):
                     adapter.execute("run-unk", "prompt", timeout=2.0)
             self._assert_classification(owner, "run-unk", FAILURE_UNKNOWN)
+
+
+class CodexProviderConfigPassthroughTests(unittest.TestCase):
+    """roadmap 1-9-1: a real Provider profile must reach Codex via --config.
+
+    The historical bug: command() never passed --config and CODEX_HOME was a
+    case-local empty dir, so Codex never discovered [model_providers.<name>];
+    model_provider="custom" was unknown and the turn failed closed
+    (CodexProtocolError -> safe_stopped). These tests prove the adapter now
+    advertises --config and a spawned app-server actually receives it, and the
+    turn completes without safe_stopped.
+    """
+
+    def _fake_codex(self, root: Path, marker: Path) -> Path:
+        # The fake app-server records the argv it was launched with (so we can
+        # assert --config reached the real spawn path) and completes a turn.
+        source = textwrap.dedent(
+            '''
+            import json
+            import sys
+            from pathlib import Path
+
+            Path({marker!r}).write_text(json.dumps(sys.argv[1:]), encoding="utf-8")
+
+            THREAD_ID = "cfg-thread"
+            TURN_ID = "cfg-turn"
+
+            def send(message):
+                sys.stdout.write(json.dumps(message, separators=(",", ":")) + "\\n")
+                sys.stdout.flush()
+
+            for line in sys.stdin:
+                message = json.loads(line)
+                if "id" not in message:
+                    continue
+                request_id = message["id"]
+                method = message.get("method")
+                if method == "initialize":
+                    send({{"jsonrpc": "2.0", "id": request_id, "result": {{}}}})
+                elif method == "thread/start":
+                    send({{"jsonrpc": "2.0", "id": request_id, "result": {{"thread": {{"id": THREAD_ID}}}}}})
+                elif method == "turn/start":
+                    send({{"jsonrpc": "2.0", "id": request_id, "result": {{"turn": {{"id": TURN_ID}}}}}})
+                    send({{"jsonrpc": "2.0", "method": "turn/completed",
+                          "params": {{"threadId": THREAD_ID, "turn": {{"id": TURN_ID, "status": "completed"}}}}}})
+            '''
+        ).format(marker=str(marker))
+        executable = root / "fake-codex"
+        executable.write_text("#!{0}\n{1}".format(sys.executable, source), encoding="utf-8")
+        executable.chmod(0o755)
+        return executable
+
+    def test_command_omits_config_flag_without_provider_config(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            with CompositionOwner(root / "owner.sqlite3") as owner:
+                adapter = CodexAppServerAdapter(
+                    owner,
+                    executable,
+                    root / "codex-home",
+                    root / "workspace",
+                    provider_identity={
+                        "provider": "fake-loopback",
+                        "model": "fake-model",
+                        "endpoint": "http://127.0.0.1:11434",
+                        "transport": "loopback-only",
+                    },
+                    event_log=root / "events.jsonl",
+                )
+                self.assertNotIn("--config", adapter.command())
+
+    def test_provider_config_staged_into_codex_home_and_turn_completes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "provider-config.toml"
+            config_path.write_text('model = "ark-code-latest"\n', encoding="utf-8")
+            marker = root / "received_argv.txt"
+            executable = self._fake_codex(root, marker)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            with CompositionOwner(root / "owner.sqlite3") as owner:
+                adapter = CodexAppServerAdapter(
+                    owner,
+                    executable,
+                    root / "codex-home",
+                    workspace,
+                    provider_identity={
+                        "provider": "custom",
+                        "model": "ark-code-latest",
+                        "endpoint": "https://ark.example.com/v1",
+                        "transport": "remote",
+                    },
+                    provider_config_path=config_path,
+                    event_log=root / "events.jsonl",
+                )
+                # Codex has no --config <file> flag, so command() must NOT emit it.
+                self.assertNotIn("--config", adapter.command())
+                with adapter:
+                    execution = adapter.execute("run-cfg", "return fixture-ok", timeout=2.0)
+                self.assertEqual(execution.status, "completed")
+                self.assertEqual(owner.get_run("run-cfg")["status"], "completed")
+                # The provider config was staged into CODEX_HOME so Codex would
+                # discover [model_providers.<name>] (roadmap 1-9-1).
+                staged = root / "codex-home" / "config.toml"
+                self.assertTrue(staged.is_file())
+                self.assertEqual(
+                    staged.read_text(encoding="utf-8"),
+                    config_path.read_text(encoding="utf-8"),
+                )
+
+
+class CodexHostEnforcementTests(unittest.TestCase):
+    """roadmap 1-9-2: ZWorkbench becomes the single sandbox authority.
+
+    ``host_enforcement`` disables Codex's internal nested sandbox (bypass flag)
+    and wraps Codex in a macOS seatbelt when the OS enforcer can apply. The
+    enforcer binary is overridable via ``ZWB_ENFORCER_BIN`` so the wrap/apply
+    path is testable without OS seatbelt access (mirrors host_enforcer).
+    """
+
+    def _write_fake_enforcer(self, root: Path, *, applies: bool) -> Path:
+        path = root / "fake-sandbox-exec"
+        if applies:
+            # Drop the "-p <profile>" prefix and exec the child: simulate a
+            # successfully applied seatbelt under which the child runs.
+            body = "#!/bin/sh\nshift 2\nexec \"$@\"\n"
+        else:
+            body = (
+                "#!/bin/sh\n"
+                'echo "sandbox-exec: sandbox_apply: Operation not permitted" >&2\n'
+                "exit 1\n"
+            )
+        path.write_text(body, encoding="utf-8")
+        path.chmod(0o755)
+        return path
+
+    def _base_adapter(self, root: Path, *, host_enforcement: bool = False, **kw):
+        workspace = root / "workspace"
+        workspace.mkdir(exist_ok=True)
+        owner = CompositionOwner(root / "owner.sqlite3")
+        identity = kw.pop(
+            "provider_identity",
+            {
+                "provider": "custom",
+                "model": "ark-code-latest",
+                "endpoint": "https://ark.example.com/v1",
+                "transport": "remote",
+            },
+        )
+        return CodexAppServerAdapter(
+            owner,
+            root / "codex",
+            root / "codex-home",
+            workspace,
+            provider_identity=identity,
+            event_log=root / "events.jsonl",
+            host_enforcement=host_enforcement,
+            **kw,
+        )
+
+    def test_command_includes_bypass_flag_only_when_host_enforcement(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "codex").write_text("#!/bin/sh\n", encoding="utf-8")
+            (root / "codex").chmod(0o755)
+            self.assertNotIn(
+                "--dangerously-bypass-approvals-and-sandbox",
+                self._base_adapter(root, host_enforcement=False).command(),
+            )
+            argv = self._base_adapter(root, host_enforcement=True).command()
+            # Global flag must precede the subcommand.
+            self.assertEqual(argv[0], str((root / "codex").resolve()))
+            self.assertEqual(argv[1], "--dangerously-bypass-approvals-and-sandbox")
+            self.assertEqual(argv[2], "app-server")
+            # The global --dangerously-bypass-approvals-and-sandbox flag is the
+            # "externally sandboxed" signal that tells Codex to stop re-seatbelting
+            # its shell children (roadmap 1-9-2). Codex has no sandbox_mode value
+            # that disables sandboxing, so this flag is the disable lever.
+            self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
+
+    def test_build_spawn_argv_wraps_with_seatbelt_when_enforcer_applies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "codex").write_text("#!/bin/sh\n", encoding="utf-8")
+            (root / "codex").chmod(0o755)
+            enforcer = self._write_fake_enforcer(root, applies=True)
+            old = os.environ.get("ZWB_ENFORCER_BIN")
+            os.environ["ZWB_ENFORCER_BIN"] = str(enforcer)
+            try:
+                argv = self._base_adapter(root, host_enforcement=True)._build_spawn_argv()
+            finally:
+                if old is None:
+                    os.environ.pop("ZWB_ENFORCER_BIN", None)
+                else:
+                    os.environ["ZWB_ENFORCER_BIN"] = old
+            self.assertEqual(argv[0], str(enforcer))
+            self.assertEqual(argv[1], "-p")
+            profile = argv[2]
+            self.assertIn("deny default", profile)
+            self.assertIn(
+                '(allow file-write* (literal "{0}"))'.format(str((root / "codex-home").resolve())),
+                profile,
+            )
+            self.assertIn("(allow network-outbound)", profile)
+            # The bypass flag is still present inside the wrapped command.
+            self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
+            self.assertEqual(argv[3], str((root / "codex").resolve()))
+
+    def test_build_spawn_argv_falls_back_when_enforcer_unavailable(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "codex").write_text("#!/bin/sh\n", encoding="utf-8")
+            (root / "codex").chmod(0o755)
+            enforcer = self._write_fake_enforcer(root, applies=False)
+            old = os.environ.get("ZWB_ENFORCER_BIN")
+            os.environ["ZWB_ENFORCER_BIN"] = str(enforcer)
+            try:
+                argv = self._base_adapter(root, host_enforcement=True)._build_spawn_argv()
+            finally:
+                if old is None:
+                    os.environ.pop("ZWB_ENFORCER_BIN", None)
+                else:
+                    os.environ["ZWB_ENFORCER_BIN"] = old
+            # No seatbelt prefix: rely on the external seatbelt as the boundary.
+            self.assertNotEqual(argv[0], str(enforcer))
+            self.assertEqual(argv[0], str((root / "codex").resolve()))
+            self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
+
+    def test_host_enforcement_turn_completes_via_applying_enforcer(self) -> None:
+        # End-to-end: with a fake enforcer that applies, the wrapped spawn runs
+        # and the turn completes; the Codex child received the bypass flag.
+        helper = CodexProviderConfigPassthroughTests()
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            enforcer = self._write_fake_enforcer(root, applies=True)
+            marker = root / "received_argv.txt"
+            executable = helper._fake_codex(root, marker)
+            old = os.environ.get("ZWB_ENFORCER_BIN")
+            os.environ["ZWB_ENFORCER_BIN"] = str(enforcer)
+            try:
+                with CompositionOwner(root / "owner.sqlite3") as owner:
+                    with CodexAppServerAdapter(
+                        owner,
+                        executable,
+                        root / "codex-home",
+                        root / "workspace",
+                        provider_identity={
+                            "provider": "custom",
+                            "model": "ark-code-latest",
+                            "endpoint": "https://ark.example.com/v1",
+                            "transport": "remote",
+                        },
+                        event_log=root / "events.jsonl",
+                        host_enforcement=True,
+                    ) as adapter:
+                        execution = adapter.execute("run-he", "return fixture-ok", timeout=2.0)
+                self.assertEqual(execution.status, "completed")
+                launched = json.loads(marker.read_text(encoding="utf-8"))
+                self.assertIn("--dangerously-bypass-approvals-and-sandbox", launched)
+                # The bypass flag is global and precedes the subcommand, so
+                # app-server is now argv[1] of the Codex child.
+                self.assertEqual(launched[0], "--dangerously-bypass-approvals-and-sandbox")
+                self.assertEqual(launched[1], "app-server")
+            finally:
+                if old is None:
+                    os.environ.pop("ZWB_ENFORCER_BIN", None)
+                else:
+                    os.environ["ZWB_ENFORCER_BIN"] = old
 
 
 if __name__ == "__main__":

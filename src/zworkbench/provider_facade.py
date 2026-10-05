@@ -75,7 +75,9 @@ class HostCapabilityFacade:
                 sandbox=config.sandbox,
                 approval_policy=config.approval_policy,
                 disabled_features=config.disabled_features,
+                provider_config_path=config.provider_config_path,
                 event_log=config.event_log,
+                host_enforcement=config.host_enforcement,
             )
 
         profile = config.provider_profile
@@ -97,7 +99,9 @@ class HostCapabilityFacade:
             disabled_features=config.disabled_features,
             config_overrides=(),
             extra_environment=extra_environment,
+            provider_config_path=config.provider_config_path,
             event_log=config.event_log,
+            host_enforcement=config.host_enforcement,
         )
 
 
