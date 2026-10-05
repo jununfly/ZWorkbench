@@ -1203,8 +1203,17 @@ class CompositionOwner:
         connection = self._require_connection()
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 10000")
-        connection.execute("PRAGMA journal_mode = WAL")
-        connection.execute("PRAGMA synchronous = FULL")
+        # On hosts where the OS sandbox blocks WAL journal fsync into the
+        # workspace (e.g. macOS sandbox-center), fall back to an in-memory
+        # journal with synchronous=OFF so the durable owner can still be
+        # created/written locally. Opt-in via ZW_OWNER_SANDBOX=1 only; it
+        # trades crash-durability for drivability. Production keeps WAL/FULL.
+        if os.environ.get("ZW_OWNER_SANDBOX") == "1":
+            connection.execute("PRAGMA journal_mode = MEMORY")
+            connection.execute("PRAGMA synchronous = OFF")
+        else:
+            connection.execute("PRAGMA journal_mode = WAL")
+            connection.execute("PRAGMA synchronous = FULL")
 
     def _initialize_schema(self) -> None:
         connection = self._require_connection()
