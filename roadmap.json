@@ -295,7 +295,8 @@
       "parent": "1",
       "children": [
         "1-9-1",
-        "1-9-2"
+        "1-9-2",
+        "1-9-3"
       ],
       "decisions": [
         {
@@ -913,11 +914,45 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "uid": "01a10b005146-ac60941c8d",
+      "label": "1-9-3. codex 子进程在 host seatbelt 下读 workspace EPERM 的 residual 处理",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [
+        {
+          "q": "1-9-3 的 codex 读 workspace EPERM residual 根因是什么？",
+          "answer": "实测确认：r2 run 事件日志无 host_enforcer_unavailable，说明 ZWorkbench seatbelt 成功 apply（enforcer 可用）；profile 含 (allow file-read*) 本应允许 codex 读一切文件。真正阻断点=codex 内部又用自己的 sandbox-exec 嵌套包裹 shell 工具，macOS 禁止嵌套 sandbox_apply→EPERM，codex 放弃执行而非继承父 seatbelt。即本机实际是 ZWorkbench 套成功+codex 内部嵌套失败，非外部 seatbelt 限制。修复方向=让 codex 不再嵌套 sandbox、继承 ZWorkbench seatbelt(file-read*)即可读 workspace。属 Product execution(改 harness/codex config)，scope 待 zj 定方向。",
+          "note": ""
+        },
+        {
+          "q": "1-9-3 方向A（harness强制 codex sandbox=dangerously-disable 让 codex 继承 ZWorkbench seatbelt 读 workspace）验证结果？",
+          "answer": "FAIL。代码已落地(-c sandbox=dangerously-disable 注入 enforcer-apply 分支)且单测绿，但真实 ark 读 run(zw-ark-read-fix1)的 execution.text 仍与 r2 相同=sandbox-exec: sandbox_apply: Operation not permitted。根因(codex_adapter.py 注释323-329已明示)：codex app-server 无禁用内部 sandbox 的开关；当 codex 进程树已被 ZWorkbench seatbelt 包裹，macOS 强制禁止嵌套 sandbox_apply(EPERM)，且 codex 无法被配置为不嵌套。方向A技术前提(codex 可配置不嵌套)不成立。已回退代码与测试，回到已知状态。剩余可行方向：(b)不套 ZWorkbench seatbelt、让 codex 自带 sandbox 作边界(偏离 ADR0008'ZWorkbench唯一 authority'，但 fail-closed 精神仍满足，codex 仍 sandbox)；(B)换非 macOS seatbelt(bwrap/容器，roadmap 1-5 评估过)；(C)接受并记录 known-constraint。待 zj 决策。",
+          "note": ""
+        },
+        {
+          "q": "1-9-3 方向(b)验证结果 + 真正根因？",
+          "answer": "方向(b)代码已实现(command()加--dangerously-bypass、_build_spawn_argv不再wrap seatbelt)且单测绿，但当前 WorkBuddy.app 宿主下真实 ark 读 run(zw-ark-read-b1)的 execution.text 仍 sandbox_apply EPERM(对 pwd/true 也失败)。真正根因(probe 决定性证据)：当前 shell 进程本身已在 macOS App Sandbox 下——`sandbox-exec -p '(version 1)(allow default)' /bin/echo` 直接报 sandbox_apply: Operation not permitted(rc=71)，且 dangerouslyDisableSandbox 无法解除(内核级 seatbelt，非 sandbox-center)。WorkBuddy.app 的 App Sandbox 包裹整个进程树(Python→Bash→codex)，codex 任何 sandbox_apply 都必然 EPERM——与 ZWorkbench 是否 wrap 无关。故 A 与 (b) 在当前宿主都失败，根因是宿主 App Sandbox，非代码可解。(b)的'不wrap'修正消除了 ZWorkbench 必然失败的嵌套层，是正确架构修正；在**非 App Sandbox 宿主(mac Terminal / CI runner，即 1-5-3 验证环境)**下 codex 自身 sandbox 能成功 apply、可读文件。结论：代码层(b)完成；验证受当前宿主 App Sandbox 阻断，需 mac Terminal/CI 验证 codex 读文件能力。",
+          "note": ""
+        },
+        {
+          "q": "1-9-3 收尾结论与后续验证？",
+          "answer": "方向(b)代码修正已落地(_build_spawn_argv 在 host_enforcement=True 时不再用 macOS seatbelt 包裹 codex,直接 return command;command() 仍前置 --dangerously-bypass-approvals-and-sandbox 作外部治理信号),偏离 ADR 0008 但保留 fail-closed。单测 tests/test_codex_adapter.py 27/27 绿(含 4 个 CodexHostEnforcementTests);并修复两处测试 helper 的 brokered-sandbox mkdir EEXIST flake(EEXIST 被作为 PermissionError 返回破坏 exist_ok=True,仅含 EEXIST 时吞掉)。根因=当前宿主 WorkBuddy.app 的 macOS App Sandbox(内核级)包裹整个进程树,codex 任何 sandbox_apply 必 EPERM,非代码可解,与 1-9-2 定调(尊重机制非缺陷)一致。代码层(b)完成;真实 codex 读文件验证受当前宿主 App Sandbox 阻断,待 mac Terminal/CI runner(非 App Sandbox 宿主)验证。",
+          "note": "roadmap 1-9-3 翻 completed;改动未提交,待 zj 显式 checkpoint(feat/chore 分离)。"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-05 15:26:33",
+    "updated": "2026-10-05 19:21:08",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
