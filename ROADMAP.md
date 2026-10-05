@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-02 18:59:45
+> 数据文件: `roadmap.json` | 最后更新: 2026-10-05 14:30:00
 
 [~][X+] 1. ZWorkbench v1 真实可用推进路线图
 ├── [x][X+] 1-1. 已闭环结论（讨论沉淀 · 参考锚点）
@@ -37,19 +37,18 @@
 │   ├── [x][X+] 1-7-4. S2-④ owner-backed receipt（operation/action/resource/idempotency key 绑定 + external_receipt，无第二 owner）
 │   ├── [x][X+] 1-7-5. S2-⑤ approval 精确绑定 + 执行级幂等（同 key 两次 apply 仅一次 digest 变化）
 │   └── [x][X+] 1-7-6. S2-⑥ Control Plane / CLI 集成（orchestrator 接 write seam，push 默认关）
-├── [ ][X+] 1-8. S3 dogfood N=10 闸门（含价值基线正式出数）
-├── [!][X+] 1-9. S4 Git push 单独门
+├── [x][X+] 1-8. S3 dogfood N=10 闸门（含价值基线正式出数）
+│   ├── [x][X+] 1-8-1. 锁定 N=10 dogfood 协议（默认入口全链路 + 每轮记录字段 + 三项硬判据）
+│   ├── [x][X+] 1-8-2. 价值基线测量工具（采集模板 + 聚合器，n=10 默认路径，与 C1-6 并表）
+│   ├── [x][X+] 1-8-3. N=10 dogfood 实测执行（zj 手动，逐轮填采集表）
+│   └── [x][X+] 1-8-4. 闸门判定（三层 AND 门 → 开/不开 S4，R3 标 implemented 或维持 target）
+├── [~][X+] 1-9. S4 Git push 单独门
+│   ├── [x][X+] 1-9-1. 接通本机真实 ark 读阶段执行路径（解 CodexProtocolError safe_stopped）
+│   └── [x][X+] 1-9-2. 让真实 ark 读阶段能真正读取文件（解 codex 内部 sandbox-exec 限制）
 └── [ ][X+] 1-10. U5 v1 验收 checklist（codex identity UNKNOWN）
-<details><summary>阻塞链：1 个节点被阻塞</summary>
-
-- 1-9. S4 Git push 单独门 ← e7: 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） [ ]
-
-</details>
-
 
 ### 下一步可开工（ready 前 3）
 
 - 1-10. U5 v1 验收 checklist（codex identity UNKNOWN） [ ]
 - 1-2-1. 选项A：v1 维持 Codex-only 只读回退基线 [ ]
-- 1-8. S3 dogfood N=10 闸门（含价值基线正式出数） [ ]
 <!-- ROADMAP_SECTION_END -->
