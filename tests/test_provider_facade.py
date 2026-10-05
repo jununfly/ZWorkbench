@@ -28,7 +28,7 @@ def _fake_executable(root: Path) -> Path:
     return executable
 
 
-def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None) -> LocalReadOnlyRunConfig:
+def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None, provider_config_path: Path | None = None, host_enforcement: bool = False) -> LocalReadOnlyRunConfig:
     workspace = root / "workspace"
     workspace.mkdir(exist_ok=True)
     return LocalReadOnlyRunConfig(
@@ -45,6 +45,8 @@ def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None)
             "transport": "loopback-only",
         },
         provider_profile=provider_profile,
+        provider_config_path=provider_config_path,
+        host_enforcement=host_enforcement,
     )
 
 
@@ -130,6 +132,42 @@ class HostCapabilityFacadeAcquisitionTests(unittest.TestCase):
                     owner.close()
             finally:
                 os.environ.pop("ARK_API_KEY", None)
+
+    def test_acquire_provider_custom_profile_passes_provider_config_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config_path = root / "provider-config.toml"
+            config_path.write_text('model = "ark-code-latest"\n', encoding="utf-8")
+            profile = ProviderProfile(
+                name="custom",
+                model_provider="custom",
+                model="ark-code-latest",
+                base_url="https://ark.example.com/v1",
+            )
+            config = _base_config(root, provider_profile=profile, provider_config_path=config_path)
+            owner = CompositionOwner(config.database)
+            try:
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
+                self.assertIsInstance(adapter, CodexAppServerAdapter)
+                # The explicit config path must reach the adapter so Codex can
+                # discover [model_providers.<name>] (roadmap 1-9-1).
+                self.assertEqual(adapter.provider_config_path, config.provider_config_path)
+            finally:
+                owner.close()
+
+    def test_acquire_provider_passes_host_enforcement(self) -> None:
+        # roadmap 1-9-2: the host-enforcement intent must reach the adapter so
+        # ZWorkbench can become the single sandbox authority (ADR 0008).
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = _base_config(root, host_enforcement=True)
+            owner = CompositionOwner(config.database)
+            try:
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
+                self.assertIsInstance(adapter, CodexAppServerAdapter)
+                self.assertTrue(adapter.host_enforcement)
+            finally:
+                owner.close()
 
 
 if __name__ == "__main__":

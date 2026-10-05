@@ -62,6 +62,8 @@ class LocalReadOnlyRunConfig:
     disabled_features: Tuple[str, ...] = ("plugins", "apps")
     authorized_providers: frozenset = DEFAULT_AUTHORIZED_PROVIDERS
     provider_profile: Optional[ProviderProfile] = None
+    provider_config_path: Optional[Path] = None
+    host_enforcement: bool = False
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -81,6 +83,12 @@ class LocalReadOnlyRunConfig:
         object.__setattr__(self, "disabled_features", tuple(self.disabled_features))
         object.__setattr__(self, "authorized_providers", frozenset(self.authorized_providers or ()))
         object.__setattr__(self, "provider_profile", self.provider_profile)
+        if self.provider_config_path is not None:
+            object.__setattr__(
+                self,
+                "provider_config_path",
+                Path(self.provider_config_path).expanduser().resolve(strict=False),
+            )
 
 
 @dataclass(frozen=True)
@@ -355,6 +363,12 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         "explicitly authorized remote provider from config",
     )
     violations.extend(provider_violations)
+    check(
+        "real_provider_config_present",
+        config.provider_profile is None or config.provider_config_path is not None,
+        "real_provider_config_missing",
+        "an explicit real Provider profile requires an explicit --provider-config path",
+    )
     provider_json_safe = _is_json_serializable(config.provider_identity)
     check(
         "provider_identity_json_serializable",
@@ -490,6 +504,7 @@ def _config_digest(config: LocalReadOnlyRunConfig) -> str:
         "sandbox": config.sandbox,
         "approval_policy": config.approval_policy,
         "disabled_features": list(config.disabled_features),
+        "host_enforcement": config.host_enforcement,
     }
     encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
