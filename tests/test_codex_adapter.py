@@ -260,7 +260,12 @@ class CodexFailureClassificationTests(unittest.TestCase):
 
     def _build_adapter(self, owner: CompositionOwner, root: Path, executable: Path) -> CodexAppServerAdapter:
         workspace = root / "workspace"
-        workspace.mkdir(exist_ok=True)
+        # Brokered sandbox returns EEXIST as PermissionError; see _base_adapter.
+        try:
+            workspace.mkdir(exist_ok=True)
+        except PermissionError as exc:
+            if "EEXIST" not in str(exc):
+                raise
         return CodexAppServerAdapter(
             owner,
             executable,
@@ -496,7 +501,17 @@ class CodexHostEnforcementTests(unittest.TestCase):
 
     def _base_adapter(self, root: Path, *, host_enforcement: bool = False, **kw):
         workspace = root / "workspace"
-        workspace.mkdir(exist_ok=True)
+        # The WorkBuddy brokered sandbox returns "EEXIST: file already exists"
+        # as a ``PermissionError`` instead of the standard ``FileExistsError``
+        # that ``mkdir(exist_ok=True)`` swallows. Treat the broker's EEXIST the
+        # same as "already exists" so helper callers that reuse a temp dir do
+        # not fail on the second call. Genuine broker denials (no EEXIST) still
+        # propagate.
+        try:
+            workspace.mkdir(exist_ok=True)
+        except PermissionError as exc:
+            if "EEXIST" not in str(exc):
+                raise
         owner = CompositionOwner(root / "owner.sqlite3")
         identity = kw.pop(
             "provider_identity",
@@ -538,7 +553,7 @@ class CodexHostEnforcementTests(unittest.TestCase):
             # that disables sandboxing, so this flag is the disable lever.
             self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
 
-    def test_build_spawn_argv_wraps_with_seatbelt_when_enforcer_applies(self) -> None:
+    def test_build_spawn_argv_skips_seatbelt_when_host_enforcement(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "codex").write_text("#!/bin/sh\n", encoding="utf-8")
@@ -553,20 +568,15 @@ class CodexHostEnforcementTests(unittest.TestCase):
                     os.environ.pop("ZWB_ENFORCER_BIN", None)
                 else:
                     os.environ["ZWB_ENFORCER_BIN"] = old
-            self.assertEqual(argv[0], str(enforcer))
-            self.assertEqual(argv[1], "-p")
-            profile = argv[2]
-            self.assertIn("deny default", profile)
-            self.assertIn(
-                '(allow file-write* (literal "{0}"))'.format(str((root / "codex-home").resolve())),
-                profile,
-            )
-            self.assertIn("(allow network-outbound)", profile)
-            # The bypass flag is still present inside the wrapped command.
-            self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
-            self.assertEqual(argv[3], str((root / "codex").resolve()))
+            # Roadmap 1-9-3 (direction b): ZWorkbench must NOT wrap Codex in a
+            # macOS seatbelt (nested sandbox_apply EPERM would block reads). Codex
+            # applies its own sandbox; the enforcer must NOT prefix the command.
+            self.assertNotEqual(argv[0], str(enforcer))
+            self.assertEqual(argv[0], str((root / "codex").resolve()))
+            self.assertEqual(argv[1], "--dangerously-bypass-approvals-and-sandbox")
+            self.assertEqual(argv[2], "app-server")
 
-    def test_build_spawn_argv_falls_back_when_enforcer_unavailable(self) -> None:
+    def test_build_spawn_argv_never_wraps_regardless_of_enforcer(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             (root / "codex").write_text("#!/bin/sh\n", encoding="utf-8")
@@ -581,14 +591,16 @@ class CodexHostEnforcementTests(unittest.TestCase):
                     os.environ.pop("ZWB_ENFORCER_BIN", None)
                 else:
                     os.environ["ZWB_ENFORCER_BIN"] = old
-            # No seatbelt prefix: rely on the external seatbelt as the boundary.
+            # Roadmap 1-9-3 (direction b): Codex is never wrapped, so the enforcer
+            # (available or not) never prefixes the command. Codex 自带 sandbox 作边界.
             self.assertNotEqual(argv[0], str(enforcer))
             self.assertEqual(argv[0], str((root / "codex").resolve()))
             self.assertIn("--dangerously-bypass-approvals-and-sandbox", argv)
 
-    def test_host_enforcement_turn_completes_via_applying_enforcer(self) -> None:
-        # End-to-end: with a fake enforcer that applies, the wrapped spawn runs
-        # and the turn completes; the Codex child received the bypass flag.
+    def test_host_enforcement_turn_completes_with_bypass_flag(self) -> None:
+        # End-to-end: with host_enforcement, Codex launches with the bypass flag
+        # and applies its own sandbox (no ZWorkbench seatbelt wrap); the turn
+        # completes and the Codex child received the bypass flag.
         helper = CodexProviderConfigPassthroughTests()
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

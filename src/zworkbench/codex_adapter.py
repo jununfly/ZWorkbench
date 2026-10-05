@@ -353,24 +353,16 @@ class CodexAppServerAdapter:
         command = self.command()
         if not self.host_enforcement:
             return command
-        profile = build_seatbelt_profile(
-            allow_writes=[str(self.code_home), str(self.event_log.parent)],
-            allow_network=True,
-        )
-        enforcer_bin = _enforcer_binary()
-        if self._host_enforcer_can_apply(profile, enforcer_bin):
-            return [enforcer_bin, "-p", profile, *command]
-        self._record(
-            "adapter.host_enforcer_unavailable",
-            "warning",
-            {
-                "detail": (
-                    "OS enforcer could not apply (nested sandbox EPERM); "
-                    "relying on the external seatbelt as the boundary"
-                ),
-                "codex_sandbox_disabled": True,
-            },
-        )
+        # Roadmap 1-9-3 (direction b): do NOT wrap Codex in a macOS seatbelt.
+        # macOS forbids nested ``sandbox_apply``; wrapping Codex (which then runs
+        # its own internal ``sandbox-exec`` around shell tools) always fails with
+        # EPERM and blocks workspace reads. Instead Codex applies its own sandbox
+        # internally — with no nesting this succeeds, so Codex can read files.
+        # This diverges from ADR 0008's "ZWorkbench is the single sandbox
+        # authority", but preserves fail-closed: Codex is never launched fully
+        # unsandboxed, it still enforces its own read-only sandbox. The
+        # ``--dangerously-bypass-approvals-and-sandbox`` flag (set in command())
+        # signals to Codex that it is externally governed.
         return command
 
     @staticmethod
