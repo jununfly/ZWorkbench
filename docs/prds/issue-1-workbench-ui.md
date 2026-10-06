@@ -2,7 +2,9 @@
 doc-kind: product-requirements
 source: https://github.com/jununfly/ZWorkbench/issues/1
 source-id: github-issue-1
-status: target
+status: implemented
+implementation-status: accepted
+review_note: 2026-10-06 回填——只读三视图 + 交互写 seam（F6/F8/F9/F12 product scope gate、F7-live/F10-exec/F13-logic 部分）经 workbench-ui-interactive 交付并测试通过；live replay / 真实 Provider / 主工作区写入 / Git push 仍按设计默认 deny（属显式范围外，非未实现）。durable 事实源见 workbench-ui-interactive.md 与 ADR 0003（宿主只读边界）。
 ---
 
 # Issue #1：Owner-backed Workbench UI and capability integration

@@ -1,8 +1,9 @@
 ---
 doc-kind: product-requirements
 authority: supporting
-status: target
-implementation-status: unknown
+status: in-progress
+implementation-status: partial
+review_note: 2026-10-06 回填——minimal slice S2（write seam，roadmap 1-7 completed）、S4（Git push 门控，roadmap 1-9 completed）、真实 Ark 读路径（1-9-1~3）已落地并测试通过；H6-full / H7 / H8 仍 target / deferred-until-demand。产品能力列仍多为 target，故 implementation-status 为 partial 而非 complete。
 ---
 
 # R3 真实可用路线图
