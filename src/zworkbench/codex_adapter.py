@@ -25,7 +25,6 @@ from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence
 
 from .composition import CompositionOwner, InvalidTransition
-from .host_enforcer import _enforcer_binary, build_seatbelt_profile
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 from .subprocess_supervisor import terminate_process
 
@@ -220,12 +219,16 @@ class CodexAppServerAdapter:
         # model_provider is unknown to Codex and the turn fails closed
         # (CodexProtocolError -> safe_stopped). See roadmap node 1-9-1.
         self.provider_config_path = Path(provider_config_path).expanduser().resolve() if provider_config_path else None
-        # ADR 0008 host enforcement (roadmap 1-9-2): when set, ZWorkbench becomes
-        # the single sandbox authority. command() disables Codex's own nested
-        # sandbox (bypass flag) and start() tries to wrap Codex in a macOS
-        # seatbelt; if the OS enforcer cannot apply (process tree already
-        # seatbelt-sandboxed), it falls back to the bypass flag alone, leaving
-        # the external seatbelt as the boundary. Never launch unsandboxed.
+        # ADR 0008 host enforcement (roadmap 1-9-2 / 1-9-3 direction b): when set,
+        # ZWorkbench's intent is to be the single sandbox authority. In practice
+        # (1-9-3 direction b) this means command() prepends the
+        # --dangerously-bypass-approvals-and-sandbox flag and ZWorkbench does NOT
+        # wrap Codex in a macOS seatbelt — a nested sandbox_apply always fails with
+        # EPERM and blocks workspace reads. Read-only enforcement then relies on
+        # Codex's own sandbox (non-sandboxed hosts) or the external host seatbelt
+        # (sandboxed hosts). This diverges from ADR 0008's wrap model but is the
+        # documented, accepted decision; the residual risk (no in-process
+        # refuse-to-start) is tracked there.
         self.host_enforcement = bool(host_enforcement)
         self.process: Optional[subprocess.Popen[bytes]] = None
         self.selector = selectors.DefaultSelector()
@@ -315,18 +318,19 @@ class CodexAppServerAdapter:
 
         command = [str(self.executable)]
         if self.host_enforcement:
-            # Roadmap node 1-9-2 (direction B): make ZWorkbench the single
-            # sandbox authority. This global flag tells Codex it is externally
-            # sandboxed so it should not re-seatbelt its own shell children via
-            # ``sandbox-exec`` (which fails with EPERM when the Codex process
-            # tree is already seatbelt-sandboxed). It additionally bypasses
+            # Roadmap node 1-9-2 / 1-9-3 direction (b): make ZWorkbench the single
+            # sandbox authority in intent. This global flag tells Codex it is
+            # externally sandboxed so it should not re-seatbelt its own shell
+            # children via ``sandbox-exec`` (which fails with EPERM when the Codex
+            # process tree is already seatbelt-sandboxed). It additionally bypasses
             # approvals. NOTE: in app-server mode the sandbox policy is NOT
             # overridable with a ``-s/--sandbox`` flag (unexpected argument) and
-            # there is no ``sandbox_mode="dangerously-disable"`` value — the only
-            # lever is this global bypass flag plus the outer seatbelt wrap done
-            # in ``_build_spawn_argv``. Empirically the flag is necessary but not
-            # sufficient to restore shell file reads when Codex itself is launched
-            # under a host seatbelt (macOS forbids nested ``sandbox_apply``).
+            # there is no ``sandbox_mode="dangerously-disable"`` value — this
+            # global bypass flag is the only lever. Empirically the flag is
+            # necessary but not sufficient to restore shell file reads when Codex
+            # itself is launched under a host seatbelt (macOS forbids nested
+            # ``sandbox_apply``); ZWorkbench does NOT wrap Codex in a macOS
+            # seatbelt (see _build_spawn_argv).
             command.append("--dangerously-bypass-approvals-and-sandbox")
         command.extend(("app-server", "--listen", "stdio://"))
         for value in self.config_overrides:
@@ -338,16 +342,17 @@ class CodexAppServerAdapter:
     def _build_spawn_argv(self) -> list[str]:
         """Return the argv used to launch the app-server process.
 
-        When ``host_enforcement`` is set, Codex's internal sandbox is already
-        disabled in :meth:`command` (bypass flag). We additionally try to make
-        ZWorkbench the single sandbox authority by wrapping Codex in a macOS
-        seatbelt (ADR 0008). If the OS enforcer cannot apply (e.g. the process
-        tree is already seatbelt-sandboxed by an external host), we fall back to
-        launching Codex with only the bypass flag, leaving the external seatbelt
-        as the enforcement boundary. This is exactly Codex's documented
-        "externally sandboxed" use. We never launch Codex unsandboxed in the
-        absolute sense: either the ZWorkbench seatbelt or the outer seatbelt
-        applies.
+        When ``host_enforcement`` is set, :meth:`command` already prepends the
+        ``--dangerously-bypass-approvals-and-sandbox`` flag. ZWorkbench does NOT
+        wrap Codex in a macOS seatbelt (roadmap 1-9-3 direction b): macOS forbids
+        nested ``sandbox_apply``, so wrapping Codex — which then runs its own
+        internal ``sandbox-exec`` around shell tools — always fails with EPERM and
+        blocks workspace reads. Instead Codex applies its own sandbox internally
+        on non-sandboxed hosts; on a sandboxed host the external host seatbelt is
+        the boundary. This diverges from ADR 0008's "ZWorkbench is the single
+        sandbox authority" wrap model, but is the documented, accepted decision;
+        the residual risk (no in-process refuse-to-start if no enforcer applies)
+        is tracked in ADR 0008 / roadmap 1-9-3.
         """
 
         command = self.command()
@@ -356,41 +361,10 @@ class CodexAppServerAdapter:
         # Roadmap 1-9-3 (direction b): do NOT wrap Codex in a macOS seatbelt.
         # macOS forbids nested ``sandbox_apply``; wrapping Codex (which then runs
         # its own internal ``sandbox-exec`` around shell tools) always fails with
-        # EPERM and blocks workspace reads. Instead Codex applies its own sandbox
-        # internally — with no nesting this succeeds, so Codex can read files.
-        # This diverges from ADR 0008's "ZWorkbench is the single sandbox
-        # authority", but preserves fail-closed: Codex is never launched fully
-        # unsandboxed, it still enforces its own read-only sandbox. The
-        # ``--dangerously-bypass-approvals-and-sandbox`` flag (set in command())
-        # signals to Codex that it is externally governed.
+        # EPERM and blocks workspace reads. Codex applies its own sandbox
+        # internally (no nesting) so it can read files; on a sandboxed host the
+        # external host seatbelt is the boundary.
         return command
-
-    @staticmethod
-    def _host_enforcer_can_apply(profile: str, enforcer_bin: str) -> bool:
-        """Probe whether the OS enforcer can apply ``profile`` to a child.
-
-        Mirrors host_enforcer.spawn_sandboxed's fail-closed detection: a
-        ``sandbox_apply`` error in stderr means the process tree is already
-        seatbelt-sandboxed and the enforcer cannot nest.
-        """
-
-        if not os.access(enforcer_bin, os.X_OK):
-            return False
-        # /bin/true is missing on macOS (true lives at /usr/bin/true); use a
-        # portable probe target so the apply-check works cross-platform.
-        probe_cmd = shutil.which("true") or "/usr/bin/true"
-        try:
-            proc = subprocess.run(
-                [enforcer_bin, "-p", profile, probe_cmd],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-        except (FileNotFoundError, subprocess.TimeoutExpired):
-            return False
-        if proc.returncode != 0 and "sandbox_apply" in proc.stderr:
-            return False
-        return proc.returncode == 0
 
     def notify(self, method: str, params: Mapping[str, Any]) -> None:
         message = {"jsonrpc": "2.0", "method": method, "params": dict(params)}
