@@ -61,6 +61,25 @@ class ZWorkbenchCliTests(unittest.TestCase):
             status = main(arguments)
         return status, json.loads(output.getvalue())
 
+    def test_host_enforcement_help_does_not_claim_seatbelt_wrap(self) -> None:
+        # Regression guard for the 1-9-3 direction (b) contract: --host-enforcement
+        # must NOT claim ZWorkbench wraps Codex in a macOS seatbelt. The adapter
+        # launches Codex with the bypass flag and NO ZWorkbench seatbelt wrap;
+        # read-only enforcement relies on Codex's own sandbox or the external
+        # host seatbelt. The misleading "wrap" wording previously contradicted
+        # the implementation and the codex app-server (which rejects -s/--sandbox).
+        buffer = io.StringIO()
+        with self.assertRaises(SystemExit):
+            with redirect_stdout(buffer):
+                main(["run", "--help"])
+        # argparse wraps long tokens across lines; normalize whitespace so the
+        # bypass flag reads as one contiguous token for substring assertions.
+        help_text = " ".join(buffer.getvalue().split())
+        self.assertNotIn("wrap the Codex child in a macOS seatbelt", help_text)
+        # The real, shipped mechanism is the explicit bypass flag (argparse wraps
+        # the long token, so assert on the stable prefix).
+        self.assertIn("--dangerously-bypass-", help_text)
+
     def test_run_completes_real_adapter_protocol_and_writes_local_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

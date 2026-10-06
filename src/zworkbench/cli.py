@@ -89,11 +89,12 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         default=False,
         help=(
-            "make ZWorkbench the single sandbox authority (ADR 0008): wrap the "
-            "Codex child in a macOS seatbelt and disable Codex's internal nested "
-            "sandbox. On hosts already under an external seatbelt (e.g. the agent "
-            "exec sandbox) the seatbelt wrap is skipped and only Codex's internal "
-            "sandbox is disabled, leaving the outer seatbelt as the boundary."
+            "make ZWorkbench the single sandbox authority (ADR 0008 intent): "
+            "launch Codex with --dangerously-bypass-approvals-and-sandbox so it "
+            "does not re-seatbelt its own shell children. ZWorkbench does NOT "
+            "wrap Codex in a macOS seatbelt (roadmap 1-9-3 direction b: nested "
+            "sandbox_apply fails with EPERM). Read-only enforcement then relies "
+            "on Codex's own sandbox or the external host seatbelt."
         ),
     )
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
