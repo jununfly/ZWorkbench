@@ -17,7 +17,11 @@ from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from zworkbench.ui_build import build_ui_artifacts
+from zworkbench.ui_build import (
+    ROOT_SOURCES,
+    build_ui_artifacts,
+    served_source_root_and_sources,
+)
 from zworkbench.ui_manifest import load_manifest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -90,6 +94,68 @@ class BuildingTheArtifactsTests(unittest.TestCase):
         second = build_ui_artifacts(REPO_ROOT, self.store)
         self.assertEqual(first["views"], second["views"])
         self.assertEqual(first["receipt"]["build"], second["receipt"]["build"])
+
+
+class LayoutAgnosticBuildTests(unittest.TestCase):
+    """The build must serve identically from a source checkout and from an
+    installed wheel (see the 2026-10-06 wheel-layout fix).  A build that
+    assumed ``src/zworkbench`` two parents above the package crashed on
+    ``pip install`` with FileNotFoundError, so these lock the layout split.
+    """
+
+    def setUp(self) -> None:
+        self.tmp = TemporaryDirectory()
+        self.store = Path(self.tmp.name) / "store"
+
+    def tearDown(self) -> None:
+        self.tmp.cleanup()
+
+    def test_source_checkout_keeps_the_src_prefix(self):
+        root, sources = served_source_root_and_sources()
+        self.assertTrue((root / "src/zworkbench/ui_declare.py").exists())
+        self.assertEqual(sources, ROOT_SOURCES)
+        for relative in sources:
+            self.assertTrue(relative.startswith("src/zworkbench/"))
+
+    def test_installed_wheel_layout_strips_the_prefix(self):
+        """When the declaring modules sit directly under ``root`` (installed
+        wheel), ``build_ui_artifacts`` must drop the ``src/zworkbench/`` prefix
+        and still produce a valid receipt -- not raise FileNotFoundError.
+        """
+        pkg = Path(self.tmp.name) / "zworkbench"
+        pkg.mkdir()
+        for relative in ROOT_SOURCES:
+            src = REPO_ROOT / relative
+            (pkg / src.name).write_bytes(src.read_bytes())
+        # The resolver would treat this flat package as the installed layout.
+        self.assertTrue((pkg / "ui_declare.py").exists())
+
+        receipt = build_ui_artifacts(pkg, self.store)["receipt"]
+        self.assertIn("build", receipt)
+        for entry in receipt["sources"]:
+            self.assertNotIn(
+                "src/zworkbench/",
+                entry["repo_path"],
+                "installed layout must not carry the source prefix",
+            )
+            self.assertTrue((pkg / entry["repo_path"]).is_file())
+
+    def test_installed_layout_receipt_matches_a_real_flat_read(self):
+        pkg = Path(self.tmp.name) / "zworkbench"
+        pkg.mkdir()
+        for relative in ROOT_SOURCES:
+            src = REPO_ROOT / relative
+            (pkg / src.name).write_bytes(src.read_bytes())
+        receipt = build_ui_artifacts(pkg, self.store)["receipt"]
+        # Every declared source resolves to a real file under the flat package.
+        for entry in receipt["sources"]:
+            self.assertEqual(
+                entry["content_digest"],
+                __import__("hashlib")
+                .sha256((pkg / entry["repo_path"]).read_bytes())
+                .hexdigest(),
+            )
+
 
 
 if __name__ == "__main__":
