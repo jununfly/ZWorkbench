@@ -949,9 +949,14 @@
           "q": "实证验证 (b) 在非沙箱宿主是否成立？",
           "answer": "实证通过(mac Terminal / 非 App Sandbox 宿主, run_id=zw-ark-read-v2): zworkbench run --host-enforcement --provider-profile custom 成功 spawn codex, preflight 全绿, execution.text=\"hello from workspace file\"(codex 真实读到 workspace/README.md), events/codex.jsonl 与 rollout jsonl 中 sandbox_apply 计数=0。结论坐实: (b) 修正在非沙箱宿主下有效——codex 不被 ZWorkbench seatbelt 包裹后, 其自身 sandbox 成功 apply、可正常读文件。反证当初 EPERM 根因确为 WorkBuddy.app 的 macOS App Sandbox(内核级)包裹进程树, 非 (b) 代码缺陷; 与 1-9-2 定调一致。1-9-3 全闭环(根因+代码修正+单测+跨宿主实证)。",
           "note": "已实证, 无需进一步代码改动; 仅余环境性约束: 在 WorkBuddy.app 沙箱宿主内仍无法验证, 但那非缺陷。"
+        },
+        {
+          "q": "1-9-3 根因描述经 1-9-4 B2 探测修正？",
+          "answer": "是。原 decision 3/4/5 把根因归为“当前宿主 WorkBuddy.app 的 macOS App Sandbox（内核级）包裹进程树、codex 任何 sandbox_apply 必 EPERM（嵌套）”。1-9-4 B2 探测（/tmp/probe_b2.py，五信号交叉）揭示更底层机制：在裸进程（无 APP_SANDBOX_CONTAINER_ID、codesign 无 sandbox entitlement、~/Desktop 可读）上，连最宽松 profile `(version 1)(allow default)` 的 sandbox-exec 也直接 EPERM（rc=71）。即 macOS 26（Darwin 25.6）对普通进程整体禁用了 sandbox-exec，与是否 App Sandbox 无关——嵌套只是表现之一，非根因。修正后根因：macOS 平台已收回普通进程的 sandbox-exec 能力；WorkBuddy.app 的 App Sandbox 是其中一种包裹态，但裸进程同样 EPERM。这不影响 1-9-3 的代码结论：(b) 修正（不 wrap、让 codex 以 --dangerously-bypass 启动、不尝试 sandbox-exec）仍正确——正因避开 sandbox-exec，codex 在非 App Sandbox 宿主才能读文件（见 decision 5 实证）；代价是 fail-open（无沙箱），与 ADR 0010 一致。原“嵌套 EPERM”措辞改为“平台禁用 sandbox-exec（含嵌套与非嵌套）”。",
+          "note": "根因修正对齐 1-9-4 result=not-viable 与 ADR 0010 边界定义；不篡改 decision 3/4/5 历史轨迹。"
         }
       ],
-      "notes": "",
+      "notes": "根因经 1-9-4 B2 探测修正：不是“App Sandbox 嵌套”，而是 macOS 26 对普通进程整体禁用 sandbox-exec（见 decision 6 与 ADR 0010）。代码结论（b 不 wrap / fail-open）不变。",
       "layer": "plan",
       "rounds": 1
     },
@@ -959,18 +964,19 @@
       "id": "1-9-4",
       "uid": "01a0f786e9b2-20261006ab",
       "label": "B2 分层 fail-closed（探测外部 seatbelt，裸机恢复 refuse-to-start）",
-      "status": "proposed",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-9",
       "children": [],
       "decisions": [],
-      "notes": "ADR 0010 排期的后续 spike：启动探测本进程是否已在外部 seatbelt 下（App Sandbox 探测）；是→不包裹、靠外部边界、receipt 标 external-sandboxed（#2/#3 由外部宿主承担）；否→尝试 ZWorkbench sandbox-exec 包裹，失败则 refuse-to-start（恢复 ADR 0008 criterion #2）。需实证'包裹层 + codex bypass flag'组合在裸机真能跑（1-9-3 曾因嵌套 EPERM 放弃包裹）。",
+      "result": "not-viable: macOS 26 已禁止普通进程 sandbox-exec（sandbox_apply: Operation not permitted），B2 依赖机制失效",
+      "notes": "ADR 0010 排期的后续 spike：启动探测本进程是否已在外部 seatbelt 下（App Sandbox 探测）；是→不包裹、靠外部边界、receipt 标 external-sandboxed（#2/#3 由外部宿主承担）；否→尝试 ZWorkbench sandbox-exec 包裹，失败则 refuse-to-start（恢复 ADR 0008 criterion #2）。\n\n== 2026-10-06 探测结果（macOS Darwin 25.6 / macOS 26，探针 /tmp/probe_b2.py）==\n多信号交叉验证：\n- A APP_SANDBOX_CONTAINER_ID=null、B codesign 无 sandbox entitlement、C ~/Desktop 可读 → 当前是裸进程，非 App Sandbox 宿主。\n- D/E/F 三个 sandbox-exec 调用全部 rc=71 `sandbox_apply: Operation not permitted`，且 F 用 `(version 1) (allow default)`（近乎不限制）也 EPERM → 证明 sandbox-exec 在当前 macOS 对**普通进程整体不可用**（平台权限/entitlement 收紧），并非'已处于 App Sandbox 导致嵌套失败'。\n\n结论：B2 依赖的 ZWorkbench 侧 sandbox-exec 包裹机制在 macOS 26 上**整体不可行**（不是 1-9-3 原诊断的'嵌套 EPERM'，而是 macOS 已收回普通进程的 sandbox-exec 权限）。\n1. B2 分层 fail-closed 在 macOS 26 不可实装，终止投入（spike 结论：not viable）。\n2. 根因修正：1-9-3 的'root cause = 宿主 App Sandbox 嵌套 sandbox_apply'应更新为'macOS 已禁用普通进程 sandbox-exec，与是否 App Sandbox 无关'——最终决策（不包裹、依赖 codex 内置 sandbox + 外部宿主边界）不变，但根因描述更准确。\n3. 替代方向（如需真 fail-closed）：(a) 仅非 macOS 平台（CI/Linux 用 namespaces/seccomp）恢复；(b) 依赖 codex 自身 read-only sandbox 而非 ZWorkbench 包裹；(c) 走 Apple Sandbox framework（需 Apple-signed app entitlement，ZWorkbench 作为 Python 包不可达）。",
       "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-01 20:52:50",
-    "updated": "2026-10-05 21:31:29",
+    "updated": "2026-10-06 13:10:00",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/ROADMAP.md"
   },
   "edges": [
