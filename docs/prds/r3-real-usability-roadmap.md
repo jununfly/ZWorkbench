@@ -3,7 +3,7 @@ doc-kind: product-requirements
 authority: supporting
 status: in-progress
 implementation-status: partial
-review_note: 2026-10-06 回填——minimal slice S2（write seam，roadmap 1-7 completed）、S4（Git push 门控，roadmap 1-9 completed）、真实 Ark 读路径（1-9-1~3）已落地并测试通过；H6-full / H7 / H8 仍 target / deferred-until-demand。产品能力列仍多为 target，故 implementation-status 为 partial 而非 complete。
+review_note: 2026-10-06 回填——minimal slice S2（write seam，roadmap 1-7 completed）、S4（Git push 门控，roadmap 1-9 completed）、真实 Ark 读路径（1-9-1~3）已落地并测试通过；H6-full / H7 / H8 仍 target / deferred-until-demand。产品能力列仍多为 target，故 implementation-status 为 partial 而非 complete。同日补 H6-full 可排期 scope + H7/H8 应急草案（状态仍 deferred，见「H6-full / H7 / H8 应急 scope」节），不推翻 ADR 0009 的 deferred 决策。
 ---
 
 # R3 真实可用路线图
@@ -37,9 +37,9 @@ ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 
 | H3 | Worker 只读 coding | implemented — `run_w8_worker_coding.py` | target |
 | H4 | Lifecycle（cancel/timeout/crash） | implemented — `run_w8_worker_lifecycle.py` | target |
 | H5 | Replay（recorded/simulated） | implemented — `run_w8_evidence_replay.py` | `live` 模式 default-deny（HOLD） |
-| H6 | 真实 Provider 兼容 | scope 已定（2026-09-27）：首版 = **单 Provider（Ark `ark-code-latest`）+ 有界重试 + 失败分类 + unknown→safe-stop**；不做多 Provider failover（标 H6-full / post-MVP）；凭证 env+stdin 注入，禁落盘 / 命令行参数 / owner | target（S1 切片） |
-| H7 | DSH 全 runtime / plugin 组合 / 路由 | **`deferred-until-demand`**：不定 scope、不建；触发条件 = 第二用户 / 团队信号；未来若建首形态 = H7-lite（最小本地编排，无 plugin 市场） | deferred |
-| H8 | 生产部署 | **`deferred-until-demand`**：不定 scope、不建；分层台阶（L8a 本地命令稳定 → L8b 本机常驻 → L8c 可发布）仅占位 | deferred |
+| H6 | 真实 Provider 兼容 | scope 已定（2026-09-27）：首版 = **单 Provider（Ark `ark-code-latest`）+ 有界重试 + 失败分类 + unknown→safe-stop**；不做多 Provider failover（标 H6-full / post-MVP）；凭证 env+stdin 注入，禁落盘 / 命令行参数 / owner | target（S1 切片；H6-full 应急 scope 见下节） |
+| H7 | DSH 全 runtime / plugin 组合 / 路由 | **`deferred-until-demand`**：不定 scope、不建；触发条件 = 第二用户 / 团队信号；未来若建首形态 = H7-lite（最小本地编排，无 plugin 市场） | deferred（应急草案见下节） |
+| H8 | 生产部署 | **`deferred-until-demand`**：不定 scope、不建；分层台阶（L8a 本地命令稳定 → L8b 本机常驻 → L8c 可发布）仅占位 | deferred（应急草案见下节） |
 | C1 | Candidate 执行（基本任务） | implemented — `run_deepseek_challenger.py` 等 | target |
 | C2 | Provider fail-closed / capability broker | implemented — `run_w8_broker_capability_surface.py` 等 | target |
 | C3 | 写副作用 parity / uncertain-reconcile | implemented（fixture）— `run_c3.py` 等 | target（未产品化） |
@@ -153,6 +153,47 @@ ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 
 
 **Lane B — 完整产品（`deferred-until-demand`）**
 6. H7-lite / H8：不定 scope、不建；触发条件 = 第二用户 / 团队信号。live replay 产品化与 C7 真实世界部分同样等 dogfood 拉力再启动。
+
+## H6-full / H7 / H8 应急 scope（deferred 项 · 2026-10-06 补）
+
+> 本节为 **deferred 项的应急 scope 草案**，不改变 R3 / ADR 0009 的 `deferred-until-demand` 状态。H7/H8 仍"不建"，仅在触发信号到来时按本节草案启动；H6-full 在 S0–S4 完成后的规划路径上，给可排期 scope。所有项强制遵守「产品定位与架构约束」节的两条负约束（Provider 必经 `HostCapabilityFacade`；不得引入第二个 durable owner；ADR 0001 / 0008 不变量）。
+
+### H6-full — 多 Provider failover ledger（post-MVP，可排期）
+
+- **定位**：S1 单 Provider 的自然延伸。S1 已建 `HostCapabilityFacade`（`src/zworkbench/provider_facade.py`，运行时唯一缝）+ `classify_provider_failure(exc)`（network / rate_limit / unknown 三桶，落 codex_adapter 传输接缝），H6-full 在此之上加 failover，不新建直连。
+- **In（范围）**：
+  1. 第 2 Provider 接入（如 Volcengine 内第二模型网关，或第二 vendor）。仍经 `HostCapabilityFacade.acquire_provider`，新增 provider profile 即可，产品编排代码零直连（静态测试 `test_local_run_must_not_directly_import_provider_adapter` 守护）。
+  2. Provider capability broker（C2 产品化）：声明每个 provider 的能力集 / 速率 / 成本 / 延迟画像，存 CompositionOwner（非第二 owner）。
+  3. Failover ledger：failover 事件（from→to、reason=`classify` 桶、timestamp、effect_id）持久化进 CompositionOwner；receipt 携带 `provider_identity` + failover chain，可 replay。
+  4. Failover 策略：每 provider 有界退避重试；全部 unknown / rate_limit 耗尽 → safe-stop（terminal, fail-closed），无 silent switch。
+- **Out（不做）**：多租户路由、plugin-market provider、按成本自动选优器（留待更后）。
+- **DoD（可机械判定）**：failover ledger 测试（模拟 A 宕 → B 接管 → 事件入 ledger；全宕 → safe-stop）；grep 断言无新增 provider 直连；receipt 可 replay。
+- **触发 / 排期**：S4 完成 + dogfood 出数后；或单 Ark "不够稳"信号（限流 / 封号）提前至 S2/S3 之间（R3 残留前提已记：failover 前移至 S2/S3 之间）。
+- **状态**：target（规划路径上，未开工）。
+
+### H7 — 全 DSH runtime / plugin 组合 / 路由（deferred-until-demand · 应急草案）
+
+- **触发条件**：第二用户 / 团队信号。未触发则永不建。
+- **首形态 = H7-lite（应急草案，非承诺）**：
+  1. 触发后第一步（ADR 0009 约束）：跑 H1/H2 seam 契约测试 + 对齐 `IdentityChain` / `provider_identity`（含 transport）字段；有 drift 先开契约对齐切片。
+  2. 最小本地编排：多 session / run 管理、按能力 dispatch 的任务路由（非 LLM 路由）、现有 seam 的 plugin 组合。**禁止在入口 / CLI 新建 agent loop**（C1-1）。
+- **Out（不做）**：完整 DSH Agent loop、plugin marketplace、远程多 agent。
+- **负约束（硬）**：所有能力经 `HostCapabilityFacade` + 单一 durable owner；`cli.py` / `local_run.py` 不得新增 session / retry / routing 状态字段（grep 断言 + 测试护栏，沿用 ADR 0009 后果）。
+- **状态**：deferred（应急草案仅作触发后启动清单，非排期）。
+
+### H8 — 生产部署（deferred-until-demand · 应急草案）
+
+- **触发条件**：发布 / 分发信号（同 H7 触发族）。
+- **分层台阶（应急草案，仅占位 → 触发后细化）**：
+  - **L8a 本地命令稳定**：CLI 经 pip/uv 在 venv 安装即用，无外部服务依赖（≈ 当前状态）。
+  - **L8b 本机常驻**：可选 daemon / watch 模式 / 定时任务，仍单用户本地。
+  - **L8c 可发布**：可分发包 + 更新通道，telemetry 默认关、无 PII egress。
+- **Out（不做）**：云托管、多租户 SaaS、managed deployment。
+- **状态**：deferred（台阶仅占位，触发后按实际信号细化 scope）。
+
+### 与 R3 三层 AND 门的关系
+
+H6-full / H7 / H8 均属"做完"门槛（PG-4 deferred），**不参与"可用"AND 门**。R3 标 `implemented` 不依赖它们；它们只在 v1 真实可用达成后、按需触发。
 
 ## 下一步行动（双开工线 · 2026-09-27）
 
