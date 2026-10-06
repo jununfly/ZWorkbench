@@ -31,5 +31,14 @@ ADR 0008 的 **S0 spike 意图与未来 B2 分层 fail-closed 仍完全有效**�
 - `host_enforcement` 的语义在文档层与实现层一致：它是"App Sandbox 宿主下的便利开关 + 外部边界依赖"，而非"强制沙箱权威"。
 - 非 seatbelt 宿主上跑写 seam 前，必须先有 B2（或外部宿主提供边界），否则 worker 无强制约束；当前不得在裸机宣称写 seam 安全。
 - ADR 0008 consequences 中"S2 acceptance 须带 enforcer 证据"对 active path 暂缓，待 B2 落地恢复。
-- `host_enforcer.py` 保留为 S0 参考实现 + B2 基础，不删；其 `EnforcerUnavailable` / `spawn_sandboxed` 是 B2 的候选载体。
+- `host_enforcer.py` 曾作 S0 参考实现（其 `EnforcerUnavailable` / `spawn_sandboxed` 拟作 B2 候选载体）；B2 已据 roadmap **1-9-4** 探测判 `not-viable`（macOS 26 对普通进程整体禁用 `sandbox-exec`），且该模块 active path 从不 import。经决策**已删去**（`git rm src/zworkbench/host_enforcer.py tests/test_host_enforcer_s0.py`），避免误导后人以为包裹机制仍可用。
 - 1-9-3 已记录的"尊重宿主 seatbelt"决策正式纳入 ADR 体系。
+
+## Related decision: ZW_OWNER_SANDBOX（durable-owner 沙箱降级）
+
+同一 macOS 沙箱根因族的另一处偏离（与 1-9 host_enforcement fail-open 同源）：macOS 沙箱（WorkBuddy.app App Sandbox / sandbox-center）阻断 WAL journal 的 fsync 写入 workspace，导致 durable owner 在沙箱宿主无法创建/写入。
+
+- 决策（commit 3d11f08，**intended**）：opt-in `ZW_OWNER_SANDBOX=1`，`CompositionOwner._configure_connection` 降级为 `journal_mode = MEMORY` + `synchronous = OFF`，换取 drivability（`composition.py:1206-1216` 注释已写明 trade-off）。
+- 偏离范围：production 路径（默认不设该 env）保持 `WAL` + `FULL`，不受影响。
+- residual risk：opt-in 路径下进程崩溃可能丢失未刷盘的 owner 状态（runs / approvals / effects / replay metadata），safe-stopped 一致性边界弱化。当前 scope 仅本地 sandbox 宿主跑 harness，可接受；**但禁止在 production 环境设 `ZW_OWNER_SANDBOX=1`**。
+- 与 1-9 系列"macOS 沙箱阻断 fsync / sandbox-exec"同根因，纳入同一次 review 审计。
