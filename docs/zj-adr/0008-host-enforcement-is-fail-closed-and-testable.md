@@ -3,9 +3,12 @@ status: accepted
 doc-kind: adr
 authority: primary
 authority-id: adr.host-enforcement.fail-closed-and-testable
+superseded-by: adr.host-enforcement.active-read-path.boundary
 ---
 
 # ADR 0008：host enforcement 必须 fail-closed 且可测试
+
+> **Superseded for the active Codex read-path by [ADR 0010](0010-host-enforcement-active-read-path-boundary.md) (2026-10-06):** the wrap model and fail-closed criteria do not apply to `host_enforcement=True` on the active path (App Sandbox hosts rely on the external boundary; non-seatbelt hosts are fail-open). ADR 0008's S0 spike contract and future B2 remain in force.
 
 > 状态为 `accepted`：2026-09-27 H6–H8 scope 收敛讨论中，zj 拍板"S0 host-enforcement spike 提为下一节点"并采纳 fail-closed 三判据；enforcer 技术选型（候选见 Decision）留 spike 内定，不预判。
 

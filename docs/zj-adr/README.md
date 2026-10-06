@@ -25,3 +25,4 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0006：宿主服务的 manifest 只有一个 build 身份——全树 receipt](0006-one-build-identity-for-served-manifests.md)（`accepted`）
 - [ADR 0008：host enforcement 必须 fail-closed 且可测试](0008-host-enforcement-is-fail-closed-and-testable.md)（`accepted`）
 - [ADR 0009：v1 是 Codex-only 回退基线的合法延伸；写入边界按 R3 序列逐步放松](0009-v1-codex-only-fallback-and-write-boundary-sequencing.md)（`accepted`）
+- [ADR 0010：活动 Codex 读路径的 host enforcement 边界=外部宿主 seatbelt（偏离 ADR 0008 的 wrap 模型）](0010-host-enforcement-active-read-path-boundary.md)（`accepted`）

@@ -296,7 +296,8 @@
       "children": [
         "1-9-1",
         "1-9-2",
-        "1-9-3"
+        "1-9-3",
+        "1-9-4"
       ],
       "decisions": [
         {
@@ -953,6 +954,18 @@
       "notes": "",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-9-4": {
+      "id": "1-9-4",
+      "uid": "01a0f786e9b2-20261006ab",
+      "label": "B2 分层 fail-closed（探测外部 seatbelt，裸机恢复 refuse-to-start）",
+      "status": "proposed",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "ADR 0010 排期的后续 spike：启动探测本进程是否已在外部 seatbelt 下（App Sandbox 探测）；是→不包裹、靠外部边界、receipt 标 external-sandboxed（#2/#3 由外部宿主承担）；否→尝试 ZWorkbench sandbox-exec 包裹，失败则 refuse-to-start（恢复 ADR 0008 criterion #2）。需实证'包裹层 + codex bypass flag'组合在裸机真能跑（1-9-3 曾因嵌套 EPERM 放弃包裹）。",
+      "layer": "plan"
     }
   },
   "metadata": {
