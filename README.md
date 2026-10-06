@@ -18,4 +18,17 @@ AI 侧「token → 代码」闭环（R1）：先在本地生成 UI Reference Man
 
 真实 Provider 的按需、路线外验证见 `docs/references/optional-real-provider-staging.md`（账户 owner 自持 Key、env+stdin 注入、secret 0 落盘）。
 
+## 安装为正式构建产物
+
+`zworkbench` 是 `pyproject.toml` 声明的 console 脚本（`zworkbench = "zworkbench.cli:main"`）。从源码构建并安装后即为 PATH 上的真实命令；UI 在源码布局与 wheel 布局下均能正确解析源码根（2026-10-06 修复其写死的 `src/zworkbench` 路径假设，否则 `pip install` 后 `ui-host`/`ui-build` 会 `FileNotFoundError`）。
+
+```bash
+python -m pip wheel . -w dist --no-build-isolation --no-deps   # 产出 dist/zworkbench-0.1.0-py3-none-any.whl
+python -m pip install dist/zworkbench-0.1.0-py3-none-any.whl   # 安装后 zworkbench 进入当前 Python 的 bin
+zworkbench ui-host        # 只读三视图，浏览器打开 stdout 打印的 base_url（/ 会 302 到 /home）
+zworkbench ui --db <db>   # 连真实 owner DB 的可写 dogfood UI
+```
+
+注：`--no-build-isolation` 复用当前环境的 setuptools（缺失先 `pip install setuptools`）。纯 Python、`dependencies = []`，wheel 自包含、无需前端打包步骤（UI 为 server-rendered HTML，见 ADR 0003）。
+
 从 [文档地图](docs/README.md) 开始：领域语言解释对象，方法论解释判定，架构解释责任边界，ADR 解释长期选择；外部 staging 的受控操作边界见 references。

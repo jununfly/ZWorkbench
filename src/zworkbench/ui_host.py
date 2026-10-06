@@ -22,7 +22,7 @@ from pathlib import Path
 from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
-from .ui_build import ROOT_SOURCES, build_receipt
+from .ui_build import build_receipt, served_source_root_and_sources
 from .ui_home import home_manifest, render_home
 from .ui_record_view import record_manifest, render_record_view
 from .ui_review import PANEL_ACTIONS, ReviewMode
@@ -418,8 +418,8 @@ _SERVED_BUILD: Optional[str] = None
 def _served_build() -> str:
     global _SERVED_BUILD
     if _SERVED_BUILD is None:
-        root = Path(__file__).resolve().parents[2]
-        _SERVED_BUILD = build_receipt(root, ROOT_SOURCES)["build"]
+        root, sources = served_source_root_and_sources()
+        _SERVED_BUILD = build_receipt(root, sources)["build"]
     return _SERVED_BUILD
 
 
@@ -589,13 +589,18 @@ def serve_workbench(
     # deliberately bypasses the module-level cache: a long-lived process that
     # filled the cache earlier must not skip the startup read and serve an
     # identity the tree can no longer back.
-    served_build = build_receipt(Path(__file__).resolve().parents[2], ROOT_SOURCES)[
-        "build"
-    ]
+    served_build = build_receipt(*served_source_root_and_sources())["build"]
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802 - name fixed by BaseHTTPRequestHandler
             route, _, query = self.path.partition("?")
+            if route in ("", "/"):
+                # The announced base_url has no path; land on the default view
+                # instead of a bare 404.
+                self.send_response(302)
+                self.send_header("Location", "/home")
+                self.end_headers()
+                return
             if route == STYLESHEET_ROUTE:
                 self._respond(stylesheet().encode("utf-8"), "text/css; charset=utf-8")
                 return

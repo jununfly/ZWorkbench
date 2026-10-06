@@ -44,9 +44,53 @@ VIEW_MANIFESTS: Dict[str, Callable[..., Dict[str, Any]]] = {
 }
 
 
+def served_source_root_and_sources() -> Tuple[Path, Tuple[str, ...]]:
+    """Resolve the package directory and effective source paths.
+
+    The build receipt is computed from the declaring modules.  Those modules
+    live at two different places depending on how the package is consumed:
+
+    * **source checkout** -- ``<repo>/src/zworkbench/*.py``; ``ROOT_SOURCES``
+      already carries the ``src/zworkbench/`` prefix, and the receipt root is
+      the repository root two levels above the package.
+    * **installed wheel** -- ``<site-packages>/zworkbench/*.py``; the prefix is
+      dropped and the receipt root becomes the package directory itself.
+
+    The discriminator is the package's parent directory name, not the presence
+    of ``ui_declare.py`` (which exists in both layouts): a checkout keeps the
+    package under a ``src/`` directory, while an installed wheel does not.
+    Returning both halves keeps ``build_receipt`` layout-agnostic so the UI
+    host serves identically from a checkout or from ``pip install``.
+    """
+    pkg = Path(__file__).resolve().parent  # .../zworkbench
+    if pkg.parent.name == "src":
+        # Source checkout: repo root is two levels above src/zworkbench.
+        return pkg.parent.parent, ROOT_SOURCES
+    # Installed wheel (or any flat layout): modules sit directly under pkg.
+    prefix = "src/zworkbench/"
+    sources = tuple(
+        s[len(prefix) :] if s.startswith(prefix) else s for s in ROOT_SOURCES
+    )
+    return pkg, sources
+
+
 def build_ui_artifacts(root: Path, store: Path) -> Dict[str, Any]:
-    """Generate and store one manifest per view against a shared receipt."""
-    receipt = build_receipt(Path(root), ROOT_SOURCES)
+    """Generate and store one manifest per view against a shared receipt.
+
+    The source paths are layout-relative: when ``root`` is a source checkout
+    (``<repo>/src/zworkbench`` exists) the ``ROOT_SOURCES`` prefix is kept; when
+    ``root`` is an installed wheel (modules sit directly under the package) the
+    prefix is dropped.  This keeps ``ui-build`` working from either layout.
+    """
+    root = Path(root)
+    prefix = "src/zworkbench/"
+    if (root / "ui_declare.py").exists():
+        sources: Tuple[str, ...] = tuple(
+            s[len(prefix) :] if s.startswith(prefix) else s for s in ROOT_SOURCES
+        )
+    else:
+        sources = ROOT_SOURCES
+    receipt = build_receipt(root, sources)
     views: Dict[str, Dict[str, str]] = {}
     for view, manifest_of in VIEW_MANIFESTS.items():
         manifest = manifest_of(build=receipt["build"])

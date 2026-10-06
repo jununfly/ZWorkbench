@@ -37,11 +37,6 @@ LOOPBACK = "127.0.0.1"
 #: Addresses that keep the service on this machine. Anything else would put
 #: review material, including manifest identity, on the network.
 LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
-#: Default repository root for `ui-build`.  The package lives at
-#: ``src/zworkbench/cli.py``, so two parents up is the project root that holds
-#: ``src/zworkbench``.  Tying the default to the package means the build works
-#: from any working directory without the caller locating the tree.
-_DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
 _SECRET_VALUE = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,}|(?:api[_-]?key|access[_-]?token|authorization)\s*[:=]\s*\S+)",
     re.IGNORECASE,
@@ -981,9 +976,15 @@ def _ui_build_command(args: argparse.Namespace) -> int:
     same --store.
     """
 
-    from .ui_build import build_ui_artifacts
+    from .ui_build import build_ui_artifacts, served_source_root_and_sources
 
-    root = _resolve(args.root) if args.root is not None else _DEFAULT_REPO_ROOT
+    # Default root adapts to a source checkout or an installed wheel; an
+    # explicit --root always wins.
+    root = (
+        _resolve(args.root)
+        if args.root is not None
+        else served_source_root_and_sources()[0]
+    )
     store = _resolve(args.store)
     try:
         result = build_ui_artifacts(root, store)
