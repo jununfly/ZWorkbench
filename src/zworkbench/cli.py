@@ -37,6 +37,11 @@ LOOPBACK = "127.0.0.1"
 #: Addresses that keep the service on this machine. Anything else would put
 #: review material, including manifest identity, on the network.
 LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
+#: Default repository root for `ui-build`.  The package lives at
+#: ``src/zworkbench/cli.py``, so two parents up is the project root that holds
+#: ``src/zworkbench``.  Tying the default to the package means the build works
+#: from any working directory without the caller locating the tree.
+_DEFAULT_REPO_ROOT = Path(__file__).resolve().parents[2]
 _SECRET_VALUE = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,}|(?:api[_-]?key|access[_-]?token|authorization)\s*[:=]\s*\S+)",
     re.IGNORECASE,
@@ -295,6 +300,36 @@ def _parser() -> argparse.ArgumentParser:
         help="enable the local review annotation mode",
     )
     ui.set_defaults(handler=_ui_command)
+
+    ui_build = commands.add_parser(
+        "ui-build",
+        help="generate and store the UI reference manifest artifacts",
+        description=(
+            "Generate the UI reference manifest for every view from the "
+            "declaring sources and store each artifact under its own identity. "
+            "The build only reads sources and writes artifacts: it starts no "
+            "run, opens no owner database and changes no owner state. The "
+            "produced --store directory is what `ui-ref` queries against, which "
+            "closes the R1 review-token -> code loop on the AI side."
+        ),
+    )
+    ui_build.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help=(
+            "repository root that contains src/zworkbench; defaults to the "
+            "package's own repository root"
+        ),
+    )
+    ui_build.add_argument(
+        "--store",
+        required=True,
+        type=Path,
+        help="local manifest artifact directory to write the generated artifacts into",
+    )
+    ui_build.set_defaults(handler=_ui_build_command)
+
     return parser
 
 
@@ -934,6 +969,44 @@ def _ui_command(args: argparse.Namespace) -> int:
             )
     finally:
         owner.close()
+    return 0
+
+
+def _ui_build_command(args: argparse.Namespace) -> int:
+    """Generate and store every view manifest against one shared receipt.
+
+    The produced --store directory is the artifact `ui-ref` reads, so after
+    this command the AI side of the R1 loop (token -> code) is reachable: copy
+    a review token's ref/ui_map/build and run `ui-ref resolve` against the
+    same --store.
+    """
+
+    from .ui_build import build_ui_artifacts
+
+    root = _resolve(args.root) if args.root is not None else _DEFAULT_REPO_ROOT
+    store = _resolve(args.store)
+    try:
+        result = build_ui_artifacts(root, store)
+    except OSError as exc:
+        raise SystemExit(
+            "ui-build could not read the declaring sources under {0!r}: {1}. "
+            "Pass --root to point at the repository that contains src/zworkbench."
+            .format(str(root), type(exc).__name__)
+        )
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "ui-build",
+        "status": "completed",
+        "root": str(root),
+        "store": str(store),
+        "build": result["receipt"]["build"],
+        "sources": [entry["repo_path"] for entry in result["receipt"]["sources"]],
+        "views": {
+            view: {"ui_map": identity["ui_map"], "build": identity["build"]}
+            for view, identity in result["views"].items()
+        },
+    }
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0
 
 

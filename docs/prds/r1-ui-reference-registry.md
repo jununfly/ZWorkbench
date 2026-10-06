@@ -149,8 +149,8 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 与行为测试。相关模块见 `src/zworkbench/ui_*.py`，验证入口见 [Repository README](../../README.md)。
 
 前端宿主已落地：服务端渲染 HTML 经本机回环只读提供（[ADR 0003](../zj-adr/0003-workbench-host-is-server-rendered-html-over-loopback.md)），
-带独立样式层、overlay 与评审面板，manifest 由构建钩子产出 build receipt。视图渲染仍是纯函数，
-评审决策仍由状态机拥有。
+带独立样式层、overlay 与评审面板，manifest 由构建命令 `zworkbench ui-build --store <dir>` 产出 build receipt 并落盘为按 ui_map/build identity 寻址的产物。视图渲染仍是纯函数，
+评审决策仍由状态机拥有。AI 侧「token → 代码」闭环由此接通：`ui-build` 生成产物后，`zworkbench ui-ref resolve <ref> --store <dir> --ui-map <m> --build <b>` 按精确 identity 只读定位代码声明（命令事实源见 [Repository README](../../README.md)）。
 
 深链接的模式提示已落地：评审模式未开启时跟随链接仍完成纯定位，页面同时提示评审模式未开启、
 需显式进入，绝不静默开启；失败链接不叠加提示（`tests/test_ui_deep_link_negative.py` 的
