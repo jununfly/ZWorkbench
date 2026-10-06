@@ -14,6 +14,8 @@ zworkbench run --prompt "解释这个函数的意图"
 
 本地评审入口是只读 loopback 宿主：`zworkbench ui-host` 服务三个声明视图；`zworkbench ui-host --review` 显式开启本地评审标注模式（悬停语义名、脱敏反馈 token、深链接定位）。宿主只绑定 127.0.0.1，不打开 owner 数据库，中断即释放端口。
 
+AI 侧「token → 代码」闭环（R1）：先在本地生成 UI Reference Manifest 产物 `zworkbench ui-build --store <dir>`（只读、不启动业务 Run、不改 owner 状态），再把浏览器复制的反馈 token 中的 `ref`/`ui_map`/`build` 交给 `zworkbench ui-ref resolve <ref> --store <dir> --ui-map <m> --build <b>` 定位代码声明；`ui-ref` 按精确 identity 只读查询，缺失返回 `manifest-missing`，不联网下载历史版本。
+
 真实 Provider 的按需、路线外验证见 `docs/references/optional-real-provider-staging.md`（账户 owner 自持 Key、env+stdin 注入、secret 0 落盘）。
 
 从 [文档地图](docs/README.md) 开始：领域语言解释对象，方法论解释判定，架构解释责任边界，ADR 解释长期选择；外部 staging 的受控操作边界见 references。
