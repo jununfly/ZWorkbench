@@ -97,6 +97,17 @@ def _parser() -> argparse.ArgumentParser:
             "on Codex's own sandbox or the external host seatbelt."
         ),
     )
+    run.add_argument(
+        "--real-provider-gate",
+        action="store_true",
+        default=False,
+        help=(
+            "explicitly consent to a real Provider egress/billing path. Required "
+            "when --provider-profile is set: the controlled gate that keeps the "
+            "loopback/fake baseline from silently reaching a real Provider "
+            "(roadmap node 1-1-4). Without it, a real profile is denied."
+        ),
+    )
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
     run.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
@@ -455,6 +466,7 @@ def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
         provider_profile=provider_profile,
         provider_config_path=provider_config_path,
         host_enforcement=args.host_enforcement,
+        real_provider_gate=bool(args.real_provider_gate),
     )
     return config
 

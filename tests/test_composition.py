@@ -6,7 +6,14 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from zworkbench.composition import CompositionOwner, IntegrityError, InvalidTransition, NotFoundError, RetryBudgetExhausted
+from zworkbench.composition import (
+    CompositionOwner,
+    IntegrityError,
+    InvalidTransition,
+    NotFoundError,
+    ProviderAccessDenied,
+    RetryBudgetExhausted,
+)
 
 
 class CompositionOwnerTests(unittest.TestCase):
@@ -648,6 +655,87 @@ class ProviderRetryBudgetTests(unittest.TestCase):
             self.assertEqual(len(ledger), 1)
             self.assertEqual(ledger[0]["bound"], "enforced")
             self.assertEqual(reopened.snapshot()["provider_retry_budget"][0]["max_retries"], 3)
+            self.assertEqual(reopened.state_digest(), digest_before)
+
+
+class ProviderAccessGateLedgerTests(unittest.TestCase):
+    # Node 1-1-4: the controlled boundary between the loopback/fake baseline and
+    # a real Provider is recorded per run so every run's classification (real vs
+    # baseline) is auditable; the reason-required rule stays fail-closed.
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self) -> None:
+        self.owner.create_run("run-1", "provider.read-only", {"request": "fixture"})
+        self.owner.start_run("run-1")
+
+    def test_record_and_read_real_decision(self) -> None:
+        self._run()
+        ledger_id = self.owner.record_provider_access_gate(
+            "run-1", "real", True, "explicit real_provider_gate enabled; real Provider profile selected",
+            provider_id="custom", profile_name="ark",
+        )
+        entry = self.owner.get_provider_access_gate(ledger_id)
+        self.assertEqual(entry["classification"], "real")
+        self.assertTrue(entry["gate_enabled"])
+        self.assertEqual(entry["provider_id"], "custom")
+        self.assertEqual(entry["profile_name"], "ark")
+
+    def test_record_and_read_baseline_decision(self) -> None:
+        self._run()
+        ledger_id = self.owner.record_provider_access_gate(
+            "run-1", "baseline", False, "no real Provider profile; loopback/fake baseline",
+            provider_id="fake-loopback", profile_name=None,
+        )
+        entry = self.owner.get_provider_access_gate(ledger_id)
+        self.assertEqual(entry["classification"], "baseline")
+        self.assertFalse(entry["gate_enabled"])
+        self.assertIsNone(entry["profile_name"])
+
+    def test_for_run_returns_recorded_decision(self) -> None:
+        self._run()
+        self.owner.record_provider_access_gate(
+            "run-1", "baseline", False, "no real Provider profile; loopback/fake baseline",
+        )
+        entries = self.owner.provider_access_gate_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["classification"], "baseline")
+
+    def test_invalid_classification_rejected(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_access_gate("run-1", "weird", False, "nope")
+
+    def test_reason_required_fail_closed(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_access_gate("run-1", "baseline", False, "")
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_access_gate("run-1", "baseline", False, "   ")
+
+    def test_missing_entry_raises_not_found(self) -> None:
+        with self.assertRaises(NotFoundError):
+            self.owner.get_provider_access_gate("missing")
+
+    def test_survives_reopen_and_appears_in_snapshot(self) -> None:
+        self._run()
+        self.owner.record_provider_access_gate(
+            "run-1", "baseline", False, "no real Provider profile; loopback/fake baseline",
+        )
+        digest_before = self.owner.state_digest()
+        self.owner.close()
+        with CompositionOwner(self.db) as reopened:
+            ledger = reopened.provider_access_gate_ledger_for_run("run-1")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["classification"], "baseline")
+            self.assertIn("provider_access_gate_ledger", reopened.snapshot())
             self.assertEqual(reopened.state_digest(), digest_before)
 
 

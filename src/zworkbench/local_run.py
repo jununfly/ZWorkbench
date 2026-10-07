@@ -64,6 +64,7 @@ class LocalReadOnlyRunConfig:
     provider_profile: Optional[ProviderProfile] = None
     provider_config_path: Optional[Path] = None
     host_enforcement: bool = False
+    real_provider_gate: bool = False
 
     def __post_init__(self) -> None:
         for field_name in (
@@ -83,6 +84,7 @@ class LocalReadOnlyRunConfig:
         object.__setattr__(self, "disabled_features", tuple(self.disabled_features))
         object.__setattr__(self, "authorized_providers", frozenset(self.authorized_providers or ()))
         object.__setattr__(self, "provider_profile", self.provider_profile)
+        object.__setattr__(self, "real_provider_gate", bool(self.real_provider_gate))
         if self.provider_config_path is not None:
             object.__setattr__(
                 self,
@@ -239,6 +241,13 @@ class LocalReadOnlyRunOrchestrator:
                     owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
                 except Exception:
                     pass
+                # The Provider-access gate decision is admission-level; record it
+                # for the (now existing) run even on the failed path so the
+                # real/baseline boundary stays auditable.
+                try:
+                    self._record_access_gate(owner, run_id)
+                except Exception:
+                    pass
                 raise
             finally:
                 adapter.close()
@@ -247,7 +256,29 @@ class LocalReadOnlyRunOrchestrator:
             # caliber is unknown/delegated by construction — no remote zero-residue
             # proof is ever claimed.
             owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
+            # Record the Provider-access gate decision for this run: the boundary
+            # between the loopback/fake baseline and a real Provider must be
+            # explicit and auditable.  Preflight has already denied any real
+            # profile without the gate enabled, so the recorded classification
+            # faithfully reflects the admitted path.  We record here (after the
+            # adapter has created the run) because the ledger references runs.
+            self._record_access_gate(owner, run_id)
             return result
+
+    def _record_access_gate(self, owner: "CompositionOwner", run_id: str) -> None:
+        """Record the Provider-access gate decision for an admitted run."""
+
+        real_requested = self.config.provider_profile is not None
+        owner.record_provider_access_gate(
+            run_id,
+            "real" if real_requested else "baseline",
+            self.config.real_provider_gate,
+            "explicit real_provider_gate enabled; real Provider profile selected"
+            if real_requested
+            else "no real Provider profile; loopback/fake baseline",
+            provider_id=self.config.provider_identity.get("provider"),
+            profile_name=self.config.provider_profile.name if real_requested else None,
+        )
 
 
 def _require_text(value: str, name: str) -> str:
@@ -368,6 +399,14 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         config.provider_profile is None or config.provider_config_path is not None,
         "real_provider_config_missing",
         "an explicit real Provider profile requires an explicit --provider-config path",
+    )
+    real_requested = config.provider_profile is not None
+    check(
+        "real_provider_gate_enabled",
+        not real_requested or config.real_provider_gate,
+        "real_provider_gate_disabled",
+        "an explicit real Provider profile requires real_provider_gate=True; "
+        "the baseline (loopback / fake) path must never silently reach a real Provider",
     )
     provider_json_safe = _is_json_serializable(config.provider_identity)
     check(
