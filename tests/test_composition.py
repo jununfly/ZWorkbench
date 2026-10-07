@@ -331,5 +331,114 @@ class ProviderExitLedgerTests(unittest.TestCase):
             self.owner.get_provider_exit_ledger("missing")
 
 
+class ProviderFallbackLedgerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name)
+        self.db = self.root / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self, run_id: str = "run-1") -> None:
+        self.owner.create_run(run_id, "unit-test", {"prompt": "fixture"})
+        self.owner.start_run(run_id)
+
+    def test_reason_required_denies_empty_and_none(self) -> None:
+        # Node 1-1-1 regression: a fallback without an explicit reason must be
+        # rejected (reason-required fail-closed), never silently admitted.
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_fallback(
+                "run-1", from_provider="primary", to_provider="secondary",
+                reason="", degradation_mode="fallback", attempt=1,
+            )
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_fallback(
+                "run-1", from_provider="primary", to_provider="secondary",
+                reason=None, degradation_mode="fallback", attempt=1,
+            )
+
+    def test_records_fallback_with_all_fields(self) -> None:
+        self._run()
+        entry = self.owner.record_provider_fallback(
+            "run-1", from_provider="primary", to_provider="secondary",
+            reason="RATE_LIMIT", degradation_mode="fallback", attempt=1,
+            failure_code="RATE_LIMIT", http_status=429,
+            local_state_fingerprint="a" * 64,
+        )
+        self.assertEqual(entry["from_provider"], "primary")
+        self.assertEqual(entry["to_provider"], "secondary")
+        self.assertEqual(entry["reason"], "RATE_LIMIT")
+        self.assertEqual(entry["degradation_mode"], "fallback")
+        self.assertEqual(entry["attempt"], 1)
+        self.assertEqual(entry["failure_code"], "RATE_LIMIT")
+        self.assertEqual(entry["http_status"], 429)
+        self.assertEqual(entry["local_state_fingerprint"], "a" * 64)
+        events = self.owner.events("run-1")
+        self.assertTrue(any(e["type"] == "provider.fallback.ledger.recorded" for e in events))
+
+    def test_degradation_mode_must_be_valid(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_fallback(
+                "run-1", from_provider="primary", to_provider="secondary",
+                reason="RATE_LIMIT", degradation_mode="explode", attempt=1,
+            )
+
+    def test_attempt_must_be_non_negative_int(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_fallback(
+                "run-1", from_provider="primary", to_provider="secondary",
+                reason="RATE_LIMIT", degradation_mode="fallback", attempt=-1,
+            )
+
+    def test_local_state_fingerprint_must_be_hex_or_unknown(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_fallback(
+                "run-1", from_provider="primary", to_provider="secondary",
+                reason="RATE_LIMIT", degradation_mode="fallback", attempt=1,
+                local_state_fingerprint="not-hex",
+            )
+
+    def test_survives_reopen_and_appears_in_snapshot(self) -> None:
+        self._run()
+        self.owner.record_provider_fallback(
+            "run-1", from_provider="primary", to_provider="secondary",
+            reason="RATE_LIMIT", degradation_mode="fallback", attempt=1,
+        )
+        digest_before = self.owner.state_digest()
+        self.owner.close()
+        with CompositionOwner(self.db) as reopened:
+            ledger = reopened.provider_fallback_ledger_for_run("run-1")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["reason"], "RATE_LIMIT")
+            self.assertEqual(reopened.snapshot()["provider_fallback_ledger"][0]["to_provider"], "secondary")
+            self.assertEqual(reopened.state_digest(), digest_before)
+
+    def test_for_run_returns_all_entries_in_order(self) -> None:
+        self._run()
+        self.owner.record_provider_fallback(
+            "run-1", from_provider="primary", to_provider="secondary",
+            reason="RATE_LIMIT", degradation_mode="fallback", attempt=1,
+        )
+        self.owner.record_provider_fallback(
+            "run-1", from_provider="secondary", to_provider=None,
+            reason="UPSTREAM_UNAVAILABLE", degradation_mode="safe_stop", attempt=2,
+            failure_code="UPSTREAM_UNAVAILABLE", http_status=503,
+        )
+        entries = self.owner.provider_fallback_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 2)
+        self.assertEqual([e["degradation_mode"] for e in entries], ["fallback", "safe_stop"])
+
+    def test_get_missing_ledger_entry_raises_not_found(self) -> None:
+        with self.assertRaises(NotFoundError):
+            self.owner.get_provider_fallback_ledger("missing")
+
+
 if __name__ == "__main__":
     unittest.main()

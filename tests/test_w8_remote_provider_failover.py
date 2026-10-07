@@ -176,6 +176,42 @@ class RemoteProviderFailoverFixtureTests(unittest.TestCase):
         self.assertNotIn("api_key", redacted_json)
         self.assertEqual(redacted["response"]["semantic_fixture_exact"], True)
 
+    def test_fallback_is_recorded_in_owner_backed_fallback_ledger(self) -> None:
+        # Node 1-1-1: the router's fallback decision must now land in the
+        # dedicated owner-backed provider_fallback_ledger, not only fixture events.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "fallback-ledger-run")
+            router = OwnerBackedProviderRouter(owner, self.routes, cooldown_ticks=5)
+
+            def dispatch(route: ProviderRoute):
+                if route.provider_id == "primary":
+                    raise ProviderFailure("RATE_LIMIT", http_status=429)
+                return {"text": "fixture-ok", "provider": route.provider_id}
+
+            router.route("fallback-ledger-run", "request-1", 0, dispatch)
+            ledger = owner.provider_fallback_ledger_for_run("fallback-ledger-run")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["from_provider"], "primary")
+            self.assertEqual(ledger[0]["to_provider"], "secondary")
+            self.assertEqual(ledger[0]["reason"], "RATE_LIMIT")
+            self.assertEqual(ledger[0]["degradation_mode"], "fallback")
+            self.assertEqual(ledger[0]["attempt"], 1)
+            self.assertEqual(ledger[0]["http_status"], 429)
+
+    def test_owner_fallback_ledger_rejects_missing_reason(self) -> None:
+        # Regression for node 1-1-1: reason-required fail-closed at the owner.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "missing-reason-run")
+            with self.assertRaises(ValueError):
+                owner.record_provider_fallback(
+                    "missing-reason-run",
+                    from_provider="primary",
+                    to_provider="secondary",
+                    reason="",
+                    degradation_mode="fallback",
+                    attempt=1,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

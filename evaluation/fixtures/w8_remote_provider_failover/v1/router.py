@@ -100,6 +100,15 @@ class OwnerBackedProviderRouter:
             }
             self._record(run_id, f"{request_id}:decision:all-cooled", "provider.failover.decision", decision)
             self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision")
+            self.owner.record_provider_fallback(
+                run_id,
+                from_provider=None,
+                to_provider=None,
+                reason="all_routes_cooling_down",
+                degradation_mode="safe_stop",
+                attempt=0,
+                failure_code="all_routes_cooling_down",
+            )
             self.owner.safe_stop_run(run_id, "provider_all_routes_cooled")
             return {"status": "safe_stopped", "attempts": [], "decision": decision}
 
@@ -159,6 +168,16 @@ class OwnerBackedProviderRouter:
                 }
                 self._record(run_id, f"{request_id}:decision:{attempt_number}", "provider.failover.decision", decision)
                 self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision:{attempt_number}")
+                self.owner.record_provider_fallback(
+                    run_id,
+                    from_provider=route.provider_id,
+                    to_provider=fallback[0].provider_id if fallback else None,
+                    reason=failure.code,
+                    degradation_mode="fallback" if fallback else "safe_stop",
+                    attempt=attempt_number,
+                    failure_code=failure.code,
+                    http_status=failure.details.get("http_status"),
+                )
                 if not fallback:
                     self.owner.safe_stop_run(run_id, "provider_all_routes_cooled")
                     return {"status": "safe_stopped", "attempts": attempts, "decision": decision}
