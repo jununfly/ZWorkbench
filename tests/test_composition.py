@@ -261,6 +261,33 @@ class CompositionOwnerTests(unittest.TestCase):
                 {"provider": "fake", "api_key": "secret"},
             )
 
+    def test_external_receipt_rejects_raw_credentials_and_secret_values(self) -> None:
+        # 1-6-1: external_receipt must go through secret rejection (field name)
+        # AND value-level scanning before it is persisted in the unique owner.
+        self._run()
+        claim = self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
+        # Field-name level: a raw credential key must be rejected.
+        with self.assertRaises(ValueError):
+            self.owner.complete_effect(claim.effect_id, {"delivered": True}, {"api_key": "sk-secret"})
+        # Value-level: benign field name but a secret-shaped value must be rejected.
+        with self.assertRaises(ValueError):
+            self.owner.complete_effect(claim.effect_id, {"delivered": True}, {"receipt": "AKIAIOSFODNN7EXAMPLE"})
+        # Allowed: an identity-reference suffix is not a raw credential.
+        stored = self.owner.complete_effect(claim.effect_id, {"delivered": True}, {"api_key_ref": "vault://secret/42"})
+        self.assertEqual(stored["external_receipt"], {"api_key_ref": "vault://secret/42"})
+
+    def test_reconcile_applied_rejects_secret_valued_receipt(self) -> None:
+        # 1-6-1 symmetry: the applied-reconcile path also persists evidence as
+        # external_receipt and must reject secret-shaped values.
+        self._run()
+        claim = self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
+        self.owner.mark_effect_uncertain(claim.effect_id, {"error": "worker interrupted"})
+        with self.assertRaises(ValueError):
+            self.owner.reconcile_effect(claim.effect_id, "applied", {"receipt": "AKIAIOSFODNN7EXAMPLE"})
+        # A benign applied reconcile still persists its receipt.
+        stored = self.owner.reconcile_effect(claim.effect_id, "applied", {"receipt": "r-1"})
+        self.assertEqual(stored["external_receipt"], {"receipt": "r-1"})
+
 
 class ProviderExitLedgerTests(unittest.TestCase):
     def setUp(self) -> None:
