@@ -237,13 +237,35 @@
       "id": "1-1-2",
       "uid": "01a11594effa-a598805983",
       "label": "P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "attempt 计账落 owner 的落点？",
+          "answer": "新增专用表 provider_attempt_ledger（不扩展 provider_exit_ledger、不叫 retry_budget_ledger）：attempt 原始计数语义与 exit ledger（带 cooling 的退出账本）正交；retry_budget_ledger 命名留给 1-1-3（Provider 级预算/上限表），1-1-2 先沉淀原始计数供其引用",
+          "note": ""
+        },
+        {
+          "q": "计账记录什么内容？",
+          "answer": "每行=一次 attempt 的终态（failed/succeeded）；列 run_id/provider_id/request_id/attempt_number/status/failure_code/recorded_at；started 仅保留既有 provider.attempt event 不进 ledger（同步 router 下每个 started 必终态，计数等价）",
+          "note": ""
+        },
+        {
+          "q": "接入点与既有观测如何取舍？",
+          "answer": "router 在 failed/succeeded 两个终态点调用 record_provider_attempt；保留既有 provider.attempt event 观测，不破坏现有 fixture 断言；新增专用 ledger 作为硬化审计",
+          "note": ""
+        },
+        {
+          "q": "schema 版本如何处置？",
+          "answer": "不变更 SCHEMA_VERSION（沿用 1-1-1 先例）；新表 CREATE TABLE IF NOT EXISTS 幂等补表，并加入 health check 的 required 集合；snapshot 纳入（ORDER BY attempt_number, ledger_id 确定）",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-3": {
       "id": "1-1-3",
@@ -824,7 +846,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-07 18:47:20",
+    "updated": "2026-10-07 19:30:02",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
