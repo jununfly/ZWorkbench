@@ -11,6 +11,16 @@ review_note: 2026-10-06 回填——只读三视图 + 交互写 seam（F6/F8/F9/
 
 > 来源：[GitHub Issue #1](https://github.com/jununfly/ZWorkbench/issues/1)。本文保存该 Issue 的 R1 spec；它描述目标与验收合同，不证明能力已实现。
 
+## 相关设计实体
+
+本 Issue 的产品设计已沉淀为长期设计实体（见 `docs/designs/`）：
+
+- 界面引用注册表协议 / manifest / token / 生命周期 / 所有权边界 → [pd-ui-reference-system](../designs/pd-ui-reference-system.md)
+- 界面引用注册表功能本体 → [pf-ui-reference-registry](../designs/pf-ui-reference-registry.md)
+- 本地评审标注闭环 → [ep-review-annotation-loop](../designs/ep-review-annotation-loop.md)
+- 交互式工作台设计决策与写 seam → [pd-interactive-workbench](../designs/pd-interactive-workbench.md) · [ep-write-seam-journey](../designs/ep-write-seam-journey.md) · [pf-workbench-features](../designs/pf-workbench-features.md)
+- unknown→safe-stop 失败关闭语义 → [ps-safe-stop-unknown](../designs/ps-safe-stop-unknown.md)
+
 ## Problem
 
 当前只能通过受控 CLI、owner snapshot 和分散运行产物理解工作状态，缺少一个能恢复上下文、呈现运行事实、证据和下一步的本地优先工作台。UI 不得把 DSH/Codex/Provider session 变成第二个 durable owner，也不得伪造 approval、写入、Provider 切换或 live replay。

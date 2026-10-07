@@ -9,6 +9,7 @@ implementation-status: unknown
 
 > 来源：2026-09-30「如何把 ZWorkbench 做到用户能真实可用」讨论 sub-03（分发/安装/首次运行 UX）结论沉淀。
 > 本文件是产品规格，不是实现事实；未由 owner-backed 证据证实的能力标 `target` / `unknown`。
+> 设计层（首跑最小形态、只读自检 `doctor`、价值演示缝合、端到端旅程）已沉淀为 [pd-first-run-onboarding](../designs/pd-first-run-onboarding.md) 与 [ep-first-run-journey](../designs/ep-first-run-journey.md)，本 PRD 不再重复。
 
 ## Problem Statement
 
@@ -23,14 +24,16 @@ implementation-status: unknown
 
 > 「非作者陌生人 <5 分钟」降为 deferred-until-demand + 本文件的 UX 目标，不得写回验收判据。
 
-## 首跑最小形态（承接 C1 约束5）
+## 首跑最小形态（设计见 pd-first-run-onboarding）
 
-- 新增 `zworkbench run --prompt "..."`（或 `zworkbench demo`）：自动在默认位置（如 `~/.zworkbench/cases/first-run/`）脚手架 `case-root + workspace + state` 子目录；`--codex` 缺省按 PATH 探测并打印实际解析路径；原完整参数形态保留为高级用法。
+- 新增 `zworkbench run --prompt "..."`（或 `zworkbench demo`）：自动在默认位置脚手架 `case-root + workspace + state` 子目录；`--codex` 缺省按 PATH 探测并打印实际解析路径；原完整参数形态保留为高级用法。
 - Provider 默认 `fake-loopback`（零配置、恒真可达），不要求任何外部凭证。
 
 **验收**：不读 README 的用户用单条命令完成首跑。
 
-## onboarding = 只读自检 `doctor`（承接 C3）
+> 完整设计与边界见 [pd-first-run-onboarding](../designs/pd-first-run-onboarding.md)（首跑最小形态 / onboarding 自检 / 价值演示缝合）。
+
+## onboarding = 只读自检 `doctor`（设计见 pd-first-run-onboarding）
 
 - 只探测（Codex 可执行性、case 目录约定、loopback provider 可达性），输出 readiness 报告 + 每项失败对应 fix hint，**不采集、不存储任何凭证**。
 - 真实 Provider 在首跑路径中改写为「显式旁路」：doctor 报告末行指向 staging runbook 引导（声明 owner 自持 Key 的按需动作）。
@@ -39,12 +42,14 @@ implementation-status: unknown
 
 **验收**：doctor 在零凭证环境下全绿可跑，`git status` 无副作用文件。
 
-## 价值演示缝合（next_steps）
+## 价值演示缝合（next_steps，设计见 ep-first-run-journey）
 
 - `run` 完成且写了 `--db`（或默认 `case_root/state/composition.sqlite3`）后，在 stdout 末尾追加 `next_steps` 数组（可复制的 `zworkbench ui-host --review` 或 `zworkbench ui --db <实际 db 路径>`）。
 - 进一步 `zworkbench run ... --open`：子进程自动拉起 `ui-host`（仍 loopback、仍只读）。
 
 **验收**：首跑脚本跑通后无需读 README 即可在浏览器打开看到自己 run 的 recorded view。
+
+> 端到端旅程（pip → run → loopback UI 见 recorded view）见 [ep-first-run-journey](../designs/ep-first-run-journey.md)。
 
 ## fail-closed UX 成本回收
 

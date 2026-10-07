@@ -11,6 +11,10 @@ review_note: 2026-10-06 回填——minimal slice S2（write seam，roadmap 1-7 
 > 本文件是产品规划草稿，不是实现事实。所有未由 owner-backed 证据证实的能力标 `target` 或 `unknown`。
 > 评测脚手架（H1–H5 / C1–C7 runner）通过 **不等于** 产品能力已实现；二者必须分开计账。
 
+## 相关设计实体（场景模型）
+
+本路线图的「solo 真实可用」产品场景模型（三层 AND 门 / S0–S4 切片顺序 / H7-H8 deferred）已沉淀为设计实体 [ps-solo-real-provider](../designs/ps-solo-real-provider.md)。本 PRD 保留为产品规划权威视角，场景细节（判定门槛、切片 DoD、架构负约束）以该实体为准，本文件不再重复承载其设计层。
+
 ## Problem Statement
 
 ZWorkbench 的目标组合是 DSH 主 Harness + 进程外 Codex Coding Worker + 唯一 durable CompositionOwner。当前产品入口仍是 **Codex-only 本地只读回退基线**（`local_read_only_run`），目标架构未产品化。
@@ -268,3 +272,7 @@ scope 已收敛、R3/ADR 0008 已沉淀、工程切片 S0–S4 已锁定。作�
 - `docs/references/optional-provider-exit-inventory.md` / `optional-provider-exit-primary-sources.md`：Provider-side 退出责任记账口径。
 - H6–H8 scope 收敛过程（Human+AI 第一遍 + Agent B/C/A 三视角观点 + 拍板）原记录于 `docs/discussions/h6-h8-scope-kickoff.md`（已按 `_POLICY.md` 删除；结论已沉淀至本文件与 ADR 0008）。
 - `evaluation/evidence/competitive-baseline/README.md`（local-only，不入库）：C1-6 价值基线竞品对照实证（2026-10-01，ARK，对称三指标 + 写链路 md5 一致），见「价值判据」节实证子块。
+
+## 相关设计实体
+
+- [ps-solo-real-provider](../designs/ps-solo-real-provider.md) — solo 真实可用产品场景模型（三层 AND 门 / S0–S4 切片顺序 / H7-H8 deferred / 架构负约束）

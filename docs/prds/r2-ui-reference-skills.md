@@ -9,6 +9,8 @@ implementation-status: complete
 
 # 通用 UI 引用评审能力与协议／运行时双 Skill
 
+> 设计层（协议设计 skill 与运行时实现 skill 的职责、显式交接物 protocol profile、通用身份模型、不确定性优先、隐私边界、宿主适配器、调用顺序、报告格式等）已沉淀为设计实体 [pf-ui-reference-skills](../designs/pf-ui-reference-skills.md)，本 PRD 不再重复承载。
+
 ## Problem Statement
 
 当前的界面引用注册表与本地评审标注能力已经在 ZWorkbench 的 R1 产品规格中形成了较完整的协议、运行时边界和验收合同。它解决了 Human 与 Coding Agent 之间准确指认界面元素的问题，但现有规格仍然同时携带 ZWorkbench 的产品视图、CompositionOwner 边界、具体状态、宿主形态、构建身份和验收矩阵。
@@ -28,19 +30,15 @@ implementation-status: complete
 
 两个 skill 必须服务更多项目和 Coding Agent，但不能成为新的 UI 运行时、第二个产品架构或第二个 durable owner。
 
-## Solution
+## Solution（要点）
 
-保留现有 R1 PRD 作为 ZWorkbench 的产品需求、实现状态和验收证据来源；新增通用双 skill 能力。
+保留现有 R1 PRD 作为 ZWorkbench 的产品需求、实现状态和验收证据来源；新增通用双 skill 能力。完整设计见 [pf-ui-reference-skills](../designs/pf-ui-reference-skills.md)：
 
-协议设计 skill 面向产品负责人、架构师、UI 开发者和 Coding Agent，负责识别问题边界、定义稳定语义身份、规定 manifest／token／深链接／迁移／脱敏／副作用合同，并输出一个可被运行时实现 skill 消费的 UI Reference Protocol Profile。它只定义协议和验证要求，不直接实现浏览器 overlay、面板、剪贴板或业务视图。
+- 协议设计 skill 面向产品负责人、架构师、UI 开发者和 Coding Agent，输出可被运行时实现 skill 消费的 UI Reference Protocol Profile；只定义协议和验证要求，不直接实现浏览器 overlay、面板、剪贴板或业务视图。
+- 运行时实现 skill 面向需要在具体项目中实现或改造该能力的 Coding Agent，完成“代码声明 → manifest → DOM → review session → token／link → manifest／源码定位”的纵向闭环。
+- 协议 profile 是两个 skill 的显式交接物；缺少或无法验证 profile 时，运行时实现进入 `unknown`／`HOLD`，不自行发明协议。
 
-运行时实现 skill 面向需要在具体项目中实现或改造该能力的 Coding Agent，负责读取已确认的协议 profile，发现项目的 UI 渲染、构建、源码定位和浏览器验证接缝，完成“代码声明 → manifest → DOM → review session → token／link → manifest／源码定位”的纵向闭环，并验证正常交互、失败语义、脱敏、无远端副作用和退出清理。它通过项目已有的 UI、Host、Control Plane 或 facade 接缝工作，不直接接管业务状态。
-
-协议 profile 是两个 skill 的显式交接物。它包含协议身份、语义字段、生命周期、错误结果、信任边界、宿主能力假设和验收条件，但不包含项目的动态业务数据。两个 skill 可以独立安装；运行时 skill 不能依赖某个 skill 目录的隐式路径或未声明的跨 skill import。缺少或无法验证 profile 时，运行时实现进入 `unknown`／`HOLD`，不自行发明协议。
-
-通用能力只抽取稳定的设计和工作流原则。ZWorkbench 的 `ui-ref/v1` 字段白名单、三个工作台视图、CompositionOwner 约束、具体 viewport、CLI、源码模块和现有证据继续作为项目 profile 或产品文档，不升级为所有项目必须采用的全局事实。
-
-产品绑定关系：ZWorkbench 的具体产品需求、视图矩阵与验收历史继续由 [R1 界面引用注册表与本地评审标注模式](r1-ui-reference-registry.md) 维护；本 R2 只定义可复用的 skill 抽取与交接边界。`ZWorkbench-specific profile` 联调不属于本阶段实施范围，不是本阶段完成门槛；最终验收将其记录为 `deferred/unknown`，由项目维护者在后续独立工作中补充证据。
+产品绑定关系：ZWorkbench 的具体产品需求、视图矩阵与验收历史继续由 [R1 界面引用注册表与本地评审标注模式](r1-ui-reference-registry.md) 维护；本 R2 只定义可复用的 skill 抽取与交接边界。
 
 ## User Stories
 
@@ -105,69 +103,11 @@ implementation-status: complete
 59. As a Coding Agent, I want the skill instructions to avoid duplicating stable project facts already available in the project profile, so that the skill remains short, discoverable and maintainable.
 60. As a Human reviewer, I want the final report to state what is implemented, what is only designed, what is unknown and what remains on hold, so that I can make an informed acceptance decision.
 
-## Implementation Decisions
+## Design decisions（已沉淀）
 
-- **产品规格与 skill 分离**：现有 R1 PRD 保留为 ZWorkbench 的产品规格、具体验收矩阵、实现状态和 Human 验收记录。新 skill 不替换、移动或删改 R1 的产品语义。
+R2 的全部实现决策（产品规格与 skill 分离、双 skill 职责、显式交接物、profile 最小内容、通用身份模型、声明与派生物、结构与实例分离、不确定性优先、生命周期与迁移、历史 identity、源码定位、token 合同、深链接合同、隐私边界、review mode、键盘和焦点、clipboard、副作用和 ownership、宿主适配器、能力发现、依赖策略、协议与实现版本、技能可安装性、调用顺序、调用模式、报告格式、不复制产品验收矩阵、当前产品绑定、变更范围）已沉淀为设计实体 [pf-ui-reference-skills](../designs/pf-ui-reference-skills.md)。本 PRD 仅保留需求/验收/状态，详见该实体。
 
-- **双 skill 职责**：建立两个独立的可安装 skill。协议设计 skill 负责设计、审查和版本化协议 profile；运行时实现 skill 负责在具体项目中实现和验证该 profile。两者不合并为一个覆盖设计和编码的长文档。
-
-- **显式交接物**：协议设计 skill 的主要输出是 UI Reference Protocol Profile。运行时实现 skill 必须读取该 profile 或项目已有的等价合同；没有 profile、profile 不完整或存在冲突时只能输出 gap／HOLD／unknown，不得临时改变协议。
-
-- **profile 的最小内容**：profile 至少声明协议版本、稳定引用的语义范围、引用命名规则、manifest identity、build/source provenance、结构与实例的关系、生命周期结果、token／link 的字段白名单、隐私禁止项、review mode 交互边界、宿主能力假设、验收阈值和未知处理方式。
-
-- **profile 的数据边界**：profile 只能包含协议和允许的元数据，不包含 prompt、业务标题、完整 Run ID、事件正文、Owner snapshot、凭证、cookie、approval bearer token、输入框内容、生产数据或本机绝对路径。
-
-- **通用身份模型**：稳定机器引用、语义名称、accessible name、视觉样式、源码 provenance、mapping identity 和 build identity 分开建模。视觉重排和文案变化不应静默改变未变化的语义身份。
-
-- **声明与派生物**：项目通过统一声明接缝声明语义元素，构建过程生成并校验 manifest。manifest 是声明的派生产物，不是手工维护的元素清单，也不是 durable owner。
-
-- **结构与实例分离**：结构引用描述可讨论的语义单元；动态实例只在当前 review session 中通过不可预测、内存保存的随机 handle 区分。handle 不从业务 ID、标题、索引、排序或其哈希派生，不成为 durable entity。
-
-- **不确定性优先**：无法唯一解析时返回结构化的 `ambiguous`、`unavailable`、`expired`、`unknown`、`manifest-missing`、`source-mismatch` 或 `incompatible`。任何 fallback 都必须来自显式 profile 规则；CSS、坐标、DOM 顺序和当前首项不是合法的隐式 fallback。
-
-- **生命周期与迁移**：语义未变的改名可以使用显式 alias；语义改变必须创建新身份，并使用 replaced-by 或 retired 结果说明关系。alias 冲突、自指、循环、缺失目标和替代目标冲突在构建或 profile 校验阶段拒绝。
-
-- **历史 identity**：mapping identity 和 build identity 必须精确匹配。历史 manifest 缺失时不能用当前 manifest 静默回答；旧版本只能根据显式迁移窗口报告 migrated、retired 或 incompatible。
-
-- **源码定位**：源码定位结果必须先验证 repository-relative provenance 和内容 identity。内容发生变化时保留历史来源提示，但返回 source-mismatch，不宣称当前源码精确命中。行号可以辅助显示，但不能成为唯一 identity。
-
-- **token 合同**：token 使用版本化协议和固定字段白名单，限制大小、字段类型、重复键、未知键、枚举和值范围。解析器把输入当作数据，不把它解释为 HTML、脚本、指令、路径或授权。
-
-- **深链接合同**：deep link 只能携带定位所需的引用和 mapping identity，并导航到已存在的 UI 语义位置。它不能带业务路由、Run identity、状态恢复参数、执行动作、approval 或 apply 指令，也不能静默开启 review mode。
-
-- **隐私边界**：协议设计 skill 必须产生禁止数据清单；运行时实现 skill 必须在 token、URL、DOM、overlay、日志、clipboard、browser persistence 和 evidence 中验证该清单。真实凭证和生产数据永远不作为测试输入，敏感形状使用合成 canary。
-
-- **review mode**：review mode 默认关闭并显式启用。高亮层不接收指针事件；业务元素的点击、Enter、Space、输入和焦点由产品继续拥有。锁定目标必须通过 review panel 的显式动作，hover／focus 只预览。
-
-- **键盘和焦点**：运行时实现必须声明 review-specific 键盘消费范围、焦点顺序、可见焦点、清除行为和关闭后的焦点恢复。不得用全局监听器抢占业务弹窗、文本输入或未声明元素的快捷键。
-
-- **clipboard**：复制必须由 Human 明确发起。成功与失败都要有可观察结果；失败不能回显宿主错误、不能自动重试、不能清除当前选择。
-
-- **副作用和 ownership**：两个 skill 都不得创建新的 Agent loop、durable owner、scheduler、Provider 调用或业务执行入口。运行时实现只能通过项目已有的 UI facade／Control Plane 读取展示数据，不能直接写 durable owner 或改变 Run、effect、approval、replay canonical state。
-
-- **宿主适配器**：运行时实现以一个公开的 UI Reference Contract 作为最高测试接缝，内部适配 manifest 生成、DOM 渲染、session instance、host navigation、browser driver 和 source lookup。适配器可以因 SSR、SPA、静态 HTML、原生应用或不同测试引擎而变化，但必须映射到同一外部行为合同。
-
-- **能力发现**：运行时 skill 先发现项目的 UI 框架、构建入口、manifest 产物、源码定位能力、宿主边界、浏览器驱动和测试命令，再选择适配方式。缺失能力要记录为 unknown 或 blocked，不用另建隐式工具链掩盖缺口。
-
-- **依赖策略**：第三方 DOM picker、highlighter、clipboard 或 browser helper 不是协议必需项。只有在收益明确时才引入，并记录固定版本、来源、许可证、资源释放方式、替代方案和退出路径。
-
-- **协议与实现版本**：协议 profile、skill 版本、项目 runtime adapter、manifest schema、token schema、browser environment 和 evidence identity 分开记录。协议或 schema 变化后必须重新执行受影响的兼容性和安全验证。
-
-- **技能可安装性**：两个 skill 可以独立安装和调用，不依赖 ZWorkbench 的源码、Python 模块、目录结构或内部命令。运行时 skill 可以消费项目 profile，但不能通过未声明的相对路径导入另一个 skill 的内部文件。
-
-- **调用顺序**：默认工作流是先由协议设计 skill 形成或审核 profile，再由运行时实现 skill 执行实现和验证。若项目已有被接受的 profile，可以直接进入运行时 skill；若只要求审查现有实现，也可以只调用协议设计 skill。
-
-- **调用模式**：初版两个 skill 使用显式 Human invocation，避免普通 UI 视觉设计任务被自动误触发。未来只有在触发词和边界经过多个项目验证后，才考虑把其中一个改为 model-invoked；改动必须评估额外的上下文负担。
-
-- **报告格式**：两个 skill 都必须输出结构化结论，至少区分 `implemented`、`target`、`unknown`、`HOLD`、`blocked`、`migrated`、`retired`、`incompatible` 和 `source-mismatch`。报告必须包含 profile／artifact／environment identity、使用的证据、未覆盖项、下一证据、owner 和回滚路径。
-
-- **不复制产品验收矩阵**：ZWorkbench 的三视图和具体场景矩阵仍由产品规格维护。通用 skill 只要求每个项目提供独立于 manifest 的语义覆盖矩阵，并验证缺失声明不会缩小分母。
-
-- **当前产品绑定**：ZWorkbench 使用现有 R1 协议作为第一个 project profile。该 profile 可以复用既有 `ui-ref/v1`、manifest、动态实例、review host 和测试证据，但这些名称和数值不成为其他项目的强制默认值。
-
-- **变更范围**：本 PRD 计划新增两个 skill 包及其协议 profile／fixture／验证说明，必要时补充项目文档导航。它不要求修改 CompositionOwner schema、DSH 主 Harness、Codex Worker bridge、Provider adapter 或现有业务执行流程。
-
-## Testing Decisions
+## Testing Decisions（验收合同）
 
 测试以公开输入、输出、失败结果和用户可见行为为主，不绑定私有 helper、组件树、CSS 类名、DOM 嵌套、内部状态机实现或某个前端框架的偶然结构。
 
@@ -233,3 +173,8 @@ ZWorkbench 已有的 manifest 校验、token／deep link 解析、动态实例�
 - 初版优先抽取审核、定位、协议校验和实现工作流；不要把协议固定字段和浏览器行为代码搬进 skill 文本。skill 指导 Agent 调用项目能力，项目运行时才拥有真实行为。
 - 当前 R1 产品文档及其索引继续独立维护产品范围和验收状态；新 skill 不复制未经当前代码、测试和运行证据重新确认的历史状态。
 - 协议设计 → profile → runtime adapter → 静态与完整 runtime evidence 链条已由独立 `catalog-html` fixture 验证；`ZWorkbench-specific profile` 联调保持 deferred/unknown，不在本阶段发布或实现对应 ticket。
+- 设计层完整内容见 [pf-ui-reference-skills](../designs/pf-ui-reference-skills.md)。
+
+## 相关设计实体
+
+- [pf-ui-reference-skills](../designs/pf-ui-reference-skills.md) — 协议设计 skill 与运行时实现 skill 的职责、显式交接物、通用身份模型、不确定性优先、隐私边界、宿主适配器、调用顺序、报告格式
