@@ -35,7 +35,7 @@ authority-id: design.interactive-workbench
 - **D1 — IA 方向**：✅ A 会话优先；B/C 留后续 gate。
 - **D2 — 交互深度**：✅ 本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态；F6/F12 触碰 Run/Approval/Effect 转后续 product scope gate。
 - **D3 — 三变体切换器**：✅ 保留为开发期调试工具，不向最终用户暴露。
-- **D4 — 交互深度 gate 已开并交付**：✅ D2 原留 gate（F6/F12 product scope、F7-live/F10-exec/F13-logic 🚧）与 D1 留后 B/C 变体（F8/F9），经交互路线图 1-2 / 1-3 全部 completed。真实副作用仅在宿主注入对应 facade 时暴露；只读宿主仍守 Round-1 契约（POST 404）。
+- **D4 — 交互深度 gate 已开并交付**：✅ D2 原留 gate（F6/F12 product scope、F7-live/F10-exec/F13-logic 🚧）与 D1 留后 B/C 变体（F8/F9），经 Issue #1 实现规格「Interactive write seams」全部 completed 交付（ADR 0003/0004）。真实副作用仅在宿主注入对应 facade 时暴露；只读宿主仍守 Round-1 契约（POST 404）。
 
 ## Status
 

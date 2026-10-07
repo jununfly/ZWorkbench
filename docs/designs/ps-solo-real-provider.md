@@ -45,7 +45,7 @@ authority-id: design.solo-real-provider
 
 ## Status
 
-TARGET / PARTIAL — S2（write seam，roadmap 1-7 completed）、S4（Git push 门控，1-9 completed）、真实 Ark 读路径（1-9-1~3）已落地并测试通过；H6-full / H7 / H8 仍 target / deferred-until-demand。评测脚手架（H1–H8 / C1–C7 runner）通过 ≠ 产品能力已实现，二者分开计账。
+TARGET / PARTIAL — S2（write seam）/ S4（Git push 门控）/ 真实 Ark 读路径的产品切片实现已落地并测试通过（规划追踪见执行层路线图 1-10-*；本实体不声称路线图节点状态，节点当前状态以 roadmap/ 为准）；H6-full / H7 / H8 仍 target / deferred-until-demand。评测脚手架（H1–H8 / C1–C7 runner）通过 ≠ 产品能力已实现，二者分开计账。
 
 ## Source map
 

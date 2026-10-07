@@ -6,6 +6,11 @@ authority-id: adr.host-enforcement.active-read-path.boundary
 supersedes: adr.host-enforcement.fail-closed-and-testable (applicability to the active Codex read-path under host_enforcement)
 ---
 
+> ⚠️ **路线图节点引用勘误（非决策变更）**：本 ADR 撰写时 host-enforcement / 真实可用工作挂载于路线图分支 `1-9`。路线重组后该工作已迁至 `1-10`（R3 solo 真实可用）：
+> - 本 ADR 中 `1-9-4`（B2 分层 fail-closed spike）→ 现行 `1-10-1`（S0 host-enforcement spike）；
+> - `1-9-2` / `1-9-3`（direction (b) 真实 Codex 接入、尊重宿主 seatbelt）→ 现行 `1-10` 分支的真实 Codex 接入探索，其结论已固化为本 ADR 决策本身。
+> 现行 `1-9` 已改作 R4 首跑/onboarding 分支（1-9-1 零配置首跑 / 1-9-2 doctor / 1-9-3 价值演示 / 1-9-4 fail-closed UX / 1-9-5 回归脚本），**与本 ADR 的 host-enforcement 主题无关**——请勿从本 ADR 的 `1-9-*` 引用跳转到现行 `1-9` 分支。
+
 # ADR 0010：活动 Codex 读路径的 host enforcement 边界是外部宿主 seatbelt
 
 > Supersedes ADR 0008 **仅限** active Codex 读路径（`host_enforcement=True`）的适用域。ADR 0008 的 S0 spike 意图与未来 B2 分层 fail-closed 仍完全有效（见 Consequences）。
