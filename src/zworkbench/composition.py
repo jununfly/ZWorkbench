@@ -69,6 +69,10 @@ class ApprovalError(CompositionError):
     """An approval cannot be created, decided, or consumed."""
 
 
+class RetryBudgetExhausted(CompositionError):
+    """A Provider's declared retry budget has no remaining allowance."""
+
+
 class IntegrityError(CompositionError):
     """A backup or restored database failed integrity validation."""
 
@@ -1247,6 +1251,194 @@ class CompositionOwner:
         ).fetchall()
         return [self._decode_row(row, {}) for row in rows]
 
+    # -- Provider-level retry budget (node 1-1-3) --------------------------
+    #
+    # The attempt ledger (node 1-1-2) counts every dispatched terminal attempt.
+    # The retry budget layer closes the UNKNOWN gap the adaptation doc flagged:
+    # a Provider-level retry *ceiling* owned by the single durable owner, plus a
+    # consumption ledger that records each cross-Provider retry with its
+    # attempt / failure_class / target / reason.  A declared budget is enforced
+    # fail-closed; an undeclared Provider still has its retry recorded (bound=
+    # 'undeclared') so the absence of a ceiling is an auditable signal rather
+    # than silent state.
+
+    def declare_provider_retry_budget(
+        self,
+        provider_id: str,
+        *,
+        max_retries: int,
+        declared_by: str,
+    ) -> Dict[str, Any]:
+        """Declare or replace the owner-owned retry ceiling for a Provider.
+
+        ``max_retries`` is the upper bound on cross-Provider retries attributed
+        to ``provider_id`` within a single run.  ``declared_by`` captures the
+        provenance of the ceiling (the entity that owns/establishes it).
+        """
+
+        self._require_text(provider_id, "provider_id")
+        if not isinstance(max_retries, int) or max_retries < 0:
+            raise ValueError("max_retries must be a non-negative integer")
+        self._require_text(declared_by, "declared_by")
+        self._reject_raw_credentials(
+            {"provider_id": provider_id, "declared_by": declared_by},
+            "provider retry budget declaration",
+        )
+        timestamp = self._now()
+        with self._transaction() as connection:
+            connection.execute(
+                """
+                INSERT INTO provider_retry_budget(provider_id, max_retries, declared_by, declared_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(provider_id) DO UPDATE SET
+                    max_retries = excluded.max_retries,
+                    declared_by = excluded.declared_by,
+                    declared_at = excluded.declared_at
+                """,
+                (provider_id, max_retries, declared_by, timestamp),
+            )
+        return self.get_provider_retry_budget(provider_id)
+
+    def get_provider_retry_budget(self, provider_id: str) -> Dict[str, Any]:
+        """Read one declared Provider retry budget by provider id."""
+
+        connection = self._require_connection()
+        self._require_text(provider_id, "provider_id")
+        row = connection.execute(
+            "SELECT * FROM provider_retry_budget WHERE provider_id = ?", (provider_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider retry budget not declared: {provider_id}")
+        return self._decode_row(row, {})
+
+    def provider_retry_budgets(self) -> List[Dict[str, Any]]:
+        """Return all declared Provider retry budgets."""
+
+        connection = self._require_connection()
+        rows = connection.execute("SELECT * FROM provider_retry_budget ORDER BY provider_id").fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
+    def record_provider_retry_budget_consumption(
+        self,
+        run_id: str,
+        *,
+        provider_id: str,
+        request_id: str,
+        attempt_number: int,
+        failure_class: str,
+        target: Optional[str],
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Record one cross-Provider retry consumption and enforce the ceiling.
+
+        The attempt/failure_class/target/reason are captured for every
+        cross-Provider retry regardless of whether a budget is declared.  When a
+        budget is declared for ``provider_id`` the consumption is bounded: if the
+        count for ``(run_id, provider_id)`` would exceed ``max_retries`` the call
+        raises ``RetryBudgetExhausted`` (fail-closed) and writes nothing.  When no
+        budget is declared the consumption is still recorded with ``bound=
+        'undeclared'`` so the missing ceiling is auditable rather than silent.
+        """
+
+        self._require_text(run_id, "run_id")
+        self._require_text(provider_id, "provider_id")
+        self._require_text(request_id, "request_id")
+        if not isinstance(attempt_number, int) or attempt_number < 1:
+            raise ValueError("attempt_number must be a positive integer")
+        self._require_text(failure_class, "failure_class")
+        if target is not None:
+            self._require_text(target, "target")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string (retry without reason is rejected)")
+        self._reject_raw_credentials(
+            {
+                "provider_id": provider_id,
+                "request_id": request_id,
+                "failure_class": failure_class,
+                "target": target,
+                "reason": reason,
+            },
+            "provider retry budget consumption",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            budget = connection.execute(
+                "SELECT * FROM provider_retry_budget WHERE provider_id = ?", (provider_id,)
+            ).fetchone()
+            if budget is None:
+                bound = "undeclared"
+            else:
+                prior = connection.execute(
+                    "SELECT COUNT(*) AS n FROM provider_retry_budget_ledger WHERE run_id = ? AND provider_id = ?",
+                    (run_id, provider_id),
+                ).fetchone()["n"]
+                if prior + 1 > budget["max_retries"]:
+                    raise RetryBudgetExhausted(
+                        f"provider {provider_id} retry budget exhausted for run {run_id} "
+                        f"(max_retries={budget['max_retries']}, attempted={prior + 1})"
+                    )
+                bound = "enforced"
+            connection.execute(
+                """
+                INSERT INTO provider_retry_budget_ledger(
+                    ledger_id, run_id, provider_id, request_id, attempt_number,
+                    failure_class, target, reason, bound, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    provider_id,
+                    request_id,
+                    attempt_number,
+                    failure_class,
+                    target,
+                    reason,
+                    bound,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "provider.retry_budget.consumption.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "provider_id": provider_id,
+                    "request_id": request_id,
+                    "attempt_number": attempt_number,
+                    "failure_class": failure_class,
+                    "target": target,
+                    "reason": reason,
+                    "bound": bound,
+                },
+            )
+        return self.get_provider_retry_budget_ledger(ledger_id)
+
+    def get_provider_retry_budget_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one retry-budget consumption entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM provider_retry_budget_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider retry budget ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def provider_retry_budget_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all retry-budget consumption entries for a run, in attempt order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM provider_retry_budget_ledger WHERE run_id = ? ORDER BY attempt_number, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
     def events(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return recorded events; this is a recorded view, not live replay."""
 
@@ -1296,6 +1488,14 @@ class CompositionOwner:
             "provider_attempt_ledger": [
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM provider_attempt_ledger ORDER BY attempt_number, ledger_id")
+            ],
+            "provider_retry_budget": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM provider_retry_budget ORDER BY provider_id")
+            ],
+            "provider_retry_budget_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM provider_retry_budget_ledger ORDER BY attempt_number, ledger_id")
             ],
         }
 
@@ -1563,6 +1763,25 @@ class CompositionOwner:
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_attempt_ledger_by_run ON provider_attempt_ledger(run_id, attempt_number, ledger_id);
+            CREATE TABLE IF NOT EXISTS provider_retry_budget (
+                provider_id TEXT PRIMARY KEY,
+                max_retries INTEGER NOT NULL,
+                declared_by TEXT NOT NULL,
+                declared_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS provider_retry_budget_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                provider_id TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                failure_class TEXT NOT NULL,
+                target TEXT,
+                reason TEXT NOT NULL,
+                bound TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS provider_retry_budget_ledger_by_run ON provider_retry_budget_ledger(run_id, attempt_number, ledger_id);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             PRAGMA user_version = 1;
             """
@@ -1783,7 +2002,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):

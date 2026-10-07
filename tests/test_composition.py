@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from zworkbench.composition import CompositionOwner, IntegrityError, InvalidTransition, NotFoundError
+from zworkbench.composition import CompositionOwner, IntegrityError, InvalidTransition, NotFoundError, RetryBudgetExhausted
 
 
 class CompositionOwnerTests(unittest.TestCase):
@@ -539,6 +539,116 @@ class ProviderAttemptLedgerTests(unittest.TestCase):
     def test_get_missing_ledger_entry_raises_not_found(self) -> None:
         with self.assertRaises(NotFoundError):
             self.owner.get_provider_attempt_ledger("missing")
+
+
+class ProviderRetryBudgetTests(unittest.TestCase):
+    # Node 1-1-3: a Provider-level retry ceiling owned by the single durable
+    # owner, plus a consumption ledger for every cross-Provider retry.
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self) -> None:
+        self.owner.create_run("run-1", "provider.read-only", {"request": "fixture"})
+        self.owner.start_run("run-1")
+
+    def test_declare_and_read_budget(self) -> None:
+        self.owner.declare_provider_retry_budget("primary", max_retries=3, declared_by="owner")
+        budget = self.owner.get_provider_retry_budget("primary")
+        self.assertEqual(budget["provider_id"], "primary")
+        self.assertEqual(budget["max_retries"], 3)
+        self.assertEqual(budget["declared_by"], "owner")
+        self.assertEqual(len(self.owner.provider_retry_budgets()), 1)
+
+    def test_undeclared_budget_raises_not_found(self) -> None:
+        with self.assertRaises(NotFoundError):
+            self.owner.get_provider_retry_budget("ghost")
+
+    def test_declare_is_idempotent_upsert(self) -> None:
+        self.owner.declare_provider_retry_budget("primary", max_retries=2, declared_by="owner")
+        self.owner.declare_provider_retry_budget("primary", max_retries=5, declared_by="operator")
+        budget = self.owner.get_provider_retry_budget("primary")
+        self.assertEqual(budget["max_retries"], 5)
+        self.assertEqual(budget["declared_by"], "operator")
+        self.assertEqual(len(self.owner.provider_retry_budgets()), 1)
+
+    def test_consumption_records_each_retry_with_failure_class_target_reason(self) -> None:
+        self._run()
+        self.owner.declare_provider_retry_budget("primary", max_retries=5, declared_by="owner")
+        self.owner.record_provider_retry_budget_consumption(
+            "run-1", provider_id="primary", request_id="req-1", attempt_number=1,
+            failure_class="RATE_LIMIT", target="secondary", reason="RATE_LIMIT",
+        )
+        self.owner.record_provider_retry_budget_consumption(
+            "run-1", provider_id="primary", request_id="req-1", attempt_number=2,
+            failure_class="TIMEOUT", target="secondary", reason="TIMEOUT",
+        )
+        entries = self.owner.provider_retry_budget_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 2)
+        self.assertEqual([e["attempt_number"] for e in entries], [1, 2])
+        self.assertEqual([e["failure_class"] for e in entries], ["RATE_LIMIT", "TIMEOUT"])
+        self.assertEqual([e["target"] for e in entries], ["secondary", "secondary"])
+        self.assertEqual([e["bound"] for e in entries], ["enforced", "enforced"])
+
+    def test_exhaustion_is_fail_closed(self) -> None:
+        # The ceiling is enforced: one over the max raises and writes nothing.
+        self._run()
+        self.owner.declare_provider_retry_budget("primary", max_retries=2, declared_by="owner")
+        for attempt in (1, 2):
+            self.owner.record_provider_retry_budget_consumption(
+                "run-1", provider_id="primary", request_id="req-1", attempt_number=attempt,
+                failure_class="RATE_LIMIT", target="secondary", reason="RATE_LIMIT",
+            )
+        with self.assertRaises(RetryBudgetExhausted):
+            self.owner.record_provider_retry_budget_consumption(
+                "run-1", provider_id="primary", request_id="req-1", attempt_number=3,
+                failure_class="RATE_LIMIT", target="secondary", reason="RATE_LIMIT",
+            )
+        # nothing was written for the rejected third retry
+        self.assertEqual(len(self.owner.provider_retry_budget_ledger_for_run("run-1")), 2)
+
+    def test_undeclared_provider_still_recorded_as_undeclared(self) -> None:
+        # Baseline loopback/fake Providers have no declared ceiling; the retry is
+        # still captured (audit signal) without blocking the path.
+        self._run()
+        self.owner.record_provider_retry_budget_consumption(
+            "run-1", provider_id="loopback", request_id="req-1", attempt_number=1,
+            failure_class="UNKNOWN", target=None, reason="UNKNOWN",
+        )
+        entries = self.owner.provider_retry_budget_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["bound"], "undeclared")
+        self.assertIsNone(entries[0]["target"])
+
+    def test_reason_required_fail_closed(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_retry_budget_consumption(
+                "run-1", provider_id="primary", request_id="req-1", attempt_number=1,
+                failure_class="RATE_LIMIT", target="secondary", reason="",
+            )
+
+    def test_survives_reopen_and_appears_in_snapshot(self) -> None:
+        self._run()
+        self.owner.declare_provider_retry_budget("primary", max_retries=3, declared_by="owner")
+        self.owner.record_provider_retry_budget_consumption(
+            "run-1", provider_id="primary", request_id="req-1", attempt_number=1,
+            failure_class="RATE_LIMIT", target="secondary", reason="RATE_LIMIT",
+        )
+        digest_before = self.owner.state_digest()
+        self.owner.close()
+        with CompositionOwner(self.db) as reopened:
+            ledger = reopened.provider_retry_budget_ledger_for_run("run-1")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["bound"], "enforced")
+            self.assertEqual(reopened.snapshot()["provider_retry_budget"][0]["max_retries"], 3)
+            self.assertEqual(reopened.state_digest(), digest_before)
 
 
 if __name__ == "__main__":
