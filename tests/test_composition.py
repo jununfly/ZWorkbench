@@ -440,5 +440,106 @@ class ProviderFallbackLedgerTests(unittest.TestCase):
             self.owner.get_provider_fallback_ledger("missing")
 
 
+class ProviderAttemptLedgerTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name)
+        self.db = self.root / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self, run_id: str = "run-1") -> None:
+        self.owner.create_run(run_id, "unit-test", {"prompt": "fixture"})
+        self.owner.start_run(run_id)
+
+    def test_records_terminal_attempt_with_all_fields(self) -> None:
+        self._run()
+        entry = self.owner.record_provider_attempt(
+            "run-1", provider_id="primary", request_id="req-1",
+            attempt_number=2, status="failed", failure_code="RATE_LIMIT",
+        )
+        self.assertEqual(entry["provider_id"], "primary")
+        self.assertEqual(entry["request_id"], "req-1")
+        self.assertEqual(entry["attempt_number"], 2)
+        self.assertEqual(entry["status"], "failed")
+        self.assertEqual(entry["failure_code"], "RATE_LIMIT")
+        events = self.owner.events("run-1")
+        self.assertTrue(any(e["type"] == "provider.attempt.ledger.recorded" for e in events))
+
+    def test_succeeded_attempt_without_failure_code(self) -> None:
+        self._run()
+        entry = self.owner.record_provider_attempt(
+            "run-1", provider_id="primary", request_id="req-1",
+            attempt_number=1, status="succeeded",
+        )
+        self.assertEqual(entry["status"], "succeeded")
+        self.assertIsNone(entry["failure_code"])
+
+    def test_status_must_be_terminal(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_attempt(
+                "run-1", provider_id="primary", request_id="req-1",
+                attempt_number=1, status="started",
+            )
+
+    def test_attempt_number_must_be_positive_int(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_attempt(
+                "run-1", provider_id="primary", request_id="req-1",
+                attempt_number=0, status="failed",
+            )
+
+    def test_required_fields_rejected(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_attempt(
+                "run-1", provider_id="", request_id="req-1",
+                attempt_number=1, status="failed",
+            )
+        with self.assertRaises(ValueError):
+            self.owner.record_provider_attempt(
+                "run-1", provider_id="primary", request_id="req-1",
+                attempt_number=1, status="succeeded", failure_code=123,
+            )
+
+    def test_for_run_counts_attempts_per_provider_in_order(self) -> None:
+        # Node 1-1-2 regression: attempts must be owner-backed and countable
+        # per provider per run, in deterministic attempt order.
+        self._run()
+        self.owner.record_provider_attempt("run-1", provider_id="primary", request_id="req-1", attempt_number=1, status="failed", failure_code="RATE_LIMIT")
+        self.owner.record_provider_attempt("run-1", provider_id="secondary", request_id="req-1", attempt_number=2, status="failed", failure_code="TIMEOUT")
+        self.owner.record_provider_attempt("run-1", provider_id="tertiary", request_id="req-1", attempt_number=3, status="succeeded")
+        entries = self.owner.provider_attempt_ledger_for_run("run-1")
+        self.assertEqual(len(entries), 3)
+        self.assertEqual([e["attempt_number"] for e in entries], [1, 2, 3])
+        self.assertEqual([e["provider_id"] for e in entries], ["primary", "secondary", "tertiary"])
+        # downstream budget accounting can derive per-provider attempt counts
+        counts = {}
+        for entry in entries:
+            counts[entry["provider_id"]] = counts.get(entry["provider_id"], 0) + 1
+        self.assertEqual(counts, {"primary": 1, "secondary": 1, "tertiary": 1})
+
+    def test_survives_reopen_and_appears_in_snapshot(self) -> None:
+        self._run()
+        self.owner.record_provider_attempt("run-1", provider_id="primary", request_id="req-1", attempt_number=1, status="succeeded")
+        digest_before = self.owner.state_digest()
+        self.owner.close()
+        with CompositionOwner(self.db) as reopened:
+            ledger = reopened.provider_attempt_ledger_for_run("run-1")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["provider_id"], "primary")
+            self.assertEqual(reopened.snapshot()["provider_attempt_ledger"][0]["status"], "succeeded")
+            self.assertEqual(reopened.state_digest(), digest_before)
+
+    def test_get_missing_ledger_entry_raises_not_found(self) -> None:
+        with self.assertRaises(NotFoundError):
+            self.owner.get_provider_attempt_ledger("missing")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1152,6 +1152,101 @@ class CompositionOwner:
         ).fetchall()
         return [self._decode_row(row, {}) for row in rows]
 
+    def record_provider_attempt(
+        self,
+        run_id: str,
+        *,
+        provider_id: str,
+        request_id: str,
+        attempt_number: int,
+        status: str,
+        failure_code: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Record one owner-owned Provider retry attempt (terminal outcome only).
+
+        This is the first-class, auditable home for attempt accounting that the
+        Provider adaptation layer previously kept only inside fixture-level
+        ``provider.attempt`` events and the router's in-memory ``attempts`` list
+        (node 1-1-2).  Each dispatched attempt ends in a terminal ``status`` of
+        ``"failed"`` or ``"succeeded"``; the live ``"started"`` observation stays
+        in the generic event stream and is intentionally not duplicated here so
+        the ledger counts attempts exactly once.  A single durable owner lets a
+        downstream Provider-level retry budget (node 1-1-3) count and bound
+        attempts per provider per run instead of trusting transient fixture state.
+        """
+
+        self._require_text(run_id, "run_id")
+        self._require_text(provider_id, "provider_id")
+        self._require_text(request_id, "request_id")
+        if not isinstance(attempt_number, int) or attempt_number < 1:
+            raise ValueError("attempt_number must be a positive integer")
+        if status not in ("failed", "succeeded"):
+            raise ValueError("status must be 'failed' or 'succeeded'")
+        if failure_code is not None:
+            self._require_text(failure_code, "failure_code")
+        self._reject_raw_credentials(
+            {"provider_id": provider_id, "request_id": request_id, "failure_code": failure_code},
+            "provider attempt",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            connection.execute(
+                """
+                INSERT INTO provider_attempt_ledger(
+                    ledger_id, run_id, provider_id, request_id, attempt_number,
+                    status, failure_code, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    provider_id,
+                    request_id,
+                    attempt_number,
+                    status,
+                    failure_code,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "provider.attempt.ledger.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "provider_id": provider_id,
+                    "request_id": request_id,
+                    "attempt_number": attempt_number,
+                    "status": status,
+                    "failure_code": failure_code,
+                },
+            )
+        return self.get_provider_attempt_ledger(ledger_id)
+
+    def get_provider_attempt_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one provider-attempt ledger entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM provider_attempt_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider attempt ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def provider_attempt_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all provider-attempt ledger entries for a run, in attempt order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM provider_attempt_ledger WHERE run_id = ? ORDER BY attempt_number, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
     def events(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return recorded events; this is a recorded view, not live replay."""
 
@@ -1197,6 +1292,10 @@ class CompositionOwner:
             "provider_fallback_ledger": [
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM provider_fallback_ledger ORDER BY recorded_at, attempt, ledger_id")
+            ],
+            "provider_attempt_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM provider_attempt_ledger ORDER BY attempt_number, ledger_id")
             ],
         }
 
@@ -1453,6 +1552,17 @@ class CompositionOwner:
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_fallback_ledger_by_run ON provider_fallback_ledger(run_id, recorded_at);
+            CREATE TABLE IF NOT EXISTS provider_attempt_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                provider_id TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                failure_code TEXT,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS provider_attempt_ledger_by_run ON provider_attempt_ledger(run_id, attempt_number, ledger_id);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             PRAGMA user_version = 1;
             """
@@ -1673,7 +1783,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
