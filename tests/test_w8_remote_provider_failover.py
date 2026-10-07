@@ -260,6 +260,55 @@ class RemoteProviderFailoverFixtureTests(unittest.TestCase):
             self.assertEqual([e["status"] for e in ledger], ["failed", "succeeded"])
             self.assertEqual(reopened.state_digest(), digest_before)
 
+    def test_retry_budget_captured_for_undeclared_provider(self) -> None:
+        # Node 1-1-3 regression: the router records every cross-Provider retry in
+        # the owner-backed retry-budget ledger (attempt/failure_class/target/reason).
+        # With no declared ceiling the bound is 'undeclared' and the path is not
+        # blocked, proving the budget layer is auditing rather than silent.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "budget-undeclared-run")
+            router = OwnerBackedProviderRouter(owner, self.routes, cooldown_ticks=5)
+
+            def dispatch(route: ProviderRoute):
+                if route.provider_id == "primary":
+                    raise ProviderFailure("RATE_LIMIT", http_status=429)
+                return {"text": "fixture-ok", "provider": route.provider_id}
+
+            router.route("budget-undeclared-run", "request-1", 0, dispatch)
+            ledger = owner.provider_retry_budget_ledger_for_run("budget-undeclared-run")
+            self.assertEqual(len(ledger), 1)
+            self.assertEqual(ledger[0]["provider_id"], "primary")
+            self.assertEqual(ledger[0]["attempt_number"], 1)
+            self.assertEqual(ledger[0]["failure_class"], "RATE_LIMIT")
+            self.assertEqual(ledger[0]["target"], "secondary")
+            self.assertEqual(ledger[0]["reason"], "RATE_LIMIT")
+            self.assertEqual(ledger[0]["bound"], "undeclared")
+
+    def test_declared_budget_exhaustion_safe_stops(self) -> None:
+        # Node 1-1-3 regression: a declared ceiling is enforced fail-closed. A
+        # zero-retry budget means the Provider cannot be retried; the router must
+        # safe-stop instead of dispatching the fallback Provider.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "budget-exhausted-run")
+            owner.declare_provider_retry_budget("primary", max_retries=0, declared_by="owner")
+            router = OwnerBackedProviderRouter(owner, self.routes, cooldown_ticks=5)
+
+            dispatched: list[str] = []
+
+            def dispatch(route: ProviderRoute):
+                dispatched.append(route.provider_id)
+                if route.provider_id == "primary":
+                    raise ProviderFailure("RATE_LIMIT", http_status=429)
+                return {"text": "fixture-ok", "provider": route.provider_id}
+
+            result = router.route("budget-exhausted-run", "request-1", 0, dispatch)
+            self.assertEqual(result["status"], "safe_stopped")
+            self.assertEqual(dispatched, ["primary"])
+            self.assertEqual(owner.get_run("budget-exhausted-run")["status"], "safe_stopped")
+
+            ledger = owner.provider_retry_budget_ledger_for_run("budget-exhausted-run")
+            self.assertEqual(len(ledger), 0)
+
 
 if __name__ == "__main__":
     unittest.main()

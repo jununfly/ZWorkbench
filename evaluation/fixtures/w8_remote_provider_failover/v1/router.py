@@ -10,6 +10,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping
 
+from zworkbench import RetryBudgetExhausted
+
 
 SCHEMA = "zworkbench-w8-remote-provider-failover-fixture/v1"
 
@@ -186,6 +188,19 @@ class OwnerBackedProviderRouter:
                     failure_code=failure.code,
                     http_status=failure.details.get("http_status"),
                 )
+                try:
+                    self.owner.record_provider_retry_budget_consumption(
+                        run_id,
+                        provider_id=route.provider_id,
+                        request_id=request_id,
+                        attempt_number=attempt_number,
+                        failure_class=failure.code,
+                        target=fallback[0].provider_id if fallback else None,
+                        reason=failure.code,
+                    )
+                except RetryBudgetExhausted:
+                    self.owner.safe_stop_run(run_id, "provider_retry_budget_exhausted")
+                    return {"status": "safe_stopped", "attempts": attempts, "decision": decision}
                 if not fallback:
                     self.owner.safe_stop_run(run_id, "provider_all_routes_cooled")
                     return {"status": "safe_stopped", "attempts": attempts, "decision": decision}
