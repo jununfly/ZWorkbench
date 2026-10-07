@@ -1,0 +1,93 @@
+---
+doc-kind: architecture-cross-cutting
+authority: primary
+authority-id: architecture.cross-cutting.execution-effect-authorization
+---
+
+# 执行层 effect 授权管线
+
+## Question
+
+ZWorkbench 的 baseline 内，哪些 effect 集合是允许的、它们如何经 request→policy→decision→claim→execute→complete/reconcile 六段式管线授权，以及越界 effect 如何 fail-closed？
+
+## Scope
+
+本页覆盖 baseline effect 集合决策、六段式授权管线、approval 绑定粒度与重签语义、S2 可恢复写入的消费边界，以及 owner 级 deny 的边界分层（owner 强制类 vs preflight 类）。真实 Provider 路由 / 真实主工作区写入 / Git push / deploy / Webhook / live replay 属后续受控 gate（S4+），非永久禁止。
+
+## Boundaries
+
+- baseline effect 集合 = {read-only（preflight 准入或 read-only effect class，二选一）、loopback / fake Provider 调用、S2 可恢复写入（approval-required，case-local，单一 owner commit，不 push）}。
+- 未知 effect class / token / scope 不匹配由 owner 强制 safe-stop（已落）。
+- 越界 workspace / 未声明网络·凭证·子进程须 safe-stop（功能已决策，但 owner 级 deny 缺 `declared_side_effects` / `exposure` 形参，须进实现 backlog）。
+- 重复请求幂等由 owner 层强保证；approval token 仅存 hash。
+
+## Responsibility
+
+授权管线负责：把每个 effect 请求经六段式裁决、把 approval 精确绑定到四元组、在 owner 层强制未知/越界 safe-stop，并把 S2 写入收敛到单一 owner commit。
+
+## Owned state
+
+effect / approval / claim / reconcile 状态由 CompositionOwner 记录。declared_side_effects / exposure 当前不在 schema 内（见 Backlog）。
+
+## Interface
+
+- effect 类 → 入口方法 → 出口动作 → 信任边界 映射表（见下方）。
+- `request_approval` / `approve` / `deny_approval` / `claim_effect` / `complete_effect` / `mark_effect_uncertain` / `reconcile_effect`。
+- policy 阶段当前内联于 `claim_effect`，须抽为显式 `evaluate_policy(effect_request, context) -> (allow, reason)`。
+
+## Failure behavior
+
+未知 effect class / token / scope → safe-stop；越界 workspace / 未声明网络·凭证·子进程 → safe-stop（owner 级 deny 待 schema 字段落地）；approval 不匹配 → deny；重复请求 → already_completed，无第二次物理副作用。
+
+## baseline effect 清单 + gate 映射
+
+| effect 类 | 入口 | 出口动作 | 信任边界 |
+| --- | --- | --- | --- |
+| read-only | preflight 准入（或 read-only effect class） | 不进 claim seam / 不创建 claimed effect 行 | 只读，无外部副作用 |
+| loopback / fake Provider 调用 | claim_effect | adapter 执行 | 仅回环 / fake，无真实外部 |
+| S2 可恢复写入 | claim_effect（approval-required） | 单一 owner commit，不 push | case-local worktree，用户手动 merge 回主仓库 |
+
+## 六段式管线 + Q4 deny 边界分层
+
+1. request → 声明 operation/action/resource/idempotency_key。
+2. policy → `evaluate_policy()` 返回 (allow, reason)；owner 强制类（未知 class/token/scope）在此拒绝。
+3. decision → approval 精确绑定四元组，token 一次性、hash-only、不可续期/不可重签（重签=新建 request）。
+4. claim → owner 记账，幂等守卫。
+5. execute → 在信任边界内执行（loopback/fake/case-local）。
+6. complete / reconcile → uncertain→reconcile→unknown fail-closed。
+
+Q4 deny 分层：
+- **owner 强制类（已实现）**：未知 effect class / token / scope 不匹配 / approval 不匹配 → safe-stop。
+- **preflight 类（须进 backlog）**：越界 workspace、未声明网络·凭证·子进程 → 功能已决策必须 deny，但 owner 级缺 `declared_side_effects` / `exposure` 形参，0% 可强制，须加 schema 字段。
+
+## 产品语义落文（solo 场景）
+
+- S2 消费边界：commit 后由用户在隔离 worktree 内 review，merge 回主仓库为显式、用户手动触发，不属本管线。
+- solo 场景 approver = 同一本地操作者 CLI 显式同意。
+
+## Backlog（实现前须登记，不阻塞本结论）
+
+1. owner schema 增 `declared_side_effects` / `exposure` 字段 + deny 逻辑（Q4 preflight 类）。
+2. `create_worktree` case-local 校验；`apply_diff` 加 `resource == worktree_path` 断言 + repo 指纹校验。
+3. `complete_run` 在 read-only 路径 `finally` 显式调用，统一 run 闭合锚点。
+4. read-only 二选一（建议 (a) preflight 准入即授权、不进 claim seam）写入 doc + 补测试。
+
+## Source map
+
+- `../../src/zworkbench/composition.py`
+- `../../src/zworkbench/codex_adapter.py`
+- `../../src/zworkbench/write_seam.py`
+- `../../src/zworkbench/write_run.py`
+- `../../tests/test_composition.py`
+- `../../tests/test_write_seam.py`
+- `../../tests/test_write_run.py`
+- `../zj-adr/0008-host-enforcement-is-fail-closed-and-testable.md`
+- `../zj-adr/0009-v1-codex-only-fallback-and-write-boundary-sequencing.md`
+
+## Related authority
+
+- [系统概览](ta-overview.md)
+- [CompositionOwner](ta-composition-owner.md)
+- [可恢复写入边界](ta-reversible-write-boundary.md)
+- [Provider 适配与降级](ta-provider-adaptation.md)
+- [本地只读运行流](ta-local-read-only-flow.md)

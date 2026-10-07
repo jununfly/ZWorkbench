@@ -68,3 +68,24 @@ stdout/stderr/line 超限、启动失败、超时或无法清理进程树时，b
 - [分层与依赖](ta-layers.md)
 - [DSH runtime 集成](ta-dsh-runtime-integration.md)
 - [CompositionOwner](ta-composition-owner.md)
+
+## 执行层基本功能讨论结论（2026-10-07）
+
+> 以下为 zj-discuss「执行层应实现哪些基本功能」讨论的耐久沉淀（sub-02 Worker 调度与监督）。过程讨论稿已删除，本段为唯一权威结论。
+
+### sub-02：Worker 调度与监督
+
+- **IMPLEMENTED（baseline 内落地）：** 传输契约 + identity 绑定 + 未知 wire fail-closed；H2 handshake 验收；Provider 维度 loopback-only 边界；进程树清理 + exit receipt。
+- **UNKNOWN / BLOCKED（须显式标注，不得据「代码存在」标 DONE）：**
+  - H1 Bootstrap 负向测试、H3 read-only coding fixture、H4 lifecycle（cancel/stop_parent/recover）fixture **全部零覆盖** → H1/H3/H4 标 BLOCKED/unknown。
+  - 单发监督无心跳；长连接心跳属 TARGET/unknown。
+  - cleanup 断言 + 孤儿零残留证明 UNKNOWN；exit receipt 无子进程树快照字段。
+- **IdentityChain 完成性分层（P1，须 ADR）：** parent/child/attempt/dsh/event/artifact 为 required；codex_thread/turn 仅在确认 Codex Worker 时 required，否则允许 UNKNOWN；停止 fake fixture 编造 codex 身份。
+- **Q4 双重钳制（P0）：** `worker_bridge` 请求构造处加 `assert replay_mode=="normal"`；`WorkerBridge` 加显式 `real_worker_mode: bool = False`，开真实模式须 ADR + owner gated reason。
+- **真实架构前硬前置（backlog）：** host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置；`_reject_secrets` 值级扫描；`semantic_result` 出站脱敏；`codex_adapter.close()` stderr 脱敏；bridge 进程异常退出注册 reaper 兜底 killpg；worker 可执行体 digest 实测校验。
+
+### 交叉引用
+
+- [终止与资源生命周期](ta-termination-resource-lifecycle.md)
+- [Provider 适配与降级](ta-provider-adaptation.md)
+- [执行层 effect 授权](ta-execution-effect-authorization.md)
