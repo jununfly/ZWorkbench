@@ -47,7 +47,7 @@
       "id": "1-1",
       "uid": "01a11593c9c3-fe9aaf534f",
       "label": "Provider 适配与降级（sub-05）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -58,7 +58,8 @@
       ],
       "decisions": [],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2": {
       "id": "1-2",
@@ -202,13 +203,35 @@
       "id": "1-1-1",
       "uid": "01a11594eec2-42a65b2adf",
       "label": "P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "fallback 计账落 owner-backed 的落点？",
+          "answer": "新增专用表 provider_fallback_ledger，不扩展 provider_exit_ledger（语义不同：exit 账本 vs fallback 决策账本）；attempt 计账的 P1 由 1-1-2/1-1-3 处理",
+          "note": ""
+        },
+        {
+          "q": "reason 缺失如何处理？",
+          "answer": "reason-required fail-closed：reason 缺失/空/None 一律 ValueError 拒绝；并加回归测试证明缺失即拒",
+          "note": ""
+        },
+        {
+          "q": "接入点与既有观测如何取舍？",
+          "answer": "在 OwnerBackedProviderRouter.route() 的两个决策分支（fallback / safe_stop）调用 record_provider_fallback；保留既有 event+result 观测，不破坏现有 fixture 断言，新增专用 ledger 作为硬化审计",
+          "note": ""
+        },
+        {
+          "q": "schema 版本如何处置？",
+          "answer": "不变更 SCHEMA_VERSION（沿用 provider_exit_ledger 先例）；新表走 CREATE TABLE IF NOT EXISTS 幂等补表，并加入 health check 的 required 集合",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-2": {
       "id": "1-1-2",
@@ -801,7 +824,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-07 17:08:38",
+    "updated": "2026-10-07 18:47:20",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
