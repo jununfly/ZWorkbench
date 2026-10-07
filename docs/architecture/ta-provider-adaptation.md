@@ -46,20 +46,20 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 | attempt 原始计账（per provider per run，可计数审计） | IMPLEMENTED | owner-backed `provider_attempt_ledger`（node 1-1-2） |
 | reason-required + 不静默切换 fail-closed | IMPLEMENTED（deny 已单测 + fixture 回归验证） | `provider_fallback_ledger` reason-required；真实触发面仍待 1-10 真实 gate |
 | Run 级 retry 预算 | IMPLEMENTED | CompositionOwner 已有界 |
-| Provider 级 retry 预算（上限/约束） | UNKNOWN | 原始 attempt 计账已 owner-backed（1-1-2），但单一 owner 上限/约束仍待 1-1-3 |
+| Provider 级 retry 预算（上限/约束） | IMPLEMENTED | owner-backed `provider_retry_budget`（声明式上限 + declared_by）+ `provider_retry_budget_ledger`（每次跨 Provider retry 的 attempt/failure_class/target/reason；bound=enforced/undeclared），耗尽失败封闭（node 1-1-3） |
 | 真实 Provider 路由 / 计费 | 超出 baseline（backlog） | 需独立 gate |
 
 ## Known gaps
 
 - ~~fallback 的 attempt 计账只存在于 fixture，未进入 owner~~（已解决，node 1-1-1）：现由 owner-backed `provider_fallback_ledger` 记录 target/reason/degradation/attempt，可跨 Run 审计。
 - reason-required 与 no-silent-switch 的 fail-closed 在当前 baseline 下是真空真的（没有第二个真实 Provider 可 fallback 到），端到端未被真实触发验证。
-- Provider 级 retry 预算没有单一 owner 与上限，与 DSH/Worker retry 一样属于「跨层 retry 无单一 owner 记账」的 UNKNOWN 面。
+- ~~Provider 级 retry 预算没有单一 owner 与上限~~（已解决，node 1-1-3）：现由 owner-backed `provider_retry_budget`（声明式上限 + declared_by）与 `provider_retry_budget_ledger`（每次跨 Provider retry 的 attempt/failure_class/target/reason，bound=enforced/undeclared）闭合；耗尽触发 `RetryBudgetExhausted` 失败封闭并 safe-stop。未声明上限的 Provider 仍被审计记录（bound=undeclared），而非静默。
 
 ## Backlog（实现前须登记，不阻塞本结论）
 
 1. P0 fallback 审计硬化（<1.5 人日）：把 fixture 中的 fallback target/reason/degradation/attempt 计账落为 owner-backed，并加回归测试证明 reason 缺失即拒绝。
 2. ~~P1 在 owner 中记录 attempt 计账（扩展 provider_exit_ledger 或新增 retry_budget_ledger）~~（已解决，node 1-1-2）：现由 owner-backed `provider_attempt_ledger` 记录每次尝试的终态（failed/succeeded），可按 provider/run 计数审计，供 1-1-3 的 Provider 级预算引用。
-3. P1 Provider 级 retry 预算表（~2.5 人日）：声明 owner + 上限 + 每次跨 Provider retry 的 attempt/failure_class/target/reason。
+3. ~~P1 Provider 级 retry 预算表（~2.5 人日）：声明 owner + 上限 + 每次跨 Provider retry 的 attempt/failure_class/target/reason~~（已解决，node 1-1-3）：现由 owner-backed `provider_retry_budget` + `provider_retry_budget_ledger` 实现，耗尽失败封闭。
 4. P1 真实 Provider gate 收口（~2 人日）：把真实路由 / 计费接入受控 gate，明确与 loopback/fake baseline 的边界。
 
 ## Source map
