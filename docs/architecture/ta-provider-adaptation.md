@@ -42,10 +42,11 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 | 能力 | 状态 | 证据 |
 | --- | --- | --- |
 | capability 路由 + failure class 归一 + identity↔transport 绑定 | IMPLEMENTED | provider_facade / provider_vocabulary |
-| fallback target + reason + degradation mode + attempt 计账 | IMPLEMENTED | owner-backed `provider_fallback_ledger`（node 1-1-1） |
+| fallback 决策（target/reason/degradation + attempt 上下文） | IMPLEMENTED | owner-backed `provider_fallback_ledger`（node 1-1-1） |
+| attempt 原始计账（per provider per run，可计数审计） | IMPLEMENTED | owner-backed `provider_attempt_ledger`（node 1-1-2） |
 | reason-required + 不静默切换 fail-closed | IMPLEMENTED（deny 已单测 + fixture 回归验证） | `provider_fallback_ledger` reason-required；真实触发面仍待 1-10 真实 gate |
 | Run 级 retry 预算 | IMPLEMENTED | CompositionOwner 已有界 |
-| Provider 级 retry 预算 | UNKNOWN | owner 外、无单一 owner 计账 |
+| Provider 级 retry 预算（上限/约束） | UNKNOWN | 原始 attempt 计账已 owner-backed（1-1-2），但单一 owner 上限/约束仍待 1-1-3 |
 | 真实 Provider 路由 / 计费 | 超出 baseline（backlog） | 需独立 gate |
 
 ## Known gaps
@@ -57,7 +58,7 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 ## Backlog（实现前须登记，不阻塞本结论）
 
 1. P0 fallback 审计硬化（<1.5 人日）：把 fixture 中的 fallback target/reason/degradation/attempt 计账落为 owner-backed，并加回归测试证明 reason 缺失即拒绝。
-2. P1 在 owner 中记录 attempt 计账（扩展 provider_exit_ledger 或新增 retry_budget_ledger）。
+2. ~~P1 在 owner 中记录 attempt 计账（扩展 provider_exit_ledger 或新增 retry_budget_ledger）~~（已解决，node 1-1-2）：现由 owner-backed `provider_attempt_ledger` 记录每次尝试的终态（failed/succeeded），可按 provider/run 计数审计，供 1-1-3 的 Provider 级预算引用。
 3. P1 Provider 级 retry 预算表（~2.5 人日）：声明 owner + 上限 + 每次跨 Provider retry 的 attempt/failure_class/target/reason。
 4. P1 真实 Provider gate 收口（~2 人日）：把真实路由 / 计费接入受控 gate，明确与 loopback/fake baseline 的边界。
 
