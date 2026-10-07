@@ -26,7 +26,7 @@ import os
 from typing import TYPE_CHECKING, Any, Mapping
 
 from .codex_adapter import CodexAppServerAdapter
-from .composition import CompositionOwner
+from .composition import CompositionOwner, ProviderAccessDenied
 
 
 if TYPE_CHECKING:  # pragma: no cover - import only for static type checking
@@ -54,14 +54,26 @@ class HostCapabilityFacade:
     ) -> CodexAppServerAdapter:
         """Build the Codex adapter for one admitted, case-local run.
 
-        When an explicit real Provider profile is selected, the adapter is wired
-        to that provider: the profile's ``model_provider`` (e.g. ``custom``), an
-        empty ``config_overrides`` so Codex honours its own
-        ``[model_providers.<name>]`` table, and an optional credential read from
-        a local env var named by ``env_ref``.  Otherwise the historical ollama
-        default is used for backward compatibility (loopback,
-        ``model_provider="ollama"``).
+        This is the single controlled gate between the loopback / fake baseline
+        and a real Provider.  When an explicit real Provider profile is selected,
+        the adapter is wired to that provider only if ``config.real_provider_gate``
+        is enabled; otherwise the acquisition is refused fail-closed with
+        :class:`ProviderAccessDenied` so the baseline never silently reaches a
+        real Provider.  When no real profile is selected, the historical ollama
+        default is used (loopback, ``model_provider="ollama"``).
+
+        The real profile wires the adapter to that provider: the profile's
+        ``model_provider`` (e.g. ``custom``), an empty ``config_overrides`` so
+        Codex honours its own ``[model_providers.<name>]`` table, and an optional
+        credential read from a local env var named by ``env_ref``.
         """
+
+        if config.provider_profile is not None and not config.real_provider_gate:
+            raise ProviderAccessDenied(
+                "real Provider profile {0!r} requires real_provider_gate=True; "
+                "the baseline (loopback / fake) path must never silently reach a "
+                "real Provider".format(config.provider_profile.name)
+            )
 
         if config.provider_profile is None:
             return CodexAppServerAdapter(

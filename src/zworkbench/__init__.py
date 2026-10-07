@@ -9,6 +9,7 @@ from .composition import (
     InvalidTransition,
     NotFoundError,
     PolicyDenied,
+    ProviderAccessDenied,
     RetryBudgetExhausted,
 )
 from .codex_adapter import (
@@ -155,6 +156,7 @@ __all__ = [
     "NotFoundError",
     "PolicyDenied",
     "RetryBudgetExhausted",
+    "ProviderAccessDenied",
     "ADAPTER_SCHEMA",
     "CodexAdapterError",
     "CodexAppServerAdapter",

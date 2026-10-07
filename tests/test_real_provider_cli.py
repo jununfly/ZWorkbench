@@ -222,6 +222,7 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
             },
                 authorized_providers=frozenset({"custom"}),
                 provider_profile=profile,
+                real_provider_gate=True,
             )
             with CompositionOwner(config.database) as owner:
                 adapter = HostCapabilityFacade.acquire_provider(owner, config)
@@ -259,6 +260,7 @@ class AuthorizedRemoteProviderTests(unittest.TestCase):
             },
                 authorized_providers=frozenset({"ark"}),
                 provider_profile=profile,
+                real_provider_gate=True,
             )
             with CompositionOwner(config.database) as owner:
                 with patch.dict(os.environ, {"ARK_API_KEY": "local-secret-value"}):
@@ -368,6 +370,7 @@ class CliRealProviderTests(unittest.TestCase):
                         "ark",
                         "--provider-config",
                         str(config_path),
+                        "--real-provider-gate",
                     ]
                 )
             payload = __import__("json").loads(output.getvalue())

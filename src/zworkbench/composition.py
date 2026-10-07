@@ -73,6 +73,17 @@ class RetryBudgetExhausted(CompositionError):
     """A Provider's declared retry budget has no remaining allowance."""
 
 
+class ProviderAccessDenied(CompositionError):
+    """A real Provider was requested without the controlled access gate enabled.
+
+    The baseline path (loopback / fake) must never silently reach a real
+    Provider.  When a run config selects an explicit real Provider profile but
+    ``real_provider_gate`` is not enabled, the Host Capability Facade refuses to
+    produce an adapter; the preflight layer denies admission with the same
+    semantics so the orchestrator returns a clean ``denied`` result.
+    """
+
+
 class IntegrityError(CompositionError):
     """A backup or restored database failed integrity validation."""
 
@@ -1439,6 +1450,83 @@ class CompositionOwner:
         ).fetchall()
         return [self._decode_row(row, {}) for row in rows]
 
+    # -- Provider access gate (node 1-1-4) ---------------------------------
+    #
+    # The single controlled boundary that decides whether a run reaches a real
+    # Provider or stays on the loopback / fake baseline.  The facade refuses to
+    # produce an adapter (and preflight denies admission) whenever a real
+    # Provider profile is selected without ``real_provider_gate`` enabled; the
+    # orchestrator records the decision here so every run's classification is
+    # auditable (which runs engaged real routing / billing vs stayed baseline).
+    def record_provider_access_gate(
+        self,
+        run_id: str,
+        classification: str,
+        gate_enabled: bool,
+        reason: str,
+        provider_id: Optional[str] = None,
+        profile_name: Optional[str] = None,
+    ) -> str:
+        """Record one Provider-access gate decision for a run.
+
+        ``classification`` is ``"real"`` (an explicit real Provider profile was
+        selected and gated) or ``"baseline"`` (loopback / fake, no real
+        profile).  ``reason`` must be non-empty: a missing or blank reason is a
+        fail-closed programming error, never a silent default.
+        """
+
+        self._require_text(run_id, "run_id")
+        if classification not in ("real", "baseline"):
+            raise ValueError("classification must be 'real' or 'baseline'")
+        if not reason or not reason.strip():
+            raise ValueError("provider access gate reason must be non-empty")
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        ledger_id = secrets.token_hex(16)
+        timestamp = self._now()
+        connection.execute(
+            """
+            INSERT INTO provider_access_gate_ledger(
+                ledger_id, run_id, classification, gate_enabled, reason,
+                provider_id, profile_name, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ledger_id,
+                run_id,
+                classification,
+                1 if gate_enabled else 0,
+                reason,
+                provider_id,
+                profile_name,
+                timestamp,
+            ),
+        )
+        connection.commit()
+        return ledger_id
+
+    def get_provider_access_gate(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one Provider-access gate ledger entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM provider_access_gate_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider access gate ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def provider_access_gate_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all Provider-access gate entries for a run, in recorded order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM provider_access_gate_ledger WHERE run_id = ? ORDER BY recorded_at, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
     def events(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return recorded events; this is a recorded view, not live replay."""
 
@@ -1496,6 +1584,10 @@ class CompositionOwner:
             "provider_retry_budget_ledger": [
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM provider_retry_budget_ledger ORDER BY attempt_number, ledger_id")
+            ],
+            "provider_access_gate_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM provider_access_gate_ledger ORDER BY recorded_at, run_id, ledger_id")
             ],
         }
 
@@ -1782,6 +1874,17 @@ class CompositionOwner:
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_retry_budget_ledger_by_run ON provider_retry_budget_ledger(run_id, attempt_number, ledger_id);
+            CREATE TABLE IF NOT EXISTS provider_access_gate_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                classification TEXT NOT NULL,
+                gate_enabled INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                provider_id TEXT,
+                profile_name TEXT,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS provider_access_gate_ledger_by_run ON provider_access_gate_ledger(run_id, recorded_at, ledger_id);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             PRAGMA user_version = 1;
             """
@@ -2002,7 +2105,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):

@@ -131,6 +131,8 @@ class S1ArkReadonlyEgressTests(unittest.TestCase):
             },
             authorized_providers=frozenset({"ark-test"}),
             provider_profile=ARK_PROFILE,
+            provider_config_path=Path(tempfile.mkdtemp()) / "provider-config.toml",
+            real_provider_gate=True,
         )
         with CompositionOwner(config.database) as owner:
             adapter = HostCapabilityFacade.acquire_provider(owner, config)
@@ -165,6 +167,8 @@ class S1ArkReadonlyEgressTests(unittest.TestCase):
             },
             authorized_providers=frozenset({"ark-test"}),
             provider_profile=ARK_PROFILE,
+            provider_config_path=Path(tempfile.mkdtemp()) / "provider-config.toml",
+            real_provider_gate=True,
         )
         adapters = []
 

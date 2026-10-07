@@ -15,10 +15,11 @@ import tempfile
 import unittest
 
 import zworkbench.local_run as local_run_module
-from zworkbench import HostCapabilityFacade
+from zworkbench import HostCapabilityFacade, ProviderAccessDenied
 from zworkbench.codex_adapter import CodexAppServerAdapter, DEFAULT_CONFIG_OVERRIDES
 from zworkbench.composition import CompositionOwner
 from zworkbench.local_run import LocalReadOnlyRunConfig, ProviderProfile
+
 
 
 def _fake_executable(root: Path) -> Path:
@@ -28,7 +29,7 @@ def _fake_executable(root: Path) -> Path:
     return executable
 
 
-def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None, provider_config_path: Path | None = None, host_enforcement: bool = False) -> LocalReadOnlyRunConfig:
+def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None, provider_config_path: Path | None = None, host_enforcement: bool = False, real_provider_gate: bool = False) -> LocalReadOnlyRunConfig:
     workspace = root / "workspace"
     workspace.mkdir(exist_ok=True)
     return LocalReadOnlyRunConfig(
@@ -47,6 +48,7 @@ def _base_config(root: Path, *, provider_profile: ProviderProfile | None = None,
         provider_profile=provider_profile,
         provider_config_path=provider_config_path,
         host_enforcement=host_enforcement,
+        real_provider_gate=real_provider_gate,
     )
 
 
@@ -114,7 +116,7 @@ class HostCapabilityFacadeAcquisitionTests(unittest.TestCase):
                     base_url="https://example.invalid/v1",
                     env_ref="ARK_API_KEY",
                 )
-                config = _base_config(root, provider_profile=profile)
+                config = _base_config(root, provider_profile=profile, real_provider_gate=True)
                 owner = CompositionOwner(config.database)
                 try:
                     adapter = HostCapabilityFacade.acquire_provider(owner, config)
@@ -144,7 +146,7 @@ class HostCapabilityFacadeAcquisitionTests(unittest.TestCase):
                 model="ark-code-latest",
                 base_url="https://ark.example.com/v1",
             )
-            config = _base_config(root, provider_profile=profile, provider_config_path=config_path)
+            config = _base_config(root, provider_profile=profile, provider_config_path=config_path, real_provider_gate=True)
             owner = CompositionOwner(config.database)
             try:
                 adapter = HostCapabilityFacade.acquire_provider(owner, config)
@@ -166,6 +168,57 @@ class HostCapabilityFacadeAcquisitionTests(unittest.TestCase):
                 adapter = HostCapabilityFacade.acquire_provider(owner, config)
                 self.assertIsInstance(adapter, CodexAppServerAdapter)
                 self.assertTrue(adapter.host_enforcement)
+            finally:
+                owner.close()
+
+
+class ProviderAccessGateTests(unittest.TestCase):
+    """Node 1-1-4: the facade is the controlled gate between baseline and real.
+
+    A real Provider profile must never be acquired without the explicit
+    ``real_provider_gate``; the baseline (loopback / fake) path stays the default.
+    """
+
+    def _real_profile(self) -> ProviderProfile:
+        return ProviderProfile(
+            name="custom",
+            model_provider="custom",
+            model="ark-code-latest",
+            base_url="https://ark.example.com/v1",
+        )
+
+    def test_real_profile_without_gate_is_denied_fail_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = _base_config(root, provider_profile=self._real_profile())
+            owner = CompositionOwner(config.database)
+            try:
+                with self.assertRaises(ProviderAccessDenied):
+                    HostCapabilityFacade.acquire_provider(owner, config)
+            finally:
+                owner.close()
+
+    def test_real_profile_with_gate_is_allowed(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = _base_config(root, provider_profile=self._real_profile(), real_provider_gate=True)
+            owner = CompositionOwner(config.database)
+            try:
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
+                self.assertIsInstance(adapter, CodexAppServerAdapter)
+                self.assertEqual(adapter.model_provider, "custom")
+            finally:
+                owner.close()
+
+    def test_baseline_default_needs_no_gate(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = _base_config(root)
+            owner = CompositionOwner(config.database)
+            try:
+                adapter = HostCapabilityFacade.acquire_provider(owner, config)
+                self.assertIsInstance(adapter, CodexAppServerAdapter)
+                self.assertEqual(adapter.model_provider, "ollama")
             finally:
                 owner.close()
 

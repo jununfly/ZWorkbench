@@ -9,6 +9,7 @@ from zworkbench import (
     CompositionOwner,
     LocalReadOnlyRunConfig,
     LocalReadOnlyRunOrchestrator,
+    ProviderProfile,
 )
 
 
@@ -276,6 +277,146 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
                 ledger = owner.provider_exit_ledger_for_run("run-failed")
                 self.assertEqual(len(ledger), 1)
                 self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
+
+
+class ProviderAccessGateTests(unittest.TestCase):
+    """Node 1-1-4: the controlled gate between baseline and a real Provider.
+
+    The loopback / fake baseline must never silently reach a real Provider: a
+    real profile without the gate is denied at preflight, and every admitted run
+    records its classification (real vs baseline) to the owner for audit.
+    """
+
+    def _fixture(self, root: Path) -> Path:
+        workspace = root / "workspace"
+        workspace.mkdir()
+        executable = root / "codex"
+        executable.write_text("#!/bin/sh\n", encoding="utf-8")
+        executable.chmod(0o755)
+        return executable
+
+    def test_real_profile_without_gate_is_denied_before_adapter(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = self._fixture(root)
+            profile = ProviderProfile(
+                name="custom",
+                model_provider="custom",
+                model="ark-code-latest",
+                base_url="https://ark.example.com/v1",
+            )
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=root / "workspace",
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+                provider_profile=profile,
+                provider_config_path=root / "provider-config.toml",
+                real_provider_gate=False,  # gate explicitly off
+            )
+            factory_calls = []
+
+            def forbidden_factory(owner, factory_config):
+                factory_calls.append((owner, factory_config))
+                raise AssertionError("adapter factory must not run after denied preflight")
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=forbidden_factory).run(
+                "run-denied",
+                "must not execute",
+            )
+            self.assertEqual(result.status, "denied")
+            self.assertFalse(result.preflight.allowed)
+            self.assertIn(
+                "real_provider_gate_disabled",
+                {violation.code for violation in result.preflight.violations},
+            )
+            self.assertEqual(factory_calls, [])
+            self.assertFalse(config.database.exists())
+
+    def test_baseline_run_records_baseline_gate_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = self._fixture(root)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=root / "workspace",
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RecordingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-baseline",
+                "inspect the local project and return fixture-ok",
+            )
+            self.assertEqual(len(adapters), 1)
+            with CompositionOwner(config.database) as owner:
+                ledger = owner.provider_access_gate_ledger_for_run("run-baseline")
+                self.assertEqual(len(ledger), 1)
+                self.assertEqual(ledger[0]["classification"], "baseline")
+                self.assertFalse(ledger[0]["gate_enabled"])
+
+    def test_real_profile_with_gate_records_real_decision(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = self._fixture(root)
+            profile = ProviderProfile(
+                name="custom",
+                model_provider="custom",
+                model="ark-code-latest",
+                base_url="https://ark.example.com/v1",
+            )
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=root / "workspace",
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+                provider_profile=profile,
+                provider_config_path=root / "provider-config.toml",
+                real_provider_gate=True,
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RecordingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-real",
+                "inspect the local project and return fixture-ok",
+            )
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(len(adapters), 1)
+            with CompositionOwner(config.database) as owner:
+                ledger = owner.provider_access_gate_ledger_for_run("run-real")
+                self.assertEqual(len(ledger), 1)
+                self.assertEqual(ledger[0]["classification"], "real")
+                self.assertTrue(ledger[0]["gate_enabled"])
+                self.assertEqual(ledger[0]["profile_name"], "custom")
 
 
 if __name__ == "__main__":
