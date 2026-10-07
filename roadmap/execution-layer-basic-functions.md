@@ -1,14 +1,14 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 20:22:14
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 21:20:01
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
-├── [~][Y+] 1-1. Provider 适配与降级（sub-05）
+├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
 │   ├── [x][Y+] 1-1-1. P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日）
 │   ├── [x][Y+] 1-1-2. P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）
 │   ├── [x][Y+] 1-1-3. P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日）
-│   └── [ ][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
+│   └── [x][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
 ├── [!][Y+] 1-2. 证据与回放（sub-06）
 │   ├── [ ][Y+] 1-2-1. P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）
 │   ├── [ ][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
@@ -70,7 +70,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日） [ ]
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
 - 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」 [ ]
+- 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试） [ ]
 <!-- ROADMAP_SECTION_END -->

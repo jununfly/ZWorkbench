@@ -47,7 +47,7 @@
       "id": "1-1",
       "uid": "01a11593c9c3-fe9aaf534f",
       "label": "Provider 适配与降级（sub-05）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -305,13 +305,35 @@
       "id": "1-1-4",
       "uid": "01a11594f26f-344517f741",
       "label": "P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "真实 Provider gate 的落点与形态？",
+          "answer": "三层一致受控：HostCapabilityFacade.acquire_provider 强制 fail-closed（real-requested && !gate 抛 ProviderAccessDenied）；preflight 静态 deny（code=real_provider_gate_disabled）；LocalReadOnlyRunOrchestrator 在 owner 内按 run_id 记录 gate 决策到 provider_access_gate_ledger。CLI 是唯一 human 入口，baseline（loopback/fake）永不静默触达真实 Provider",
+          "note": ""
+        },
+        {
+          "q": "同意/边界语义如何处理？",
+          "answer": "新增配置字段 real_provider_gate: bool = False（默认关）；real-requested = provider_profile is not None；real-requested && !gate 一律拒绝。classification = 'real' if real-requested else 'baseline'，两者都记 owner（审计：哪些 run 走 real/billing vs 留 baseline），failure语义 fail-closed",
+          "note": ""
+        },
+        {
+          "q": "CLI 接入点如何取舍？",
+          "answer": "新增 --real-provider-gate（store_true 默认 False）；_run_config 设 real_provider_gate = bool(args.real_provider_gate)。真实 profile 须显式带该旗（受控 gate 在 human 边界显式化，呼应 AGENTS.md fail-closed 哲学）；已有 CLI 真实 profile 测试补 --real-provider-gate，不破坏既有真实 profile 功能",
+          "note": ""
+        },
+        {
+          "q": "schema 版本如何处置？",
+          "answer": "不变更 SCHEMA_VERSION（沿用 1-1-1/1-1-2/1-1-3 先例）；新表 provider_access_gate_ledger 走 CREATE TABLE IF NOT EXISTS 幂等补表 + health-check required 集合 + snapshot 纳入（ORDER BY recorded_at, run_id, ledger_id 确定）",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-1": {
       "id": "1-2-1",
@@ -868,7 +890,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-07 20:22:14",
+    "updated": "2026-10-07 21:20:01",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

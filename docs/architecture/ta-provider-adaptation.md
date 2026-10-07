@@ -47,7 +47,8 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 | reason-required + 不静默切换 fail-closed | IMPLEMENTED（deny 已单测 + fixture 回归验证） | `provider_fallback_ledger` reason-required；真实触发面仍待 1-10 真实 gate |
 | Run 级 retry 预算 | IMPLEMENTED | CompositionOwner 已有界 |
 | Provider 级 retry 预算（上限/约束） | IMPLEMENTED | owner-backed `provider_retry_budget`（声明式上限 + declared_by）+ `provider_retry_budget_ledger`（每次跨 Provider retry 的 attempt/failure_class/target/reason；bound=enforced/undeclared），耗尽失败封闭（node 1-1-3） |
-| 真实 Provider 路由 / 计费 | 超出 baseline（backlog） | 需独立 gate |
+| 真实 Provider 受控 gate（baseline ↔ real 边界） | IMPLEMENTED | `LocalReadOnlyRunConfig.real_provider_gate` 默认关；`HostCapabilityFacade.acquire_provider` fail-closed 拒真实 profile（抛 `ProviderAccessDenied`），preflight 静态 deny（`real_provider_gate_disabled`），orchestrator 在 owner 记 `provider_access_gate_ledger`（classification=real/baseline 可审计）；CLI 需显式 `--real-provider-gate`（node 1-1-4） |
+| 真实 Provider 路由 / 计费 | IMPLEMENTED（受控 gate 收口） | 经 node 1-1-4 的受控 gate 接入；baseline（loopback/fake）永不静默触达真实 Provider |
 
 ## Known gaps
 
@@ -60,7 +61,7 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 1. P0 fallback 审计硬化（<1.5 人日）：把 fixture 中的 fallback target/reason/degradation/attempt 计账落为 owner-backed，并加回归测试证明 reason 缺失即拒绝。
 2. ~~P1 在 owner 中记录 attempt 计账（扩展 provider_exit_ledger 或新增 retry_budget_ledger）~~（已解决，node 1-1-2）：现由 owner-backed `provider_attempt_ledger` 记录每次尝试的终态（failed/succeeded），可按 provider/run 计数审计，供 1-1-3 的 Provider 级预算引用。
 3. ~~P1 Provider 级 retry 预算表（~2.5 人日）：声明 owner + 上限 + 每次跨 Provider retry 的 attempt/failure_class/target/reason~~（已解决，node 1-1-3）：现由 owner-backed `provider_retry_budget` + `provider_retry_budget_ledger` 实现，耗尽失败封闭。
-4. P1 真实 Provider gate 收口（~2 人日）：把真实路由 / 计费接入受控 gate，明确与 loopback/fake baseline 的边界。
+4. ~~P1 真实 Provider gate 收口（~2 人日）：把真实路由 / 计费接入受控 gate，明确与 loopback/fake baseline 的边界~~（已解决，node 1-1-4）：`real_provider_gate` 默认关，`HostCapabilityFacade` fail-closed 拒未授权真实 profile，preflight 静态 deny，orchestrator 记 `provider_access_gate_ledger` 审计；CLI 显式 `--real-provider-gate`。
 
 ## Source map
 
