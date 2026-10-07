@@ -42,15 +42,15 @@ reason 缺失 → 拒绝（reason-required）；Provider identity 与请求不�
 | 能力 | 状态 | 证据 |
 | --- | --- | --- |
 | capability 路由 + failure class 归一 + identity↔transport 绑定 | IMPLEMENTED | provider_facade / provider_vocabulary |
-| fallback target + reason + degradation mode + attempt 计账 | TARGET | 仅在 fixture 中出现，未落地为 owner-backed 能力 |
-| reason-required + 不静默切换 fail-closed | IMPLEMENTED（但 baseline 下真空真） → UNKNOWN | 逻辑存在，但 baseline 仅 loopback/fake，无真实 fallback 触发面 |
+| fallback target + reason + degradation mode + attempt 计账 | IMPLEMENTED | owner-backed `provider_fallback_ledger`（node 1-1-1） |
+| reason-required + 不静默切换 fail-closed | IMPLEMENTED（deny 已单测 + fixture 回归验证） | `provider_fallback_ledger` reason-required；真实触发面仍待 1-10 真实 gate |
 | Run 级 retry 预算 | IMPLEMENTED | CompositionOwner 已有界 |
 | Provider 级 retry 预算 | UNKNOWN | owner 外、无单一 owner 计账 |
 | 真实 Provider 路由 / 计费 | 超出 baseline（backlog） | 需独立 gate |
 
 ## Known gaps
 
-- fallback 的 attempt 计账只存在于 fixture，未进入 owner，无法跨 Run 审计真实 fallback 次数。
+- ~~fallback 的 attempt 计账只存在于 fixture，未进入 owner~~（已解决，node 1-1-1）：现由 owner-backed `provider_fallback_ledger` 记录 target/reason/degradation/attempt，可跨 Run 审计。
 - reason-required 与 no-silent-switch 的 fail-closed 在当前 baseline 下是真空真的（没有第二个真实 Provider 可 fallback 到），端到端未被真实触发验证。
 - Provider 级 retry 预算没有单一 owner 与上限，与 DSH/Worker retry 一样属于「跨层 retry 无单一 owner 记账」的 UNKNOWN 面。
 

@@ -1,11 +1,11 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap.json` | 最后更新: 2026-10-07 17:08:38
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 18:47:20
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
-├── [ ][Y+] 1-1. Provider 适配与降级（sub-05）
-│   ├── [ ][Y+] 1-1-1. P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日）
+├── [~][Y+] 1-1. Provider 适配与降级（sub-05）
+│   ├── [x][Y+] 1-1-1. P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日）
 │   ├── [ ][Y+] 1-1-2. P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）
 │   ├── [ ][Y+] 1-1-3. P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日）
 │   └── [ ][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
@@ -70,7 +70,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-1. Provider 适配与降级（sub-05） [ ]
-- 1-1-1. P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日） [ ]
 - 1-1-2. P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger） [ ]
+- 1-1-3. P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日） [ ]
+- 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日） [ ]
 <!-- ROADMAP_SECTION_END -->
