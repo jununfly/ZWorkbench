@@ -1038,6 +1038,120 @@ class CompositionOwner:
             for row in rows
         ]
 
+    def record_provider_fallback(
+        self,
+        run_id: str,
+        *,
+        from_provider: Optional[str],
+        to_provider: Optional[str],
+        reason: str,
+        degradation_mode: str,
+        attempt: int,
+        failure_code: Optional[str] = None,
+        http_status: Optional[int] = None,
+        local_state_fingerprint: str = "unknown",
+    ) -> Dict[str, Any]:
+        """Record an owner-owned Provider fallback / degradation decision.
+
+        This is the first-class, auditable home for fallback accounting that the
+        Provider adaptation layer previously kept only inside fixture-level
+        events and generic results (node 1-1-1).  Every fallback or safe-stop
+        decision must carry an explicit ``reason``; a missing / empty reason is
+        rejected (reason-required fail-closed) because a silent degradation must
+        never enter the single durable owner.
+        """
+
+        self._require_text(run_id, "run_id")
+        if from_provider is not None:
+            self._require_text(from_provider, "from_provider")
+        if to_provider is not None:
+            self._require_text(to_provider, "to_provider")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string (fallback without reason is rejected)")
+        if degradation_mode not in ("fallback", "safe_stop"):
+            raise ValueError("degradation_mode must be 'fallback' or 'safe_stop'")
+        if not isinstance(attempt, int) or attempt < 0:
+            raise ValueError("attempt must be a non-negative integer")
+        if failure_code is not None:
+            self._require_text(failure_code, "failure_code")
+        if http_status is not None and not isinstance(http_status, int):
+            raise ValueError("http_status must be an integer or None")
+        if local_state_fingerprint != "unknown":
+            self._require_text(local_state_fingerprint, "local_state_fingerprint")
+            if not _HEX64.fullmatch(local_state_fingerprint):
+                raise ValueError("local_state_fingerprint must be 64-char SHA-256 hex or 'unknown'")
+        self._reject_raw_credentials(
+            {
+                "from_provider": from_provider,
+                "to_provider": to_provider,
+                "reason": reason,
+                "failure_code": failure_code,
+            },
+            "provider fallback decision",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            connection.execute(
+                """
+                INSERT INTO provider_fallback_ledger(
+                    ledger_id, run_id, from_provider, to_provider, reason,
+                    degradation_mode, attempt, failure_code, http_status,
+                    local_state_fingerprint, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    from_provider,
+                    to_provider,
+                    reason,
+                    degradation_mode,
+                    attempt,
+                    failure_code,
+                    http_status,
+                    local_state_fingerprint,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "provider.fallback.ledger.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "from_provider": from_provider,
+                    "to_provider": to_provider,
+                    "reason": reason,
+                    "degradation_mode": degradation_mode,
+                    "attempt": attempt,
+                },
+            )
+        return self.get_provider_fallback_ledger(ledger_id)
+
+    def get_provider_fallback_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one provider-fallback ledger entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM provider_fallback_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"provider fallback ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def provider_fallback_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all provider-fallback ledger entries for a run, in recorded order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM provider_fallback_ledger WHERE run_id = ? ORDER BY recorded_at, attempt, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
     def events(self, run_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """Return recorded events; this is a recorded view, not live replay."""
 
@@ -1079,6 +1193,10 @@ class CompositionOwner:
                     },
                 )
                 for row in connection.execute("SELECT * FROM provider_exit_ledger ORDER BY recorded_at, ledger_id")
+            ],
+            "provider_fallback_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM provider_fallback_ledger ORDER BY recorded_at, attempt, ledger_id")
             ],
         }
 
@@ -1321,6 +1439,20 @@ class CompositionOwner:
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_exit_ledger_by_run ON provider_exit_ledger(run_id, recorded_at);
+            CREATE TABLE IF NOT EXISTS provider_fallback_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                from_provider TEXT,
+                to_provider TEXT,
+                reason TEXT NOT NULL,
+                degradation_mode TEXT NOT NULL,
+                attempt INTEGER NOT NULL,
+                failure_code TEXT,
+                http_status INTEGER,
+                local_state_fingerprint TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS provider_fallback_ledger_by_run ON provider_fallback_ledger(run_id, recorded_at);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             PRAGMA user_version = 1;
             """
@@ -1541,7 +1673,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
