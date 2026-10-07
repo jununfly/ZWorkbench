@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 21:20:01
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 21:53:03
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -9,8 +9,8 @@
 │   ├── [x][Y+] 1-1-2. P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）
 │   ├── [x][Y+] 1-1-3. P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日）
 │   └── [x][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
-├── [!][Y+] 1-2. 证据与回放（sub-06）
-│   ├── [ ][Y+] 1-2-1. P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）
+├── [~][Y+] 1-2. 证据与回放（sub-06）
+│   ├── [x][Y+] 1-2-1. P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）
 │   ├── [ ][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
 │   ├── [ ][Y+] 1-2-3. P1 live 零外部执行断言守卫（断言式计账，非结构性）
 │   └── [ ][Y+] 1-2-4. P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类
@@ -29,8 +29,8 @@
 │   ├── [ ][Y+] 1-5-1. P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）
 │   ├── [ ][Y+] 1-5-2. P1 run 级 restart 预算 + 跨层（DSH/Worker/Provider）retry 单一 owner 计账
 │   └── [ ][Y+] 1-5-3. P1 caller-auth 缺口（ZW_OWNER_SANDBOX=1 弱化 fail-closed）真实架构前硬前置
-├── [ ][Y+] 1-6. 唯一 owner 持久化（sub-03）
-│   ├── [ ][Y+] 1-6-1. P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描
+├── [~][Y+] 1-6. 唯一 owner 持久化（sub-03）
+│   ├── [x][Y+] 1-6-1. P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描
 │   ├── [ ][Y+] 1-6-2. P1 run 级 attempt 一等实体决策
 │   ├── [ ][Y+] 1-6-3. P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）
 │   └── [ ][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
@@ -59,11 +59,10 @@
     ├── [ ][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
     ├── [ ][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
     └── [ ][X+] 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）
-<details><summary>阻塞链：3 个节点被阻塞</summary>
+<details><summary>阻塞链：2 个节点被阻塞</summary>
 
 - 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7） ← e6: 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」 [ ]
-- 1-2. 证据与回放（sub-06） ← e2: 1-6. 唯一 owner 持久化（sub-03） [ ]
-- 1-4. 执行层 effect 授权（sub-04） ← e1: 1-6. 唯一 owner 持久化（sub-03） [ ]
+- 1-4. 执行层 effect 授权（sub-04） ← e1: 1-6. 唯一 owner 持久化（sub-03） [~]
 
 </details>
 
