@@ -13,12 +13,14 @@ decisions_resolved:
   - D2: 交互深度 = 本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态（F6 发送 / F12 审批执行 另开 product scope gate）
   - D3: 三变体切换器 = 保留为开发期调试工具（?variant=A/B/C）
   - Q4: ?variant= 调试切换器 = 纯 client 端 query 参数分支，不接入 ui_build 生产构建管线
-  - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经交互路线图 1-2 / 1-3 节点全部 completed（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）。
+  - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经交互路线图 1-2 / 1-3 节点全部 completed（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）
 review_note: 2026-09-27 刷新——原 DRAFT 的 §3 分类与 §3b Round-1 范围已与 issue-1 实现规格的「Interactive write seams」小节对齐；除 F18 外 F1–F13 均已交付。本文档反映已交付状态，仍可按 review 意见修订。
 review_note: 本 PRD 与 issue-1 实现规格对"交互/写入能力"的口径已对齐；交互/写入能力的 durable 事实源是 issue-1 实现规格「Interactive write seams (post-Round-1)」小节与 ADR 0003（宿主只读边界），本 PRD 在 §3c / §9 登记已交付写 seam。
 ---
 
 # 完整工作台 Web-UI（含交互）
+
+> 设计层（IA 决策 D1–D4、dsh-web 对齐边界、写 seam 宿主契约、F1–F19 功能目录）已沉淀为长期设计实体，见文末「相关设计实体」。本 PRD 保留需求/范围/验收与跨文档口径。
 
 ## 1. 意图与边界
 
@@ -50,34 +52,16 @@ review_note: 本 PRD 与 issue-1 实现规格对"交互/写入能力"的口径�
 
 ## 3. 原子化 Features 清单
 
-分类图例：
+完整 F1–F19 功能目录（ID / 功能 / 分类 / 依据 / 依赖）已沉淀为设计实体 [pf-workbench-features](../designs/pf-workbench-features.md)，本 PRD 不再复制该表。
+
+分类图例（与 [pf-workbench-features](../designs/pf-workbench-features.md) 一致）：
 - ✅ 已落地（勿重复）
 - 🔨 本轮构建（纯 UI，仅 server-render + 渐进 JS，不碰运行时）
 - 🚧 需 product scope gate（触碰 CompositionOwner / Run / Approval / Effect，**非纯 UI**，须按 AGENTS.md Step 1 另开 gate）
 - ⏭ 后续 gate（本轮不做，方向已定但留独立 gate 推进）
 - ⛔ 明确不做
 
-| ID | 功能 | 分类 | 依据 / 说明 | 依赖 |
-|---|---|---|---|---|
-| F1 | 信息架构（IA）方向选定：A 会话优先 / B 画布 / C 日记 / 混合 | ✅ 已决（A 优先） | **D1 已拍板：先 A 会话优先**；B 画布、C 日记转为 ⏭ 后续 gate，不本轮构建 | 决定 F3–F9 形态 |
-| F2 | 顶栏 shell（brand / crumb / tags / pills / icon-button） | 🔨 构建 | 原型 token 已对齐 `ui_style`；Issue #1 顶栏偏简，补齐 tags(pill) 状态语义 | `ui_style` |
-| F3 | 侧栏工作记录导航（side-panel：新建 / 近期工作 / 工作区） | 🔨 构建（A 已定） | 纯导航壳，数据来自 owner-backed 投影 | `ui_view_model` |
-| F4 | 会话消息流（message / avatar / meta / plan-card） | 🔨 构建（A 已定） | 只读渲染既有工作记录消息；plan-card 步骤态来自 `ui_view_model` | `ui_view_model` |
-| F5 | 计划卡（working plan：done/current/pending 步骤） | 🔨 构建 | 同 F4 内聚，状态由投影驱动 | `ui_view_model` |
-| F6 | 输入 composer 由只读 → 真实发送 | ✅ 已交付 | **D2 原拍板留 gate**；后续经交互路线图 1-2-1 交付（ui_run composer，POST /api/runs 真实建 Run） | CompositionOwner/Run |
-| F7 | 运行事实检查器（inspector：mode/workspace/approval/worker、effect/approval、evidence links） | ✅ 已交付 | 渲染壳（1-1-6）+ 实时值（1-2-3 / 1-2-6，每次轮询重投影） | `ui_view_model` |
-| F8 | 命令画布（canvas-layout：command-path 节点 / decision notes / artifact panel / run-rail） | ✅ 已交付 | **D1 原拍板留后续**；后续经交互路线图 1-3-1 交付（?variant=B canvas 变体） | `ui_view_model` |
-| F9 | 项目日记（journal-layout：index / reading / evidence-table） | ✅ 已交付 | **D1 原拍板留后续**；后续经交互路线图 1-3-2 交付（?variant=C journal 变体） | `ui_view_model` |
-| F10 | 运行轨道栏（run-rail：状态 / 可执行 Run / Owner 记录 / 证据时间线） | ✅ 已交付 | 渲染壳（1-1-7）+ 可执行 Run（1-2-4，POST /api/runs 触发） | CompositionOwner |
-| F11 | 场景状态机 UI（empty / planning / approval / stopped） | ✅ 已交付 | 四态渲染（1-1-8）+ 真实控制（1-2-7，POST /api/scenario-state：request_stop→safe_stopped、request_approval→pending approval） | `ui_review` |
-| F12 | 审批执行 UI（apply diff / Approval / retry / effect receipt） | ✅ 已交付 | **D2 原拍板留 gate**；后续经交互路线图 1-2-2 交付（ui_approval，POST /api/approvals：approve→approved、deny→denied，deny 强制非空理由） | Approval/Effect |
-| F13 | 安全停止 / reconcile UI（identity unresolved → 停 + 请求 reconcile） | ✅ 已交付 | 横幅/stopped 态（1-1-9）+ 越界判定（1-2-5）+ reconcile 路由（1-2-8，POST /api/reconcile 触发 owner.reconcile_identity） | `ui_review` |
-| F14 | DSH 对齐只读 surface（`/session-references` 身份投影） | ✅ 部分已落地 | `ui_view_model` 已有 Host Capability Facade + DSH 身份投影；本轮仅**扩展只读投影**，不引 dsh-web 运行时 | ADR 0007 |
-| F15 | r2-ui-reference-skills 协同 UI（profile_status / runtime_status 可视化调用与结果呈现） | 🔨 构建 | 元 UI：把 `skills/ui-reference-*` 的状态检查可视化，提升 human↔agent 协同 | `ui_reference` skills |
-| F16 | 响应式 & 降级（≤760px / reduced-motion） | ✅ 已落地 | Issue #1 已覆盖，勿重建 | — |
-| F17 | 本地运行/调试接入（loopback server + CDP harness） | ✅ 已落地 | `local_run.py` / `cli.py` / `tests` 已有；仅扩展新交互测试 | — |
-| F18 | 证据 live replay（伪装 deterministic replay） | ⛔ 不做 | 原型明确 "no live replay"；记录视图是只读投影，不可伪装确定性回放 | ADR 0004 |
-| F19 | 三变体调试切换器（`?variant=A/B/C` 开发期工具） | 🔨 开发期工具 | **D3 已拍板：保留为开发期调试工具**，不向最终用户暴露；用于对照原型三变体（A 会话 / B 画布 / C 日记）。**Q4 已拍板：纯 client 端 query 参数分支，不接入 `ui_build` 构建管线**，避免污染生产构建 | `ui_style` |
+交互/写入能力的 durable 事实源是 `docs/designs/issue-1-workbench-ui-implementation.md` 的「Interactive write seams (post-Round-1)」小节（四写 seam + 宿主契约）与 ADR 0003（宿主只读边界）；本 PRD 的 §3c 与之对齐，不再另设路线图为事实源。
 
 ## 3b. 本轮交付范围（Round 1）
 
@@ -105,7 +89,7 @@ review_note: 本 PRD 与 issue-1 实现规格对"交互/写入能力"的口径�
 
 ## 3c. 越过 Round-1 的已交付项（交互写 seam）
 
-D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付（落地于 issue-1 实现规格「Interactive write seams」小节与对应宿主契约）：
+D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付（落地于 issue-1 实现规格「Interactive write seams」小节与对应宿主契约）。完整写 seam → facade → POST 合同见设计实体 [ep-write-seam-journey](../designs/ep-write-seam-journey.md)。
 
 | 项 | 路线图节点 | 写 seam / 宿主契约 |
 |---|---|---|
@@ -121,6 +105,8 @@ D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付�
 不变式（沿用 Round-1 + ADR 0003）：**所有真实写入 / 审批 / reconcile 仅在宿主注入对应 facade 时暴露**；只读宿主（CLI `ui-host`）一律 disabled 占位 + POST 404。可写宿主由 CLI `ui --db <path>`（dogfood）提供，接真实 CompositionOwner + 四 facade。
 
 ## 4. 决策（D）—— 已拍板
+
+设计决策 D1–D4 与 Q4 的完整表述已沉淀为设计实体 [pd-interactive-workbench](../designs/pd-interactive-workbench.md)，本 PRD 仅保留结论：
 
 - **D1 — IA 方向**：✅ **A 会话优先**。B 画布 / C 日记 留后续独立 gate，本轮不构建。
 - **D2 — 交互深度**：✅ **本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态**。F6（发送）与 F12（审批执行）触碰 Run/Approval/Effect，转为 ⏭ 后续 product scope gate；F7/F10/F13 的运行时部分（实时值 / 可执行 Run / 越界判定）同理留 gate。
@@ -158,3 +144,9 @@ D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付�
 
 - **事实源**：交互 / 写入能力的 durable 事实源是 `docs/designs/issue-1-workbench-ui-implementation.md` 的「Interactive write seams (post-Round-1)」小节（四写 seam + 宿主契约）与 ADR 0003（宿主只读边界）；本 PRD 的 §3c 与之对齐，不再另设路线图为事实源。
 - **F18 仍为 ⛔ 不做**：证据 live replay 明确排除，未交付也不计划交付。
+
+## 相关设计实体
+
+- [pd-interactive-workbench](../designs/pd-interactive-workbench.md) — IA 决策 D1–D4、dsh-web 对齐边界、跨文档口径
+- [pf-workbench-features](../designs/pf-workbench-features.md) — F1–F19 功能目录与分类
+- [ep-write-seam-journey](../designs/ep-write-seam-journey.md) — 写 seam → facade → POST 宿主契约旅程

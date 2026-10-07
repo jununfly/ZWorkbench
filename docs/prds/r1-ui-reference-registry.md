@@ -7,17 +7,25 @@ implementation-status: accepted
 
 # R1 界面引用注册表与本地评审标注模式
 
+> 本 PRD 是 ZWorkbench 的产品需求与验收事实源。设计层（协议合同、manifest/token/生命周期、功能本体、标注闭环、协作与隐私边界、unknown→safe-stop 语义）已沉淀为长期设计实体，集中见文末「相关设计实体」。
+
 ## Problem Statement
 
 Human 与 AI 在评审工作台时，无法通过对话准确定位同一个界面元素。“左边卡片”“右下按钮”等描述会因视口、布局、运行状态和动态列表而产生歧义；截图坐标、CSS selector 与 DOM 顺序又会随重构失效。
 
 手工维护 docs 元素映射表会形成另一份容易漂移的命名来源。用户已明确取消该设计，改为代码驱动的界面引用注册表。反馈过程还必须避免把页面正文、Run 数据或凭证带入 URL、剪贴板与外部平台。
 
-## Solution
+## Solution（要点）
 
 在 R1 工作台提供默认关闭、显式开启的本地评审标注模式。Human 悬停或选择主要语义元素时，看到边框、中文语义名和稳定引用；主动复制脱敏反馈 token 后，AI 可通过同一构建版本的 UI Reference Manifest 定位代码声明。深链接只定位界面元素，不恢复或执行业务状态。
 
-完整合同是：代码通过统一 helper 声明引用，构建生成并校验 manifest，页面渲染真实引用属性，标注模式读取真实 DOM，生成脱敏 token，Human/AI 通过 manifest 回到代码。manifest 是代码的派生产物，不是第二个手工维护的注册表。docs 只说明协议、命名、安全与迁移规则，不列出元素映射清单。
+完整设计合同（代码声明→manifest→DOM→token→源码定位、token/link 白名单、引用生命周期、所有权边界、功能本体、标注闭环、协作与隐私、unknown→safe-stop 语义）已沉淀为下列设计实体，本 PRD 不再重复承载：
+
+- 协议 / manifest / token / 生命周期 / 所有权边界 → [pd-ui-reference-system](../designs/pd-ui-reference-system.md)
+- 界面引用注册表功能本体 → [pf-ui-reference-registry](../designs/pf-ui-reference-registry.md)
+- 本地评审标注闭环 → [ep-review-annotation-loop](../designs/ep-review-annotation-loop.md)
+- Human↔AI 评审协作与隐私边界 → [ps-review-collaboration](../designs/ps-review-collaboration.md)
+- unknown→safe-stop 失败关闭语义 → [ps-safe-stop-unknown](../designs/ps-safe-stop-unknown.md)
 
 ## User Stories
 
@@ -49,50 +57,7 @@ Human 与 AI 在评审工作台时，无法通过对话准确定位同一个界�
 26. As a maintainer, I want any reused selector/highlighter dependency to have a pinned version, license and exit path, so that a small feature remains maintainable.
 27. As a maintainer, I want a reusable skill extracted only after the product protocol has been exercised, so that the skill documents a tested workflow rather than replacing runtime behavior.
 
-## Implementation Decisions
-
-- **已确认的单一来源**：统一代码 helper 声明 `ui_ref`；构建从声明生成并校验 UI Reference Manifest。不得新增人工 docs 元素映射表。协议文档与本 spec 不承担具体元素清单的职责。
-- **语义粒度**：只覆盖人会讨论、影响行为或信息理解的单元，例如工作记录列表、列表项、当前工作、运行事实、证据、预检操作及结果。装饰容器、分隔线、图标内部节点不注册。
-- **字段分离**：稳定机器引用、中文语义名和无障碍名称分别维护。文案、布局和可访问名称变化不改变语义未变的引用。注册声明包含元素类型、父级引用、适用状态、代码来源和生命周期信息；manifest 与构建/映射版本绑定。
-- **校验边界**：声明的引用全局唯一，名称合法，父级关系和迁移目标有效。注册表定义唯一性与动态实例重复是不同规则；一个列表项声明可渲染多个实例，不能以此关闭声明重复检测。
-- **动态元素**：Run ID、标题和业务载荷不拼入结构引用。实例上下文与结构引用分离，使用当前评审会话内随机分配的 instance handle；不从 Run ID、标题、索引或其哈希派生。handle 与 UI 已有实体 key 的关联仅在内存保存，不成为 durable entity。同会话内已选且仍挂载的实例必须唯一解析，排序和普通重渲染保持关联；虚拟化卸载时返回 `unavailable`，同一实体重新挂载可恢复关联。实体删除、关闭评审、页面重载或切换工作区后 handle 失效且不得复用。跨会话 token 仅能解析结构及代码声明，实例结果为 `expired`；不得伪称已找到原业务记录。无 handle 的重复结构返回 `ambiguous`，不默认取首项。
-- **真实 DOM**：运行时渲染 `data-ui-ref`，标注模式从真实元素读取引用并核对 manifest；不从截图坐标、CSS class 或 DOM tree order 创造身份。未登记节点不生成看似有效的反馈引用。
-- **Token 合同**：版本化 `ui-ref/v1` token 只携带稳定引用、映射/构建版本、允许的视口类别、展示状态及必要的脱敏上下文。字段及限制由下方 Token v1 合同固定；不允许自由格式 context，不抽取页面文本推断上下文。展示状态不是 Owner 状态的授权或恢复指令。
-- **禁止数据**：prompt、运行标题、完整 Run ID、原始事件、Owner snapshot、凭证、cookie、approval bearer token、输入框内容与本地绝对路径不得进入 token、overlay 或链接。代码来源定位保留在本地 manifest，不将本机路径复制进反馈。
-- **深链接**：链接仅携带引用和映射版本，定位已存在的界面语义。不能携带业务状态、恢复 Run、启动任务、触发预检或 apply。默认关闭的评审模式不被链接静默开启；未开启时页面完成纯定位标注，并提示评审模式未开启、需显式进入（提示不点名具体开关写法，入口方式属于宿主入口）。
-- **引用生命周期**：视觉重排不改 ref；语义改变创建新 ref，并声明 alias / replaced-by 或废弃结果。当前映射版本必须保留对紧邻上一发布映射版本的显式迁移声明；更早版本可返回 `incompatible`。初版用合成上一版本 fixture 验证兼容合同。禁止静默复用已废弃身份。迁移必须显示结果；未知引用或不兼容版本不回退到 CSS 猜测。
-- **交互与退出**：评审模式默认关闭，仅本地显式启用。高亮层不接收指针事件，普通点击、Enter 和 Space 保留业务行为。独立评审面板列出当前已挂载语义目标（动态项仅显示中文结构名与结构引用；服务出的页面不携带短暂实例标记——实例 handle 属于一次评审会话，跨 HTTP 请求必然失效，渲染进页面只会让每次解析都得到 `expired`，并破坏文档跨请求的可复现性；同结构条目按文档序与页面元素一一对应，选择不会静默落到首行），用户通过面板中的“锁定目标”按钮选择，绝不向业务元素派发点击。悬停/聚焦只预览；面板提供键盘可达的目标选择、锁定、复制与清除操作。Escape 仅在评审面板拥有焦点时清除锁定；不拦截业务弹窗的 Escape。关闭面板恢复开启前仍存在的焦点目标，否则回到评审入口。复制必须由用户发起；失败可见。禁用/卸载释放 overlay、监听器和后台资源，保留正常焦点和无障碍语义。
-- **所有权**：本模块只拥有界面引用元数据及短暂展示状态，不持有 Run、attempt、event、effect、approval 或 replay canonical state。已有展示数据沿用 Workbench Control Plane façade；不增加 Owner schema，不直接读取 SQLite、DSH/Codex session 或调用 Worker/Provider。
-- **测试接缝**：以“UI Reference 解析与评审”公开合同作为一个主要接缝，覆盖生成/校验 manifest、解析 token/link、定位目标和禁用生命周期；真实页面集成验证该合同的可见结果。既有 façade 保持业务动作接缝，不为每个组件另建业务适配器。
-- **依赖与 skill**：第三方 DOM picker/highlighter 的可复用性仍为 `unknown`，未选定依赖或前端框架。优先评估小型本地能力，验证版本 pin、许可证、依赖、关闭和退出。先验证产品切片并完成两三轮真实反馈，再考虑抽取 skill；skill 负责校验、定位与协作工作流，不实现另一套浏览器运行时。
-
-### Token v1 固定合同
-
-复制格式为 UTF-8 JSON 对象，序列化后不超过 1024 字节；拒绝重复键、未知键、类型错误、超限和未知协议版本。输入作为数据解析与文本展示，不解释为 HTML、脚本、指令或路径。以下是完整白名单，字段外信息不能通过嵌套对象或自由文本进入 token。
-
-| 字段 | 必填 | 值及限制 |
-|---|---|---|
-| protocol | 是 | 固定 `ui-ref/v1` |
-| ref | 是 | 1–128 个 ASCII 字符；小写字母开头，各点分段仅含小写字母、数字和连字符；必须能在指定 manifest 解析 |
-| ui_map | 是 | manifest 规范化内容的 SHA-256，小写十六进制 64 位；不包含其自身 digest 字段计算 |
-| build | 是 | 源码及构建输入 receipt 的 SHA-256，小写十六进制 64 位 |
-| viewport | 是 | `compact`（CSS viewport 宽度小于 768px）或 `wide`（至少 768px） |
-| state | 是 | `draft`、`loading`、`empty`、`created`、`running`、`recovering`、`completed`、`failed`、`denied`、`safe-stopped`、`unknown`、`not-applicable`；来自已有脱敏 view model 或静态展示合同，无依据时用 `unknown` |
-| instance | 否 | 128-bit 安全随机 handle，编码为 32 位小写十六进制；仅动态实例定位使用 |
-
-handle 不是凭证或可远程查询的业务标识。生成器仅从已校验 manifest 与允许的展示元数据取值；解析器验证字段并返回结构化错误，不能把非法输入回显到日志。复制失败保留本地选择并显示失败，不自动重试剪贴板写入。
-
-深链接使用本地工作台入口及 `ui_ref`、`ui_map` 两个定位参数，分别遵循 ref 与 ui_map 的规则；不带 build、state、instance 或业务路由参数。入口按 manifest 的视图归属进行纯 UI 导航，不能加载指定 Run 或改变 Owner 状态。动态重复项的链接只定位结构，要求用户在本地选择实例；隐藏目标显示 `unavailable`。单个定位参数重复、未知定位参数或超限均拒绝。链接本身不是实例级复现保证。
-
-### Manifest 获取与源码定位合同
-
-构建输出确定性的 manifest 与 build receipt，随本地 UI artifact 一起保存；提供只读本地查询接口，按精确 ui_map/build identity 返回 manifest 或 `manifest-missing`，不联网下载历史版本。评审面板显示当前 identity 和本地查询说明，AI 可经项目本地工具读取同一产物。具体命令随前端宿主落定，但必须能在不启动业务 Run 的情况下查询。
-
-manifest 包含 schema 版本、构建 receipt identity、视图归属、引用声明及迁移信息；声明来源包含仓库相对路径、声明符号和对应源码内容 digest。receipt 固定源码快照（包含未提交修改）及构建输入摘要，Git commit 可作为辅助来源但不能替代内容 identity。禁止 manifest 包含本机绝对路径或业务数据；不依赖易漂移的行号作为唯一定位依据。
-
-解析分别返回“结构/代码来源结果”和“当前 DOM 实例结果”。代码定位前验证目标源码内容 digest；不匹配返回 `source-mismatch`，保留历史来源提示，不给出当前源码精确命中的结论。缺少指定产物时返回 `manifest-missing`；当前版本不匹配时仅能按显式迁移记录返回 `migrated` 或 `retired`，没有记录返回 `incompatible`。不得用当前 manifest 静默替代旧 manifest。alias 冲突、循环和不存在的目标在构建时拒绝。语义变化的 replaced-by 结果必须标明“替代元素”，不能表述为同一身份。
-
-## Testing Decisions
+## Acceptance（验收合同）
 
 测试公开输入输出和用户可见行为，不绑定组件内部状态、私有 helper、DOM 嵌套或 CSS 实现。以下阈值是验收合同；各项的执行证据在文末 Implementation status 逐项登记，未登记证据的项不得视为已通过。
 
@@ -137,10 +102,8 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 ## Further Notes
 
 - 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充。设计状态为 `target`；实现状态为 `accepted`（2026-09-13 Human 验收，见 Implementation status）。整个 R1 主规格仍独立验收。
-- 依据另一任务中用户关于“去掉 docs 映射表”的明确修正，以及对后续六项补正和引用生命周期的“同意，这些内容补进 R1 spec”。来源任务 ID：`01a08451-5660-7e61-b32d-d6812c049c0d`。
-- 早期研究 brief 中“docs 映射表”的假设已被上述用户决定替代。该研究仍没有可用的外部选型 ledger，不能把候选可复用性写为已验证。
-- 与 [工作台用户界面](../architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
-- helper API、本地 manifest 查询命令、token 白名单、实例有效期、兼容窗口和覆盖分母已固定；前端宿主与真实宿主下的 fixture 组织已落地（ADR 0003，见 Implementation status）。这些细节不得削弱上述失败与隐私合同；无法证明安全唯一定位时保持不可用/歧义，不恢复业务状态。
+- 设计合同（协议/manifest/token/生命周期/功能本体/标注闭环/协作与隐私/unknown→safe-stop）已沉淀为 `docs/designs/` 下设计实体（见文末「相关设计实体」），本 PRD 不重复承载。
+- 与 [工作台用户界面](../../docs/architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../../docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
 
 ## Implementation status
 
@@ -224,3 +187,11 @@ manifest 包含 schema 版本、构建 receipt identity、视图归属、引用�
 主 manifest 身份与构建钩子 receipt 身份的统一"已由
 [ADR 0006](../zj-adr/0006-one-build-identity-for-served-manifests.md) 定死：全树 receipt 为唯
 一 build 身份，宿主启动时现算。整个 R1 仍须独立通过主规格验收。
+
+## 相关设计实体
+
+- [pd-ui-reference-system](../designs/pd-ui-reference-system.md) — 协议合同、manifest、token v1、引用生命周期、所有权边界
+- [pf-ui-reference-registry](../designs/pf-ui-reference-registry.md) — 界面引用注册表功能本体
+- [ep-review-annotation-loop](../designs/ep-review-annotation-loop.md) — 本地评审标注闭环
+- [ps-review-collaboration](../designs/ps-review-collaboration.md) — Human↔AI 评审协作与隐私边界
+- [ps-safe-stop-unknown](../designs/ps-safe-stop-unknown.md) — unknown→safe-stop 失败关闭语义
