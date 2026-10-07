@@ -1,0 +1,858 @@
+{
+  "title": "执行层基本功能 — 讨论结论落地路线",
+  "description": "基于 zj-discuss 执行层基本功能讨论（7 子文档，2026-10-07 结论）的 T/I/U 矩阵 gap/backlog 编排；baseline=read-only+loopback/fake+S2 可恢复写入",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a11593c852-2bbadcdb79",
+      "label": "执行层基本功能 — 讨论结论落地路线",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7",
+        "1-8",
+        "1-9",
+        "1-10"
+      ],
+      "decisions": [
+        {
+          "q": "baseline 边界如何定？",
+          "answer": "read-only + loopback/fake Provider + S2 可恢复写入；真实 Provider/Worker 须独立 ADR + owner gated reason，不静默升级",
+          "note": "与讨论锁定口径一致"
+        },
+        {
+          "q": "优先级策略？",
+          "answer": "P0 先于 P1；P0 均为 owner 层 fail-closed 加固，无大 schema 改动",
+          "note": "P0 清单来自 7 篇 ta 页 Backlog"
+        },
+        {
+          "q": "本次从 designs/prds 导入的产品面缺口？",
+          "answer": "R3 real-usability（in-progress/partial）+ R4 first-run（target/unknown）为产品场景缺口；原 1-1..1-8 仅覆盖 owner 层 fail-closed 加固，未覆盖产品场景。新增 1-9（R4）/1-10（R3），C7 真实世界部分并入 1-3-5。",
+          "note": "判定依据：pd-first-run-onboarding / ep-first-run-journey / ps-solo-real-provider / ps-safe-stop-unknown 的 status 字段"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a11593c9c3-fe9aaf534f",
+      "label": "Provider 适配与降级（sub-05）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a11593cb26-0680b160c0",
+      "label": "证据与回放（sub-06）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a11593cc59-8bb29491ec",
+      "label": "终止与资源生命周期（sub-07）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3",
+        "1-3-4",
+        "1-3-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a11593cd8f-55ee8e305e",
+      "label": "执行层 effect 授权（sub-04）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a11593cec5-353bf96053",
+      "label": "Run 生命周期编排（sub-01）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a11593d00c-58b1e75dca",
+      "label": "唯一 owner 持久化（sub-03）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3",
+        "1-6-4"
+      ],
+      "decisions": [
+        {
+          "q": "与 sub-04/sub-06 的关系？",
+          "answer": "sub-03 是 sub-04（effect 授权）与 sub-06（证据/回放）的硬前置，须先稳定",
+          "note": "见 blocks 边 1-6→1-4 / 1-6→1-2"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a11593d13d-7f655d4ee8",
+      "label": "Worker 调度与监督（sub-02）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-7-1",
+        "1-7-2",
+        "1-7-3",
+        "1-7-4"
+      ],
+      "decisions": [
+        {
+          "q": "H1/H3/H4 覆盖纪律？",
+          "answer": "零覆盖标 BLOCKED，须先建 fixture 再标 DONE，不得据代码存在标完成",
+          "note": "讨论锁定"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8": {
+      "id": "1-8",
+      "uid": "01a11593d26f-eec051e58f",
+      "label": "真实架构硬前置（共享）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-8-1",
+        "1-8-2",
+        "1-8-3",
+        "1-8-4",
+        "1-8-5"
+      ],
+      "decisions": [
+        {
+          "q": "共享硬前置的语义？",
+          "answer": "host sandbox/值级拒密/脱敏/reaper/digest 为真实架构前硬前置；baseline（loopback/fake）内不要求，真实 Provider/Worker 接入前必须落地",
+          "note": "与 sub-02/sub-03 的 caller-auth、secret 值级前置同源"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a11594eec2-42a65b2adf",
+      "label": "P0 fallback 审计硬化：fallback 计账落 owner-backed + reason 缺失即拒绝回归（<1.5 人日）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a11594effa-a598805983",
+      "label": "P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a11594f140-3bdf2b1093",
+      "label": "P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "uid": "01a11594f26f-344517f741",
+      "label": "P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a11594f3a1-abfbbd9483",
+      "label": "P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a11594f4dd-87a0d7d102",
+      "label": "P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a11594f60d-0a1a69a739",
+      "label": "P1 live 零外部执行断言守卫（断言式计账，非结构性）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a11594f73c-3f64c6b17f",
+      "label": "P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a11594f86e-61d3652fc2",
+      "label": "P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a11594f9a5-768db9864b",
+      "label": "P1 退出账本对称接线（调用点配对：谁在何时记哪边）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a11594fad3-6f9ea2aab4",
+      "label": "P1 常驻服务 runtime registry，强制 ≤3 上限",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-4": {
+      "id": "1-3-4",
+      "uid": "01a11594fc02-e53c53138c",
+      "label": "P1 fail-stop 升级契约（不可处理→fail-stop，非 silent unknown）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a115955a8f-397b912e67",
+      "label": "P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a115955be0-ebaca431d6",
+      "label": "P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a115955d30-851e165553",
+      "label": "P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "uid": "01a115955e69-179d5b622c",
+      "label": "P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a115955f9e-79022d4ef1",
+      "label": "P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a1159560cf-ce36cd1a6e",
+      "label": "P1 run 级 restart 预算 + 跨层（DSH/Worker/Provider）retry 单一 owner 计账",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "uid": "01a115956203-a79a29ab11",
+      "label": "P1 caller-auth 缺口（ZW_OWNER_SANDBOX=1 弱化 fail-closed）真实架构前硬前置",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "uid": "01a115956334-448cee0295",
+      "label": "P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "uid": "01a115956487-08da1493ab",
+      "label": "P1 run 级 attempt 一等实体决策",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "uid": "01a1159565b6-66030d26b0",
+      "label": "P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-4": {
+      "id": "1-6-4",
+      "uid": "01a1159566ea-6bb03174cd",
+      "label": "P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-1": {
+      "id": "1-7-1",
+      "uid": "01a11595681b-da6cca5d91",
+      "label": "P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-2": {
+      "id": "1-7-2",
+      "uid": "01a11595696d-c5a0ef36ff",
+      "label": "P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-3": {
+      "id": "1-7-3",
+      "uid": "01a115956aa1-47096799d1",
+      "label": "P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7-4": {
+      "id": "1-7-4",
+      "uid": "01a115956bd5-c2f3fb7fdd",
+      "label": "P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-1": {
+      "id": "1-8-1",
+      "uid": "01a115956d16-feaa4b89cb",
+      "label": "host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-2": {
+      "id": "1-8-2",
+      "uid": "01a115956e4a-359455e5cf",
+      "label": "值级拒密 _reject_secrets 扫描（覆盖 external_receipt + stdout/stderr）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-3": {
+      "id": "1-8-3",
+      "uid": "01a115956f7d-08936576c3",
+      "label": "semantic_result / codex_adapter.close() stderr 出站脱敏",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-4": {
+      "id": "1-8-4",
+      "uid": "01a1159570ad-6d4f801673",
+      "label": "bridge 进程异常退出 reaper 兜底 killpg",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-8-5": {
+      "id": "1-8-5",
+      "uid": "01a1159571e0-f8c0e53f8f",
+      "label": "worker 可执行体 digest 实测校验",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-8",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9": {
+      "id": "1-9",
+      "uid": "01a1159f2fcf-566d5483a1",
+      "label": "首跑与 onboarding（R4 缺口：target/unknown）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-9-1",
+        "1-9-2",
+        "1-9-3",
+        "1-9-4",
+        "1-9-5"
+      ],
+      "decisions": [
+        {
+          "q": "验收轨 vs UX 目标轨？",
+          "answer": "验收轨=zj（机械判定：干净 venv + 空 case_root 下 pip install . → loopback UI 见 recorded_view_present=true，退出码 0 且可重放）；UX 目标轨=非作者陌生人<5 分钟降为 deferred-until-demand + 代理指标，不进验收判据。",
+          "note": "source: pd-first-run-onboarding / ep-first-run-journey"
+        },
+        {
+          "q": "真实 Provider 在首跑路径的角色？",
+          "answer": "真实 Provider=一次显式、可记账、进 receipt 的授权动作（与 ADR 0009 共用显式授权语义）；onboarding 仅只读自检 + 定位回填，不代持/不代填凭证，不产品化为首跑步骤。",
+          "note": "doctor 在 issue #39 关闭前不得输出『配置真实 Provider 已完成』"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9-1": {
+      "id": "1-9-1",
+      "uid": "01a1159f3043-c5e493affc",
+      "label": "零配置首跑脚手架（run --prompt 自动 case-root/workspace/state + --codex PATH 探测 + 默认 fake-loopback）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9-2": {
+      "id": "1-9-2",
+      "uid": "01a1159f30b6-2fdbd635df",
+      "label": "只读自检 doctor（探测 Codex 可执行性 / case 目录约定 / loopback 可达 + readiness 报告 + 每项 fix hint）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9-3": {
+      "id": "1-9-3",
+      "uid": "01a1159f312a-1f52738d96",
+      "label": "价值演示缝合（run 末 stdout 追加 next_steps 数组 + --open 自动拉起 ui-host，仍 loopback 只读）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9-4": {
+      "id": "1-9-4",
+      "uid": "01a1159f319e-fbc75ce771",
+      "label": "fail-closed UX 成本回收（PreflightViolation.hint + timeout/failed 区分 + 重试提示）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-9-5": {
+      "id": "1-9-5",
+      "uid": "01a1159f3212-bc9d0b2519",
+      "label": "端到端首跑回归脚本（fake-loopback、零凭证、recorded_view_present 验证；依赖 #40/S0 解后补测）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-9",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10": {
+      "id": "1-10",
+      "uid": "01a1159f3371-0278a8f182",
+      "label": "solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1",
+      "children": [
+        "1-10-1",
+        "1-10-2",
+        "1-10-3",
+        "1-10-4",
+        "1-10-5",
+        "1-10-6",
+        "1-10-7"
+      ],
+      "decisions": [
+        {
+          "q": "产品可用判定门槛？",
+          "answer": "产品可用 = 工程判据 ∧ 用户信任判据 ∧ 价值判据（三层 AND 门，任一不达标维持 target）；『可用』宣告不因工程闭环（S0-S3）完成而提前，须等价值基线出数。",
+          "note": "source: ps-solo-real-provider"
+        },
+        {
+          "q": "评测脚手架通过 = 产品能力已实现？",
+          "answer": "否。H1-H8 / C1-C7 runner 通过 ≠ 产品能力已实现，二者分开计账；评测脚手架证据不得冒充产品交付证据。",
+          "note": "ps-solo-real-provider Status 段明示"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-1": {
+      "id": "1-10-1",
+      "uid": "01a1159f33e5-887f8a1f55",
+      "label": "S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-2": {
+      "id": "1-10-2",
+      "uid": "01a1159f3465-6baecde5f1",
+      "label": "S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-3": {
+      "id": "1-10-3",
+      "uid": "01a1159f34d8-43cbdc3f87",
+      "label": "S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-4": {
+      "id": "1-10-4",
+      "uid": "01a1159f354b-7c35f1871a",
+      "label": "S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-5": {
+      "id": "1-10-5",
+      "uid": "01a1159f35bf-b3a9ef1728",
+      "label": "S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-6": {
+      "id": "1-10-6",
+      "uid": "01a1159f3633-61a6b31669",
+      "label": "价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-10-7": {
+      "id": "1-10-7",
+      "uid": "01a1159f36aa-f658fc9428",
+      "label": "H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-10",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-5": {
+      "id": "1-3-5",
+      "uid": "01a1159f3805-1ede85fb74",
+      "label": "C7 真实世界退出记账（safe-stop Provider-side：远端 retention/账单/本地退出≠Provider 退出，owner-backed 证据补齐）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-10-07 16:56:09",
+    "updated": "2026-10-07 17:08:38",
+    "md_file": "roadmap/execution-layer-basic-functions.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a11593d00c-58b1e75dca",
+      "to": "01a11593cd8f-55ee8e305e",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a11593d00c-58b1e75dca",
+      "to": "01a11593cb26-0680b160c0",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a11593d26f-eec051e58f",
+      "to": "01a11593d13d-7f655d4ee8",
+      "type": "informs"
+    },
+    {
+      "id": "e4",
+      "from": "01a11593d26f-eec051e58f",
+      "to": "01a11593cec5-353bf96053",
+      "type": "informs"
+    },
+    {
+      "id": "e5",
+      "from": "01a115956bd5-c2f3fb7fdd",
+      "to": "01a11593d26f-eec051e58f",
+      "type": "derives-from"
+    },
+    {
+      "id": "e6",
+      "from": "01a1159f33e5-887f8a1f55",
+      "to": "01a1159f34d8-43cbdc3f87",
+      "type": "blocks"
+    },
+    {
+      "id": "e7",
+      "from": "01a11593d26f-eec051e58f",
+      "to": "01a1159f3371-0278a8f182",
+      "type": "informs"
+    },
+    {
+      "id": "e8",
+      "from": "01a1159f3805-1ede85fb74",
+      "to": "01a11593cc59-8bb29491ec",
+      "type": "derives-from"
+    }
+  ],
+  "edge_seq": 8
+}
