@@ -26,6 +26,10 @@ authority: supporting
 - [本地只读运行流](architecture/ta-local-read-only-flow.md) — 从 preflight 到 owner-backed result 的触发、序列与退出；authority-id: architecture.flow.local-read-only-run
 - [可恢复写入边界](architecture/ta-reversible-write-boundary.md) — write effect 的 HOLD、approval、host enforcement 与放行门；authority-id: architecture.cross-cutting.reversible-write-boundary
 - [工作台用户界面](architecture/ta-workbench-user-surface.md) — 工作记录、任务详情、recorded view 与 owner-backed 界面边界；authority-id: architecture.user-surface.workbench
+- [执行层 effect 授权](architecture/ta-execution-effect-authorization.md) — baseline effect 集合、六段式授权管线、approval 绑定粒度与 S2 消费边界；authority-id: architecture.cross-cutting.execution-effect-authorization
+- [Provider 适配与降级](architecture/ta-provider-adaptation.md) — 单 Provider capability 路由、failure class、identity↔transport 绑定与 fail-closed fallback；authority-id: architecture.subsystem.provider-adaptation
+- [证据与回放](architecture/ta-evidence-replay.md) — recorded/simulated/live 三模式隔离、provenance 绑定与 live 默认拒绝；authority-id: architecture.subsystem.evidence-replay
+- [终止与资源生命周期](architecture/ta-termination-resource-lifecycle.md) — 进程树清理、本地/Provider 退出账本分离与 SIGTERM→SIGKILL→UNKNOWN 升级；authority-id: architecture.subsystem.termination-resource-lifecycle
 
 ## 长期页面
 
