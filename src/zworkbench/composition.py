@@ -39,6 +39,9 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
 
 SCHEMA = "zworkbench-composition-owner/v1"
 SCHEMA_VERSION = 1
+
+# Secret-shaped values that must never be persisted in owner evidence.
+_SECRET_VALUE = re.compile(r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
 ALLOWED_EFFECT_CLASSES = frozenset({"read-only", "idempotent", "approval-required"})
 REPLAY_MODES = frozenset({"recorded_view", "simulated_replay", "live_replay"})
 RUN_STATES = frozenset(
@@ -544,6 +547,7 @@ class CompositionOwner:
     ) -> Dict[str, Any]:
         """Commit one physical effect and its result exactly once."""
 
+        self._reject_raw_credentials(external_receipt or {}, "external_receipt")
         timestamp = self._now()
         with self._transaction() as connection:
             effect = self._effect_row(connection, effect_id)
@@ -606,6 +610,8 @@ class CompositionOwner:
 
         if observed_outcome not in {"applied", "not-applied", "unknown"}:
             raise ValueError("observed_outcome must be applied, not-applied, or unknown")
+        if observed_outcome == "applied":
+            self._reject_raw_credentials(evidence or {}, "external_receipt")
         timestamp = self._now()
         with self._transaction() as connection:
             effect = self._effect_row(connection, effect_id)
@@ -1958,7 +1964,12 @@ class CompositionOwner:
 
     @staticmethod
     def _reject_raw_credentials(value: Any, field_name: str) -> None:
-        """Reject obvious credential fields before they enter owner evidence."""
+        """Reject obvious credential fields and secret-shaped values before they enter owner evidence.
+
+        Scans both raw credential *field names* (e.g. ``api_key``) and *values*
+        matching provider secret patterns (``sk-...`` / ``AKIA...``). Identity
+        references (``_ref`` / ``_digest`` / ``_id`` suffixes) are allowed.
+        """
 
         sensitive = {"api_key", "apikey", "authorization", "cookie", "password", "secret", "token", "key"}
         safe_field_names = {"idempotency_key"}
@@ -1976,6 +1987,9 @@ class CompositionOwner:
             elif isinstance(current, (list, tuple)):
                 for index, item in enumerate(current):
                     visit(item, f"{path}[{index}]")
+            elif isinstance(current, str):
+                if _SECRET_VALUE.search(current):
+                    raise ValueError(f"{field_name} contains a secret-shaped value at {path}")
 
         visit(value, field_name)
 
