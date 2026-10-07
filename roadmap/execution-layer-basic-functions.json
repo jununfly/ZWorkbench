@@ -65,7 +65,7 @@
       "id": "1-2",
       "uid": "01a11593cb26-0680b160c0",
       "label": "证据与回放（sub-06）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -74,9 +74,16 @@
         "1-2-3",
         "1-2-4"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "e2(1-6->1-2 blocks) 是否仍构成硬前置？",
+          "answer": "否，已认定失效并移除。证据/回放(sub-06)并不真正依赖唯一 owner 持久化(sub-03)先稳定；1-6-1(secret 不入 owner)已独立落地，external_receipt 的值级拒密已就位，足以支撑 1-2 开工。故回 1-2。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3": {
       "id": "1-3",
@@ -133,7 +140,7 @@
       "id": "1-6",
       "uid": "01a11593d00c-58b1e75dca",
       "label": "唯一 owner 持久化（sub-03）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -147,10 +154,16 @@
           "q": "与 sub-04/sub-06 的关系？",
           "answer": "sub-03 是 sub-04（effect 授权）与 sub-06（证据/回放）的硬前置，须先稳定",
           "note": "见 blocks 边 1-6→1-4 / 1-6→1-2"
+        },
+        {
+          "q": "为何现在开工 1-6 而非按『开始 1-2』指令？",
+          "answer": "用户在『开始 1-2』下确认：1-2 被 e2(1-6→1-2) 硬阻塞，且 1-6 已记录决策 sub-03 是 sub-06 的硬前置；故先稳定 1-6（唯一 owner 持久化），完成后再回 1-2。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-7": {
       "id": "1-7",
@@ -339,13 +352,20 @@
       "id": "1-2-1",
       "uid": "01a11594f3a1-abfbbd9483",
       "label": "P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "DSH Harness 端到端三模式收口如何落地？",
+          "answer": "选 A：新增 DSH-native runner（run_w8_dsh_evidence_replay.py）。经 DshRuntimeAdapter 真实跑 fixture bootstrap→产出 owner run→封存 cassette→该 artifact 作为 recorded_view/simulated_replay/live_replay 共同输入，加 7 场景负面用例与回归测试 test_w8_dsh_evidence_replay.py。本机 fake-loopback 可跑。注：用 fixture bootstrap（非构建好的 ZDSHarness CLI），与 test_dsh_runtime 同路径；真实 CLI 走 run_w8_dsh_artifact_integration。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-2": {
       "id": "1-2-2",
@@ -519,13 +539,20 @@
       "id": "1-6-1",
       "uid": "01a115956334-448cee0295",
       "label": "P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "external_receipt 值级拒密实现落点选哪种？",
+          "answer": "选 A：扩展 composition._reject_raw_credentials 增加值级扫描（sk-/AKIA），并在 complete_effect + reconcile_effect 的 external_receipt 写入点调用。副作用：owner 全部 evidence writer（create_run/record_result/record_replay_metadata/各 ledger）现在统一获得值级拒密，为 1-8-2（stdout/stderr 值级扫描）铺路。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6-2": {
       "id": "1-6-2",
@@ -890,7 +917,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-07 21:20:01",
+    "updated": "2026-10-07 21:53:03",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
@@ -898,12 +925,6 @@
       "id": "e1",
       "from": "01a11593d00c-58b1e75dca",
       "to": "01a11593cd8f-55ee8e305e",
-      "type": "blocks"
-    },
-    {
-      "id": "e2",
-      "from": "01a11593d00c-58b1e75dca",
-      "to": "01a11593cb26-0680b160c0",
       "type": "blocks"
     },
     {
