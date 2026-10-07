@@ -212,6 +212,54 @@ class RemoteProviderFailoverFixtureTests(unittest.TestCase):
                     attempt=1,
                 )
 
+    def test_attempts_recorded_in_owner_backed_attempt_ledger(self) -> None:
+        # Node 1-1-2: every dispatched attempt must land in the dedicated
+        # owner-backed provider_attempt_ledger (not only fixture events), so a
+        # downstream Provider-level retry budget can count attempts per run.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "attempt-ledger-run")
+            router = OwnerBackedProviderRouter(owner, self.routes, cooldown_ticks=5)
+
+            def dispatch(route: ProviderRoute):
+                if route.provider_id == "primary":
+                    raise ProviderFailure("RATE_LIMIT", http_status=429)
+                return {"text": "fixture-ok", "provider": route.provider_id}
+
+            router.route("attempt-ledger-run", "request-1", 0, dispatch)
+            ledger = owner.provider_attempt_ledger_for_run("attempt-ledger-run")
+            self.assertEqual(len(ledger), 2)
+            self.assertEqual([e["attempt_number"] for e in ledger], [1, 2])
+            self.assertEqual([e["provider_id"] for e in ledger], ["primary", "secondary"])
+            self.assertEqual([e["status"] for e in ledger], ["failed", "succeeded"])
+            self.assertEqual(ledger[0]["failure_code"], "RATE_LIMIT")
+            self.assertIsNone(ledger[1]["failure_code"])
+
+            per_provider = {}
+            for entry in ledger:
+                per_provider[entry["provider_id"]] = per_provider.get(entry["provider_id"], 0) + 1
+            self.assertEqual(per_provider, {"primary": 1, "secondary": 1})
+
+    def test_attempt_ledger_survives_reopen(self) -> None:
+        # Node 1-1-2 regression: attempt accounting is durable and survives a
+        # DB reopen, proving it is owner-backed rather than transient fixture state.
+        with CompositionOwner(self.database) as owner:
+            self._start_run(owner, "attempt-reopen-run")
+            router = OwnerBackedProviderRouter(owner, self.routes, cooldown_ticks=5)
+
+            def dispatch(route: ProviderRoute):
+                if route.provider_id == "primary":
+                    raise ProviderFailure("RATE_LIMIT", http_status=429)
+                return {"text": "fixture-ok", "provider": route.provider_id}
+
+            router.route("attempt-reopen-run", "request-1", 0, dispatch)
+            digest_before = owner.state_digest()
+
+        with CompositionOwner(self.database) as reopened:
+            ledger = reopened.provider_attempt_ledger_for_run("attempt-reopen-run")
+            self.assertEqual(len(ledger), 2)
+            self.assertEqual([e["status"] for e in ledger], ["failed", "succeeded"])
+            self.assertEqual(reopened.state_digest(), digest_before)
+
 
 if __name__ == "__main__":
     unittest.main()

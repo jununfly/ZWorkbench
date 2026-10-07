@@ -140,6 +140,14 @@ class OwnerBackedProviderRouter:
                 }
                 attempts.append(failed)
                 self._record(run_id, f"{request_id}:attempt:{attempt_number}:failed", "provider.attempt", failed)
+                self.owner.record_provider_attempt(
+                    run_id,
+                    provider_id=route.provider_id,
+                    request_id=request_id,
+                    attempt_number=attempt_number,
+                    status="failed",
+                    failure_code=failure.code,
+                )
                 self._record(
                     run_id,
                     f"{request_id}:cooldown:{route.provider_id}",
@@ -191,6 +199,13 @@ class OwnerBackedProviderRouter:
             }
             attempts.append(succeeded)
             self._record(run_id, f"{request_id}:attempt:{attempt_number}:succeeded", "provider.attempt", succeeded)
+            self.owner.record_provider_attempt(
+                run_id,
+                provider_id=route.provider_id,
+                request_id=request_id,
+                attempt_number=attempt_number,
+                status="succeeded",
+            )
             result = {
                 "status": "completed",
                 "provider": route.provider_id,
