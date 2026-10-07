@@ -3,7 +3,7 @@ doc-kind: product-requirements
 authority: supporting
 status: in-progress
 implementation-status: partial
-review_note: 2026-10-06 回填——minimal slice S2（write seam，roadmap 1-7 completed）、S4（Git push 门控，roadmap 1-9 completed）、真实 Ark 读路径（1-9-1~3）已落地并测试通过；H6-full / H7 / H8 仍 target / deferred-until-demand。产品能力列仍多为 target，故 implementation-status 为 partial 而非 complete。同日补 H6-full 可排期 scope + H7/H8 应急草案（状态仍 deferred，见「H6-full / H7 / H8 应急 scope」节），不推翻 ADR 0009 的 deferred 决策。
+review_note: 2026-10-06 回填——minimal slice S2（write seam）/ S4（Git push 门控）/ 真实 Ark 读路径的产品切片实现已落地并测试通过（进展与规划追踪见设计实体 ps-solo-real-provider 与执行层路线图 1-10-*；本 PRD 不声称路线图节点状态，节点当前状态以 roadmap/ 为准）；H6-full / H7 / H8 仍 target / deferred-until-demand。产品能力列仍多为 target，故 implementation-status 为 partial 而非 complete。同日补 H6-full 可排期 scope + H7/H8 应急草案（状态仍 deferred，见「H6-full / H7 / H8 应急 scope」节），不推翻 ADR 0009 的 deferred 决策。
 ---
 
 # R3 真实可用路线图

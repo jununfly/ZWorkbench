@@ -26,14 +26,14 @@ authority-id: design.workbench-features
 | F3 | 侧栏工作记录导航 | 🔨 构建（A） | 纯导航壳，数据来自 owner-backed 投影 |
 | F4 | 会话消息流（message/avatar/meta/plan-card） | 🔨 构建（A） | 只读渲染既有工作记录 |
 | F5 | 计划卡（working plan 步骤态） | 🔨 构建 | 投影驱动 |
-| F6 | composer 由只读 → 真实发送 | ✅ 已交付 | 1-2-1，POST /api/runs 真实建 Run |
-| F7 | 运行事实检查器 | ✅ 已交付 | 渲染壳 + 实时值（1-2-3/1-2-6 每次轮询重投影） |
-| F8 | 命令画布（?variant=B） | ✅ 已交付 | 1-3-1 canvas 变体 |
-| F9 | 项目日记（?variant=C） | ✅ 已交付 | 1-3-2 journal 变体 |
-| F10 | 运行轨道栏（含可执行 Run） | ✅ 已交付 | 渲染壳 + 可执行 Run（1-2-4） |
-| F11 | 场景状态机 UI（empty/planning/approval/stopped） | ✅ 已交付 | 四态渲染 + 真实控制（1-2-7） |
-| F12 | 审批执行 UI（apply/Approval/retry/effect receipt） | ✅ 已交付 | 1-2-2，POST /api/approvals；deny 强制非空理由 |
-| F13 | 安全停止 / reconcile UI | ✅ 已交付 | 横幅/stopped + 越界判定 + reconcile 路由（1-2-5/1-2-8） |
+| F6 | composer 由只读 → 真实发送 | ✅ 已交付 | Issue #1 实现规格「Interactive write seams」；POST /api/runs 真实建 Run（ADR 0003） |
+| F7 | 运行事实检查器 | ✅ 已交付 | 渲染壳 + 实时值（每次轮询经 resolve_view 重投影，只读无副作用） |
+| F8 | 命令画布（?variant=B） | ✅ 已交付 | canvas 变体布局（?variant=B） |
+| F9 | 项目日记（?variant=C） | ✅ 已交付 | journal 变体布局（?variant=C） |
+| F10 | 运行轨道栏（含可执行 Run） | ✅ 已交付 | 渲染壳 + 可执行 Run（宿主注入 command facade） |
+| F11 | 场景状态机 UI（empty/planning/approval/stopped） | ✅ 已交付 | 四态渲染 + 真实控制（宿主注入 scenario facade → POST /api/scenario-state） |
+| F12 | 审批执行 UI（apply/Approval/retry/effect receipt） | ✅ 已交付 | POST /api/approvals；deny 强制非空理由（宿主注入 approval facade，ADR 0003） |
+| F13 | 安全停止 / reconcile UI | ✅ 已交付 | 横幅/stopped + 越界判定 + reconcile 路由（宿主注入 reconcile facade → POST /api/reconcile 触发 owner.reconcile_identity） |
 | F14 | DSH 对齐只读 surface（`/session-references`） | ✅ 部分已落地 | Host Capability Facade + DSH 身份投影，不引运行时 |
 | F15 | r2-ui-reference-skills 协同 UI | 🔨 构建 | 把 skills 状态检查可视化（F15） |
 | F16 | 响应式 & 降级（≤760px / reduced-motion） | ✅ 已落地 | Issue #1 已覆盖 |

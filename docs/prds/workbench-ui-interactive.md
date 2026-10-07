@@ -13,7 +13,7 @@ decisions_resolved:
   - D2: 交互深度 = 本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态（F6 发送 / F12 审批执行 另开 product scope gate）
   - D3: 三变体切换器 = 保留为开发期调试工具（?variant=A/B/C）
   - Q4: ?variant= 调试切换器 = 纯 client 端 query 参数分支，不接入 ui_build 生产构建管线
-  - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经交互路线图 1-2 / 1-3 节点全部 completed（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）
+  - D4: 交互深度 gate 已开并交付——F6/F8/F9/F12 的 product scope gate 与 F7-live/F10-exec/F13-logic 的 🚧 部分，经 Issue #1 实现规格「Interactive write seams」全部 completed 交付（不再是"留 gate"待办）；真实写入/审批/reconcile 仅当宿主注入对应 facade 时可用，否则沿用 Round-1 只读契约（POST 404）
 review_note: 2026-09-27 刷新——原 DRAFT 的 §3 分类与 §3b Round-1 范围已与 issue-1 实现规格的「Interactive write seams」小节对齐；除 F18 外 F1–F13 均已交付。本文档反映已交付状态，仍可按 review 意见修订。
 review_note: 本 PRD 与 issue-1 实现规格对"交互/写入能力"的口径已对齐；交互/写入能力的 durable 事实源是 issue-1 实现规格「Interactive write seams (post-Round-1)」小节与 ADR 0003（宿主只读边界），本 PRD 在 §3c / §9 登记已交付写 seam。
 ---
@@ -93,14 +93,14 @@ D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付�
 
 | 项 | 路线图节点 | 写 seam / 宿主契约 |
 |---|---|---|
-| F6 composer 真实发送 | 1-2-1 | 宿主注入 command facade → POST /api/runs 真实建 Run；无 facade 则 404 |
-| F10 可执行 Run | 1-2-4 | 复用 command facade |
-| F11 场景真实控制 | 1-2-7 | 宿主注入 scenario facade → POST /api/scenario-state（request_stop / request_approval）；无 facade 则 404 |
-| F12 审批执行 | 1-2-2 | 宿主注入 approval facade → POST /api/approvals（approve / deny）；deny 强制非空理由；无 facade 则 404 |
-| F13 越界判定 + reconcile | 1-2-5 / 1-2-8 | 宿主注入 reconcile facade → POST /api/reconcile 触发 owner.reconcile_identity；无 facade 则 404 |
-| F7 实时值 | 1-2-3 / 1-2-6 | 每次轮询经 resolve_view 重投影，只读无副作用 |
-| F8 ?variant=B | 1-3-1 | canvas 变体布局 |
-| F9 ?variant=C | 1-3-2 | journal 变体布局 |
+| F6 composer 真实发送 | Issue #1 实现规格「Interactive write seams」 | 宿主注入 command facade → POST /api/runs 真实建 Run；无 facade 则 404 |
+| F10 可执行 Run | Issue #1 实现规格「Interactive write seams」 | 复用 command facade |
+| F11 场景真实控制 | Issue #1 实现规格「Interactive write seams」 | 宿主注入 scenario facade → POST /api/scenario-state（request_stop / request_approval）；无 facade 则 404 |
+| F12 审批执行 | Issue #1 实现规格「Interactive write seams」 | 宿主注入 approval facade → POST /api/approvals（approve / deny）；deny 强制非空理由；无 facade 则 404 |
+| F13 越界判定 + reconcile | Issue #1 实现规格「Interactive write seams」 | 宿主注入 reconcile facade → POST /api/reconcile 触发 owner.reconcile_identity；无 facade 则 404 |
+| F7 实时值 | Issue #1 实现规格「Interactive write seams」 | 每次轮询经 resolve_view 重投影，只读无副作用 |
+| F8 ?variant=B | Issue #1 实现规格「Interactive write seams」 | canvas 变体布局 |
+| F9 ?variant=C | Issue #1 实现规格「Interactive write seams」 | journal 变体布局 |
 
 不变式（沿用 Round-1 + ADR 0003）：**所有真实写入 / 审批 / reconcile 仅在宿主注入对应 facade 时暴露**；只读宿主（CLI `ui-host`）一律 disabled 占位 + POST 404。可写宿主由 CLI `ui --db <path>`（dogfood）提供，接真实 CompositionOwner + 四 facade。
 
@@ -111,7 +111,7 @@ D2/D1 原把以下项标为"留 gate"，已由后续 product gate 全部交付�
 - **D1 — IA 方向**：✅ **A 会话优先**。B 画布 / C 日记 留后续独立 gate，本轮不构建。
 - **D2 — 交互深度**：✅ **本轮只交付纯 UI 壳 + 只读投影 + disabled/stopped 态**。F6（发送）与 F12（审批执行）触碰 Run/Approval/Effect，转为 ⏭ 后续 product scope gate；F7/F10/F13 的运行时部分（实时值 / 可执行 Run / 越界判定）同理留 gate。
 - **D3 — 三变体切换器**：✅ **保留为开发期调试工具**（`?variant=A/B/C`），不向最终用户暴露。
-- **D4 — 交互深度 gate 已开并交付**：✅ D2 原留的 gate（F6/F12 product scope、F7-live/F10-exec/F13-logic 🚧）与 D1 留后续的 B/C 变体（F8/F9），经交互路线图 1-2 / 1-3 节点全部 completed，不再是"留 gate"待办。真实副作用仅在宿主注入对应 facade 时可用，只读宿主仍守 Round-1 契约（POST 404）。
+- **D4 — 交互深度 gate 已开并交付**：✅ D2 原留的 gate（F6/F12 product scope、F7-live/F10-exec/F13-logic 🚧）与 D1 留后续的 B/C 变体（F8/F9），经 Issue #1 实现规格「Interactive write seams」全部 completed 交付，不再是"留 gate"待办。真实副作用仅在宿主注入对应 facade 时可用，只读宿主仍守 Round-1 契约（POST 404）。
 
 ## 5. dsh-web 对齐映射（只读，不引入运行时）
 

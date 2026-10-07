@@ -1,7 +1,7 @@
 ---
 doc-kind: product-requirements
 authority: supporting
-status: target
+status: accepted
 implementation-status: accepted
 ---
 
@@ -101,7 +101,7 @@ Human 与 AI 在评审工作台时，无法通过对话准确定位同一个界�
 
 ## Further Notes
 
-- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充。设计状态为 `target`；实现状态为 `accepted`（2026-09-13 Human 验收，见 Implementation status）。整个 R1 主规格仍独立验收。
+- 本 spec 是 [R1 工作台规格](issue-1-workbench-ui.md) 的补充。设计层已沉淀为 `docs/designs/` 下设计实体（见文末「相关设计实体」），不再独立承载协议合同；实现状态为 `accepted`（2026-09-13 Human 验收，见 Implementation status）。整个 R1 主规格仍独立验收。
 - 设计合同（协议/manifest/token/生命周期/功能本体/标注闭环/协作与隐私/unknown→safe-stop）已沉淀为 `docs/designs/` 下设计实体（见文末「相关设计实体」），本 PRD 不重复承载。
 - 与 [工作台用户界面](../../docs/architecture/ta-workbench-user-surface.md) 和 [唯一 durable owner ADR](../../docs/zj-adr/0001-composition-owner-is-the-unique-durable-owner.md) 保持一致。manifest 的“唯一来源”仅指界面引用元数据，不挑战 CompositionOwner 的业务所有权。
 

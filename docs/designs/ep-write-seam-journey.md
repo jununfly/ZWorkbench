@@ -21,13 +21,13 @@ authority-id: design.write-seam-journey
 
 不变式（沿用 Round-1 + ADR 0003）：**所有真实写入 / 审批 / reconcile 仅在宿主注入对应 facade 时暴露**；只读宿主（CLI `ui-host`）一律 disabled 占位 + POST 404。
 
-| 能力 | 路线图节点 | 宿主契约（facade 注入） |
+| 能力 | 交付依据（事实源） | 宿主契约（facade 注入） |
 |---|---|---|
-| F6 composer 真实发送 / F10 可执行 Run | 1-2-1 / 1-2-4 | 宿主注入 command facade → POST `/api/runs` 真实建 Run；无 facade 则 404 |
-| F11 场景真实控制 | 1-2-7 | 宿主注入 scenario facade → POST `/api/scenario-state`（`request_stop` / `request_approval`）；无 facade 则 404 |
-| F12 审批执行 | 1-2-2 | 宿主注入 approval facade → POST `/api/approvals`（`approve` / `deny`）；`deny` 强制非空理由；无 facade 则 404 |
-| F13 越界判定 + reconcile | 1-2-5 / 1-2-8 | 宿主注入 reconcile facade → POST `/api/reconcile` 触发 `owner.reconcile_identity`；无 facade 则 404 |
-| F7 实时值 | 1-2-3 / 1-2-6 | 每次轮询经 `resolve_view` 重投影，只读无副作用 |
+| F6 composer 真实发送 / F10 可执行 Run | Issue #1 实现规格「Interactive write seams」（ADR 0003） | 宿主注入 command facade → POST `/api/runs` 真实建 Run；无 facade 则 404 |
+| F11 场景真实控制 | Issue #1 实现规格「Interactive write seams」（ADR 0003） | 宿主注入 scenario facade → POST `/api/scenario-state`（`request_stop` / `request_approval`）；无 facade 则 404 |
+| F12 审批执行 | Issue #1 实现规格「Interactive write seams」（ADR 0003） | 宿主注入 approval facade → POST `/api/approvals`（`approve` / `deny`）；`deny` 强制非空理由；无 facade 则 404 |
+| F13 越界判定 + reconcile | Issue #1 实现规格「Interactive write seams」（ADR 0003） | 宿主注入 reconcile facade → POST `/api/reconcile` 触发 `owner.reconcile_identity`；无 facade 则 404 |
+| F7 实时值 | Issue #1 实现规格「Interactive write seams」（ADR 0003） | 每次轮询经 `resolve_view` 重投影，只读无副作用 |
 
 ## 验收
 
