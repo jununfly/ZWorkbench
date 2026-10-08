@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 13:40:04
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 14:55:50
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -14,10 +14,10 @@
 │   ├── [x][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
 │   ├── [x][Y+] 1-2-3. P1 live 零外部执行断言守卫（断言式计账，非结构性）
 │   └── [x][Y+] 1-2-4. P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类
-├── [ ][Y+] 1-3. 终止与资源生命周期（sub-07）
-│   ├── [ ][Y+] 1-3-1. P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0
-│   ├── [ ][Y+] 1-3-2. P1 退出账本对称接线（调用点配对：谁在何时记哪边）
-│   ├── [ ][Y+] 1-3-3. P1 常驻服务 runtime registry，强制 ≤3 上限
+├── [~][Y+] 1-3. 终止与资源生命周期（sub-07）
+│   ├── [x][Y+] 1-3-1. P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0
+│   ├── [x][Y+] 1-3-2. P1 退出账本对称接线（调用点配对：谁在何时记哪边）
+│   ├── [x][Y+] 1-3-3. P1 常驻服务 runtime registry，强制 ≤3 上限
 │   ├── [ ][Y+] 1-3-4. P1 fail-stop 升级契约（不可处理→fail-stop，非 silent unknown）
 │   └── [ ][Y+] 1-3-5. C7 真实世界退出记账（safe-stop Provider-side：远端 retention/账单/本地退出≠Provider 退出，owner-backed 证据补齐）
 ├── [!][Y+] 1-4. 执行层 effect 授权（sub-04）
