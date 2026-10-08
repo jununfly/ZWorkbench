@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 import tempfile
 import unittest
 
 from zworkbench.composition import (
+    CallerAuthError,
     CompositionOwner,
     EVIDENCE_SOURCE_NATIVE,
     EVIDENCE_SOURCE_OUTER_COMPOSED,
@@ -948,6 +950,125 @@ class TestCrossLayerRetryBudget(unittest.TestCase):
         self.assertEqual(len(self.owner.dsh_retry_budget_ledger_for_run("run-1")), 1)
         self.assertEqual(len(self.owner.worker_retry_budget_ledger_for_run("run-1")), 1)
         self.assertEqual(len(self.owner.run_restart_ledger_for_run("run-1")), 1)
+
+
+class TestCallerAuth(unittest.TestCase):
+    """Node 1-5-3: caller-auth fail-closed on the durable owner.
+
+    Mechanism: caller session token (owner_callers registry + authenticate_caller
+    establishes an in-memory session).  Coverage: every state-changing operation
+    routes through _transaction(), which enforces _require_authenticated_caller()
+    when caller_auth_required is set.  The guard is independent of journal
+    durability, so ZW_OWNER_SANDBOX=1 must not weaken it.
+    """
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "owner.sqlite"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _enable(self, caller_id: str = "local-cli", token: str = "secret-token") -> None:
+        self.owner.enable_caller_auth(caller_id, token)
+
+    def test_default_off_backward_compatible(self) -> None:
+        # caller-auth is opt-in; existing single-process usage is unaffected.
+        self.assertFalse(self.owner.caller_auth_required())
+        self.owner.create_run("run-1", "task", {"x": 1})
+
+    def test_enable_then_unauthenticated_write_is_rejected(self) -> None:
+        self._enable()
+        self.owner.close()
+        unauth = CompositionOwner(self.db)
+        self.assertTrue(unauth.caller_auth_required())
+        with self.assertRaises(CallerAuthError):
+            unauth.create_run("run-1", "task", {"x": 1})
+        unauth.close()
+
+    def test_authenticate_then_write_succeeds(self) -> None:
+        self._enable()
+        self.owner.authenticate_caller("local-cli", "secret-token")
+        run = self.owner.create_run("run-1", "task", {"x": 1})
+        self.assertEqual(run["status"], "created")
+
+    def test_wrong_token_is_rejected(self) -> None:
+        self._enable()
+        with self.assertRaises(CallerAuthError):
+            self.owner.authenticate_caller("local-cli", "wrong-token")
+
+    def test_unknown_caller_is_rejected(self) -> None:
+        self._enable()
+        with self.assertRaises(CallerAuthError):
+            self.owner.authenticate_caller("ghost", "any-token")
+
+    def test_register_caller_requires_authenticated_session(self) -> None:
+        self._enable()
+        self.owner.close()
+        unauth = CompositionOwner(self.db)
+        with self.assertRaises(CallerAuthError):
+            unauth.register_caller("worker-1", "worker-token")
+        unauth.close()
+        auth = CompositionOwner(self.db)
+        auth.authenticate_caller("local-cli", "secret-token")
+        auth.register_caller("worker-1", "worker-token")
+        auth.authenticate_caller("worker-1", "worker-token")
+        auth.create_run("run-2", "task", {})
+        auth.close()
+
+    def test_all_destructive_writes_require_auth(self) -> None:
+        # With caller-auth on, every destructive op rejects an unauthenticated owner.
+        self._enable()
+        unauth = CompositionOwner(self.db)  # reopened; posture read from owner_meta
+        self.assertTrue(unauth.caller_auth_required())
+        destructive = [
+            ("create_run", lambda o: o.create_run("r", "task", {})),
+            ("start_run", lambda o: o.start_run("r")),
+            ("claim_effect", lambda o: o.claim_effect("r", "op-1", "write", "sink", "idem-1", "idempotent")),
+            ("complete_run", lambda o: o.complete_run("r", "result")),
+            ("request_approval", lambda o: o.request_approval("r", "op-2", "write", "sink", "idem-2", "reason")),
+            ("safe_stop_run", lambda o: o.safe_stop_run("r", "boom")),
+            ("fail_run", lambda o: o.fail_run("r", "boom")),
+        ]
+        for name, op in destructive:
+            with self.subTest(name=name):
+                with self.assertRaises(CallerAuthError):
+                    op(unauth)
+
+    def test_zw_owner_sandbox_does_not_weaken_auth(self) -> None:
+        # ZW_OWNER_SANDBOX=1 only relaxes journal durability; caller-auth stays enforced.
+        self.owner.close()
+        old = os.environ.get("ZW_OWNER_SANDBOX")
+        os.environ["ZW_OWNER_SANDBOX"] = "1"
+        try:
+            with CompositionOwner(self.db) as boot:
+                boot.enable_caller_auth("local-cli", "secret-token")
+            # Reopen under the sandbox-downgraded journal: posture kept, no live session.
+            with CompositionOwner(self.db) as sandboxed:
+                self.assertTrue(sandboxed.caller_auth_required())
+                with self.assertRaises(CallerAuthError):
+                    sandboxed.create_run("run-1", "task", {})
+                sandboxed.authenticate_caller("local-cli", "secret-token")
+                sandboxed.create_run("run-1", "task", {})
+        finally:
+            if old is None:
+                os.environ.pop("ZW_OWNER_SANDBOX", None)
+            else:
+                os.environ["ZW_OWNER_SANDBOX"] = old
+
+    def test_reopened_owner_keeps_auth_posture(self) -> None:
+        self._enable()
+        self.owner.authenticate_caller("local-cli", "secret-token")
+        self.owner.create_run("run-1", "task", {})
+        reopened = CompositionOwner(self.db)
+        self.assertTrue(reopened.caller_auth_required())
+        with self.assertRaises(CallerAuthError):
+            reopened.create_run("run-2", "task", {})
+        reopened.authenticate_caller("local-cli", "secret-token")
+        reopened.create_run("run-2", "task", {})
+        reopened.close()
 
 
 class ProviderAccessGateLedgerTests(unittest.TestCase):
