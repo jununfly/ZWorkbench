@@ -138,7 +138,7 @@
       "id": "1-5",
       "uid": "01a11593cec5-353bf96053",
       "label": "Run 生命周期编排（sub-01）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -1215,22 +1215,44 @@
       "id": "1-5-4",
       "uid": "01a11c0f67dc-44b308226e",
       "label": "P1 跨层 retry/run-restart 真实调用点接线（dsh_runtime bootstrap 重触发 + worker_bridge handshake 重连接进 owner；caller-auth 收口后）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "现有跨层 retry ledger 调用方现状？",
+          "answer": "src 全部 record_*_retry_budget_consumption（provider/dsh/worker/run-restart 四层）零真实调用方；1-5-2 只落地 owner 原语。1-5-4 是首次把 ledger 接进 dsh_runtime/worker_bridge 真实执行流",
+          "note": ""
+        },
+        {
+          "q": "预算耗尽 fail-closed 触发条件？",
+          "answer": "仅当声明了 budget（max_retries）时 record_*_retry 检查 count>=max 才 raise RetryBudgetExhausted；undeclared 记 bound='undeclared' 不 raise（与 provider 层一致，向后兼容现有单进程测试零破）",
+          "note": ""
+        },
+        {
+          "q": "attempt_number 来源？",
+          "answer": "各层在真实调用点入口按 (run_id, layer_id) 计数既有 ledger 条目 +1 派生 attempt_number，单调不回退；不引入新序号字段",
+          "note": ""
+        },
+        {
+          "q": "run-restart 重 arm 需要 owner 状态机改动？",
+          "answer": "是。execute() 重启分支原调 start_run 对 terminal run 触发 InvalidTransition（completed/failed/safe_stopped 无出边）。新增 owner.restart_run 原语作唯一审计逃生口：允许 created/waiting_approval/recovering/completed/failed/safe_stopped→running 重 arm 并 emit run.restarted；start_run 保持普通生命周期不变。同时 owner 级 fail-closed 信号（RetryBudgetExhausted/InvalidTransition/CallerAuthError/NotFoundError）在 execute() except 中跳过 _record_failure（不 safe_stop、不记 dsh.error），run 保持 arm 态由编排层决策。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan",
       "exit_criteria": [
         "dsh_runtime 在 DSH retry / run-restart 触发时调用 owner.record_dsh_retry / record_run_restart；worker_bridge 在 Worker retry 时调用 owner.record_worker_retry",
         "全链路 ≥1 真实 e2e：预算耗尽触发 RetryBudgetExhausted fail-closed；既有 206 测试零回归"
-      ]
+      ],
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 23:29:27",
+    "updated": "2026-10-09 00:11:39",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
