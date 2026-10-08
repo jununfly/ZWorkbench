@@ -1051,5 +1051,109 @@ class UnknownTerminologyTwoLayerTests(unittest.TestCase):
         self.assertIn("run.identity.violation", event_types)
 
 
+class DeclaredExposureTests(unittest.TestCase):
+    """1-4-1: Q4 preflight-class deny enforced via declared_side_effects/exposure.
+
+    The declaration is opt-in at preflight: claim_effect only enforces it when
+    one exists for the run.  Any breach safe-stops the run (fail-closed).
+    """
+
+    def _owner(self, tmp: Path) -> CompositionOwner:
+        owner = CompositionOwner(tmp / "owner.sqlite3")
+        owner.create_run("run-q4", "effect", {"x": 1})
+        return owner
+
+    def test_declare_and_get_round_trip(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            owner = self._owner(root)
+            declared = owner.declare_exposure(
+                "run-q4",
+                declared_side_effects=["idempotent", "approval-required"],
+                exposure={"workspace_root": "/tmp/ws", "network": True, "credentials": False, "subprocess": False},
+            )
+            self.assertEqual(declared["declared_side_effects"], ["approval-required", "idempotent"])
+            got = owner.get_declared_exposure("run-q4")
+            assert got is not None
+            self.assertEqual(got["exposure"]["workspace_root"], "/tmp/ws")
+            self.assertTrue(got["exposure"]["network"])
+            self.assertFalse(got["exposure"]["credentials"])
+            # Idempotent re-declare replaces the boundary.
+            owner.declare_exposure("run-q4", declared_side_effects=["idempotent"], exposure={"workspace_root": "/tmp/ws2"})
+            self.assertEqual(owner.get_declared_exposure("run-q4")["declared_side_effects"], ["idempotent"])
+            self.assertEqual(owner.get_declared_exposure("run-q4")["exposure"]["workspace_root"], "/tmp/ws2")
+            owner.close()
+
+    def test_claim_allowed_within_declared_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"
+            ws.mkdir()
+            owner = self._owner(root)
+            owner.declare_exposure(
+                "run-q4",
+                declared_side_effects=["idempotent"],
+                exposure={"workspace_root": str(ws), "network": False, "credentials": False, "subprocess": False},
+            )
+            claim = owner.claim_effect("run-q4", "op1", "act", str(ws / "file"), "k1", "idempotent", required_exposure={"workspace"})
+            self.assertTrue(claim.executable)
+            self.assertEqual(claim.status, "claimed")
+            owner.close()
+
+    def test_claim_denied_side_effect_not_declared(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"
+            ws.mkdir()
+            owner = self._owner(root)
+            owner.declare_exposure("run-q4", declared_side_effects=["approval-required"], exposure={"workspace_root": str(ws)})
+            claim = owner.claim_effect("run-q4", "op2", "act", str(ws / "file"), "k2", "idempotent")
+            self.assertFalse(claim.executable)
+            self.assertEqual(claim.reason, "side_effect_not_declared")
+            self.assertEqual(owner.get_run("run-q4")["status"], "safe_stopped")
+            owner.close()
+
+    def test_claim_denied_workspace_out_of_bounds(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"
+            ws.mkdir()
+            outside = root / "outside" / "file"
+            owner = self._owner(root)
+            owner.declare_exposure("run-q4", declared_side_effects=["idempotent"], exposure={"workspace_root": str(ws)})
+            claim = owner.claim_effect("run-q4", "op3", "act", str(outside), "k3", "idempotent", required_exposure={"workspace"})
+            self.assertFalse(claim.executable)
+            self.assertEqual(claim.reason, "workspace_out_of_bounds")
+            self.assertEqual(owner.get_run("run-q4")["status"], "safe_stopped")
+            owner.close()
+
+    def test_claim_denied_exposure_not_declared(self) -> None:
+        for capability in ("network", "credentials", "subprocess"):
+            with self.subTest(capability=capability), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                ws = root / "ws"
+                ws.mkdir()
+                owner = self._owner(root)
+                owner.declare_exposure(
+                    "run-q4",
+                    declared_side_effects=["idempotent"],
+                    exposure={"workspace_root": str(ws), "network": False, "credentials": False, "subprocess": False},
+                )
+                claim = owner.claim_effect("run-q4", "op-x", "act", str(ws / "file"), "k-x", "idempotent", required_exposure={capability})
+                self.assertFalse(claim.executable)
+                self.assertEqual(claim.reason, "exposure_not_declared")
+                owner.close()
+
+    def test_claim_proceeds_without_declaration_legacy(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            owner = self._owner(root)
+            # No declaration: legacy behaviour, claim allowed (idempotent, no approval).
+            claim = owner.claim_effect("run-q4", "op5", "act", "/some/resource", "k5", "idempotent")
+            self.assertTrue(claim.executable)
+            self.assertEqual(claim.status, "claimed")
+            owner.close()
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -18,7 +18,7 @@ ZWorkbench 的 baseline 内，哪些 effect 集合是允许的、它们如何经
 
 - baseline effect 集合 = {read-only（采用 (a) preflight 准入即授权、不进 claim seam；二选一中的 (b) read-only effect class 路径未采用）、loopback / fake Provider 调用、S2 可恢复写入（approval-required，case-local，单一 owner commit，不 push）}。read-only 的授权由 `LocalReadOnlyRunOrchestrator.preflight` 静态准入承载，**不调用 `CompositionOwner.claim_effect`、不创建 claimed effect 行**：admission 即授权，无外部副作用，故无需六段式 claim 记账。
 - 未知 effect class / token / scope 不匹配由 owner 强制 safe-stop（已落）。
-- 越界 workspace / 未声明网络·凭证·子进程须 safe-stop（功能已决策，但 owner 级 deny 缺 `declared_side_effects` / `exposure` 形参，须进实现 backlog）。
+- 越界 workspace / 未声明网络·凭证·子进程由 owner 级 safe-stop 强制（Q4 preflight 类，已在 1-4-1 落地：`CompositionOwner.declared_exposure` 表记录 per-run `declared_side_effects` / `exposure`，`claim_effect` 在声明存在时强制边界，缺失声明走既有行为）。
 - 重复请求幂等由 owner 层强保证；approval token 仅存 hash。
 
 ## Responsibility
@@ -27,7 +27,7 @@ ZWorkbench 的 baseline 内，哪些 effect 集合是允许的、它们如何经
 
 ## Owned state
 
-effect / approval / claim / reconcile 状态由 CompositionOwner 记录。declared_side_effects / exposure 当前不在 schema 内（见 Backlog）。
+effect / approval / claim / reconcile 状态由 CompositionOwner 记录。declared_side_effects / exposure 由 `declared_exposure` 表（per-run）记录，经 `claim_effect` 的 Q4 preflight 校验强制（见 Backlog #1）。
 
 ## Interface
 
@@ -37,7 +37,7 @@ effect / approval / claim / reconcile 状态由 CompositionOwner 记录。declar
 
 ## Failure behavior
 
-未知 effect class / token / scope → safe-stop；越界 workspace / 未声明网络·凭证·子进程 → safe-stop（owner 级 deny 待 schema 字段落地）；approval 不匹配 → deny；重复请求 → already_completed，无第二次物理副作用。
+未知 effect class / token / scope → safe-stop；越界 workspace / 未声明网络·凭证·子进程 → safe-stop（owner 级 deny 已落地，见 Backlog #1）；approval 不匹配 → deny；重复请求 → already_completed，无第二次物理副作用。
 
 ## baseline effect 清单 + gate 映射
 
@@ -67,7 +67,7 @@ Q4 deny 分层：
 
 ## Backlog（实现前须登记，不阻塞本结论）
 
-1. owner schema 增 `declared_side_effects` / `exposure` 字段 + deny 逻辑（Q4 preflight 类）。
+1. ~~owner schema 增 `declared_side_effects` / `exposure` 字段 + deny 逻辑（Q4 preflight 类）。~~ **已落文（1-4-1）**：新增 `declared_exposure` 表（per-run，`declared_side_effects_json` + `exposure_json{workspace_root,network,credentials,subprocess}`）+ `CompositionOwner.declare_exposure` / `get_declared_exposure`；`claim_effect` 加 `required_exposure` 形参，在声明存在时 safe-stop 拦截四类越界（`side_effect_not_declared` / `workspace_out_of_bounds` / `exposure_not_declared`）；声明缺失走既有行为（按需校验、向后兼容）。write_seam.apply_diff 在 claim 前声明 workspace=case_root、required_exposure={workspace}。由 `tests/test_composition.py::DeclaredExposureTests` 证明四因可强制。
 2. `create_worktree` case-local 校验；`apply_diff` 加 `resource == worktree_path` 断言 + repo 指纹校验。
 3. `complete_run` 在 read-only 路径 `finally` 显式调用，统一 run 闭合锚点。
 4. ~~read-only 二选一（建议 (a) preflight 准入即授权、不进 claim seam）写入 doc + 补测试。~~ **已落文（1-4-4）**：采用 (a) preflight 准入即授权、不进 claim seam；二选一中的 (b) read-only effect class 路径未采用。local_run 的 read-only run 不调用 `claim_effect`、不创建 claimed effect 行（由 `tests/test_local_run_orchestration.py::test_read_only_run_does_not_create_claimed_effect_rows` 证明：completed run 与 denied preflight 均零 `effects` 行）。

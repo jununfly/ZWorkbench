@@ -436,7 +436,8 @@ class WriteSeamCaseLocalTests(unittest.TestCase):
             seam = WriteSeam(owner, worktree_root, case_root=case_root)
             worktree = seam.create_worktree("run-cl-3", repo)
             try:
-                token = _approved_token(owner, "run-cl-3", "opCL3", "apply_diff", "wt-something-else", "kCL3")
+                resource_cl = str(worktree.parent / "other-target")
+                token = _approved_token(owner, "run-cl-3", "opCL3", "apply_diff", resource_cl, "kCL3")
                 with self.assertRaises(DiffApplyError):
                     seam.apply_diff(
                         "run-cl-3",
@@ -445,7 +446,7 @@ class WriteSeamCaseLocalTests(unittest.TestCase):
                         approval_token=token,
                         operation_id="opCL3",
                         action="apply_diff",
-                        resource="wt-something-else",
+                        resource=resource_cl,
                         idempotency_key="kCL3",
                     )
             finally:

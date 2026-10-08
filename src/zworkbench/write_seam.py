@@ -170,6 +170,19 @@ class WriteSeam:
         """
 
         worktree_path = Path(worktree_path).expanduser().resolve()
+        # Q4 preflight: declare this run's allowed exposure.  The write seam's
+        # only required capability is the local worktree write, bounded to the
+        # case root (or the worktree parent when no case root is configured).
+        self.owner.declare_exposure(
+            run_id,
+            declared_side_effects=[EFFECT_CLASS_WRITE],
+            exposure={
+                "workspace_root": str(self.case_root) if self.case_root is not None else str(worktree_path.parent),
+                "network": False,
+                "credentials": False,
+                "subprocess": False,
+            },
+        )
         claim = self.owner.claim_effect(
             run_id,
             operation_id,
@@ -178,6 +191,7 @@ class WriteSeam:
             idempotency_key,
             EFFECT_CLASS_WRITE,
             approval_token=approval_token,
+            required_exposure={"workspace"},
         )
         if not claim.executable:
             # Non-executable claim: already completed (idempotent replay), in
