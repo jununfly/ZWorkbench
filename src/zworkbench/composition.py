@@ -1751,6 +1751,520 @@ class CompositionOwner:
         ).fetchall()
         return [self._decode_row(row, {}) for row in rows]
 
+    # -- DSH-layer retry budget (node 1-5-2) ---------------------------------
+    #
+    # Mirror of the Provider retry-budget surface for the DSH (Deep Skill
+    # Harness) bootstrap layer.  Every DSH retry is tallied by the single
+    # durable owner so it is auditable and fail-closed, exactly like Provider
+    # retries.  The DSH layer is addressed by ``dsh_id`` (the pinned DSH
+    # profile/artifact identity), not by run id, so the ceiling is stable
+    # across restarts of the same run.
+    def declare_dsh_retry_budget(
+        self,
+        dsh_id: str,
+        *,
+        max_retries: int,
+        declared_by: str,
+    ) -> Dict[str, Any]:
+        """Declare or replace the owner-owned retry ceiling for a DSH profile."""
+
+        self._require_text(dsh_id, "dsh_id")
+        if not isinstance(max_retries, int) or max_retries < 0:
+            raise ValueError("max_retries must be a non-negative integer")
+        self._require_text(declared_by, "declared_by")
+        self._reject_raw_credentials(
+            {"dsh_id": dsh_id, "declared_by": declared_by},
+            "dsh retry budget declaration",
+        )
+        timestamp = self._now()
+        with self._transaction() as connection:
+            connection.execute(
+                """
+                INSERT INTO dsh_retry_budget(dsh_id, max_retries, declared_by, declared_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(dsh_id) DO UPDATE SET
+                    max_retries = excluded.max_retries,
+                    declared_by = excluded.declared_by,
+                    declared_at = excluded.declared_at
+                """,
+                (dsh_id, max_retries, declared_by, timestamp),
+            )
+        return self.get_dsh_retry_budget(dsh_id)
+
+    def get_dsh_retry_budget(self, dsh_id: str) -> Dict[str, Any]:
+        """Read one declared DSH retry budget by dsh id."""
+
+        connection = self._require_connection()
+        self._require_text(dsh_id, "dsh_id")
+        row = connection.execute(
+            "SELECT * FROM dsh_retry_budget WHERE dsh_id = ?", (dsh_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"dsh retry budget not declared: {dsh_id}")
+        return self._decode_row(row, {})
+
+    def dsh_retry_budgets(self) -> List[Dict[str, Any]]:
+        """Return all declared DSH retry budgets."""
+
+        connection = self._require_connection()
+        rows = connection.execute("SELECT * FROM dsh_retry_budget ORDER BY dsh_id").fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
+    def record_dsh_retry_budget_consumption(
+        self,
+        run_id: str,
+        *,
+        dsh_id: str,
+        request_id: str,
+        attempt_number: int,
+        failure_class: str,
+        target: Optional[str],
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Record one cross-DSH retry consumption and enforce the ceiling.
+
+        Mirrors ``record_provider_retry_budget_consumption``: every DSH retry is
+        captured regardless of a declared budget; when a budget is declared the
+        count for ``(run_id, dsh_id)`` is bounded and exhaustion raises
+        ``RetryBudgetExhausted`` (fail-closed), writing nothing.  Undeclared
+        budgets are recorded with ``bound='undeclared'`` so the missing ceiling
+        is auditable rather than silent.
+        """
+
+        self._require_text(run_id, "run_id")
+        self._require_text(dsh_id, "dsh_id")
+        self._require_text(request_id, "request_id")
+        if not isinstance(attempt_number, int) or attempt_number < 1:
+            raise ValueError("attempt_number must be a positive integer")
+        self._require_text(failure_class, "failure_class")
+        if target is not None:
+            self._require_text(target, "target")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string (retry without reason is rejected)")
+        self._reject_raw_credentials(
+            {
+                "dsh_id": dsh_id,
+                "request_id": request_id,
+                "failure_class": failure_class,
+                "target": target,
+                "reason": reason,
+            },
+            "dsh retry budget consumption",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            budget = connection.execute(
+                "SELECT * FROM dsh_retry_budget WHERE dsh_id = ?", (dsh_id,)
+            ).fetchone()
+            if budget is None:
+                bound = "undeclared"
+            else:
+                prior = connection.execute(
+                    "SELECT COUNT(*) AS n FROM dsh_retry_budget_ledger WHERE run_id = ? AND dsh_id = ?",
+                    (run_id, dsh_id),
+                ).fetchone()["n"]
+                if prior + 1 > budget["max_retries"]:
+                    raise RetryBudgetExhausted(
+                        f"dsh {dsh_id} retry budget exhausted for run {run_id} "
+                        f"(max_retries={budget['max_retries']}, attempted={prior + 1})"
+                    )
+                bound = "enforced"
+            connection.execute(
+                """
+                INSERT INTO dsh_retry_budget_ledger(
+                    ledger_id, run_id, dsh_id, request_id, attempt_number,
+                    failure_class, target, reason, bound, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    dsh_id,
+                    request_id,
+                    attempt_number,
+                    failure_class,
+                    target,
+                    reason,
+                    bound,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "dsh.retry_budget.consumption.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "dsh_id": dsh_id,
+                    "request_id": request_id,
+                    "attempt_number": attempt_number,
+                    "failure_class": failure_class,
+                    "target": target,
+                    "reason": reason,
+                    "bound": bound,
+                },
+            )
+        return self.get_dsh_retry_budget_ledger(ledger_id)
+
+    def get_dsh_retry_budget_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one DSH retry-budget consumption entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM dsh_retry_budget_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"dsh retry budget ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def dsh_retry_budget_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all DSH retry-budget consumption entries for a run, in attempt order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM dsh_retry_budget_ledger WHERE run_id = ? ORDER BY attempt_number, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
+    # -- Worker-layer retry budget (node 1-5-2) ------------------------------
+    #
+    # Mirror of the Provider/DSH retry-budget surface for the Codex Worker
+    # layer (the DSH→Worker handshake / read-only coding attempts).  Addressed
+    # by ``worker_id`` so the ceiling is stable across restarts of the same run.
+    def declare_worker_retry_budget(
+        self,
+        worker_id: str,
+        *,
+        max_retries: int,
+        declared_by: str,
+    ) -> Dict[str, Any]:
+        """Declare or replace the owner-owned retry ceiling for a Worker profile."""
+
+        self._require_text(worker_id, "worker_id")
+        if not isinstance(max_retries, int) or max_retries < 0:
+            raise ValueError("max_retries must be a non-negative integer")
+        self._require_text(declared_by, "declared_by")
+        self._reject_raw_credentials(
+            {"worker_id": worker_id, "declared_by": declared_by},
+            "worker retry budget declaration",
+        )
+        timestamp = self._now()
+        with self._transaction() as connection:
+            connection.execute(
+                """
+                INSERT INTO worker_retry_budget(worker_id, max_retries, declared_by, declared_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(worker_id) DO UPDATE SET
+                    max_retries = excluded.max_retries,
+                    declared_by = excluded.declared_by,
+                    declared_at = excluded.declared_at
+                """,
+                (worker_id, max_retries, declared_by, timestamp),
+            )
+        return self.get_worker_retry_budget(worker_id)
+
+    def get_worker_retry_budget(self, worker_id: str) -> Dict[str, Any]:
+        """Read one declared Worker retry budget by worker id."""
+
+        connection = self._require_connection()
+        self._require_text(worker_id, "worker_id")
+        row = connection.execute(
+            "SELECT * FROM worker_retry_budget WHERE worker_id = ?", (worker_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"worker retry budget not declared: {worker_id}")
+        return self._decode_row(row, {})
+
+    def worker_retry_budgets(self) -> List[Dict[str, Any]]:
+        """Return all declared Worker retry budgets."""
+
+        connection = self._require_connection()
+        rows = connection.execute("SELECT * FROM worker_retry_budget ORDER BY worker_id").fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
+    def record_worker_retry_budget_consumption(
+        self,
+        run_id: str,
+        *,
+        worker_id: str,
+        request_id: str,
+        attempt_number: int,
+        failure_class: str,
+        target: Optional[str],
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Record one cross-Worker retry consumption and enforce the ceiling.
+
+        Mirrors the Provider/DSH surfaces: every Worker retry is captured; when
+        a budget is declared the count for ``(run_id, worker_id)`` is bounded and
+        exhaustion raises ``RetryBudgetExhausted`` (fail-closed).  Undeclared
+        budgets are recorded with ``bound='undeclared'``.
+        """
+
+        self._require_text(run_id, "run_id")
+        self._require_text(worker_id, "worker_id")
+        self._require_text(request_id, "request_id")
+        if not isinstance(attempt_number, int) or attempt_number < 1:
+            raise ValueError("attempt_number must be a positive integer")
+        self._require_text(failure_class, "failure_class")
+        if target is not None:
+            self._require_text(target, "target")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string (retry without reason is rejected)")
+        self._reject_raw_credentials(
+            {
+                "worker_id": worker_id,
+                "request_id": request_id,
+                "failure_class": failure_class,
+                "target": target,
+                "reason": reason,
+            },
+            "worker retry budget consumption",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            budget = connection.execute(
+                "SELECT * FROM worker_retry_budget WHERE worker_id = ?", (worker_id,)
+            ).fetchone()
+            if budget is None:
+                bound = "undeclared"
+            else:
+                prior = connection.execute(
+                    "SELECT COUNT(*) AS n FROM worker_retry_budget_ledger WHERE run_id = ? AND worker_id = ?",
+                    (run_id, worker_id),
+                ).fetchone()["n"]
+                if prior + 1 > budget["max_retries"]:
+                    raise RetryBudgetExhausted(
+                        f"worker {worker_id} retry budget exhausted for run {run_id} "
+                        f"(max_retries={budget['max_retries']}, attempted={prior + 1})"
+                    )
+                bound = "enforced"
+            connection.execute(
+                """
+                INSERT INTO worker_retry_budget_ledger(
+                    ledger_id, run_id, worker_id, request_id, attempt_number,
+                    failure_class, target, reason, bound, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    worker_id,
+                    request_id,
+                    attempt_number,
+                    failure_class,
+                    target,
+                    reason,
+                    bound,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "worker.retry_budget.consumption.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "worker_id": worker_id,
+                    "request_id": request_id,
+                    "attempt_number": attempt_number,
+                    "failure_class": failure_class,
+                    "target": target,
+                    "reason": reason,
+                    "bound": bound,
+                },
+            )
+        return self.get_worker_retry_budget_ledger(ledger_id)
+
+    def get_worker_retry_budget_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one Worker retry-budget consumption entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM worker_retry_budget_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"worker retry budget ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def worker_retry_budget_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all Worker retry-budget consumption entries for a run, in attempt order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM worker_retry_budget_ledger WHERE run_id = ? ORDER BY attempt_number, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
+    # -- Run-level restart budget (node 1-5-2) ------------------------------
+    #
+    # A run-level restart budget is a SEPARATE ceiling from the per-layer retry
+    # budgets: it bounds how many times a whole Run may be re-bootstrapped
+    # (DSH bootstrap re-run / Worker re-handshake) within its lifecycle.  Keyed
+    # by run_id (each run declares its own ceiling).  Exhaustion raises
+    # ``RetryBudgetExhausted`` (fail-closed).
+    def declare_run_restart_budget(
+        self,
+        run_id: str,
+        *,
+        max_restarts: int,
+        declared_by: str,
+    ) -> Dict[str, Any]:
+        """Declare or replace the owner-owned restart ceiling for a run."""
+
+        self._require_text(run_id, "run_id")
+        if not isinstance(max_restarts, int) or max_restarts < 0:
+            raise ValueError("max_restarts must be a non-negative integer")
+        self._require_text(declared_by, "declared_by")
+        self._reject_raw_credentials(
+            {"run_id": run_id, "declared_by": declared_by},
+            "run restart budget declaration",
+        )
+        timestamp = self._now()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            connection.execute(
+                """
+                INSERT INTO run_restart_budget(run_id, max_restarts, declared_by, declared_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(run_id) DO UPDATE SET
+                    max_restarts = excluded.max_restarts,
+                    declared_by = excluded.declared_by,
+                    declared_at = excluded.declared_at
+                """,
+                (run_id, max_restarts, declared_by, timestamp),
+            )
+        return self.get_run_restart_budget(run_id)
+
+    def get_run_restart_budget(self, run_id: str) -> Dict[str, Any]:
+        """Read one declared run restart budget by run id."""
+
+        connection = self._require_connection()
+        self._require_text(run_id, "run_id")
+        row = connection.execute(
+            "SELECT * FROM run_restart_budget WHERE run_id = ?", (run_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"run restart budget not declared: {run_id}")
+        return self._decode_row(row, {})
+
+    def record_run_restart(
+        self,
+        run_id: str,
+        *,
+        request_id: str,
+        attempt_number: int,
+        trigger: str,
+        reason: str,
+    ) -> Dict[str, Any]:
+        """Record one run restart and enforce the run-level restart ceiling.
+
+        Every restart is captured regardless of a declared budget.  When a budget
+        is declared the count for ``run_id`` is bounded and exhaustion raises
+        ``RetryBudgetExhausted`` (fail-closed), writing nothing.  Undeclared
+        budgets are recorded with ``bound='undeclared'`` so a missing ceiling is
+        auditable rather than silent.  ``trigger`` names the restart cause (e.g.
+        ``dsh_bootstrap_failed``, ``worker_handshake_timeout``).
+        """
+
+        self._require_text(run_id, "run_id")
+        self._require_text(request_id, "request_id")
+        if not isinstance(attempt_number, int) or attempt_number < 1:
+            raise ValueError("attempt_number must be a positive integer")
+        self._require_text(trigger, "trigger")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("reason must be a non-empty string (restart without reason is rejected)")
+        self._reject_raw_credentials(
+            {
+                "request_id": request_id,
+                "trigger": trigger,
+                "reason": reason,
+            },
+            "run restart budget consumption",
+        )
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            budget = connection.execute(
+                "SELECT * FROM run_restart_budget WHERE run_id = ?", (run_id,)
+            ).fetchone()
+            if budget is None:
+                bound = "undeclared"
+            else:
+                prior = connection.execute(
+                    "SELECT COUNT(*) AS n FROM run_restart_ledger WHERE run_id = ?",
+                    (run_id,),
+                ).fetchone()["n"]
+                if prior + 1 > budget["max_restarts"]:
+                    raise RetryBudgetExhausted(
+                        f"run {run_id} restart budget exhausted "
+                        f"(max_restarts={budget['max_restarts']}, attempted={prior + 1})"
+                    )
+                bound = "enforced"
+            connection.execute(
+                """
+                INSERT INTO run_restart_ledger(
+                    ledger_id, run_id, request_id, attempt_number,
+                    trigger, reason, bound, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    request_id,
+                    attempt_number,
+                    trigger,
+                    reason,
+                    bound,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "run.restart_budget.consumption.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "request_id": request_id,
+                    "attempt_number": attempt_number,
+                    "trigger": trigger,
+                    "reason": reason,
+                    "bound": bound,
+                },
+            )
+        return self.get_run_restart_ledger(ledger_id)
+
+    def get_run_restart_ledger(self, ledger_id: str) -> Dict[str, Any]:
+        """Read one run-restart ledger entry by id."""
+
+        connection = self._require_connection()
+        row = connection.execute(
+            "SELECT * FROM run_restart_ledger WHERE ledger_id = ?", (ledger_id,)
+        ).fetchone()
+        if row is None:
+            raise NotFoundError(f"run restart ledger entry not found: {ledger_id}")
+        return self._decode_row(row, {})
+
+    def run_restart_ledger_for_run(self, run_id: str) -> List[Dict[str, Any]]:
+        """Return all run-restart ledger entries for a run, in attempt order."""
+
+        connection = self._require_connection()
+        self._run_row(connection, run_id)
+        rows = connection.execute(
+            "SELECT * FROM run_restart_ledger WHERE run_id = ? ORDER BY attempt_number, ledger_id",
+            (run_id,),
+        ).fetchall()
+        return [self._decode_row(row, {}) for row in rows]
+
     # -- Provider access gate (node 1-1-4) ---------------------------------
     #
     # The single controlled boundary that decides whether a run reaches a real
@@ -1885,6 +2399,30 @@ class CompositionOwner:
             "provider_retry_budget_ledger": [
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM provider_retry_budget_ledger ORDER BY attempt_number, ledger_id")
+            ],
+            "dsh_retry_budget": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM dsh_retry_budget ORDER BY dsh_id")
+            ],
+            "dsh_retry_budget_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM dsh_retry_budget_ledger ORDER BY attempt_number, ledger_id")
+            ],
+            "worker_retry_budget": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM worker_retry_budget ORDER BY worker_id")
+            ],
+            "worker_retry_budget_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM worker_retry_budget_ledger ORDER BY attempt_number, ledger_id")
+            ],
+            "run_restart_budget": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM run_restart_budget ORDER BY run_id")
+            ],
+            "run_restart_ledger": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM run_restart_ledger ORDER BY attempt_number, ledger_id")
             ],
             "provider_access_gate_ledger": [
                 cls._decode_row(row, {})
@@ -2184,6 +2722,65 @@ class CompositionOwner:
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_retry_budget_ledger_by_run ON provider_retry_budget_ledger(run_id, attempt_number, ledger_id);
+            -- Cross-layer retry accounting (node 1-5-2): DSH and Worker layers
+            -- mirror the Provider two-table pattern so every layer's retries are
+            -- tallied by the single durable owner.  A run-level restart budget is
+            -- a SEPARATE ceiling (not summed with the per-layer retry budgets).
+            CREATE TABLE IF NOT EXISTS dsh_retry_budget (
+                dsh_id TEXT PRIMARY KEY,
+                max_retries INTEGER NOT NULL,
+                declared_by TEXT NOT NULL,
+                declared_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS dsh_retry_budget_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                dsh_id TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                failure_class TEXT NOT NULL,
+                target TEXT,
+                reason TEXT NOT NULL,
+                bound TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS dsh_retry_budget_ledger_by_run ON dsh_retry_budget_ledger(run_id, attempt_number, ledger_id);
+            CREATE TABLE IF NOT EXISTS worker_retry_budget (
+                worker_id TEXT PRIMARY KEY,
+                max_retries INTEGER NOT NULL,
+                declared_by TEXT NOT NULL,
+                declared_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS worker_retry_budget_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                worker_id TEXT NOT NULL,
+                request_id TEXT NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                failure_class TEXT NOT NULL,
+                target TEXT,
+                reason TEXT NOT NULL,
+                bound TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS worker_retry_budget_ledger_by_run ON worker_retry_budget_ledger(run_id, attempt_number, ledger_id);
+            CREATE TABLE IF NOT EXISTS run_restart_budget (
+                run_id TEXT PRIMARY KEY REFERENCES runs(run_id),
+                max_restarts INTEGER NOT NULL,
+                declared_by TEXT NOT NULL,
+                declared_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS run_restart_ledger (
+                ledger_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL REFERENCES runs(run_id),
+                request_id TEXT NOT NULL,
+                attempt_number INTEGER NOT NULL,
+                trigger TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                bound TEXT NOT NULL,
+                recorded_at TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS run_restart_ledger_by_run ON run_restart_ledger(run_id, attempt_number, ledger_id);
             CREATE TABLE IF NOT EXISTS provider_access_gate_ledger (
                 ledger_id TEXT PRIMARY KEY,
                 run_id TEXT NOT NULL REFERENCES runs(run_id),
@@ -2489,7 +3086,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "declared_exposure", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "declared_exposure", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger", "dsh_retry_budget", "dsh_retry_budget_ledger", "worker_retry_budget", "worker_retry_budget_ledger", "run_restart_budget", "run_restart_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
@@ -2517,6 +3114,12 @@ class CompositionOwner:
             "provider_retry_budget",
             "provider_retry_budget_ledger",
             "provider_access_gate_ledger",
+            "dsh_retry_budget",
+            "dsh_retry_budget_ledger",
+            "worker_retry_budget",
+            "worker_retry_budget_ledger",
+            "run_restart_budget",
+            "run_restart_ledger",
         }
     )
 
