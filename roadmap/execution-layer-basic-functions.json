@@ -138,7 +138,7 @@
       "id": "1-5",
       "uid": "01a11593cec5-353bf96053",
       "label": "Run 生命周期编排（sub-01）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -148,7 +148,8 @@
       ],
       "decisions": [],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6": {
       "id": "1-6",
@@ -653,13 +654,42 @@
       "id": "1-5-1",
       "uid": "01a115955f9e-79022d4ef1",
       "label": "P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "complete_run 如何拒绝未决 approval？",
+          "answer": "查 approvals 表：run_id=? 且 status='pending' 计数 >0 则 raise InvalidTransition（无 schema 变更）",
+          "note": ""
+        },
+        {
+          "q": "complete_run 如何拒绝关键 identity 缺失？",
+          "answer": "调既有 detect_identity_violations(run_id)，返回非空即 raise InvalidTransition（复用现有 identity 图，无 schema 变更）",
+          "note": ""
+        },
+        {
+          "q": "拒绝时是否改 run 状态/落事件？",
+          "answer": "不改状态、不落事件，与既有 unresolved-effect 拒绝路径一致（仅 raise InvalidTransition，run 停留 running）",
+          "note": ""
+        },
+        {
+          "q": "complete_run 如何拒绝未决 approval？",
+          "answer": "查 approvals 表：run_id=? 且 status='pending' 计数 >0 则 raise InvalidTransition（无 schema 变更）",
+          "note": ""
+        },
+        {
+          "q": "complete_run 如何拒绝未决 approval？",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "72269ada920b03bad8f5c985cc6cd7f9a6616bc66bebf1d83286388b8894da67"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-2": {
       "id": "1-5-2",
@@ -1129,7 +1159,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 21:44:53",
+    "updated": "2026-10-08 21:57:21",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
