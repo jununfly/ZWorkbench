@@ -89,6 +89,18 @@ class RetryBudgetExhausted(CompositionError):
     """A Provider's declared retry budget has no remaining allowance."""
 
 
+class CallerAuthError(CompositionError):
+    """A caller attempted to write owner state without an authenticated session.
+
+    Fail-closed: when caller-auth is enabled (``caller_auth_required`` in
+    owner_meta), every state-changing operation requires an authenticated
+    caller session.  This guard lives in-memory (on the established session)
+    and is intentionally independent of journal durability, so it stays
+    enforced even under ``ZW_OWNER_SANDBOX=1`` (which only relaxes WAL/FULL
+    to MEMORY/synchronous=OFF).
+    """
+
+
 class ProviderAccessDenied(CompositionError):
     """A real Provider was requested without the controlled access gate enabled.
 
@@ -143,6 +155,16 @@ class CompositionOwner:
         self._connection.row_factory = sqlite3.Row
         self._configure_connection()
         self._initialize_schema()
+        # Caller-auth (node 1-5-3): fail-closed guard, independent of journal
+        # durability.  Whether auth is enforced is read once from owner_meta so a
+        # reopened owner keeps its posture; the live session is in-memory only.
+        self._caller_auth_required = False
+        self._caller_session = None
+        auth_row = self._connection.execute(
+            "SELECT value FROM owner_meta WHERE key = 'caller_auth_required'"
+        ).fetchone()
+        if auth_row is not None and auth_row["value"] == "true":
+            self._caller_auth_required = True
         # In-process capacity guardrail for resident services (sub-07 Backlog #3).
         # Runtime state only — never persisted; a freshly opened owner gets an
         # empty registry, matching the per-session boundary.
@@ -2424,6 +2446,14 @@ class CompositionOwner:
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM run_restart_ledger ORDER BY attempt_number, ledger_id")
             ],
+            "owner_callers": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM owner_callers ORDER BY caller_id")
+            ],
+            "owner_caller_sessions": [
+                cls._decode_row(row, {})
+                for row in connection.execute("SELECT * FROM owner_caller_sessions ORDER BY created_at, session_id")
+            ],
             "provider_access_gate_ledger": [
                 cls._decode_row(row, {})
                 for row in connection.execute("SELECT * FROM provider_access_gate_ledger ORDER BY recorded_at, run_id, ledger_id")
@@ -2571,6 +2601,22 @@ class CompositionOwner:
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS owner_callers (
+                caller_id TEXT PRIMARY KEY,
+                caller_token_hash TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS owner_caller_sessions (
+                session_id TEXT PRIMARY KEY,
+                caller_id TEXT NOT NULL REFERENCES owner_callers(caller_id),
+                token_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                status TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS owner_callers_active ON owner_callers(caller_id, status);
+            CREATE INDEX IF NOT EXISTS owner_caller_sessions_by_caller ON owner_caller_sessions(caller_id, status);
             CREATE TABLE IF NOT EXISTS runs (
                 run_id TEXT PRIMARY KEY,
                 task_type TEXT NOT NULL,
@@ -2817,8 +2863,10 @@ class CompositionOwner:
         connection.execute("PRAGMA user_version = 3")
 
     @contextlib.contextmanager
-    def _transaction(self) -> Iterator[sqlite3.Connection]:
+    def _transaction(self, *, exempt_auth: bool = False) -> Iterator[sqlite3.Connection]:
         connection = self._require_connection()
+        if self._caller_auth_required and not exempt_auth:
+            self._require_authenticated_caller()
         connection.execute("BEGIN IMMEDIATE")
         try:
             yield connection
@@ -2827,6 +2875,96 @@ class CompositionOwner:
             raise
         else:
             connection.commit()
+
+    # ------------------------------------------------------------------
+    # Caller authentication (node 1-5-3, fail-closed)
+    # ------------------------------------------------------------------
+
+    def _require_authenticated_caller(self) -> None:
+        if not self._caller_auth_required:
+            return
+        if self._caller_session is None:
+            raise CallerAuthError("caller authentication required before writing owner state")
+
+    @staticmethod
+    def _hash_token(token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    def _establish_session(self, caller_id: str, token_hash: str, ttl_seconds: int = 3600) -> str:
+        session_id = self._new_id()
+        now = self._now()
+        expires_at = (
+            _datetime.datetime.now(_datetime.timezone.utc) + _datetime.timedelta(seconds=ttl_seconds)
+        ).isoformat(timespec="milliseconds")
+        self._caller_session = {"caller_id": caller_id, "session_id": session_id}
+        with self._transaction(exempt_auth=True) as connection:
+            connection.execute(
+                """
+                INSERT INTO owner_caller_sessions(session_id, caller_id, token_hash, created_at, expires_at, status)
+                VALUES (?, ?, ?, ?, ?, 'active')
+                """,
+                (session_id, caller_id, token_hash, now, expires_at),
+            )
+        return session_id
+
+    def enable_caller_auth(self, initial_caller_id: str, initial_caller_token: str) -> None:
+        """Bootstrap caller-auth: register the initial caller and turn on fail-closed.
+
+        Once ``caller_auth_required`` is set in owner_meta, every state-changing
+        operation requires an authenticated caller session.  Safe to call once at
+        setup; re-calling re-registers the initial caller's token (rotation) and
+        refreshes the in-memory session.  The bootstrap write is ``exempt_auth``
+        because no caller is authenticated yet — this is the only privileged path.
+        """
+        self._require_text(initial_caller_id, "initial_caller_id")
+        self._require_text(initial_caller_token, "initial_caller_token")
+        token_hash = self._hash_token(initial_caller_token)
+        with self._transaction(exempt_auth=True) as connection:
+            connection.execute(
+                "INSERT INTO owner_meta(key, value) VALUES('caller_auth_required', 'true') "
+                "ON CONFLICT(key) DO UPDATE SET value='true'"
+            )
+            connection.execute(
+                """
+                INSERT INTO owner_callers(caller_id, caller_token_hash, status, created_at)
+                VALUES (?, ?, 'active', ?)
+                ON CONFLICT(caller_id) DO UPDATE SET caller_token_hash=excluded.caller_token_hash, status='active', created_at=excluded.created_at
+                """,
+                (initial_caller_id, token_hash, self._now()),
+            )
+        self._caller_auth_required = True
+        self._establish_session(initial_caller_id, token_hash)
+
+    def register_caller(self, caller_id: str, caller_token: str) -> None:
+        """Register an additional caller. Requires an already-authenticated session (fail-closed)."""
+        self._require_authenticated_caller()
+        self._require_text(caller_id, "caller_id")
+        self._require_text(caller_token, "caller_token")
+        token_hash = self._hash_token(caller_token)
+        with self._transaction() as connection:
+            connection.execute(
+                """
+                INSERT INTO owner_callers(caller_id, caller_token_hash, status, created_at)
+                VALUES (?, ?, 'active', ?)
+                """,
+                (caller_id, token_hash, self._now()),
+            )
+
+    def authenticate_caller(self, caller_id: str, caller_token: str) -> str:
+        """Establish an in-memory session for a registered caller. Fail-closed on bad token/id."""
+        self._require_text(caller_id, "caller_id")
+        self._require_text(caller_token, "caller_token")
+        token_hash = self._hash_token(caller_token)
+        row = self._connection.execute(
+            "SELECT caller_token_hash, status FROM owner_callers WHERE caller_id = ?", (caller_id,)
+        ).fetchone()
+        if row is None or row["status"] != "active" or row["caller_token_hash"] != token_hash:
+            raise CallerAuthError(f"caller authentication failed: {caller_id}")
+        return self._establish_session(caller_id, token_hash)
+
+    def caller_auth_required(self) -> bool:
+        """Whether caller-auth is currently enforced on this owner instance."""
+        return self._caller_auth_required
 
     def _require_connection(self) -> sqlite3.Connection:
         if self._connection is None:
@@ -3086,7 +3224,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "declared_exposure", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger", "dsh_retry_budget", "dsh_retry_budget_ledger", "worker_retry_budget", "worker_retry_budget_ledger", "run_restart_budget", "run_restart_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "declared_exposure", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger", "dsh_retry_budget", "dsh_retry_budget_ledger", "worker_retry_budget", "worker_retry_budget_ledger", "run_restart_budget", "run_restart_ledger", "owner_callers", "owner_caller_sessions"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
@@ -3120,6 +3258,8 @@ class CompositionOwner:
             "worker_retry_budget_ledger",
             "run_restart_budget",
             "run_restart_ledger",
+            "owner_callers",
+            "owner_caller_sessions",
         }
     )
 
