@@ -8,7 +8,7 @@ later orchestration module without copying the policy checks around.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 import hashlib
 import ipaddress
 import json
@@ -215,6 +215,9 @@ class LocalReadOnlyRunOrchestrator:
 
         with CompositionOwner(self.config.database) as owner:
             adapter = self.adapter_factory(owner, self.config)
+            execution: Optional[CodexExecution] = None
+            succeeded: bool = False
+            error: Optional[BaseException] = None
             try:
                 execution = adapter.execute(
                     run_id,
@@ -227,6 +230,7 @@ class LocalReadOnlyRunOrchestrator:
                     },
                     timeout=timeout,
                 )
+                succeeded = True
                 result = LocalReadOnlyRunResult(
                     "completed",
                     run_id,
@@ -234,7 +238,8 @@ class LocalReadOnlyRunOrchestrator:
                     execution,
                     owner.state_digest(),
                 )
-            except Exception:
+            except Exception as exc:
+                error = exc
                 # Even a failed run engaged the provider; record the owner-owned,
                 # unknown/delegated exit accounting before re-raising.
                 try:
@@ -251,6 +256,10 @@ class LocalReadOnlyRunOrchestrator:
                 raise
             finally:
                 adapter.close()
+                # 1-4-3 统一 run 闭合锚点: local_run 层保证 run 不悬在 running，
+                # 不依赖 adapter 内部是否闭合 (defense-in-depth)。adapter 已闭合
+                # (completed/safe_stopped/failed) 时幂等跳过。
+                self._ensure_run_closed(owner, run_id, succeeded, execution, error)
             # Run closure: record the owner-owned provider-exit accounting. The
             # default (loopback/fake) path has no real remote provider, so the
             # caliber is unknown/delegated by construction — no remote zero-residue
@@ -279,6 +288,46 @@ class LocalReadOnlyRunOrchestrator:
             provider_id=self.config.provider_identity.get("provider"),
             profile_name=self.config.provider_profile.name if real_requested else None,
         )
+
+    def _ensure_run_closed(
+        self,
+        owner: "CompositionOwner",
+        run_id: str,
+        succeeded: bool,
+        execution: "Optional[CodexExecution]",
+        error: "Optional[BaseException]",
+    ) -> None:
+        """1-4-3 统一 run 闭合锚点。
+
+        local_run 层保证 run 进入终态，不悬在 ``running``，无论 adapter 内部
+        是否已闭合（defense-in-depth）。adapter 已把 run 收为 completed /
+        safe_stopped / failed 时幂等跳过；仅当 run 仍为 running（adapter 异常
+        未闭合、或未来 adapter 不负责闭合）才由本层兜底：成功路径
+        ``complete_run``，异常路径 ``fail_run``。闭合失败不掩盖既有异常。
+        """
+
+        try:
+            row = owner.get_run(run_id)
+        except Exception:
+            return
+        if row["status"] != "running":
+            return
+        try:
+            if succeeded and execution is not None:
+                owner.complete_run(run_id, asdict(execution))
+            else:
+                owner.fail_run(
+                    run_id,
+                    {
+                        "type": type(error).__name__ if error is not None else "RunError",
+                        "message": str(error)
+                        if error is not None
+                        else "read-only run terminated before completion",
+                    },
+                )
+        except Exception:
+            # 闭合失败不应掩盖既有异常；run 已记录在案供后续 reconcile。
+            pass
 
 
 def _require_text(value: str, name: str) -> str:
