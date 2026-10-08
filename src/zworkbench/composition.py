@@ -231,6 +231,58 @@ class CompositionOwner:
             self._set_run_status(connection, row, "running", "run.started")
         return self.get_run(run_id)
 
+    def restart_run(self, run_id: str, reason: str) -> Dict[str, Any]:
+        """Re-arm a non-running run back into execution (run-restart primitive).
+
+        Cross-layer retry/run-restart wiring (node 1-5-4) treats re-executing an
+        existing ``run_id`` as a restart. The normal lifecycle forbids
+        ``terminal -> running`` transitions (``completed`` / ``failed`` /
+        ``safe_stopped`` are terminal with no outgoing edges), so this is the
+        single audited escape hatch that re-arms such a run. It is intentionally
+        separate from ``start_run``: ``start_run`` must stay bound to the normal
+        lifecycle so a terminal run can never be silently re-armed through the
+        ordinary bootstrap path.
+
+        Allowed re-arm sources: ``created``, ``waiting_approval``,
+        ``recovering``, ``completed``, ``failed``, ``safe_stopped``. A run that
+        is already ``running`` is a no-op (idempotent). Any other source is
+        rejected as ``InvalidTransition``.
+
+        The run_restart budget itself is enforced earlier, at
+        ``record_run_restart`` time (fail-closed only when ``bound='enforced'``);
+        ``restart_run`` never rejects on budget -- it only performs the audited
+        state re-arm and emits ``run.restarted``.
+        """
+
+        self._require_text(reason, "reason")
+        rearmable = {
+            "created",
+            "waiting_approval",
+            "recovering",
+            "completed",
+            "failed",
+            "safe_stopped",
+        }
+        with self._transaction() as connection:
+            row = self._run_row(connection, run_id)
+            old_status = row["status"]
+            if old_status == "running":
+                return self.get_run(run_id)
+            if old_status not in rearmable:
+                raise InvalidTransition(f"run {run_id} cannot restart from {old_status}")
+            timestamp = self._now()
+            connection.execute(
+                "UPDATE runs SET status = ?, updated_at = ? WHERE run_id = ?",
+                ("running", timestamp, run_id),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "run.restarted",
+                {"from": old_status, "to": "running", "reason": reason},
+            )
+        return self.get_run(run_id)
+
     def complete_run(self, run_id: str, semantic_result: Any) -> Dict[str, Any]:
         """Complete a run only when no effect remains unresolved.
 
