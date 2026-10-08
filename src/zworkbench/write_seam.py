@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-from .composition import CompositionOwner
+from .composition import CompositionOwner, EVIDENCE_SOURCE_NATIVE
 
 
 WRITE_SEAM_SCHEMA = "zworkbench-write-seam/v1"
@@ -106,6 +106,7 @@ class WriteSeam:
                 "write_seam.worktree.reused",
                 {"worktree_path": str(worktree_path)},
                 f"{run_id}:worktree",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             return worktree_path
         try:
@@ -117,6 +118,7 @@ class WriteSeam:
             "write_seam.worktree.created",
             {"worktree_path": str(worktree_path), "base_ref": base_ref},
             f"{run_id}:worktree",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
         return worktree_path
 

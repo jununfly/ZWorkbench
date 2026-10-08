@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from zworkbench import ComponentIdentity, CompositionOwner, IdentityChain, ProviderIdentity, UNKNOWN
+from zworkbench.composition import EVIDENCE_SOURCE_OUTER_COMPOSED
 from zworkbench.replay import (
     CassetteIdentity,
     OwnerBackedReplayService,
@@ -29,7 +30,7 @@ class OwnerBackedReplayServiceTests(unittest.TestCase):
         self.owner = CompositionOwner(self.root / "state" / "composition.sqlite3")
         self.owner.create_run("source-run", "replay-fixture", {"prompt": "fixture"})
         self.owner.start_run("source-run")
-        self.owner.record_event("source-run", "fixture.started", {"source": "h5"})
+        self.owner.record_event("source-run", "fixture.started", {"source": "h5"}, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
         self.owner.complete_run("source-run", {"answer": "fixture-ok"})
         self.service = OwnerBackedReplayService(self.owner)
 

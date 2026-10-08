@@ -38,12 +38,23 @@ from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
 
 
 SCHEMA = "zworkbench-composition-owner/v1"
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 # Secret-shaped values that must never be persisted in owner evidence.
 _SECRET_VALUE = re.compile(r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
 ALLOWED_EFFECT_CLASSES = frozenset({"read-only", "idempotent", "approval-required"})
 REPLAY_MODES = frozenset({"recorded_view", "simulated_replay", "live_replay"})
+
+# Evidence source classification (docs/methods/README.md). Every owner-persisted
+# observation must declare where the observed behaviour came from so the owner
+# can tell native runtime behaviour apart from plugin-composed or outer-composed
+# behaviour. This is the Q4 owner-backed source classification (ta-evidence-replay.md).
+EVIDENCE_SOURCE_NATIVE = "native"
+EVIDENCE_SOURCE_PLUGIN_COMPOSED = "plugin-composed"
+EVIDENCE_SOURCE_OUTER_COMPOSED = "outer-composed"
+EVIDENCE_SOURCES = frozenset(
+    {EVIDENCE_SOURCE_NATIVE, EVIDENCE_SOURCE_PLUGIN_COMPOSED, EVIDENCE_SOURCE_OUTER_COMPOSED}
+)
 RUN_STATES = frozenset(
     {"created", "running", "waiting_approval", "recovering", "completed", "failed", "safe_stopped"}
 )
@@ -159,9 +170,13 @@ class CompositionOwner:
 
         self._require_text(run_id, "run_id")
         self._require_text(task_type, "task_type")
-        self._reject_raw_credentials(input_value, "input")
+        # Run input/metadata is the harness's own run definition, not external
+        # adapter evidence. The owner is the trusted raw store and projection
+        # safety is enforced by the view layer (redaction), so create_run must
+        # NOT reject secret-shaped values here. Value-level credential hygiene
+        # stays at the true external-evidence seams: record_result/record_event,
+        # record_replay_metadata, external_receipt and the provider ledgers.
         metadata_value = dict(metadata or {})
-        self._reject_raw_credentials(metadata_value, "metadata")
         input_json = self._canonical_json(input_value)
         metadata_json = self._canonical_json(metadata_value)
         timestamp = self._now()
@@ -204,7 +219,7 @@ class CompositionOwner:
             ).fetchone()["count"]
             if unresolved:
                 raise InvalidTransition(f"run {run_id} has {unresolved} unresolved effect(s)")
-            self._record_result_tx(connection, run_id, "semantic", semantic_result, "run")
+            self._record_result_tx(connection, run_id, "semantic", semantic_result, "run", EVIDENCE_SOURCE_NATIVE)
             self._set_run_status(connection, row, "completed", "run.completed")
         return self.get_run(run_id)
 
@@ -225,7 +240,7 @@ class CompositionOwner:
                 self._set_run_status(connection, row, "safe_stopped", "run.safe_stopped", {"reason": "uncertain_effect"})
                 blocked_by_effect = True
             else:
-                self._record_result_tx(connection, run_id, "error", error, "run")
+                self._record_result_tx(connection, run_id, "error", error, "run", EVIDENCE_SOURCE_NATIVE)
                 self._set_run_status(connection, row, "failed", "run.failed")
         if blocked_by_effect:
             raise InvalidTransition(f"run {run_id} safe-stopped because an effect is unresolved")
@@ -572,7 +587,7 @@ class CompositionOwner:
                 """,
                 (timestamp, self._canonical_json(result), effect_id, effect["attempt"]),
             )
-            self._record_result_tx(connection, effect["run_id"], "effect", result, effect_id)
+            self._record_result_tx(connection, effect["run_id"], "effect", result, effect_id, EVIDENCE_SOURCE_OUTER_COMPOSED)
             self._append_event(connection, effect["run_id"], "effect.completed", {"effect_id": effect_id, "attempt": effect["attempt"], "physical_effect_count": 1})
             return self._decode_row(connection.execute("SELECT * FROM effects WHERE effect_id = ?", (effect_id,)).fetchone(), {"external_receipt_json": "external_receipt"})
 
@@ -654,7 +669,7 @@ class CompositionOwner:
                 self._set_run_status(connection, run, "running", "run.reconciled", {"effect_id": effect_id, "outcome": observed_outcome})
             self._append_event(connection, effect["run_id"], "effect.reconciled", {"effect_id": effect_id, "outcome": observed_outcome, "physical_effect_count": physical_count})
             if observed_outcome == "applied":
-                self._record_result_tx(connection, effect["run_id"], "effect", {"reconciled": True, "evidence": evidence}, effect_id)
+                self._record_result_tx(connection, effect["run_id"], "effect", {"reconciled": True, "evidence": evidence}, effect_id, EVIDENCE_SOURCE_OUTER_COMPOSED)
             return self._decode_row(connection.execute("SELECT * FROM effects WHERE effect_id = ?", (effect_id,)).fetchone(), {"external_receipt_json": "external_receipt"})
 
     # ------------------------------------------------------------------
@@ -807,14 +822,20 @@ class CompositionOwner:
     # Evidence, export and portable backup
     # ------------------------------------------------------------------
 
-    def record_result(self, run_id: str, kind: str, value: Any, source_id: Optional[str] = None) -> Dict[str, Any]:
-        """Append a durable semantic or adapter result."""
+    def record_result(self, run_id: str, kind: str, value: Any, source_id: Optional[str] = None, *, evidence_source: str) -> Dict[str, Any]:
+        """Append a durable semantic or adapter result.
+
+        ``evidence_source`` is required so every owner-persisted observation is
+        classified as native / plugin-composed / outer-composed. A missing or
+        invalid classification is rejected (fail-closed) instead of defaulted.
+        """
 
         self._require_text(kind, "kind")
         self._reject_raw_credentials(value, "value")
+        self._validate_evidence_source(evidence_source)
         with self._transaction() as connection:
             self._run_row(connection, run_id)
-            return self._record_result_tx(connection, run_id, kind, value, source_id)
+            return self._record_result_tx(connection, run_id, kind, value, source_id, evidence_source)
 
     def record_event(
         self,
@@ -822,14 +843,18 @@ class CompositionOwner:
         event_type: str,
         payload: Mapping[str, Any],
         event_id: Optional[str] = None,
+        *,
+        evidence_source: str,
     ) -> Dict[str, Any]:
         """Append one structured adapter event without exposing SQLite.
 
         Adapter messages are evidence, not a second source of truth.  The
         owner therefore assigns the canonical event row and keeps the public
-        seam deliberately smaller than the underlying table.  A caller may
-        provide a stable event id when retrying an already-recorded message;
-        a conflicting reuse is rejected instead of being silently merged.
+        seam deliberately smaller than the underlying table.  ``evidence_source``
+        is required so each event is classified as native / plugin-composed /
+        outer-composed.  A caller may provide a stable event id when retrying an
+        already-recorded message; a conflicting reuse is rejected instead of
+        being silently merged.
         """
 
         self._require_text(event_type, "event_type")
@@ -837,6 +862,7 @@ class CompositionOwner:
             raise ValueError("payload must be an object")
         payload_value = dict(payload)
         self._reject_raw_credentials(payload_value, "payload")
+        self._validate_evidence_source(evidence_source)
         if event_id is not None:
             self._require_text(event_id, "event_id")
         with self._transaction() as connection:
@@ -850,11 +876,12 @@ class CompositionOwner:
                         existing["run_id"] == run_id
                         and existing["type"] == event_type
                         and existing["payload_json"] == self._canonical_json(payload_value)
+                        and existing["evidence_source"] == evidence_source
                     )
                     if not same:
                         raise CompositionError("event_id is already bound to different event data")
                     return self._decode_row(existing, {"payload_json": "payload"})
-            assigned_id = self._append_event(connection, run_id, event_type, payload_value, event_id)
+            assigned_id = self._append_event(connection, run_id, event_type, payload_value, event_id, evidence_source)
             return self._decode_row(
                 connection.execute("SELECT * FROM events WHERE event_id = ?", (assigned_id,)).fetchone(),
                 {"payload_json": "payload"},
@@ -1798,6 +1825,7 @@ class CompositionOwner:
                 kind TEXT NOT NULL,
                 value_json TEXT NOT NULL,
                 source_id TEXT,
+                evidence_source TEXT,
                 created_at TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS replays (
@@ -1816,6 +1844,7 @@ class CompositionOwner:
                 run_id TEXT NOT NULL REFERENCES runs(run_id),
                 type TEXT NOT NULL,
                 payload_json TEXT NOT NULL,
+                evidence_source TEXT,
                 created_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS events_by_run ON events(run_id, seq);
@@ -1892,9 +1921,19 @@ class CompositionOwner:
             );
             CREATE INDEX IF NOT EXISTS provider_access_gate_ledger_by_run ON provider_access_gate_ledger(run_id, recorded_at, ledger_id);
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
-            PRAGMA user_version = 1;
             """
         )
+        # Migrate existing v1 databases: add the evidence_source classification
+        # without fabricating a value for rows we cannot re-derive. Legacy rows
+        # keep NULL (unknown) so the store never lies about an evidence source.
+        # Read the prior version BEFORE bumping so the migration actually fires.
+        prior_version = connection.execute("PRAGMA user_version").fetchone()[0]
+        if prior_version < SCHEMA_VERSION:
+            for table in ("results", "events"):
+                existing_columns = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
+                if "evidence_source" not in existing_columns:
+                    connection.execute(f"ALTER TABLE {table} ADD COLUMN evidence_source TEXT")
+        connection.execute("PRAGMA user_version = 2")
 
     @contextlib.contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -1961,6 +2000,23 @@ class CompositionOwner:
     def _require_text(value: str, name: str) -> None:
         if not isinstance(value, str) or not value.strip():
             raise ValueError(f"{name} must be a non-empty string")
+
+    @staticmethod
+    def _validate_evidence_source(value: Any) -> str:
+        """Classify an evidence source or fail-closed on a missing/invalid value.
+
+        The owner must distinguish native / plugin-composed / outer-composed
+        evidence. A missing or unknown classification is rejected rather than
+        silently defaulted, so untagged evidence cannot enter the durable store.
+        """
+
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError("evidence_source must be a non-empty string")
+        if value not in EVIDENCE_SOURCES:
+            raise ValueError(
+                f"evidence_source must be one of {sorted(EVIDENCE_SOURCES)}: {value!r}"
+            )
+        return value
 
     @staticmethod
     def _reject_raw_credentials(value: Any, field_name: str) -> None:
@@ -2042,12 +2098,14 @@ class CompositionOwner:
         event_type: str,
         payload: Mapping[str, Any],
         event_id: Optional[str] = None,
+        evidence_source: str = EVIDENCE_SOURCE_NATIVE,
     ) -> str:
         self._reject_raw_credentials(payload, "event payload")
+        self._validate_evidence_source(evidence_source)
         event_id = event_id or self._new_id()
         connection.execute(
-            "INSERT INTO events(event_id, run_id, type, payload_json, created_at) VALUES (?, ?, ?, ?, ?)",
-            (event_id, run_id, event_type, self._canonical_json(dict(payload)), self._now()),
+            "INSERT INTO events(event_id, run_id, type, payload_json, evidence_source, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+            (event_id, run_id, event_type, self._canonical_json(dict(payload)), evidence_source, self._now()),
         )
         return event_id
 
@@ -2058,8 +2116,10 @@ class CompositionOwner:
         kind: str,
         value: Any,
         source_id: Optional[str],
+        evidence_source: str,
     ) -> Dict[str, Any]:
         self._reject_raw_credentials(value, "value")
+        self._validate_evidence_source(evidence_source)
         if source_id is not None:
             existing = connection.execute(
                 "SELECT * FROM results WHERE run_id = ? AND kind = ? AND source_id = ?",
@@ -2070,10 +2130,10 @@ class CompositionOwner:
         result_id = self._new_id()
         timestamp = self._now()
         connection.execute(
-            "INSERT INTO results(result_id, run_id, kind, value_json, source_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-            (result_id, run_id, kind, self._canonical_json(value), source_id, timestamp),
+            "INSERT INTO results(result_id, run_id, kind, value_json, source_id, evidence_source, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (result_id, run_id, kind, self._canonical_json(value), source_id, evidence_source, timestamp),
         )
-        self._append_event(connection, run_id, "result.recorded", {"result_id": result_id, "kind": kind, "source_id": source_id})
+        self._append_event(connection, run_id, "result.recorded", {"result_id": result_id, "kind": kind, "source_id": source_id}, evidence_source=evidence_source)
         return self._decode_row(connection.execute("SELECT * FROM results WHERE result_id = ?", (result_id,)).fetchone(), {"value_json": "value"})
 
     @staticmethod

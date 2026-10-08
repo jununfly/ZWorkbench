@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import urllib.request
 
-from zworkbench.composition import CompositionOwner
+from zworkbench.composition import CompositionOwner, EVIDENCE_SOURCE_NATIVE
 from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
@@ -55,7 +55,7 @@ def owner_with_state(directory):
         metadata={"workspace": "case-local"},
     )
     owner.start_run("run-alpha")
-    owner.record_event("run-alpha", "worker.started", {"note": "read-only"})
+    owner.record_event("run-alpha", "worker.started", {"note": "read-only"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
     owner.complete_run("run-alpha", {"summary": "done"})
     return owner
 
@@ -124,6 +124,7 @@ class ProjectingOwnerStateForTheHomeViewTests(unittest.TestCase):
                 "private_note": "must not be projected",
             },
             source_id="artifact-1",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
 
         artifacts = home_view_model(self.owner)["artifacts"]
@@ -140,6 +141,7 @@ class ProjectingOwnerStateForTheHomeViewTests(unittest.TestCase):
             "evidence.saved",
             {"digest": "evidence-digest-1", "private_note": "must not be projected"},
             event_id="event-evidence-1",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
 
         evidence = home_view_model(self.owner)["evidence"]
@@ -361,6 +363,7 @@ class ProjectingTaskDetailAdmissionTests(unittest.TestCase):
                 "worker.completed",
                 {"status": "completed"},
                 source_id="child-worker",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
 
             model = task_detail_view_model(owner, "parent-incomplete")
@@ -475,8 +478,8 @@ class ProjectingTaskDetailAdmissionTests(unittest.TestCase):
             self.addCleanup(owner.close)
             owner.create_run("run-timeline", "local_read_only_run", {})
             owner.start_run("run-timeline")
-            owner.record_event("run-timeline", "preflight.passed", {"private": "hidden"})
-            owner.record_event("run-timeline", "worker.started", {"private": "hidden"})
+            owner.record_event("run-timeline", "preflight.passed", {"private": "hidden"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
+            owner.record_event("run-timeline", "worker.started", {"private": "hidden"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
 
             timeline = task_detail_view_model(owner, "run-timeline")["timeline"]
 
@@ -715,12 +718,14 @@ class ServingOwnerStateThroughTheHostTests(unittest.TestCase):
             "journal.note",
             {"private": "must not project"},
             event_id="event-record-http",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
         owner.record_result(
             "run-record-http",
             "semantic",
             {"status": "completed", "private_note": "must not project"},
             source_id="semantic-http",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
         owner.record_result(
             "run-record-http",
@@ -732,6 +737,7 @@ class ServingOwnerStateThroughTheHostTests(unittest.TestCase):
                 "bytes": 16,
             },
             source_id="artifact-http",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
         owner.record_replay_metadata(
             "run-record-http",
@@ -760,10 +766,10 @@ class ServingOwnerStateThroughTheHostTests(unittest.TestCase):
         owner = CompositionOwner(Path(self.directory.name) / "record-selection.sqlite3")
         self.addCleanup(owner.close)
         owner.create_run("run-record-one", "local_read_only_run", {})
-        owner.record_event("run-record-one", "worker.started", {}, event_id="event-one")
-        owner.record_event("run-record-one", "provider.requested", {}, event_id="event-two")
+        owner.record_event("run-record-one", "worker.started", {}, event_id="event-one", evidence_source=EVIDENCE_SOURCE_NATIVE)
+        owner.record_event("run-record-one", "provider.requested", {}, event_id="event-two", evidence_source=EVIDENCE_SOURCE_NATIVE)
         owner.create_run("run-record-two", "local_read_only_run", {})
-        owner.record_event("run-record-two", "worker.completed", {}, event_id="event-three")
+        owner.record_event("run-record-two", "worker.completed", {}, event_id="event-three", evidence_source=EVIDENCE_SOURCE_NATIVE)
         host = serve_workbench(view_source=owner_view_source(owner))
         self.addCleanup(host.close)
         before = owner.state_digest()
@@ -804,6 +810,7 @@ class ProjectingRecordViewOwnerStateTests(unittest.TestCase):
                 "journal.note",
                 {"message": "visible only in owner", "private": "must not project"},
                 event_id="event-journal-1",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
 
             model = record_view_model(owner, "run-record")
@@ -828,6 +835,7 @@ class ProjectingRecordViewOwnerStateTests(unittest.TestCase):
                     "private_note": "must not project",
                 },
                 source_id="semantic-1",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             owner.record_result(
                 "run-record-metadata",
@@ -840,6 +848,7 @@ class ProjectingRecordViewOwnerStateTests(unittest.TestCase):
                     "private_note": "must not project",
                 },
                 source_id="artifact-1",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             owner.record_replay_metadata(
                 "run-record-metadata",
@@ -868,9 +877,9 @@ class ProjectingRecordViewOwnerStateTests(unittest.TestCase):
             owner = CompositionOwner(Path(directory) / "owner.sqlite3")
             self.addCleanup(owner.close)
             owner.create_run("run-filter", "local_read_only_run", {})
-            owner.record_event("run-filter", "worker.started", {})
-            owner.record_event("run-filter", "provider.requested", {})
-            owner.record_event("run-filter", "worker.completed", {})
+            owner.record_event("run-filter", "worker.started", {}, evidence_source=EVIDENCE_SOURCE_NATIVE)
+            owner.record_event("run-filter", "provider.requested", {}, evidence_source=EVIDENCE_SOURCE_NATIVE)
+            owner.record_event("run-filter", "worker.completed", {}, evidence_source=EVIDENCE_SOURCE_NATIVE)
 
             model = record_view_model(owner, "run-filter", filter_text="worker")
 
@@ -1132,8 +1141,8 @@ class VariantContentBranchTests(unittest.TestCase):
         owner.start_run("run-alpha")
         owner.request_approval("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "needs human ok")
         owner.claim_effect("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "idempotent")
-        owner.record_result("run-alpha", "summary", {"text": "done"}, source_id="op-write")
-        owner.record_event("run-alpha", "worker.started", {"note": "read-only"})
+        owner.record_result("run-alpha", "summary", {"text": "done"}, source_id="op-write", evidence_source=EVIDENCE_SOURCE_NATIVE)
+        owner.record_event("run-alpha", "worker.started", {"note": "read-only"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
         owner.record_replay_metadata(
             "run-alpha", "replay-1", "recorded_view", "dig-est", "dig-env",
             {"provider": "x", "model": "y"},

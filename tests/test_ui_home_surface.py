@@ -16,7 +16,7 @@ from tempfile import TemporaryDirectory
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from browser import browser, chrome_available
-from zworkbench.composition import CompositionOwner
+from zworkbench.composition import CompositionOwner, EVIDENCE_SOURCE_NATIVE
 from zworkbench.ui_home import home_manifest, render_home
 from zworkbench.ui_host import serve_workbench
 from zworkbench.ui_runtime import audit_rendered_html
@@ -773,8 +773,8 @@ class HomeVariantContentF8F9Tests(unittest.TestCase):
         owner.start_run("run-alpha")
         owner.request_approval("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "needs ok")
         owner.claim_effect("run-alpha", "op-write", "write", "file:///tmp/x", "idem-1", "idempotent")
-        owner.record_result("run-alpha", "summary", {"text": "done"})
-        owner.record_event("run-alpha", "worker.started", {"note": "read-only"})
+        owner.record_result("run-alpha", "summary", {"text": "done"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
+        owner.record_event("run-alpha", "worker.started", {"note": "read-only"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
         self.owner = owner
 
     def _render(self, variant):

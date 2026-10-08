@@ -22,7 +22,11 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from ._digest import canonical_json as _canonical_json, file_digest as _file_digest, sha256_json as _sha256_json
-from .composition import CompositionOwner, InvalidTransition
+from .composition import (
+    CompositionOwner,
+    EVIDENCE_SOURCE_NATIVE,
+    InvalidTransition,
+)
 from .subprocess_supervisor import LineStreamSupervisor, terminate_process
 
 
@@ -408,7 +412,7 @@ class DshRuntimeAdapter:
         try:
             manifest = DshRuntimeManifest.load(self.manifest_path)
             self._validate_case_paths(manifest)
-            self.owner.record_result(run_id, "dsh.preflight", manifest.identity(), f"{run_id}:dsh-preflight")
+            self.owner.record_result(run_id, "dsh.preflight", manifest.identity(), f"{run_id}:dsh-preflight", evidence_source=EVIDENCE_SOURCE_NATIVE)
             execution = self._run_process(run_id, manifest, timeout)
             self.owner.complete_run(run_id, execution.to_dict())
             return execution
@@ -537,6 +541,7 @@ class DshRuntimeAdapter:
                     "status": message["payload"]["status"],
                     "profile_id": message["payload"]["profile_id"],
                 },
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
 
         supervisor = LineStreamSupervisor(
@@ -559,7 +564,7 @@ class DshRuntimeAdapter:
         exit_code = self._wait_for_exit(deadline)
         exit_receipt = self._exit_receipt(exit_code, command)
         self._last_exit_receipt = exit_receipt
-        self.owner.record_result(run_id, "dsh.exit", exit_receipt, f"{run_id}:dsh-exit")
+        self.owner.record_result(run_id, "dsh.exit", exit_receipt, f"{run_id}:dsh-exit", evidence_source=EVIDENCE_SOURCE_NATIVE)
         self._exit_receipt_recorded = True
         if exit_code != 0:
             raise DshProcessError("DSH exited with a non-zero code", code="process_exit_nonzero")
@@ -581,7 +586,7 @@ class DshRuntimeAdapter:
             exit_code=exit_code,
             raw_event_count=raw_event_count,
         )
-        self.owner.record_result(run_id, "dsh.bootstrap", result.to_dict(), f"{run_id}:dsh-bootstrap")
+        self.owner.record_result(run_id, "dsh.bootstrap", result.to_dict(), f"{run_id}:dsh-bootstrap", evidence_source=EVIDENCE_SOURCE_NATIVE)
         return result
 
     def _parse_bootstrap_message(self, line: bytes, run_id: str, manifest: DshRuntimeManifest) -> Dict[str, Any]:
@@ -593,6 +598,7 @@ class DshRuntimeAdapter:
                 run_id,
                 "dsh.bootstrap.rejected",
                 {"code": "bootstrap_invalid_json", "line_digest": f"{SHA256_PREFIX}{line_digest}"},
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             raise DshBootstrapProtocolError("DSH emitted invalid JSONL", code="bootstrap_invalid_json") from exc
         try:
@@ -628,6 +634,7 @@ class DshRuntimeAdapter:
                 run_id,
                 "dsh.bootstrap.rejected",
                 {"code": "bootstrap_message_rejected", "line_digest": f"{SHA256_PREFIX}{line_digest}"},
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             raise
         except DshManifestError as exc:
@@ -635,6 +642,7 @@ class DshRuntimeAdapter:
                 run_id,
                 "dsh.bootstrap.rejected",
                 {"code": "bootstrap_message_shape_invalid", "line_digest": f"{SHA256_PREFIX}{line_digest}"},
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             raise DshBootstrapProtocolError("bootstrap message shape is invalid", code="bootstrap_message_shape_invalid") from exc
         except (TypeError, ValueError) as exc:
@@ -642,6 +650,7 @@ class DshRuntimeAdapter:
                 run_id,
                 "dsh.bootstrap.rejected",
                 {"code": "bootstrap_shape_invalid", "line_digest": f"{SHA256_PREFIX}{line_digest}"},
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
             raise DshBootstrapProtocolError("bootstrap message shape is invalid", code="bootstrap_shape_invalid") from exc
 
@@ -674,7 +683,7 @@ class DshRuntimeAdapter:
             "message": str(error),
         }
         try:
-            self.owner.record_result(run_id, "dsh.error", payload, f"{run_id}:dsh-error:{code}")
+            self.owner.record_result(run_id, "dsh.error", payload, f"{run_id}:dsh-error:{code}", evidence_source=EVIDENCE_SOURCE_NATIVE)
             run = self.owner.get_run(run_id)
             if run["status"] in {"created", "running", "waiting_approval", "recovering"}:
                 self.owner.safe_stop_run(run_id, f"dsh:{code}")
@@ -687,7 +696,7 @@ class DshRuntimeAdapter:
     def _record_exit_if_needed(self, run_id: str) -> None:
         if self._last_exit_receipt is None or self._exit_receipt_recorded:
             return
-        self.owner.record_result(run_id, "dsh.exit", self._last_exit_receipt, f"{run_id}:dsh-exit")
+        self.owner.record_result(run_id, "dsh.exit", self._last_exit_receipt, f"{run_id}:dsh-exit", evidence_source=EVIDENCE_SOURCE_NATIVE)
         self._exit_receipt_recorded = True
 
     def _stop_process(self) -> None:

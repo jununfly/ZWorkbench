@@ -37,6 +37,7 @@ if str(REPO_ROOT / "src") not in sys.path:
 
 from evaluation.runner.run_deepseek_config_migrate_adapter import git_head, git_show, read_json, sha256_bytes, write_json  # noqa: E402
 from zworkbench import CompositionOwner  # noqa: E402
+from zworkbench.composition import EVIDENCE_SOURCE_PLUGIN_COMPOSED  # noqa: E402
 
 
 def inside(root: Path, candidate: Path) -> bool:
@@ -199,6 +200,7 @@ def record_owner_observation(paths: dict[str, Path], runtime: dict[str, Any]) ->
                     "external_effects": 0,
                 },
                 request_id,
+                evidence_source=EVIDENCE_SOURCE_PLUGIN_COMPOSED,
             )
         owner.complete_run(
             RUN_ID,
