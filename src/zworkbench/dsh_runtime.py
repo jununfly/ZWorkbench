@@ -23,9 +23,12 @@ from urllib.parse import urlsplit
 
 from ._digest import canonical_json as _canonical_json, file_digest as _file_digest, sha256_json as _sha256_json
 from .composition import (
+    CallerAuthError,
     CompositionOwner,
     EVIDENCE_SOURCE_NATIVE,
     InvalidTransition,
+    NotFoundError,
+    RetryBudgetExhausted,
 )
 from .subprocess_supervisor import LineStreamSupervisor, terminate_process
 
@@ -379,6 +382,55 @@ class DshRuntimeAdapter:
         self._exit_receipt_recorded = False
         self._provider_identity: Optional[Dict[str, Any]] = None
 
+    def _dsh_id(self, manifest: "DshRuntimeManifest") -> str:
+        """Stable owner-owned identifier for the DSH profile being bootstrapped."""
+
+        profile = manifest.data.get("profile") if isinstance(manifest.data, dict) else None
+        profile = profile if isinstance(profile, dict) else {}
+        name = profile.get("name") or profile.get("id") or profile.get("profile_id")
+        if name:
+            return f"dsh:{name}"
+        return f"dsh:{self.manifest_path.resolve().as_posix()}"
+
+    def _record_dsh_retry(self, run_id: str, dsh_id: str) -> None:
+        """Tally one DSH bootstrap attempt in the single owner (node 1-5-4).
+
+        Every DSH bootstrap attempt is accounted against the owner-owned DSH
+        retry budget.  An undeclared budget records the attempt
+        (bound='undeclared') without raising; a declared budget enforces the
+        ceiling fail-closed via RetryBudgetExhausted, before any process spawns.
+        """
+
+        ledger = self.owner.dsh_retry_budget_ledger_for_run(run_id)
+        attempt_number = len([entry for entry in ledger if entry.get("dsh_id") == dsh_id]) + 1
+        self.owner.record_dsh_retry_budget_consumption(
+            run_id,
+            dsh_id=dsh_id,
+            request_id=f"{run_id}:dsh:attempt-{attempt_number}",
+            attempt_number=attempt_number,
+            failure_class="dsh.bootstrap",
+            target=None,
+            reason="dsh.bootstrap.attempt",
+        )
+
+    def _record_run_restart(self, run_id: str) -> None:
+        """Tally one run restart in the single owner (node 1-5-4).
+
+        Re-executing an existing Run is a restart; it is accounted against the
+        owner-owned run-restart budget and fails closed (RetryBudgetExhausted)
+        when the ceiling is exhausted, before the Run is re-armed.
+        """
+
+        ledger = self.owner.run_restart_ledger_for_run(run_id)
+        attempt_number = len(ledger) + 1
+        self.owner.record_run_restart(
+            run_id,
+            request_id=f"{run_id}:restart-{attempt_number}",
+            attempt_number=attempt_number,
+            trigger="dsh_bootstrap_restart",
+            reason="dsh.restart",
+        )
+
     def execute(
         self,
         run_id: str,
@@ -403,13 +455,30 @@ class DshRuntimeAdapter:
                 "runtime_mode": RUNTIME_MODE,
             }
         )
-        self.owner.create_run(
-            run_id,
-            "dsh.bootstrap",
-            input_value if input_value is not None else {"operation": "bootstrap"},
-            run_metadata,
-        )
-        self.owner.start_run(run_id)
+        # node 1-5-4: run-restart detection.  Re-executing an existing Run is a
+        # restart; the first execution is a normal bootstrap.
+        restarting = False
+        try:
+            self.owner.get_run(run_id)
+            restarting = True
+        except NotFoundError:
+            restarting = False
+        if restarting:
+            # Tallies the restart against the owner-owned run-restart budget and
+            # re-arms the Run; fail-closed when the restart ceiling is exhausted.
+            # The re-arm uses the owner's dedicated restart_run primitive (not
+            # start_run) because a restart may re-arm a terminal run
+            # (completed/failed/safe_stopped), which the normal lifecycle forbids.
+            self._record_run_restart(run_id)
+            self.owner.restart_run(run_id, reason="dsh.restart")
+        else:
+            self.owner.create_run(
+                run_id,
+                "dsh.bootstrap",
+                input_value if input_value is not None else {"operation": "bootstrap"},
+                run_metadata,
+            )
+            self.owner.start_run(run_id)
         # Resident runtime registry: claim a slot before launching the long-lived
         # DSH bootstrap process (sub-07 Backlog #3). Acquired outside the try so
         # a capacity failure propagates fail-closed instead of being recorded as
@@ -418,8 +487,12 @@ class DshRuntimeAdapter:
         try:
             manifest = DshRuntimeManifest.load(self.manifest_path)
             self._provider_identity = dict(manifest.data["provider_identity"])
+            dsh_id = self._dsh_id(manifest)
             self._validate_case_paths(manifest)
             self.owner.record_result(run_id, "dsh.preflight", manifest.identity(), f"{run_id}:dsh-preflight", evidence_source=EVIDENCE_SOURCE_NATIVE)
+            # node 1-5-4: tally this DSH bootstrap attempt against the owner-owned
+            # DSH retry budget; fail-closed when the DSH retry ceiling is exhausted.
+            self._record_dsh_retry(run_id, dsh_id)
             execution = self._run_process(run_id, manifest, timeout)
             self.owner.complete_run(run_id, execution.to_dict())
             # Symmetric Provider-side ledger: recorded at the same terminal
@@ -432,12 +505,32 @@ class DshRuntimeAdapter:
             return execution
         except Exception as exc:
             self._stop_process()
+            # Owner-level fail-closed signals (node 1-5-1 / 1-5-3 / 1-5-4) are
+            # orchestration-level refusals -- a retry/restart budget ceiling, a
+            # caller-auth gate, or a state-transition violation -- NOT DSH
+            # execution failures. They must propagate unwrapped AND must not
+            # mutate run state: no safe_stop and no dsh.error, so the run stays
+            # in the armed state it held before the refused attempt and the
+            # orchestration layer decides the next move.
+            if isinstance(
+                exc,
+                (RetryBudgetExhausted, InvalidTransition, CallerAuthError, NotFoundError),
+            ):
+                raise
             try:
                 self._record_exit_if_needed(run_id)
             except Exception:
                 pass
             self._record_failure(run_id, exc)
-            if isinstance(exc, (DshRuntimeError, DshManifestError, DshBootstrapProtocolError, DshProcessError)):
+            if isinstance(
+                exc,
+                (
+                    DshRuntimeError,
+                    DshManifestError,
+                    DshBootstrapProtocolError,
+                    DshProcessError,
+                ),
+            ):
                 raise
             raise DshRuntimeError(str(exc), code="h1_unexpected_failure") from exc
         finally:

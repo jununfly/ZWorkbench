@@ -201,6 +201,28 @@ class WorkerBridge:
         self._process_group_clean: Optional[bool] = None
         self._orphan_processes: Optional[int] = None
 
+    def _record_worker_retry(self, parent_run_id: str, operation: str) -> None:
+        """Tally one Worker-layer attempt in the single owner (node 1-5-4).
+
+        Every Worker handshake / coding attempt is accounted against the
+        owner-owned Worker retry budget.  An undeclared budget records the
+        attempt (bound='undeclared') without raising; a declared budget enforces
+        the ceiling fail-closed via RetryBudgetExhausted.
+        """
+
+        worker_id = self.worker_artifact_identity.name
+        ledger = self.owner.worker_retry_budget_ledger_for_run(parent_run_id)
+        attempt_number = len([entry for entry in ledger if entry.get("worker_id") == worker_id]) + 1
+        self.owner.record_worker_retry_budget_consumption(
+            parent_run_id,
+            worker_id=worker_id,
+            request_id=f"{parent_run_id}:{operation}:attempt-{attempt_number}",
+            attempt_number=attempt_number,
+            failure_class=f"worker.{operation}",
+            target=None,
+            reason=f"worker.{operation}.attempt",
+        )
+
     def handshake(
         self,
         parent_run_id: str,
@@ -231,6 +253,9 @@ class WorkerBridge:
         workspace = self.case_root / "workspace"
         if not workspace.is_dir():
             raise WorkerBridgeError("case-local workspace must already be a directory", code="workspace_missing")
+        # node 1-5-4: tally this Worker handshake attempt against the owner-owned
+        # Worker retry budget; fail-closed (RetryBudgetExhausted) when exhausted.
+        self._record_worker_retry(parent_run_id, "handshake")
         parent = self.owner.get_run(parent_run_id)
         if parent["status"] != "running":
             raise WorkerBridgeError("parent Run must be running before Worker handshake", code="parent_not_running")
@@ -364,6 +389,9 @@ class WorkerBridge:
         workspace = self.case_root / "workspace"
         if not workspace.is_dir():
             raise WorkerBridgeError("case-local workspace must already be a directory", code="workspace_missing")
+        # node 1-5-4: tally this Worker coding attempt against the owner-owned
+        # Worker retry budget; fail-closed (RetryBudgetExhausted) when exhausted.
+        self._record_worker_retry(parent_run_id, "read_only_coding")
         parent = self.owner.get_run(parent_run_id)
         if parent["status"] != "running":
             raise WorkerBridgeError("parent Run must be running before Worker coding", code="parent_not_running")
