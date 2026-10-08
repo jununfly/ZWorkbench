@@ -72,9 +72,16 @@ class WriteSeam:
 
     SCHEMA = WRITE_SEAM_SCHEMA
 
-    def __init__(self, owner: CompositionOwner, worktree_root: os.PathLike[str] | str) -> None:
+    def __init__(
+        self,
+        owner: CompositionOwner,
+        worktree_root: os.PathLike[str] | str,
+        *,
+        case_root: os.PathLike[str] | str | None = None,
+    ) -> None:
         self.owner = owner
         self.worktree_root = Path(worktree_root).expanduser().resolve()
+        self.case_root = Path(case_root).expanduser().resolve() if case_root is not None else None
 
     # ------------------------------------------------------------------
     # Isolated worktree (S2-①)
@@ -95,9 +102,13 @@ class WriteSeam:
         """
 
         repo_path = Path(repo).expanduser().resolve()
+        if self.case_root is not None and not self._inside_case_root(repo_path):
+            raise WorktreeCreationError(f"repo {repo_path} is outside case_root {self.case_root}")
         if not _is_git_repo(repo_path):
             raise WorktreeCreationError(f"not a git repository: {repo_path}")
         worktree_path = self.worktree_root / run_id
+        if self.case_root is not None and not self._inside_case_root(worktree_path):
+            raise WorktreeCreationError(f"worktree {worktree_path} is outside case_root {self.case_root}")
         worktree_path.parent.mkdir(parents=True, exist_ok=True)
         if worktree_path.exists():
             # Reuse an existing worktree for the run (idempotent across retries).
@@ -108,16 +119,26 @@ class WriteSeam:
                 f"{run_id}:worktree",
                 evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
-            return worktree_path
-        try:
-            _git(repo_path, ["worktree", "add", "--force", str(worktree_path), base_ref])
-        except subprocess.CalledProcessError as exc:
-            raise WorktreeCreationError(f"git worktree add failed: {exc}") from exc
+        else:
+            try:
+                _git(repo_path, ["worktree", "add", "--force", str(worktree_path), base_ref])
+            except subprocess.CalledProcessError as exc:
+                raise WorktreeCreationError(f"git worktree add failed: {exc}") from exc
+            self.owner.record_result(
+                run_id,
+                "write_seam.worktree.created",
+                {"worktree_path": str(worktree_path), "base_ref": base_ref},
+                f"{run_id}:worktree",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
+            )
+        # Record the repo fingerprint (the base-ref HEAD) so apply_diff can detect
+        # repo/worktree substitution or tampering before any write effect commits.
+        repo_fingerprint = _git(repo_path, ["rev-parse", base_ref]).strip()
         self.owner.record_result(
             run_id,
-            "write_seam.worktree.created",
-            {"worktree_path": str(worktree_path), "base_ref": base_ref},
-            f"{run_id}:worktree",
+            "write_seam.repo.fingerprint",
+            {"repo_fingerprint": repo_fingerprint, "base_ref": base_ref, "repo": str(repo_path)},
+            f"{run_id}:repo_fingerprint",
             evidence_source=EVIDENCE_SOURCE_NATIVE,
         )
         return worktree_path
@@ -167,6 +188,17 @@ class WriteSeam:
                 return existing
             raise WriteSeamError(f"effect not executable: {claim.reason}")
 
+        # 1-4-2 invariants: the effect's declared resource must equal the physical
+        # worktree being written (no resource/physical-target confusion), and the
+        # repo fingerprint recorded at create_worktree must still match (no repo
+        # or worktree substitution/tampering).  These run only when a write is
+        # actually about to happen, so an idempotent replay returns above untouched.
+        if Path(resource).expanduser().resolve() != worktree_path:
+            raise DiffApplyError(
+                f"effect resource {resource!r} does not match the worktree being written {worktree_path}"
+            )
+        self._ensure_repo_fingerprint(run_id, worktree_path)
+
         effect_id = claim.effect_id
         assert effect_id is not None
         before_commit = _git(worktree_path, ["rev-parse", "HEAD"]).strip()
@@ -215,6 +247,41 @@ class WriteSeam:
             diff_digest=diff_digest,
             external_receipt=external_receipt,
         )
+
+    def _inside_case_root(self, path: Path) -> bool:
+        """True when ``path`` is the case root or lives inside it."""
+
+        if self.case_root is None:
+            return True
+        return path == self.case_root or self.case_root in path.parents
+
+    def _ensure_repo_fingerprint(self, run_id: str, worktree_path: Path) -> None:
+        """Fail-closed: the worktree HEAD must still equal the recorded fingerprint.
+
+        A mismatch means the repo or worktree was substituted or tampered with
+        between ``create_worktree`` and ``apply_diff``; refuse to commit.
+        """
+
+        expected = self._stored_repo_fingerprint(run_id)
+        if expected is None:
+            # Runs created before fingerprinting existed have nothing to verify.
+            # The product path always stores a fingerprint, so this branch only
+            # guards legacy fixtures; no write happens here, merely a skipped check.
+            return
+        current = _git(worktree_path, ["rev-parse", "HEAD"]).strip()
+        if current != expected:
+            raise DiffApplyError(
+                f"repo fingerprint mismatch at {worktree_path}: expected {expected}, got {current}"
+            )
+
+    def _stored_repo_fingerprint(self, run_id: str) -> Optional[str]:
+        """Return the repo fingerprint recorded at ``create_worktree``, if any."""
+
+        run = self.owner.get_run(run_id)
+        for result in run.get("results", []):
+            if result.get("kind") == "write_seam.repo.fingerprint":
+                return result.get("value", {}).get("repo_fingerprint")
+        return None
 
     def _completed_receipt(self, run_id: str, operation_id: str) -> Optional[WriteReceipt]:
         """Return the durable receipt for an already-completed effect, if any."""
