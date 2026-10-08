@@ -27,6 +27,7 @@ import zworkbench.write_seam as write_seam_module
 from zworkbench.composition import CompositionOwner
 from zworkbench.write_seam import (
     DiffApplyError,
+    WorktreeCreationError,
     WriteSeam,
     WriteSeamError,
 )
@@ -357,6 +358,156 @@ class WriteSeamApprovalIdempotencyTests(unittest.TestCase):
                 self.assertEqual(first.commit_hash, second.commit_hash, "replay must not produce a new commit")
                 self.assertEqual(_commit_count(worktree), 2, "only one digest change across the replay")
                 self.assertEqual(_git(worktree, "rev-parse", "HEAD"), first.commit_hash)
+            finally:
+                owner.close()
+
+
+class WriteSeamCaseLocalTests(unittest.TestCase):
+    """1-4-2: case-local boundary + resource==worktree assertion + repo fingerprint.
+
+    The seam must not trust its caller: the repo and the isolated worktree must
+    both resolve inside the case root, the effect's declared resource must equal
+    the physical worktree being written, and the worktree must still carry the
+    repo fingerprint recorded at create_worktree time (no substitution/tampering).
+    """
+
+    def _real_repo_outside(self, root: Path, case: Path) -> Path:
+        """A valid git repo that lives *outside* ``case`` (for negative tests)."""
+
+        case.mkdir(parents=True, exist_ok=True)
+        repo = root / "outside_repo"
+        repo.mkdir(parents=True, exist_ok=True)
+        _git(repo, "init", "-q")
+        _git(repo, "config", "user.email", "test@zworkbench.local")
+        _git(repo, "config", "user.name", "ZWorkbench Test")
+        _git(repo, "config", "commit.gpgsign", "false")
+        (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+        _git(repo, "add", "-A")
+        _git(repo, "commit", "-q", "-m", "initial seed")
+        return repo
+
+    def test_create_worktree_rejects_repo_outside_case_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            case_root = root / "case"
+            repo = self._real_repo_outside(root, case_root)
+            owner = CompositionOwner(root / "state" / "owner.sqlite3")
+            try:
+                owner.create_run("run-cl-1", "write_seam", {"x": 1})
+                seam = WriteSeam(owner, root / "worktrees", case_root=case_root)
+                with self.assertRaises(WorktreeCreationError):
+                    seam.create_worktree("run-cl-1", repo)
+            finally:
+                owner.close()
+
+    def test_create_worktree_rejects_worktree_outside_case_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # Repo lives inside case_root, but the worktree root is outside it.
+            case_root = root / "case"
+            case_root.mkdir(parents=True, exist_ok=True)
+            repo = case_root / "repo"
+            repo.mkdir(parents=True, exist_ok=True)
+            _git(repo, "init", "-q")
+            _git(repo, "config", "user.email", "test@zworkbench.local")
+            _git(repo, "config", "user.name", "ZWorkbench Test")
+            _git(repo, "config", "commit.gpgsign", "false")
+            (repo / "seed.txt").write_text("seed\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            _git(repo, "commit", "-q", "-m", "initial seed")
+
+            owner = CompositionOwner(root / "state" / "owner.sqlite3")
+            try:
+                owner.create_run("run-cl-2", "write_seam", {"x": 1})
+                seam = WriteSeam(owner, root / "outside_worktrees", case_root=case_root)
+                with self.assertRaises(WorktreeCreationError):
+                    seam.create_worktree("run-cl-2", repo)
+            finally:
+                owner.close()
+
+    def test_apply_diff_rejects_resource_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = _make_repo(root)
+            case_root = repo  # case-root == repo root (the real dogfood convention)
+            worktree_root = repo / ".zw-worktrees"
+            owner = CompositionOwner(root / "state" / "owner.sqlite3")
+            owner.create_run("run-cl-3", "write_seam", {"x": 1})
+            seam = WriteSeam(owner, worktree_root, case_root=case_root)
+            worktree = seam.create_worktree("run-cl-3", repo)
+            try:
+                token = _approved_token(owner, "run-cl-3", "opCL3", "apply_diff", "wt-something-else", "kCL3")
+                with self.assertRaises(DiffApplyError):
+                    seam.apply_diff(
+                        "run-cl-3",
+                        worktree,
+                        VALID_PATCH,
+                        approval_token=token,
+                        operation_id="opCL3",
+                        action="apply_diff",
+                        resource="wt-something-else",
+                        idempotency_key="kCL3",
+                    )
+            finally:
+                owner.close()
+
+    def test_apply_diff_rejects_repo_fingerprint_mismatch(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = _make_repo(root)
+            case_root = repo
+            worktree_root = repo / ".zw-worktrees"
+            owner = CompositionOwner(root / "state" / "owner.sqlite3")
+            owner.create_run("run-cl-4", "write_seam", {"x": 1})
+            seam = WriteSeam(owner, worktree_root, case_root=case_root)
+            worktree = seam.create_worktree("run-cl-4", repo)
+            # Tamper with the worktree between create_worktree and apply_diff.
+            _git(worktree, "commit", "--allow-empty", "-m", "tamper")
+            try:
+                token = _approved_token(owner, "run-cl-4", "opCL4", "apply_diff", str(worktree), "kCL4")
+                with self.assertRaises(DiffApplyError):
+                    seam.apply_diff(
+                        "run-cl-4",
+                        worktree,
+                        VALID_PATCH,
+                        approval_token=token,
+                        operation_id="opCL4",
+                        action="apply_diff",
+                        resource=str(worktree),
+                        idempotency_key="kCL4",
+                    )
+            finally:
+                owner.close()
+
+    def test_happy_path_records_fingerprint_and_applies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = _make_repo(root)
+            case_root = repo
+            worktree_root = repo / ".zw-worktrees"
+            owner = CompositionOwner(root / "state" / "owner.sqlite3")
+            owner.create_run("run-cl-5", "write_seam", {"x": 1})
+            seam = WriteSeam(owner, worktree_root, case_root=case_root)
+            worktree = seam.create_worktree("run-cl-5", repo)
+            try:
+                run = owner.get_run("run-cl-5")
+                fp = [r for r in run["results"] if r["kind"] == "write_seam.repo.fingerprint"]
+                self.assertEqual(len(fp), 1, "repo fingerprint must be recorded at create_worktree")
+                self.assertTrue(fp[0]["value"]["repo_fingerprint"])
+
+                token = _approved_token(owner, "run-cl-5", "opCL5", "apply_diff", str(worktree), "kCL5")
+                receipt = seam.apply_diff(
+                    "run-cl-5",
+                    worktree,
+                    VALID_PATCH,
+                    approval_token=token,
+                    operation_id="opCL5",
+                    action="apply_diff",
+                    resource=str(worktree),
+                    idempotency_key="kCL5",
+                )
+                self.assertEqual(receipt.status, "completed")
+                self.assertEqual((worktree / "hello.txt").read_text(), "hello world\n")
             finally:
                 owner.close()
 

@@ -715,7 +715,7 @@ def _write_apply_command(args: argparse.Namespace) -> int:
     else:
         patch_text = Path(args.diff).read_text(encoding="utf-8")
 
-    orchestrator = WriteRunOrchestrator(db, worktree_root=worktree_root)
+    orchestrator = WriteRunOrchestrator(db, worktree_root=worktree_root, case_root=case_root)
     try:
         receipt = orchestrator.apply(
             run_id,

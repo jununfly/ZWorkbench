@@ -30,9 +30,16 @@ class WriteRunOrchestrator:
     and never opens a second owner database.
     """
 
-    def __init__(self, database: os.PathLike[str] | str, *, worktree_root: os.PathLike[str] | str) -> None:
+    def __init__(
+        self,
+        database: os.PathLike[str] | str,
+        *,
+        worktree_root: os.PathLike[str] | str,
+        case_root: os.PathLike[str] | str | None = None,
+    ) -> None:
         self.database = Path(database).expanduser().resolve()
         self.worktree_root = Path(worktree_root).expanduser().resolve()
+        self.case_root = Path(case_root).expanduser().resolve() if case_root is not None else None
 
     def apply(
         self,
@@ -58,7 +65,7 @@ class WriteRunOrchestrator:
 
         with CompositionOwner(self.database) as owner:
             self._ensure_run(owner, run_id)
-            seam = WriteSeam(owner, self.worktree_root)
+            seam = WriteSeam(owner, self.worktree_root, case_root=self.case_root)
             worktree_path = seam.create_worktree(run_id, repo, base_ref)
             receipt = seam.apply_diff(
                 run_id,
