@@ -429,6 +429,7 @@ class CompositionOwner:
         effect_class: str,
         approval_token: Optional[str] = None,
         max_attempts: int = 2,
+        required_exposure: Optional[Iterable[str]] = None,
     ) -> EffectClaim:
         """Claim one effect or return a durable fail-closed decision.
 
@@ -500,6 +501,48 @@ class CompositionOwner:
                     self._append_event(connection, run_id, "effect.claimed", {"effect_id": existing["effect_id"], "attempt": next_attempt, "retry": True})
                     return EffectClaim(existing["effect_id"], "claimed", next_attempt, existing["physical_effect_count"], "bounded_retry")
 
+            # Q4 preflight-class deny: enforce the run's declared exposure
+            # boundary, but only when one was recorded at preflight.  Absence
+            # of a declaration preserves legacy behaviour (the declaration is
+            # opt-in).  Fail-closed: any breach safe-stops the run.
+            declared = self._declared_exposure_row(connection, run_id)
+            if declared is not None:
+                declared_classes = set(json.loads(declared["declared_side_effects_json"]))
+                if effect_class not in declared_classes:
+                    self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "side_effect_not_declared"})
+                    self._append_event(
+                        connection,
+                        run_id,
+                        "effect.claim.denied",
+                        {"operation_id": operation_id, "effect_class": effect_class, "reason": "side_effect_not_declared"},
+                    )
+                    return EffectClaim(None, "denied", 0, 0, "side_effect_not_declared")
+                exposure = json.loads(declared["exposure_json"])
+                workspace_root = exposure.get("workspace_root")
+                if workspace_root:
+                    resolved_resource = Path(resource).expanduser().resolve()
+                    resolved_root = Path(workspace_root).expanduser().resolve()
+                    if not (resolved_resource == resolved_root or resolved_resource.is_relative_to(resolved_root)):
+                        self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "workspace_out_of_bounds"})
+                        self._append_event(
+                            connection,
+                            run_id,
+                            "effect.claim.denied",
+                            {"operation_id": operation_id, "resource": resource, "workspace_root": workspace_root, "reason": "workspace_out_of_bounds"},
+                        )
+                        return EffectClaim(None, "denied", 0, 0, "workspace_out_of_bounds")
+                required = set(required_exposure or ())
+                for capability in ("network", "credentials", "subprocess"):
+                    if capability in required and not exposure.get(capability):
+                        self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "exposure_not_declared"})
+                        self._append_event(
+                            connection,
+                            run_id,
+                            "effect.claim.denied",
+                            {"operation_id": operation_id, "capability": capability, "reason": "exposure_not_declared"},
+                        )
+                        return EffectClaim(None, "denied", 0, 0, "exposure_not_declared")
+
             if effect_class not in ALLOWED_EFFECT_CLASSES:
                 self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "unknown_effect_class"})
                 self._append_event(connection, run_id, "effect.claim.denied", {"operation_id": operation_id, "reason": "unknown_effect_class"})
@@ -559,6 +602,77 @@ class CompositionOwner:
             self._set_run_status(connection, run, "running", "run.started")
             self._append_event(connection, run_id, "effect.claimed", {"effect_id": effect_id, "operation_id": operation_id, "attempt": 1, "effect_class": effect_class})
             return EffectClaim(effect_id, "claimed", 1, 0, "new_effect")
+
+    def declare_exposure(
+        self,
+        run_id: str,
+        *,
+        declared_side_effects: Iterable[str],
+        exposure: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Record the exposure a run is permitted to perform (Q4 preflight class).
+
+        Idempotent upsert: re-declaring replaces the prior boundary.  The
+        declaration is opt-in at preflight — ``claim_effect`` only enforces it
+        when one exists for the run, so absence preserves legacy behaviour.
+
+        ``exposure`` shape: ``{"workspace_root": <path>, "network": bool,
+        "credentials": bool, "subprocess": bool}``.  ``workspace_root`` bounds
+        every effect resource to that directory; the boolean flags gate the
+        network/credentials/subprocess capabilities named in ``required_exposure``.
+        """
+
+        self._require_text(run_id, "run_id")
+        declared_side_effects_value = sorted(set(declared_side_effects))
+        exposure_value = dict(exposure or {})
+        timestamp = self._now()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)  # validates the run exists
+            connection.execute(
+                """
+                INSERT INTO declared_exposure(
+                    run_id, declared_side_effects_json, exposure_json, declared_at
+                ) VALUES (?, ?, ?, ?)
+                ON CONFLICT(run_id) DO UPDATE SET
+                    declared_side_effects_json = excluded.declared_side_effects_json,
+                    exposure_json = excluded.exposure_json,
+                    declared_at = excluded.declared_at
+                """,
+                (
+                    run_id,
+                    self._canonical_json(declared_side_effects_value),
+                    self._canonical_json(exposure_value),
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "exposure.declared",
+                {"declared_side_effects": declared_side_effects_value, "exposure": exposure_value},
+            )
+        return self.get_declared_exposure(run_id)
+
+    def get_declared_exposure(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """Return the declared exposure for a run, or ``None`` if undeclared."""
+
+        with self._transaction() as connection:
+            row = self._declared_exposure_row(connection, run_id)
+        if row is None:
+            return None
+        return {
+            "run_id": row["run_id"],
+            "declared_side_effects": json.loads(row["declared_side_effects_json"]),
+            "exposure": json.loads(row["exposure_json"]),
+            "declared_at": row["declared_at"],
+        }
+
+    def _declared_exposure_row(self, connection: sqlite3.Connection, run_id: str) -> Optional[sqlite3.Row]:
+        """Read a run's declared exposure row on an existing connection."""
+
+        return connection.execute(
+            "SELECT * FROM declared_exposure WHERE run_id = ?", (run_id,)
+        ).fetchone()
 
     def complete_effect(
         self,
@@ -1938,6 +2052,12 @@ class CompositionOwner:
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS declared_exposure (
+                run_id TEXT PRIMARY KEY REFERENCES runs(run_id),
+                declared_side_effects_json TEXT NOT NULL,
+                exposure_json TEXT NOT NULL,
+                declared_at TEXT NOT NULL
+            );
             CREATE TABLE IF NOT EXISTS effect_attempts (
                 attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 effect_id TEXT NOT NULL REFERENCES effects(effect_id),
@@ -2345,7 +2465,7 @@ class CompositionOwner:
                 connection.close()
         except sqlite3.DatabaseError as exc:
             return {"ok": False, "reason": f"sqlite error: {exc}"}
-        required = {"owner_meta", "runs", "approvals", "effects", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger"}
+        required = {"owner_meta", "runs", "approvals", "effects", "declared_exposure", "effect_attempts", "results", "replays", "events", "provider_exit_ledger", "provider_fallback_ledger", "provider_attempt_ledger", "provider_retry_budget", "provider_retry_budget_ledger", "provider_access_gate_ledger"}
         if result != "ok":
             return {"ok": False, "reason": f"integrity_check={result}"}
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
@@ -2362,6 +2482,7 @@ class CompositionOwner:
             "runs",
             "approvals",
             "effects",
+            "declared_exposure",
             "effect_attempts",
             "results",
             "replays",
