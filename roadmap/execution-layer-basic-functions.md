@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 11:35:16
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 13:40:04
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -9,11 +9,11 @@
 │   ├── [x][Y+] 1-1-2. P1 attempt 计账入 owner（扩展 provider_exit_ledger 或新增 retry_budget_ledger）
 │   ├── [x][Y+] 1-1-3. P1 Provider 级 retry 预算表（声明 owner + 上限 + attempt/failure_class/target/reason，~2.5 人日）
 │   └── [x][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
-├── [~][Y+] 1-2. 证据与回放（sub-06）
+├── [x][Y+] 1-2. 证据与回放（sub-06）
 │   ├── [x][Y+] 1-2-1. P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）
 │   ├── [x][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
 │   ├── [x][Y+] 1-2-3. P1 live 零外部执行断言守卫（断言式计账，非结构性）
-│   └── [ ][Y+] 1-2-4. P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类
+│   └── [x][Y+] 1-2-4. P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类
 ├── [ ][Y+] 1-3. 终止与资源生命周期（sub-07）
 │   ├── [ ][Y+] 1-3-1. P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0
 │   ├── [ ][Y+] 1-3-2. P1 退出账本对称接线（调用点配对：谁在何时记哪边）
@@ -33,7 +33,8 @@
 │   ├── [x][Y+] 1-6-1. P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描
 │   ├── [ ][Y+] 1-6-2. P1 run 级 attempt 一等实体决策
 │   ├── [ ][Y+] 1-6-3. P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）
-│   └── [ ][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
+│   ├── [ ][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
+│   └── [x][Y+] 1-6-5. P1 create_run 不拒密：run input/metadata 归 redaction 模型（owner 存原始、view 遮罩），值级拒密仅限外部 evidence 落库 seam
 ├── [ ][Y+] 1-7. Worker 调度与监督（sub-02）
 │   ├── [ ][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
 │   ├── [ ][Y+] 1-7-2. P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）
