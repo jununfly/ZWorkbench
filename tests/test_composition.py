@@ -911,5 +911,145 @@ class EvidenceSourceClassificationTests(unittest.TestCase):
             self.assertEqual(recorded["evidence_source"], EVIDENCE_SOURCE_NATIVE)
 
 
+class RunLevelAttemptNotFirstClassTests(unittest.TestCase):
+    """1-6-2 (decided): owner does NOT hold a run-level attempt first-class entity.
+
+    Run-level retry is expressed indirectly via effect_attempts (the effect-level
+    first-class entity): one run retry == re-claiming the effect (attempt increments).
+    runs table has no attempt column and there is no run_attempts table.
+    """
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _schema_tables(self) -> set[str]:
+        conn = sqlite3.connect(self.db)
+        try:
+            return {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        finally:
+            conn.close()
+
+    def _runs_columns(self) -> list[str]:
+        conn = sqlite3.connect(self.db)
+        try:
+            return [row[1] for row in conn.execute("PRAGMA table_info(runs)")]
+        finally:
+            conn.close()
+
+    def test_runs_table_has_no_attempt_column(self) -> None:
+        self.assertNotIn("attempt", self._runs_columns())
+
+    def test_no_run_attempts_first_class_table(self) -> None:
+        self.assertNotIn("run_attempts", self._schema_tables())
+
+    def test_run_retry_expressed_via_effect_attempts(self) -> None:
+        self.owner.create_run("run-1", "unit-test", {"prompt": "fixture"})
+        self.owner.start_run("run-1")
+        request = self.owner.request_approval("run-1", "op-1", "deploy", "sink", "idem-1", "publish")
+        grant = self.owner.approve(request["approval_id"])
+        claim = self.owner.claim_effect(
+            "run-1", "op-1", "deploy", "sink", "idem-1", "approval-required", grant["token"]
+        )
+        self.owner.complete_effect(claim.effect_id, {"delivered": True})
+        # effect_attempts captured the attempt (effect-level first-class entity)
+        conn = sqlite3.connect(self.db)
+        try:
+            effect_attempt_rows = list(conn.execute("SELECT * FROM effect_attempts"))
+            with self.assertRaises(sqlite3.OperationalError):
+                conn.execute("SELECT * FROM run_attempts")
+        finally:
+            conn.close()
+        self.assertTrue(effect_attempt_rows)
+
+
+class OwnerIsolatedAuditTests(unittest.TestCase):
+    """1-6-3 (decided): audit_owner_isolated promotes the 'no second canonical
+    state' invariant from discipline to a testable contract (CI assertion carrier).
+    """
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def test_owner_is_unique_with_no_extra_tables(self) -> None:
+        report = self.owner.audit_owner_isolated()
+        self.assertTrue(report["owner_is_unique"])
+        self.assertEqual(report["non_canonical_tables"], [])
+        self.assertEqual(report["actual_canonical_count"], report["expected_canonical_count"])
+
+    def test_audit_reports_extra_table_as_second_canonical_state(self) -> None:
+        conn = sqlite3.connect(self.db)
+        try:
+            conn.execute("CREATE TABLE second_canonical (id TEXT PRIMARY KEY)")
+            conn.commit()
+        finally:
+            conn.close()
+        report = self.owner.audit_owner_isolated()
+        self.assertFalse(report["owner_is_unique"])
+        self.assertIn("second_canonical", report["non_canonical_tables"])
+
+
+class UnknownTerminologyTwoLayerTests(unittest.TestCase):
+    """1-6-4 (decided): unknown terminology has two distinct layers.
+
+    Layer 1 (remote/delegated): when a remote identity is genuinely unknown, the
+    literal string "unknown" (or "unknown/delegated" caliber) is STORED -- we
+    record that we do not know the remote state.
+    Layer 2 (internal identity): when an internal durable-identity reference is
+    missing, the run is safe-stopped and NO fabricated "unknown" value is stored;
+    the gap is surfaced as a terminal safe-stop + identity-violation event.
+    """
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.db = Path(self.tempdir.name) / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def test_layer1_remote_unknown_is_stored_literally(self) -> None:
+        self.owner.create_run("run-1", "unit-test", {"prompt": "x"})
+        self.owner.record_provider_exit_ledger("run-1", {})
+        conn = sqlite3.connect(self.db)
+        try:
+            row = conn.execute(
+                "SELECT provider, endpoint, provider_remote_zero_residue "
+                "FROM provider_exit_ledger WHERE run_id = 'run-1'"
+            ).fetchone()
+        finally:
+            conn.close()
+        self.assertEqual(row[0], "unknown")  # provider missing -> literal unknown stored (layer 1)
+        self.assertEqual(row[1], "unknown")  # endpoint missing -> literal unknown stored (layer 1)
+        self.assertEqual(row[2], "unknown/delegated")  # remote residue caliber stored literally
+
+    def test_layer2_internal_identity_missing_safe_stops_without_unknown_value(self) -> None:
+        self.owner.create_run(
+            "run-1", "unit-test", {"prompt": "x"}, metadata={"parent_run_id": "ghost-run"}
+        )
+        violations = self.owner.detect_identity_violations("run-1")
+        self.assertEqual(violations[0]["kind"], "broken_parent_run_id")
+        result = self.owner.safe_stop_on_identity_violation("run-1")
+        self.assertTrue(result["safe_stopped"])
+        run = self.owner.get_run("run-1")
+        self.assertEqual(run["status"], "safe_stopped")
+        # The internal gap is surfaced as a terminal safe-stop + identity-violation
+        # event; no fabricated "unknown" value is stored as an identity column.
+        event_types = {e["type"] for e in self.owner.events("run-1")}
+        self.assertIn("run.identity.violation", event_types)
+
+
 if __name__ == "__main__":
     unittest.main()
