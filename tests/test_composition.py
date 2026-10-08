@@ -107,6 +107,40 @@ class CompositionOwnerTests(unittest.TestCase):
         with self.assertRaises(InvalidTransition):
             self.owner.complete_run("run-1", "must not complete")
 
+    def test_complete_run_refuses_pending_approval(self) -> None:
+        # 1-5-1: a run with an undecided approval cannot be completed.
+        self._run()
+        self.owner.request_approval("run-1", "op-1", "deploy", "fixture-sink", "idem-1", "publish result")
+        with self.assertRaises(InvalidTransition):
+            self.owner.complete_run("run-1", "must not complete")
+        # The run stays running; completion is refused, not silently skipped.
+        self.assertEqual(self.owner.get_run("run-1")["status"], "running")
+
+    def test_complete_run_refuses_unresolved_identity_violation(self) -> None:
+        # 1-5-1: a run whose key-identity graph is broken cannot be completed.
+        self.owner.create_run(
+            "run-1", "unit-test", {"prompt": "x"}, metadata={"parent_run_id": "ghost-run"}
+        )
+        self.owner.start_run("run-1")
+        violations = self.owner.detect_identity_violations("run-1")
+        self.assertEqual(len(violations), 1)
+        self.assertEqual(violations[0]["kind"], "broken_parent_run_id")
+        with self.assertRaises(InvalidTransition):
+            self.owner.complete_run("run-1", "must not complete")
+        self.assertEqual(self.owner.get_run("run-1")["status"], "running")
+
+    def test_complete_run_succeeds_when_approval_decided_and_identity_clean(self) -> None:
+        # 1-5-1 negative control: an approved effect + clean identity completes.
+        self._run()
+        request = self.owner.request_approval("run-1", "op-1", "deploy", "fixture-sink", "idem-1", "publish")
+        grant = self.owner.approve(request["approval_id"])
+        claim = self.owner.claim_effect(
+            "run-1", "op-1", "deploy", "fixture-sink", "idem-1", "approval-required", grant["token"]
+        )
+        self.owner.complete_effect(claim.effect_id, {"delivered": True})
+        run = self.owner.complete_run("run-1", {"answer": "ok"})
+        self.assertEqual(run["status"], "completed")
+
     def test_fail_run_persists_safe_stop_before_reporting_unresolved_effect(self) -> None:
         self._run()
         claim = self.owner.claim_effect("run-1", "op-1", "write", "fixture-sink", "idem-1", "idempotent")
