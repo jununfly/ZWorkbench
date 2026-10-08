@@ -38,7 +38,7 @@ from zworkbench import (
     ReplayIdentity,
     UNKNOWN,
 )
-from zworkbench.composition import SCHEMA
+from zworkbench.composition import SCHEMA, EVIDENCE_SOURCE_OUTER_COMPOSED
 from zworkbench.dsh_runtime import DshRuntimeAdapter
 
 
@@ -104,7 +104,7 @@ def run_harness(
         "exit_code": exit_code,
         "dsh_session_id": execution.dsh_session_id,
     }
-    owner.record_result(RUN_ID, "semantic", semantic_result)
+    owner.record_result(RUN_ID, "semantic", semantic_result, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
 
     service = OwnerBackedReplayService(owner)
     source_event_digest = service.owner_event_digest(RUN_ID)

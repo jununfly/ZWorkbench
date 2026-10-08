@@ -47,7 +47,7 @@ live 模式触发外部执行 → 默认拒绝（fail-closed）；provenance 不
 | Q2 与 IdentityChain 会话级关联 / 空串伪完整风险 | IMPLEMENTED（1-2-2） | ReplayIdentity 增 identity_chain: IdentityChain 字段并进入 provenance；missing_fields 含 identity_chain.*；_is_missing 覆盖 None/\"unknown\"/空/纯空白；owner 仍只到 run 级（会话链绑定进 provenance，未耐久存储，见 Known gaps） |
 | Q3 live 默认拒绝 + 零外部执行计账 | IMPLEMENTED / fail-closed | replay.py |
 | Q3 「零」是结构性而非断言式 | IMPLEMENTED（1-2-3） | replay.py 增 `assert_zero_external_execution` 守卫 + `live_replay` 返回结果附 `zero_external_execution` 计账块（断言式、非结构性、fail-closed）；原结构性不执行保留为兜底，守卫把其升级为可测失败信号；不替代 1-8 host sandbox |
-| Q4 owner-backed 来源分类（native/plugin-composed/outer-composed 枚举字段） | UNKNOWN | 枚举字段缺失 |
+| Q4 owner-backed 来源分类（native/plugin-composed/outer-composed 枚举字段） | IMPLEMENTED（1-2-4） | composition.py 增 `evidence_source` 枚举（native/plugin-composed/outer-composed）+ `_validate_evidence_source` 校验；`record_result`/`record_event` 公共 seam 强制 `evidence_source` 必填（fail-closed）；`results`/`events` 表加列，SCHEMA_VERSION 1→2 迁移存量库（NULL=unknown 不撒谎）；owner 内部事件默认 native，外部 adapter/ fixture/ runner 分类 outer-composed，plugin-aware runner 分类 plugin-composed |
 
 ## Known gaps
 

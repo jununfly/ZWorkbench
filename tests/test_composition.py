@@ -8,6 +8,9 @@ import unittest
 
 from zworkbench.composition import (
     CompositionOwner,
+    EVIDENCE_SOURCE_NATIVE,
+    EVIDENCE_SOURCE_OUTER_COMPOSED,
+    EVIDENCE_SOURCE_PLUGIN_COMPOSED,
     IntegrityError,
     InvalidTransition,
     NotFoundError,
@@ -33,7 +36,7 @@ class CompositionOwnerTests(unittest.TestCase):
 
     def test_run_and_state_survive_reopen(self) -> None:
         self._run()
-        self.owner.record_result("run-1", "adapter", {"thread_id": "thread-1"}, "thread")
+        self.owner.record_result("run-1", "adapter", {"thread_id": "thread-1"}, "thread", evidence_source=EVIDENCE_SOURCE_NATIVE)
         self.owner.record_replay_metadata("run-1", "replay-1", "recorded_view", "events-sha", "env-sha", {"provider": "fake"})
         self.owner.complete_run("run-1", {"answer": "ok"})
         digest_before = self.owner.state_digest()
@@ -247,10 +250,15 @@ class CompositionOwnerTests(unittest.TestCase):
             self.owner.record_replay_metadata("run-1", "replay-2", "implicit-live", "events-sha", "env-sha", {"provider": "fake"})
 
     def test_owner_evidence_writers_reject_raw_credentials(self) -> None:
+        # NOTE: create_run is intentionally NOT asserted here. Run input/metadata
+        # is the harness's own run definition (redaction model: owner stores raw,
+        # view layer redacts) and must not be rejected by value-level hygiene.
+        # Credential hygiene is enforced only at the true external-evidence seams
+        # below (see roadmap node 1-6-5 for the scoping decision).
         with self.assertRaises(ValueError):
-            self.owner.create_run("credential-run", "unit-test", {"api_key": "secret"})
-        with self.assertRaises(ValueError):
-            self.owner.record_result("run-1", "adapter", {"authorization": "Bearer secret"})
+            self.owner.record_result(
+                "run-1", "adapter", {"authorization": "Bearer secret"}, evidence_source=EVIDENCE_SOURCE_NATIVE
+            )
         with self.assertRaises(ValueError):
             self.owner.record_replay_metadata(
                 "run-1",
@@ -764,6 +772,123 @@ class ProviderAccessGateLedgerTests(unittest.TestCase):
             self.assertEqual(ledger[0]["classification"], "baseline")
             self.assertIn("provider_access_gate_ledger", reopened.snapshot())
             self.assertEqual(reopened.state_digest(), digest_before)
+
+
+class EvidenceSourceClassificationTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name)
+        self.db = self.root / "state" / "composition.sqlite3"
+        self.owner = CompositionOwner(self.db)
+
+    def tearDown(self) -> None:
+        self.owner.close()
+        self.tempdir.cleanup()
+
+    def _run(self, run_id: str = "run-1") -> None:
+        self.owner.create_run(run_id, "unit-test", {"prompt": "fixture"})
+        self.owner.start_run(run_id)
+
+    def test_record_result_requires_evidence_source(self) -> None:
+        self._run()
+        with self.assertRaises(TypeError):
+            self.owner.record_result("run-1", "adapter", {"x": 1}, "source")
+
+    def test_record_event_requires_evidence_source(self) -> None:
+        self._run()
+        with self.assertRaises(TypeError):
+            self.owner.record_event("run-1", "worker.started", {"x": 1})
+
+    def test_record_result_rejects_invalid_evidence_source(self) -> None:
+        self._run()
+        with self.assertRaises(ValueError):
+            self.owner.record_result("run-1", "adapter", {"x": 1}, "source", evidence_source="made-up")
+
+    def test_record_result_persists_and_round_trips_evidence_source(self) -> None:
+        self._run()
+        recorded = self.owner.record_result(
+            "run-1", "adapter", {"x": 1}, "source", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED
+        )
+        self.assertEqual(recorded["evidence_source"], EVIDENCE_SOURCE_OUTER_COMPOSED)
+        reopened = CompositionOwner(self.db)
+        try:
+            run = reopened.get_run("run-1")
+            self.assertEqual({r["evidence_source"] for r in run["results"]}, {EVIDENCE_SOURCE_OUTER_COMPOSED})
+        finally:
+            reopened.close()
+
+    def test_record_event_persists_evidence_source(self) -> None:
+        self._run()
+        recorded = self.owner.record_event(
+            "run-1", "worker.started", {"x": 1}, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED
+        )
+        self.assertEqual(recorded["evidence_source"], EVIDENCE_SOURCE_OUTER_COMPOSED)
+
+    def test_plugin_composed_is_an_allowed_evidence_source(self) -> None:
+        self._run()
+        recorded = self.owner.record_result(
+            "run-1", "adapter", {"x": 1}, "source", evidence_source=EVIDENCE_SOURCE_PLUGIN_COMPOSED
+        )
+        self.assertEqual(recorded["evidence_source"], EVIDENCE_SOURCE_PLUGIN_COMPOSED)
+
+    def test_schema_migration_adds_evidence_source_to_v1_database(self) -> None:
+        import sqlite3 as _sqlite
+        import os
+
+        self.owner.close()
+        # Start from a clean path: drop the v2 schema created by setUp so we can
+        # reconstruct a legacy v1 database by hand.
+        self.db.unlink()
+        # Build a v1 database by hand: no evidence_source column, user_version=1.
+        connection = _sqlite.connect(str(self.db))
+        connection.executescript(
+            """
+            CREATE TABLE owner_meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+            CREATE TABLE runs(
+                run_id TEXT PRIMARY KEY,
+                task_type TEXT NOT NULL,
+                input_json TEXT NOT NULL,
+                metadata_json TEXT NOT NULL,
+                status TEXT NOT NULL,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE results(
+                result_id TEXT PRIMARY KEY,
+                run_id TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                value_json TEXT NOT NULL,
+                source_id TEXT,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE events(
+                seq INTEGER PRIMARY KEY AUTOINCREMENT,
+                event_id TEXT NOT NULL UNIQUE,
+                run_id TEXT NOT NULL,
+                type TEXT NOT NULL,
+                payload_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            """
+        )
+        connection.execute("PRAGMA user_version = 1")
+        connection.commit()
+        connection.close()
+
+        with CompositionOwner(self.db) as migrated:
+            health = CompositionOwner._check_database_integrity(self.db)
+            self.assertGreaterEqual(health.get("user_version", 0), 2)
+            columns = {
+                row["name"]
+                for row in migrated._require_connection().execute("PRAGMA table_info(results)")
+            }
+            self.assertIn("evidence_source", columns)
+            migrated.create_run("run-1", "unit-test", {"prompt": "fixture"})
+            migrated.start_run("run-1")
+            recorded = migrated.record_result(
+                "run-1", "adapter", {"x": 1}, "source", evidence_source=EVIDENCE_SOURCE_NATIVE
+            )
+            self.assertEqual(recorded["evidence_source"], EVIDENCE_SOURCE_NATIVE)
 
 
 if __name__ == "__main__":

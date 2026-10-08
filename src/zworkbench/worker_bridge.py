@@ -26,7 +26,11 @@ from urllib.parse import urlsplit
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 
 from ._digest import sha256_json as _sha256_json
-from .composition import CompositionError, CompositionOwner
+from .composition import (
+    CompositionError,
+    CompositionOwner,
+    EVIDENCE_SOURCE_OUTER_COMPOSED,
+)
 from .subprocess_supervisor import LineStreamSupervisor, terminate_process
 from .worker_contract import (
     ComponentIdentity,
@@ -269,23 +273,25 @@ class WorkerBridge:
                 "worker.handshake.requested",
                 {"identity": request_identity.to_dict(), "message_type": request.message_type},
                 f"{child_run_id}:handshake-requested",
+                evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
             )
-            self.owner.record_result(child_run_id, "worker.handshake.request", request.to_dict(), f"{child_run_id}:handshake-request")
+            self.owner.record_result(child_run_id, "worker.handshake.request", request.to_dict(), f"{child_run_id}:handshake-request", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             response, exit_code = self._run_process(request, parent_run_id, child_run_id, attempt_id, timeout)
             self._raise_if_stop_requested()
             self._record_exit(child_run_id)
             if exit_code != 0:
                 raise WorkerBridgeError("Worker exited with a non-zero code", code="worker_exit_nonzero")
             result = self._validate_response(response, request)
-            self.owner.record_result(child_run_id, "worker.handshake", result.to_dict(), f"{child_run_id}:handshake")
+            self.owner.record_result(child_run_id, "worker.handshake", result.to_dict(), f"{child_run_id}:handshake", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             self.owner.complete_run(child_run_id, result.to_dict())
             self.owner.record_event(
                 parent_run_id,
                 "worker.handshake.completed",
                 result.to_dict(),
                 f"{child_run_id}:handshake-completed",
+                evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
             )
-            self.owner.record_result(parent_run_id, "worker.handshake", result.to_dict(), f"{child_run_id}:handshake")
+            self.owner.record_result(parent_run_id, "worker.handshake", result.to_dict(), f"{child_run_id}:handshake", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             return result
         except Exception as exc:
             error = exc if isinstance(exc, WorkerBridgeError) else WorkerBridgeError(str(exc), code="worker_bridge_failure")
@@ -409,8 +415,9 @@ class WorkerBridge:
                 "worker.coding.requested",
                 {"identity": request_identity.to_dict(), "message_type": request.message_type, "operation": "read_only_coding"},
                 f"{child_run_id}:coding-requested",
+                evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
             )
-            self.owner.record_result(child_run_id, "worker.coding.request", request.to_dict(), f"{child_run_id}:coding-request")
+            self.owner.record_result(child_run_id, "worker.coding.request", request.to_dict(), f"{child_run_id}:coding-request", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             handshake, coding, exit_code = self._run_coding_process(
                 request,
                 parent_run_id,
@@ -424,7 +431,7 @@ class WorkerBridge:
             if exit_code != 0:
                 raise WorkerBridgeError("Worker exited with a non-zero code", code="worker_exit_nonzero")
             handshake_result = self._validate_response(handshake, request)
-            self.owner.record_result(child_run_id, "worker.handshake", handshake_result.to_dict(), f"{child_run_id}:coding-handshake")
+            self.owner.record_result(child_run_id, "worker.handshake", handshake_result.to_dict(), f"{child_run_id}:coding-handshake", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             result = self._validate_coding_result(coding, request, handshake_result, artifact_root_path)
             if self._workspace_snapshot(workspace) != workspace_before:
                 raise WorkerBridgeError("Worker changed the case-local workspace", code="coding_workspace_changed")
@@ -432,10 +439,10 @@ class WorkerBridge:
             actual_paths = set(self._workspace_snapshot(artifact_root_path))
             if actual_paths != declared_paths:
                 raise WorkerBridgeError("Worker emitted undeclared coding artifacts", code="coding_artifact_set_mismatch")
-            self.owner.record_result(child_run_id, "worker.coding", result.to_dict(), f"{child_run_id}:coding")
+            self.owner.record_result(child_run_id, "worker.coding", result.to_dict(), f"{child_run_id}:coding", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             self.owner.complete_run(child_run_id, result.to_dict())
-            self.owner.record_event(parent_run_id, "worker.coding.completed", result.to_dict(), f"{child_run_id}:coding-completed")
-            self.owner.record_result(parent_run_id, "worker.coding", result.to_dict(), f"{child_run_id}:coding")
+            self.owner.record_event(parent_run_id, "worker.coding.completed", result.to_dict(), f"{child_run_id}:coding-completed", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
+            self.owner.record_result(parent_run_id, "worker.coding", result.to_dict(), f"{child_run_id}:coding", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             return result
         except Exception as exc:
             error = exc if isinstance(exc, WorkerBridgeError) else WorkerBridgeError(str(exc), code="worker_bridge_failure")
@@ -585,6 +592,7 @@ class WorkerBridge:
                 "recovery_parent_run_id": parent_run_id,
             },
             f"{parent_run_id}:worker-recovery:{recovery_of_child_run_id}",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
 
     def _request_lifecycle_stop(self, parent_run_id: str, *, reason: str, code: str) -> Dict[str, Any]:
@@ -614,18 +622,21 @@ class WorkerBridge:
             "worker.stop.requested",
             payload,
             f"{child_run_id}:worker-stop:{code}",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.record_result(
             child_run_id,
             "worker.stop",
             payload,
             f"{child_run_id}:worker-stop:{code}",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.record_event(
             parent_run_id,
             "worker.stop.requested",
             payload,
             f"{parent_run_id}:worker-stop:{code}:{child_run_id}",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         for run_id in (child_run_id, parent_run_id):
             try:
@@ -979,14 +990,14 @@ class WorkerBridge:
     def _record_failure(self, parent_run_id: str, child_run_id: str, error: WorkerBridgeError) -> None:
         payload = {"code": error.code, "error_type": type(error).__name__, "message": str(error)}
         try:
-            self.owner.record_result(child_run_id, "worker.error", payload, f"{child_run_id}:worker-error:{error.code}")
+            self.owner.record_result(child_run_id, "worker.error", payload, f"{child_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             self.owner.safe_stop_run(child_run_id, f"worker:{error.code}")
         except Exception:
             # The original error remains caller-visible; the owner is
             # inspected separately if a secondary ledger write fails.
             pass
         try:
-            self.owner.record_result(parent_run_id, "worker.error", payload, f"{parent_run_id}:worker-error:{error.code}")
+            self.owner.record_result(parent_run_id, "worker.error", payload, f"{parent_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             recoverable = error.code in {"worker_timeout", "worker_exit_timeout", "worker_exit_nonzero"}
             receipt = self._last_exit_receipt or {}
             cleanup_verified = receipt.get("process_group_clean") is True
@@ -1016,7 +1027,7 @@ class WorkerBridge:
     def _record_exit(self, child_run_id: str) -> None:
         if self._last_exit_receipt is None or self._exit_receipt_recorded:
             return
-        self.owner.record_result(child_run_id, "worker.exit", self._last_exit_receipt, f"{child_run_id}:worker-exit")
+        self.owner.record_result(child_run_id, "worker.exit", self._last_exit_receipt, f"{child_run_id}:worker-exit", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
         self._exit_receipt_recorded = True
 
     def _build_environment(

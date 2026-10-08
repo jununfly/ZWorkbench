@@ -39,6 +39,7 @@ from zworkbench import (  # noqa: E402
     ReplayIdentity,
     UNKNOWN,
 )
+from zworkbench.composition import EVIDENCE_SOURCE_OUTER_COMPOSED  # noqa: E402
 
 
 def digest_bytes(value: bytes) -> str:
@@ -74,8 +75,8 @@ def make_source(owner: CompositionOwner) -> str:
         },
     )
     owner.start_run("source-run")
-    owner.record_event("source-run", "fixture.started", {"source": "h5"})
-    owner.record_event("source-run", "fixture.observed", {"provider_requests": 0, "tool_invocations": 0})
+    owner.record_event("source-run", "fixture.started", {"source": "h5"}, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
+    owner.record_event("source-run", "fixture.observed", {"provider_requests": 0, "tool_invocations": 0}, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
     owner.complete_run("source-run", {"answer": "fixture-ok"})
     return OwnerBackedReplayService(owner).owner_event_digest("source-run")
 

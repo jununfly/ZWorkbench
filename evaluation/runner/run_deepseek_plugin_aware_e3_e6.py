@@ -66,7 +66,7 @@ from evaluation.runner.run_deepseek_config_migrate_adapter import (  # noqa: E40
     sha256_bytes,
     write_json,
 )
-from zworkbench.composition import CompositionOwner, InvalidTransition  # noqa: E402
+from zworkbench.composition import CompositionOwner, InvalidTransition, EVIDENCE_SOURCE_PLUGIN_COMPOSED  # noqa: E402
 
 
 def canonical(value: Any) -> bytes:
@@ -378,7 +378,7 @@ def owner_replay_case(case_dir: Path) -> dict[str, Any]:
         )
         live_policy = {"mode": "live_replay", "decision": "deny", "reason": "no-explicit-approval", "effect_count": 0}
         write_json(case_dir / "live-replay-policy.json", live_policy)
-        owner.record_result(run_id, "replay.policy", live_policy, "live-replay")
+        owner.record_result(run_id, "replay.policy", live_policy, "live-replay", evidence_source=EVIDENCE_SOURCE_PLUGIN_COMPOSED)
         owner.complete_run(run_id, {"status": "replay-boundary-verified", "plugin": "dsh-routing-suite"})
         run = owner.get_run(run_id)
         snapshot = owner.snapshot()
@@ -647,7 +647,7 @@ def e5_backup_restore(case_dir: Path) -> dict[str, Any]:
     with CompositionOwner(database) as owner:
         owner.create_run(run_id, "plugin-aware-lifecycle", {"plugin": CONFIG_PLUGIN})
         owner.start_run(run_id)
-        owner.record_result(run_id, "adapter", {"plugin": CONFIG_PLUGIN, "status": "fixture"}, "adapter")
+        owner.record_result(run_id, "adapter", {"plugin": CONFIG_PLUGIN, "status": "fixture"}, "adapter", evidence_source=EVIDENCE_SOURCE_PLUGIN_COMPOSED)
         owner.complete_run(run_id, {"status": "healthy"})
         source_digest = owner.state_digest()
         manifest = owner.backup(backup)

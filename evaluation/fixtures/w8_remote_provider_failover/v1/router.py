@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Mapping
 
 from zworkbench import RetryBudgetExhausted
+from zworkbench.composition import EVIDENCE_SOURCE_OUTER_COMPOSED
 
 
 SCHEMA = "zworkbench-w8-remote-provider-failover-fixture/v1"
@@ -66,7 +67,7 @@ class OwnerBackedProviderRouter:
         return cooldowns
 
     def _record(self, run_id: str, event_id: str, event_type: str, payload: Mapping[str, Any]) -> None:
-        self.owner.record_event(run_id, event_type, {"schema": SCHEMA, **dict(payload)}, event_id)
+        self.owner.record_event(run_id, event_type, {"schema": SCHEMA, **dict(payload)}, event_id, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
 
     def _available(self, logical_time: int, attempted: set[str] | None = None) -> list[ProviderRoute]:
         attempted = attempted or set()
@@ -101,7 +102,7 @@ class OwnerBackedProviderRouter:
                 "cooldown_snapshot": dict(self._cooldown_until),
             }
             self._record(run_id, f"{request_id}:decision:all-cooled", "provider.failover.decision", decision)
-            self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision")
+            self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             self.owner.record_provider_fallback(
                 run_id,
                 from_provider=None,
@@ -177,7 +178,7 @@ class OwnerBackedProviderRouter:
                     **failure.details,
                 }
                 self._record(run_id, f"{request_id}:decision:{attempt_number}", "provider.failover.decision", decision)
-                self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision:{attempt_number}")
+                self.owner.record_result(run_id, "provider.failover", decision, f"{request_id}:decision:{attempt_number}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
                 self.owner.record_provider_fallback(
                     run_id,
                     from_provider=route.provider_id,
@@ -229,7 +230,7 @@ class OwnerBackedProviderRouter:
                 "semantic": semantic,
                 "attempts": attempts,
             }
-            self.owner.record_result(run_id, "provider.route", result, f"{request_id}:route")
+            self.owner.record_result(run_id, "provider.route", result, f"{request_id}:route", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
             self.owner.complete_run(run_id, result)
             return result
 

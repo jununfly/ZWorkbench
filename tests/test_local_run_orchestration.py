@@ -11,6 +11,7 @@ from zworkbench import (
     LocalReadOnlyRunOrchestrator,
     ProviderProfile,
 )
+from zworkbench.composition import EVIDENCE_SOURCE_OUTER_COMPOSED
 
 
 class RecordingAdapter:
@@ -26,8 +27,8 @@ class RecordingAdapter:
         provider_identity = dict(self.config.provider_identity)
         self.owner.create_run(run_id, kwargs["task_type"], {"prompt": prompt}, metadata)
         self.owner.start_run(run_id)
-        self.owner.record_result(run_id, "adapter.fake", {"thread_id": "thread-1"}, "thread-1")
-        self.owner.record_result(run_id, "adapter.fake", {"turn_id": "turn-1"}, "turn-1")
+        self.owner.record_result(run_id, "adapter.fake", {"thread_id": "thread-1"}, "thread-1", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
+        self.owner.record_result(run_id, "adapter.fake", {"turn_id": "turn-1"}, "turn-1", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
         self.owner.record_replay_metadata(
             run_id,
             f"{run_id}:recorded-view",

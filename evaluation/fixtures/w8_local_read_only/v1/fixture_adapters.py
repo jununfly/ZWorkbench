@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from zworkbench import CodexExecution, CompositionOwner, LocalReadOnlyRunConfig
+from zworkbench.composition import EVIDENCE_SOURCE_OUTER_COMPOSED
 
 
 FIXTURE_ADAPTER_SCHEMA = "zworkbench-w8-local-read-only-fixture-adapter/v1"
@@ -90,18 +91,21 @@ class FixtureSuccessAdapter(_FixtureAdapter):
             "adapter.fixture.initialized",
             {"schema": FIXTURE_ADAPTER_SCHEMA, "network_requests": 0},
             "fixture-adapter",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.record_result(
             run_id,
             "adapter.fixture.thread",
             {"thread_id": FIXTURE_THREAD_ID},
             FIXTURE_THREAD_ID,
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.record_result(
             run_id,
             "adapter.fixture.turn",
             {"thread_id": FIXTURE_THREAD_ID, "turn_id": FIXTURE_TURN_ID},
             FIXTURE_TURN_ID,
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.record_replay_metadata(
             run_id,
@@ -174,6 +178,7 @@ class FixtureUnknownBoundaryAdapter(_FixtureAdapter):
                 "network_requests": 0,
             },
             "fixture-adapter",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
         )
         self.owner.safe_stop_run(
             run_id,

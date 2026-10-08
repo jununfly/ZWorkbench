@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from zworkbench.composition import CompositionOwner
+from zworkbench.composition import CompositionOwner, EVIDENCE_SOURCE_NATIVE
 from zworkbench.dsh_runtime import (
     DshBootstrapProtocolError,
     DshManifestError,
@@ -145,11 +145,11 @@ class DshRuntimeAdapterTests(unittest.TestCase):
             owner = CompositionOwner(Path(temporary) / "owner.sqlite3")
             try:
                 owner.create_run("run-event", "unit-test", {})
-                first = owner.record_event("run-event", "fixture.event", {"value": "ok"}, "event-1")
-                second = owner.record_event("run-event", "fixture.event", {"value": "ok"}, "event-1")
+                first = owner.record_event("run-event", "fixture.event", {"value": "ok"}, "event-1", evidence_source=EVIDENCE_SOURCE_NATIVE)
+                second = owner.record_event("run-event", "fixture.event", {"value": "ok"}, "event-1", evidence_source=EVIDENCE_SOURCE_NATIVE)
                 self.assertEqual(first["event_id"], second["event_id"])
                 with self.assertRaises(ValueError):
-                    owner.record_event("run-event", "fixture.event", {"token": "must-not-persist"})
+                    owner.record_event("run-event", "fixture.event", {"token": "must-not-persist"}, evidence_source=EVIDENCE_SOURCE_NATIVE)
             finally:
                 owner.close()
 

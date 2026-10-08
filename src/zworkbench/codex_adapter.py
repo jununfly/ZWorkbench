@@ -24,7 +24,11 @@ import tomllib
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Optional, Sequence
 
-from .composition import CompositionOwner, InvalidTransition
+from .composition import (
+    CompositionOwner,
+    EVIDENCE_SOURCE_OUTER_COMPOSED,
+    InvalidTransition,
+)
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 from .subprocess_supervisor import terminate_process
 
@@ -641,6 +645,7 @@ class CodexAppServerAdapter:
                     "safe_stopped": category in SAFE_STOP_CATEGORIES,
                 },
                 f"{run_id}:failure_classification",
+                evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
             )
         except Exception:
             # Recording must never mask the original provider failure.
@@ -668,7 +673,9 @@ class CodexAppServerAdapter:
 
     def _record(self, kind: str, source_id: str, value: Mapping[str, Any]) -> None:
         if self.active_run_id:
-            self.owner.record_result(self.active_run_id, kind, dict(value), source_id)
+            self.owner.record_result(
+                self.active_run_id, kind, dict(value), source_id, evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED
+            )
 
     def _append_event(self, value: Mapping[str, Any]) -> None:
         self.event_log.parent.mkdir(parents=True, exist_ok=True)
