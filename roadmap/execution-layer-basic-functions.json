@@ -154,7 +154,7 @@
       "id": "1-6",
       "uid": "01a11593d00c-58b1e75dca",
       "label": "唯一 owner 持久化（sub-03）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -701,37 +701,58 @@
       "id": "1-6-2",
       "uid": "01a115956487-08da1493ab",
       "label": "P1 run 级 attempt 一等实体决策",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "run 级 attempt 是否升为一等实体？",
+          "answer": "不升。runs 表保持无 attempt 列；run 级 retry 由 effect_attempts（effect 级一等实体）间接表达——一次 run 重试 = 重新 claim effect（attempt 自增）。owner 不持有 run 级 attempt 一等实体表。",
+          "note": "理由：1-6 sub-03 9 张 canonical 表已 IMPLEMENTED 基本可证；run 级 restart 预算是 sub-01 backlog(line 81) 的 UNKNOWN 项，当前不紧迫；不膨胀 schema 以最快收口 1-6 解 1-4-1/1-2 阻塞。固化后该 P1 缺口关闭，run 级 restart 预算仍作为独立 UNKNOWN backlog 跟踪。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6-3": {
       "id": "1-6-3",
       "uid": "01a1159565b6-66030d26b0",
       "label": "P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "无第二 canonical 怎么升为可审计契约？",
+          "answer": "实现 audit_owner_isolated()：枚举 owner 持有的全部用户表，断言恰为 _CANONICAL_TABLES（14 张 canonical 表）；任何额外用户表即判为第二 canonical state 并 fail。该审计测试（OwnerIsolatedAuditTests）即 CI 断言载体。",
+          "note": "复用 _check_database_integrity 的 required 表集合提为 _CANONICAL_TABLES 类常量（CompositionOwner）；审计测试覆盖正向（无额外表 owner_is_unique=True）与反向（second_canonical 表被识别为 non_canonical）。仓库暂无 CI yaml，测试套件为契约执行点（未来 CI 跑即断言）。1-6-3 收尾，1-6 仍 in_progress（剩 1-6-4）。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6-4": {
       "id": "1-6-4",
       "uid": "01a1159566ea-6bb03174cd",
       "label": "P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "unknown 术语怎么拆两层？",
+          "answer": "两层已分离且行为正确，固化为术语约定：(1) 远端/委托侧（provider/endpoint/account_scope、provider_remote_zero_residue）缺失→存字面 unknown / unknown/delegated（layer 1）；(2) 内部 durable identity 引用缺失→safe_stop(reason=identity_unresolved)，不存字面 unknown 值（layer 2，F13 已实现）。",
+          "note": "两层行为均已实现并测试（layer1: provider_exit_ledger 存 unknown；layer2: detect_identity_violations + safe_stop_on_identity_violation，test_replay/test_worker_bridge 覆盖）。1-6-4 补 UnknownTerminologyTwoLayerTests 锁定两层区分。1-6 全部子节点 completed→标记 1-6 completed；e9(1-6→1-4-1) 解除，1-4-1 解阻塞。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-7-1": {
       "id": "1-7-1",
@@ -1101,7 +1122,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 21:14:07",
+    "updated": "2026-10-08 21:30:21",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
