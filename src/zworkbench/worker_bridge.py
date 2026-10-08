@@ -59,6 +59,22 @@ class WorkerBridgeError(RuntimeError):
         self.safe_stop = True
 
 
+class FailStopError(WorkerBridgeError):
+    """Termination could not be proven clean; the run must fail-stop.
+
+    A run may only be reported as a clean terminal (``safe_stopped`` /
+    ``completed``) when its process-group cleanup was provably clean
+    (``process_group_clean is True``).  When the verdict is ``False`` (proven
+    dirty) or ``None`` (unverifiable), the termination is unhandleable and the
+    operation must fail-stop: force the run to ``failed`` and surface this
+    error, never silently degrading to a clean success.
+    """
+
+    def __init__(self, message: str, *, code: str):
+        super().__init__(message, code=code)
+        self.safe_stop = False
+
+
 @dataclass(frozen=True)
 class WorkerHandshakeResult:
     """The identity-bound result of one successful Worker handshake."""
@@ -973,6 +989,10 @@ class WorkerBridge:
             if len(actual_bytes) != byte_count or actual_digest != digest_value:
                 raise WorkerBridgeError("Worker coding artifact digest does not match", code="coding_artifact_digest_mismatch")
             checked_artifacts[name] = {"path": path_value, "digest": digest_value, "bytes": byte_count}
+        # Fail-stop contract: a "completed" Worker result is impossible when
+        # the termination was not provably clean.  This guards the happy path
+        # before the caller issues complete_run on the parent Run.
+        self.assert_clean_termination()
         return WorkerCodingResult(
             identity=response.identity,
             provider_identity=response.provider_identity,
@@ -988,24 +1008,63 @@ class WorkerBridge:
             exit_code=self._last_exit_receipt["exit_code"] if self._last_exit_receipt else 0,
         )
 
+    def assert_clean_termination(self) -> None:
+        """Fail-stop if the last Worker termination was not provably clean.
+
+        See :class:`FailStopError`.  A run may only be reported as a clean
+        terminal (``safe_stopped`` / ``completed``) when ``process_group_clean``
+        is ``True``.  Any other verdict (``False`` = proven dirty, ``None`` =
+        unverifiable) is unhandleable and must fail-stop rather than be silently
+        reported as a clean success.
+        """
+
+        with self._state_lock:
+            clean = self._process_group_clean
+        if clean is not True:
+            raise FailStopError(
+                "Worker termination not provably clean; refusing clean terminal",
+                code="worker_cleanup_unverified",
+            )
+
     def _record_failure(self, parent_run_id: str, child_run_id: str, error: WorkerBridgeError) -> None:
         payload = {"code": error.code, "error_type": type(error).__name__, "message": str(error)}
         try:
             self.owner.record_result(child_run_id, "worker.error", payload, f"{child_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
-            self.owner.safe_stop_run(child_run_id, f"worker:{error.code}")
+            child_receipt = self._last_exit_receipt or {}
+            if child_receipt.get("process_group_clean") is True:
+                self.owner.safe_stop_run(child_run_id, f"worker:{error.code}")
+            else:
+                # The child's own termination was not provably clean; fail-stop
+                # it instead of silently safe-stopping.
+                self.owner.fail_run(child_run_id, "worker:child-cleanup-unverified")
         except Exception:
             # The original error remains caller-visible; the owner is
             # inspected separately if a secondary ledger write fails.
             pass
         try:
             self.owner.record_result(parent_run_id, "worker.error", payload, f"{parent_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
-            recoverable = error.code in {"worker_timeout", "worker_exit_timeout", "worker_exit_nonzero"}
             receipt = self._last_exit_receipt or {}
             cleanup_verified = receipt.get("process_group_clean") is True
-            if self.recovery_mode and recoverable and cleanup_verified:
+            if not cleanup_verified:
+                # Fail-stop: the Worker termination could not be proven clean.
+                # Do not silently safe-stop a run whose process group was not
+                # reaped.  The authoritative action is raising FailStopError;
+                # the fail_run attempt below is best-effort.
+                try:
+                    self.owner.fail_run(parent_run_id, "worker:cleanup-unverified")
+                except Exception:
+                    pass
+                raise FailStopError(
+                    "Worker termination not provably clean; fail-stop",
+                    code="worker_cleanup_unverified",
+                )
+            recoverable = error.code in {"worker_timeout", "worker_exit_timeout", "worker_exit_nonzero"}
+            if self.recovery_mode and recoverable:
                 self.owner.begin_recovery(parent_run_id, f"worker:{error.code}")
             else:
                 self.owner.safe_stop_run(parent_run_id, f"worker:{error.code}")
+        except FailStopError:
+            raise
         except Exception:
             # A failed recovery transition is fail-closed.  Do not turn a
             # partially observed lifecycle into a completed or retryable run.
@@ -1179,8 +1238,24 @@ class WorkerBridge:
                 self._termination_forced = True
             try:
                 os.killpg(process_group_id, signal.SIGKILL)
-            except (ProcessLookupError, PermissionError):
+            except ProcessLookupError:
+                # Group already reaped; nothing to clean.
                 pass
+            except PermissionError:
+                # Cannot signal the group: cleanup is unverifiable.  Leave the
+                # verdict as not-clean so the terminal boundary fail-stops
+                # instead of silently declaring a clean termination.
+                with self._state_lock:
+                    self._process_group_clean = None
+                    self._orphan_processes = None
+                return False
+            except OSError as exc:
+                # Any other OS error during escalation is unhandleable ->
+                # fail-stop, not a silent swallow.
+                raise FailStopError(
+                    f"Process group {process_group_id} cleanup escalation failed: {exc}",
+                    code="process_group_cleanup_failed",
+                ) from exc
             clean = self._wait_for_process_group_exit(process_group_id, DEFAULT_PROCESS_STOP_TIMEOUT)
         # Orphan sweep: setsid-escaped descendants survive killpg and must be
         # reaped explicitly.  ``None`` means enumeration was unsupported ->
@@ -1191,8 +1266,13 @@ class WorkerBridge:
             for orphan_pid in orphans:
                 try:
                     os.kill(orphan_pid, signal.SIGKILL)
-                except (ProcessLookupError, PermissionError):
+                except ProcessLookupError:
                     pass
+                except OSError as exc:
+                    raise FailStopError(
+                        f"Orphan cleanup failed for pid {orphan_pid}: {exc}",
+                        code="orphan_cleanup_failed",
+                    ) from exc
             orphan_count = len(orphans)
             if orphan_count > 0:
                 clean = False
