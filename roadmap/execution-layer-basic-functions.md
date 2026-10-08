@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 16:07:04
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 20:43:45
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -20,9 +20,9 @@
 │   ├── [x][Y+] 1-3-3. P1 常驻服务 runtime registry，强制 ≤3 上限
 │   ├── [x][Y+] 1-3-4. P1 fail-stop 升级契约（不可处理→fail-stop，非 silent unknown）
 │   └── [x][Y+] 1-3-5. C7 真实世界退出记账（safe-stop Provider-side：远端 retention/账单/本地退出≠Provider 退出，owner-backed 证据补齐）
-├── [!][Y+] 1-4. 执行层 effect 授权（sub-04）
-│   ├── [ ][Y+] 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）
-│   ├── [ ][Y+] 1-4-2. P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验
+├── [~][Y+] 1-4. 执行层 effect 授权（sub-04）
+│   ├── [!][Y+] 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）
+│   ├── [x][Y+] 1-4-2. P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验
 │   ├── [ ][Y+] 1-4-3. P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）
 │   └── [ ][Y+] 1-4-4. P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试
 ├── [ ][Y+] 1-5. Run 生命周期编排（sub-01）
@@ -63,7 +63,7 @@
 <details><summary>阻塞链：2 个节点被阻塞</summary>
 
 - 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7） ← e6: 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」 [ ]
-- 1-4. 执行层 effect 授权（sub-04） ← e1: 1-6. 唯一 owner 持久化（sub-03） [~]
+- 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程） ← e9: 1-6. 唯一 owner 持久化（sub-03） [~]
 
 </details>
 

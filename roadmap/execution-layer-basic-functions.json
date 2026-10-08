@@ -114,7 +114,7 @@
       "id": "1-4",
       "uid": "01a11593cd8f-55ee8e305e",
       "label": "执行层 effect 授权（sub-04）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -123,9 +123,16 @@
         "1-4-3",
         "1-4-4"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "e1 阻塞如何收窄？",
+          "answer": "用户确认：e1 的 to 从 1-4 收窄为 1-4-1，仅 '给 owner schema 加 declared_side_effects/exposure 字段' 受 1-6 硬前置约束；1-4-2/3/4 不依赖 1-6，立即可开工。",
+          "note": "放宽了原 'sub-03 硬前置 sub-04 整体' 裁定，改为按 schema 耦合粒度收窄：仅 1-4-1 改 owner schema；1-4-2 case-local / 1-4-3 finally 闭合 / 1-4-4 read-only 二选一 不碰 owner schema 形态"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5": {
       "id": "1-5",
@@ -582,13 +589,20 @@
       "id": "1-4-2",
       "uid": "01a115955be0-ebaca431d6",
       "label": "P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "resource==worktree_path 断言是否与产品逻辑资源名冲突？",
+          "answer": "不冲突。write_seam.apply_diff 的 resource 约定本就是 worktree 路径（CLI e2e test_cli_write、seam 测试、orchestrator 测试均 resource=str(worktree)）；C4 approval runner 用逻辑资源名 'case-effect-target' 但走 worker_contract/effect-ledger 另一套机制，不调 write_seam.apply_diff，故不受影响。断言按字面实现、fail-closed。",
+          "note": "case_root 以关键字参数注入 WriteSeam/WriteRunOrchestrator，默认 None 向后兼容（旧 case_root=None 路径回归全绿）。repo 指纹 = create_worktree 时 base_ref HEAD，apply_diff 前重算 worktree HEAD 比对，篡改即 DiffApplyError"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-3": {
       "id": "1-4-3",
@@ -1073,16 +1087,10 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 16:07:04",
+    "updated": "2026-10-08 20:43:45",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
-    {
-      "id": "e1",
-      "from": "01a11593d00c-58b1e75dca",
-      "to": "01a11593cd8f-55ee8e305e",
-      "type": "blocks"
-    },
     {
       "id": "e3",
       "from": "01a11593d26f-eec051e58f",
@@ -1118,7 +1126,13 @@
       "from": "01a1159f3805-1ede85fb74",
       "to": "01a11593cc59-8bb29491ec",
       "type": "derives-from"
+    },
+    {
+      "id": "e9",
+      "from": "01a11593d00c-58b1e75dca",
+      "to": "01a115955a8f-397b912e67",
+      "type": "blocks"
     }
   ],
-  "edge_seq": 8
+  "edge_seq": 9
 }
