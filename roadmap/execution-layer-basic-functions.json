@@ -89,7 +89,7 @@
       "id": "1-3",
       "uid": "01a11593cc59-8bb29491ec",
       "label": "终止与资源生命周期（sub-07）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -99,9 +99,16 @@
         "1-3-4",
         "1-3-5"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-3-1 实现策略与平台边界？",
+          "answer": "TDD：新增模块级 detect_orphan_processes(root_pid)，在 leader 仍存活时快照进程树，筛出 session 逃逸(setsid)的后代，于 _ensure_process_group_clean 中 SIGKILL 并计数；枚举不可用(无 ps)时 fail-closed 报 UNKNOWN，绝不报 0",
+          "note": "契合 codebase unknown/delegated 口径与 AGENTS fail-closed 约束；orphan_processes 用真实计数，杜绝 setsid 子进程误报为 0"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4": {
       "id": "1-4",
@@ -484,11 +491,17 @@
       "id": "1-3-1",
       "uid": "01a11594f86e-61d3652fc2",
       "label": "P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "setsid 逃逸孤儿检测在 macOS 沙箱/受限环境下能否验证？",
+          "answer": "否：本机 Bash 沙箱禁止 ps（operation not permitted），_iter_all_processes 返回 None -> receipt 记 UNKNOWN；纯逻辑(_find_orphans_in_tree)已用注入进程树确定性单测覆盖，活体 setsid 检测测试(OrphanLiveTest)在 ps 可用主机自动运行、此处 skip",
+          "note": "生产运行时(用户真实 Terminal)ps 可用，检测生效；UNKNOWN 兜底保证不误报 0，符合 fail-closed"
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -496,23 +509,41 @@
       "id": "1-3-2",
       "uid": "01a11594f9a5-768db9864b",
       "label": "P1 退出账本对称接线（调用点配对：谁在何时记哪边）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-3-2 退出账本对称接线：配对契约与接线策略？",
+          "answer": "契约：本地账本(worker.exit/dsh.exit/codex result)由拥有本地进程/资源的 adapter 在其终止点记录；Provider 侧账本(provider_exit_ledger)由知道真实 provider_identity 的 adapter/harness 在同一终止点记录，每 run 恰好一次。接线：新增 record_provider_exit_ledger_once（幂等，已存在则跳过），在 worker_bridge._record_exit、codex_adapter 终止点、dsh_runtime 终止点各记一次，local_run 改用 _once 作兜底，保证两端对称且不重复。",
+          "note": "契合 codebase unknown/delegated 口径与单 durable owner 原则；append-only API 保留（既有多条目测试不动），幂等由 _once 保证；消除 worker 路径缺 Provider 账本的缺口"
+        },
+        {
+          "q": "dsh_runtime 失败终端如何取 provider_identity？",
+          "answer": "在 execute 加载 manifest 后缓存 self._provider_identity，_record_failure 用 self._provider_identity or {}（manifest 未加载时记为 unknown，fail-closed）",
+          "note": "避免 NameError 且失败路径仍能配对 Provider 账本；manifest 加载前失败的 run 本就无法确定 provider，记 unknown 合理"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-3": {
       "id": "1-3-3",
       "uid": "01a11594fad3-6f9ea2aab4",
       "label": "P1 常驻服务 runtime registry，强制 ≤3 上限",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-3-3 常驻服务 registry 契约与边界？",
+          "answer": "契约：新增 ResidentServiceRegistry（线程安全、容量默认3、超额 fail-closed 抛 ResidentServiceCapacityError）；作为 CompositionOwner 内存 owned state（不持久化——进程/资源状态依设计文档只能是 evidence），每 owner 每进程独立。接线：CodexAppServerAdapter(start acquire/close release) + DshRuntimeAdapter(execute acquire 放 try 外、finally release)。边界：WorkerBridge 不接线——它是 per-child-run 任务进程，由进程组+supervisor 单独管理，语义上非'常驻服务'，≤3 护栏只针对 server/daemon 型常驻执行器，避免误伤任务级并发。dsh acquire 容量满直接 fail-closed 传播，不被 _record_failure 误记成 dsh 失败。",
+          "note": "契合 sub-07 Backlog #3 与 fail-closed 原则；per-owner 容量边界 = 单次执行会话护栏；WorkerBridge 排除理由明确可复核；release 幂等保证 close 前置/重复调用不崩"
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1023,7 +1054,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 13:40:04",
+    "updated": "2026-10-08 14:55:50",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
