@@ -238,7 +238,7 @@ class LocalReadOnlyRunOrchestrator:
                 # Even a failed run engaged the provider; record the owner-owned,
                 # unknown/delegated exit accounting before re-raising.
                 try:
-                    owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
+                    owner.record_provider_exit_ledger_once(run_id, self.config.provider_identity)
                 except Exception:
                     pass
                 # The Provider-access gate decision is admission-level; record it
@@ -255,7 +255,7 @@ class LocalReadOnlyRunOrchestrator:
             # default (loopback/fake) path has no real remote provider, so the
             # caliber is unknown/delegated by construction — no remote zero-residue
             # proof is ever claimed.
-            owner.record_provider_exit_ledger(run_id, self.config.provider_identity)
+            owner.record_provider_exit_ledger_once(run_id, self.config.provider_identity)
             # Record the Provider-access gate decision for this run: the boundary
             # between the loopback/fake baseline and a real Provider must be
             # explicit and auditable.  Preflight has already denied any real

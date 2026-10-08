@@ -377,6 +377,7 @@ class DshRuntimeAdapter:
         self._active_command: Optional[Tuple[str, ...]] = None
         self._last_exit_receipt: Optional[Dict[str, Any]] = None
         self._exit_receipt_recorded = False
+        self._provider_identity: Optional[Dict[str, Any]] = None
 
     def execute(
         self,
@@ -409,12 +410,25 @@ class DshRuntimeAdapter:
             run_metadata,
         )
         self.owner.start_run(run_id)
+        # Resident runtime registry: claim a slot before launching the long-lived
+        # DSH bootstrap process (sub-07 Backlog #3). Acquired outside the try so
+        # a capacity failure propagates fail-closed instead of being recorded as
+        # a DSH failure. Released in the finally below.
+        self.owner.resident_registry.acquire(run_id, "dsh-runtime")
         try:
             manifest = DshRuntimeManifest.load(self.manifest_path)
+            self._provider_identity = dict(manifest.data["provider_identity"])
             self._validate_case_paths(manifest)
             self.owner.record_result(run_id, "dsh.preflight", manifest.identity(), f"{run_id}:dsh-preflight", evidence_source=EVIDENCE_SOURCE_NATIVE)
             execution = self._run_process(run_id, manifest, timeout)
             self.owner.complete_run(run_id, execution.to_dict())
+            # Symmetric Provider-side ledger: recorded at the same terminal
+            # boundary as the local dsh.exit / dsh.bootstrap result, exactly
+            # once per run.
+            try:
+                self.owner.record_provider_exit_ledger_once(run_id, execution.provider_identity)
+            except Exception:
+                pass
             return execution
         except Exception as exc:
             self._stop_process()
@@ -427,6 +441,7 @@ class DshRuntimeAdapter:
                 raise
             raise DshRuntimeError(str(exc), code="h1_unexpected_failure") from exc
         finally:
+            self.owner.resident_registry.release(run_id)
             self._stop_process()
 
     def _validate_case_paths(self, manifest: DshRuntimeManifest) -> None:
@@ -687,6 +702,9 @@ class DshRuntimeAdapter:
             run = self.owner.get_run(run_id)
             if run["status"] in {"created", "running", "waiting_approval", "recovering"}:
                 self.owner.safe_stop_run(run_id, f"dsh:{code}")
+            # Symmetric Provider-side ledger: paired with the local dsh.exit /
+            # dsh.error accounting, recorded exactly once per run.
+            self.owner.record_provider_exit_ledger_once(run_id, self._provider_identity or {})
         except Exception:
             # The original runtime failure remains the caller-visible error;
             # the owner database is inspected separately if this ledger write

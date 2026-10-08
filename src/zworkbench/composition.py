@@ -36,6 +36,8 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
 
+from .resident_service_registry import ResidentServiceRegistry
+
 
 SCHEMA = "zworkbench-composition-owner/v1"
 SCHEMA_VERSION = 2
@@ -141,6 +143,10 @@ class CompositionOwner:
         self._connection.row_factory = sqlite3.Row
         self._configure_connection()
         self._initialize_schema()
+        # In-process capacity guardrail for resident services (sub-07 Backlog #3).
+        # Runtime state only — never persisted; a freshly opened owner gets an
+        # empty registry, matching the per-session boundary.
+        self.resident_registry = ResidentServiceRegistry()
 
     def close(self) -> None:
         """Close the owner connection."""
@@ -1046,6 +1052,40 @@ class CompositionOwner:
                 },
             )
         return self.get_provider_exit_ledger(ledger_id)
+
+    def record_provider_exit_ledger_once(
+        self,
+        run_id: str,
+        provider_identity: Mapping[str, Any],
+        *,
+        caliber: str = "unknown/delegated",
+        local_state_fingerprint: str = "unknown",
+    ) -> Dict[str, Any]:
+        """Record the Provider-side exit ledger at most once per run.
+
+        This is the symmetric counterpart to the adapter-local exit ledger
+        (e.g. ``worker.exit`` / ``dsh.exit``).  Every termination path that
+        knows the real ``provider_identity`` records it at the same boundary
+        where it records its local resource teardown, so the two ledgers are
+        *paired* rather than written at unrelated layers.
+
+        Idempotent: if a ledger entry already exists for ``run_id`` (recorded
+        by the harness or another adapter sharing the run), the existing entry
+        is returned and nothing new is appended.  This keeps the default
+        append-only ``record_provider_exit_ledger`` semantics intact (the
+        multi-entry journal contract is unchanged) while guaranteeing a single
+        Provider-side accounting per run across the harness and adapter layers.
+        """
+
+        existing = self.provider_exit_ledger_for_run(run_id)
+        if existing:
+            return existing[0]
+        return self.record_provider_exit_ledger(
+            run_id,
+            provider_identity,
+            caliber=caliber,
+            local_state_fingerprint=local_state_fingerprint,
+        )
 
     def get_provider_exit_ledger(self, ledger_id: str) -> Dict[str, Any]:
         """Read one provider-exit ledger entry by id."""
