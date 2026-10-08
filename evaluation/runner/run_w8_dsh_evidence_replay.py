@@ -32,6 +32,7 @@ from zworkbench import (
     CassetteIdentity,
     ComponentIdentity,
     CompositionOwner,
+    IdentityChain,
     OwnerBackedReplayService,
     ProviderIdentity,
     ReplayIdentity,
@@ -156,7 +157,20 @@ def make_identity(
     provider_identity_dict: Dict[str, Any],
     cassette_id: str,
     cassette_digest: str,
+    dsh_session_id: str,
 ) -> ReplayIdentity:
+    identity_chain = IdentityChain(
+        parent_run_id=RUN_ID,
+        child_run_id=f"{RUN_ID}-child",
+        attempt_id=f"{RUN_ID}-attempt-1",
+        dsh_session_id=dsh_session_id,
+        dsh_turn_id=f"{RUN_ID}-dsh-turn-1",
+        worker_run_id=f"{RUN_ID}-worker-1",
+        codex_thread_id=f"{RUN_ID}-codex-thread-1",
+        codex_turn_id=f"{RUN_ID}-codex-turn-1",
+        event_id=f"{RUN_ID}-event-1",
+        artifact_id=f"{RUN_ID}-artifact-1",
+    )
     return ReplayIdentity(
         harness_identity=ComponentIdentity(
             manifest["schema_identity"]["name"],
@@ -172,6 +186,7 @@ def make_identity(
             "dsh-fixture",
         ),
         provider_identity=ProviderIdentity(**provider_identity_dict),
+        identity_chain=identity_chain,
         tool_schema_digest=digest_bytes(json.dumps(manifest["profile"], sort_keys=True).encode("utf-8")),
         policy_digest=manifest["policy_identity"]["digest"],
         workspace_digest=digest_bytes(json.dumps(manifest["workspace"], sort_keys=True).encode("utf-8")),
@@ -205,6 +220,7 @@ def run_case(output_dir: Path, name: str) -> Dict[str, Any]:
             provider_identity_dict,
             cassette_id,
             digest_file(cassette_path),
+            dsh_session_id=semantic_result["dsh_session_id"],
         )
         service = OwnerBackedReplayService(owner)
         before_digest = owner.state_digest()
