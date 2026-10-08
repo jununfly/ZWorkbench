@@ -627,13 +627,20 @@
       "id": "1-4-4",
       "uid": "01a115955e69-179d5b622c",
       "label": "P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "read-only 二选一落文采用哪条？",
+          "answer": "采用 (a) preflight 准入即授权、不进 claim seam；二选一中的 (b) read-only effect class 路径未采用。代码已确认 local_run 不调用 claim_effect（claim_effect 仅 write_seam S2 路径调用），故 (a) 当下已是实际行为，本节点将其从 Backlog 建议提升为权威边界并补测试固化。",
+          "note": "落文：ta-execution-effect-authorization.md 的 Boundaries/基线 effect 清单表/read-only 表行/Backlog#4 三处同步改为 (a) 权威；补充 tests/test_local_run_orchestration.py 两个测试（completed run 零 effects 行 + denied preflight 无 effects 表）固化不变式。1-4-4 收尾，1-4 仍 in_progress（1-4-1 仍被 e9 卡，需先收 1-6）。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-1": {
       "id": "1-5-1",
@@ -1094,7 +1101,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 20:58:04",
+    "updated": "2026-10-08 21:14:07",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
