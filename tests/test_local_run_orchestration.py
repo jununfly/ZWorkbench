@@ -77,6 +77,49 @@ class RaisingAdapter:
         self.closed = True
 
 
+class NonClosingAdapter:
+    """Like RecordingAdapter but deliberately omits the terminal ``complete_run``.
+
+    Exercises the 1-4-3 local_run finally anchor: when an adapter returns a
+    successful execution without closing the run, local_run must close it.
+    """
+
+    def __init__(self, owner: CompositionOwner, config: LocalReadOnlyRunConfig) -> None:
+        self.owner = owner
+        self.config = config
+        self.closed = False
+        self.calls = []
+
+    def execute(self, run_id: str, prompt: str, **kwargs):
+        self.calls.append((run_id, prompt, kwargs))
+        metadata = kwargs["metadata"]
+        provider_identity = dict(self.config.provider_identity)
+        self.owner.create_run(run_id, kwargs["task_type"], {"prompt": prompt}, metadata)
+        self.owner.start_run(run_id)
+        self.owner.record_replay_metadata(
+            run_id,
+            f"{run_id}:recorded-view",
+            "recorded_view",
+            "event-digest",
+            "environment-digest",
+            provider_identity,
+        )
+        return CodexExecution(
+            run_id,
+            "thread-1",
+            "turn-1",
+            "completed",
+            "fixture-ok",
+            provider_identity,
+            "event-digest",
+            "environment-digest",
+            2,
+        )
+
+    def close(self) -> None:
+        self.closed = True
+
+
 class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
     def test_passed_preflight_runs_one_owner_backed_adapter_and_returns_result(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -160,7 +203,7 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
             self.assertEqual(factory_calls, [])
             self.assertFalse(config.database.exists())
 
-    def test_adapter_failure_closes_adapter_and_preserves_owner_state(self) -> None:
+    def test_adapter_failure_closes_run_as_failed_via_finally_anchor(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             workspace = root / "workspace"
@@ -196,7 +239,9 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
             self.assertEqual(len(adapters), 1)
             self.assertTrue(adapters[0].closed)
             with CompositionOwner(config.database) as owner:
-                self.assertEqual(owner.get_run("run-failed")["status"], "running")
+                # 1-4-3 统一 run 闭合锚点: adapter 异常未闭合时，local_run
+                # finally 兜底 fail_run，run 不再悬在 running。
+                self.assertEqual(owner.get_run("run-failed")["status"], "failed")
 
     def test_default_path_records_unknown_delegated_exit_ledger_on_success(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -278,6 +323,85 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
                 ledger = owner.provider_exit_ledger_for_run("run-failed")
                 self.assertEqual(len(ledger), 1)
                 self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
+
+
+    def test_run_closes_run_in_finally_when_adapter_leaves_it_running(self) -> None:
+        # 1-4-3: a successful adapter that does NOT close the run must be closed
+        # by the local_run finally anchor (defense-in-depth), not left running.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = NonClosingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-nonclosing",
+                "adapter returns without complete_run",
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertTrue(adapters[0].closed)
+            with CompositionOwner(config.database) as owner:
+                self.assertEqual(owner.get_run("run-nonclosing")["status"], "completed")
+
+    def test_run_idempotent_closure_when_adapter_already_completed(self) -> None:
+        # 1-4-3: when the adapter already closed the run, the finally anchor must
+        # skip (idempotent) instead of raising InvalidTransition on re-close.
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RecordingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-idempotent",
+                "adapter already completed the run",
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertTrue(adapters[0].closed)
+            with CompositionOwner(config.database) as owner:
+                self.assertEqual(owner.get_run("run-idempotent")["status"], "completed")
 
 
 class ProviderAccessGateTests(unittest.TestCase):
