@@ -65,7 +65,7 @@
       "id": "1-2",
       "uid": "01a11593cb26-0680b160c0",
       "label": "证据与回放（sub-06）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -147,7 +147,8 @@
         "1-6-1",
         "1-6-2",
         "1-6-3",
-        "1-6-4"
+        "1-6-4",
+        "1-6-5"
       ],
       "decisions": [
         {
@@ -444,13 +445,40 @@
       "id": "1-2-4",
       "uid": "01a11594f73c-3f64c6b17f",
       "label": "P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "字段落点：evidence_source 加在哪几张表？",
+          "answer": "results + events 两张 owner 耐久证据表都加。results 是规范观察/证据存储；events 的 adapter message 按方法论文档明确属 evidence。effects.external_receipt_json 是 receipt 非观察分类，本节点不动（如需另开切片）。",
+          "note": ""
+        },
+        {
+          "q": "强制分类如何落地（fail-closed 强度）？",
+          "answer": "公共 seam record_result/record_event 的 evidence_source 为必填参数，缺失或非法枚举即 raise（fail-closed）；DB 列 evidence_source TEXT 可空，存量行保留 NULL=unknown（不撒谎补默认），仅对新插入强制分类。",
+          "note": ""
+        },
+        {
+          "q": "枚举取值是什么？",
+          "answer": "native / plugin-composed / outer-composed 三值，与方法论文档及节点 label 一致；模块常量 EVIDENCE_SOURCE_NATIVE / EVIDENCE_SOURCE_PLUGIN_COMPOSED / EVIDENCE_SOURCE_OUTER_COMPOSED + _validate_evidence_source 校验助手。",
+          "note": ""
+        },
+        {
+          "q": "schema 迁移策略？",
+          "answer": "SCHEMA_VERSION 1->2；_initialize_schema 在 user_version<2 时对存量 DB 执行 ALTER TABLE results/effects? 否：ALTER TABLE results/effects 仅 results 与 events ADD COLUMN evidence_source TEXT（无 NOT NULL、无假默认）；新 DB 由 CREATE TABLE 直接带列。",
+          "note": ""
+        },
+        {
+          "q": "现有调用方如何分类？",
+          "answer": "owner 内部事件/结果：默认 native（harness 自身生成）；外部 adapter：worker_bridge/codex_adapter -> outer-composed（adapter/worker 提供行为）；dsh_runtime -> native（DSH 主 Harness 自身观察）；evaluation fixtures/runners -> outer-composed（fixture 提供行为）。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -962,11 +990,40 @@
       "decisions": [],
       "notes": "",
       "layer": "plan"
+    },
+    "1-6-5": {
+      "id": "1-6-5",
+      "uid": "0111b6158d12-b6dedfa8dc",
+      "label": "P1 create_run 不拒密：run input/metadata 归 redaction 模型（owner 存原始、view 遮罩），值级拒密仅限外部 evidence 落库 seam",
+      "status": "completed",
+      "mode": "exploit",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [
+        {
+          "q": "create_run 是否应值级拒密（secret-shaped value）？",
+          "answer": "否。create_run 存储的是 harness 自身的 run 定义（input prompt / metadata），属 redaction 模型管辖：owner 是可信原始存储，投影安全由 view 层遮罩保证（见 test_ui_view_model.RedactingBeforeTheViewSeesAnythingTests）。值级拒密(_reject_raw_credentials)只应用于真正的外部 evidence 落库 seam。",
+          "note": "撤销 373889e 在 create_run 加的 input/metadata 拒密；该拒密与 redaction 架构冲突，导致 7 个 view 层遮罩测试长期失败"
+        },
+        {
+          "q": "值级拒密的正确落点？",
+          "answer": "record_result/record_event 的 value/payload（外部 adapter 观测）、record_replay_metadata、external_receipt、各 provider ledger（1-6-1 的外部 evidence 范围）。run 自身状态不在此列。",
+          "note": "1-6-1 决策中『owner 全部 evidence writer 统一获得值级拒密』的 create_run 部分被本节点精确收窄"
+        },
+        {
+          "q": "test_owner_evidence_writers_reject_raw_credentials 如何处理？",
+          "answer": "移除其中 create_run 断言（不再成立），保留 record_result / record_replay_metadata 两处外部 evidence seam 断言，并加注释说明 create_run 属 redaction 模型。",
+          "note": ""
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 11:35:16",
+    "updated": "2026-10-08 13:40:04",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
