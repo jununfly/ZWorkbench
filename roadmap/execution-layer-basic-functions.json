@@ -371,25 +371,74 @@
       "id": "1-2-2",
       "uid": "01a11594f4dd-87a0d7d102",
       "label": "P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "空串识别为缺失的判定口径？",
+          "answer": "None / 'unknown' / 空字符串 / 纯空白字符串 均视为缺失（_is_missing(v)=not isinstance(v,str) or v.strip()==''，外加 UNKNOWN 哨兵）。构造期 _text 已拦截空串，本项是在 missing_fields/is_complete 完备性 API 层做防御性硬化与 identity 层口径统一。",
+          "note": ""
+        },
+        {
+          "q": "空串修复覆盖哪些 identity 面？",
+          "answer": "四个面统一：IdentityChain.missing_fields、ComponentIdentity.missing_fields、ProviderIdentity.is_complete、ReplayIdentity.missing_fields 的 digest 检查。与 sub-02/sub-03 的 identity 层统一。",
+          "note": ""
+        },
+        {
+          "q": "1-2-2 完成验收闸门？",
+          "answer": "回归测试覆盖四类证据且现有 test_replay/test_w8 不红：(1) IdentityChain 空/纯空白 dsh_session_id → missing_fields 报出；(2) ReplayIdentity 空 digest → missing；(3) provenance dict 含 identity_chain；(4) replay missing_replay_identity 能被空 session id 触发。",
+          "note": ""
+        },
+        {
+          "q": "provenance↔IdentityChain 会话级关联如何实现？",
+          "answer": "选 A：给 ReplayIdentity 增 identity_chain: IdentityChain 字段，进 to_dict()/missing_fields()/_base_result 的 provenance dict，按 completeness 校验（含空串识别）。provenance 仍靠校验 owner 既有事实保持 owner-backed，不碰 composition.py，不动 durable owner schema。闭合 ta 矩阵 Q2 的 UNKNOWN 缺口。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-3": {
       "id": "1-2-3",
       "uid": "01a11594f60d-0a1a69a739",
       "label": "P1 live 零外部执行断言守卫（断言式计账，非结构性）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-2-3 scope gate 分类？",
+          "answer": "Product execution：修改 ZWorkbench 产品代码（replay.py + tests）。意图由 docs/architecture/ta-evidence-replay.md 锁定：现有 live 零外部执行是结构性的（live_replay 方法不执行），缺断言守卫、重构可能静默失效；本节点加断言式守卫 + 计账，非结构性（逻辑断言，非 OS sandbox，不替代 1-8 host sandbox）。",
+          "note": ""
+        },
+        {
+          "q": "Q1 守卫应用到哪些 replay 入口？",
+          "answer": "仅 live_replay。recorded_view/simulated_replay 已证明只读、不执行，无需守卫；live_replay 是唯一可能真正执行的 seam，与 ta-evidence-replay.md 的 gap 一致。",
+          "note": ""
+        },
+        {
+          "q": "Q2 断言结果记到哪里（计账位置）？",
+          "answer": "返回结果的断言块（zero_external_execution 字段，含 5 计数快照 + violations）。非结构性、不写 owner，保持 live_replay fail-closed 不改动 owner 的不变量与现有测试。",
+          "note": ""
+        },
+        {
+          "q": "Q3 守卫发现计数非 0 时语义？",
+          "answer": "抛 ReplayError fail-closed（safe-stop），绝不静默放过。把结构性不执行升级为可被测试捕获的失败信号，正是「守卫」的意义。",
+          "note": ""
+        },
+        {
+          "q": "Q4 断言覆盖哪些外部执行计数？",
+          "answer": "全部 5 项 == 0/false：execution_performed + provider_requests + tool_invocations + external_calls + side_effect_count。任一非 0 即守卫失败。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-4": {
       "id": "1-2-4",
@@ -917,7 +966,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-07 21:53:03",
+    "updated": "2026-10-08 11:35:16",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

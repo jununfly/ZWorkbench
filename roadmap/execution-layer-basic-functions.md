@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-07 21:53:03
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 11:35:16
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -11,8 +11,8 @@
 │   └── [x][Y+] 1-1-4. P1 真实 Provider gate 收口（真实路由/计费接入受控 gate，~2 人日）
 ├── [~][Y+] 1-2. 证据与回放（sub-06）
 │   ├── [x][Y+] 1-2-1. P0 DSH Harness 端到端三模式收口（recorded/simulated/live 串成契约 + 回归测试）
-│   ├── [ ][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
-│   ├── [ ][Y+] 1-2-3. P1 live 零外部执行断言守卫（断言式计账，非结构性）
+│   ├── [x][Y+] 1-2-2. P1 provenance↔IdentityChain 会话级关联 + 空串识别为缺失
+│   ├── [x][Y+] 1-2-3. P1 live 零外部执行断言守卫（断言式计账，非结构性）
 │   └── [ ][Y+] 1-2-4. P1 owner 增 evidence 来源枚举字段（native/plugin-composed/outer-composed）并强制分类
 ├── [ ][Y+] 1-3. 终止与资源生命周期（sub-07）
 │   ├── [ ][Y+] 1-3-1. P1 DSH adapter 增 process_group_clean/orphan 字段 + 验证 setsid 子进程不误报 0
