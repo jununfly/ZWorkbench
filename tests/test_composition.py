@@ -373,6 +373,26 @@ class ProviderExitLedgerTests(unittest.TestCase):
             self.owner.get_provider_exit_ledger("missing")
 
 
+    def test_record_once_is_idempotent_across_harness_and_adapter(self) -> None:
+        # 1-3-2 pairing contract: the harness and adapter share one run; the
+        # adapter writes the Provider ledger, the harness must not duplicate it.
+        self._run()
+        identity = {"provider": "fake-loopback", "endpoint": "http://127.0.0.1:11434"}
+        first = self.owner.record_provider_exit_ledger_once("run-1", identity)
+        second = self.owner.record_provider_exit_ledger_once("run-1", identity)
+        self.assertEqual(first["ledger_id"], second["ledger_id"])
+        self.assertEqual(len(self.owner.provider_exit_ledger_for_run("run-1")), 1)
+
+    def test_record_once_preserves_append_only_base_semantics(self) -> None:
+        # The base API remains append-only; _once is the deliberate guard the
+        # harness/adapter rely on to keep a single Provider accounting per run.
+        self._run()
+        identity = {"provider": "fake-loopback", "endpoint": "http://127.0.0.1:11434"}
+        self.owner.record_provider_exit_ledger_once("run-1", identity)
+        self.owner.record_provider_exit_ledger("run-1", identity)
+        self.assertEqual(len(self.owner.provider_exit_ledger_for_run("run-1")), 2)
+
+
 class ProviderFallbackLedgerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tempdir = tempfile.TemporaryDirectory()

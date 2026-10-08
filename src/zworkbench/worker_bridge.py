@@ -20,7 +20,7 @@ import threading
 import time
 from dataclasses import dataclass
 import re
-from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
@@ -183,6 +183,7 @@ class WorkerBridge:
         self._termination_signal: Optional[int] = None
         self._termination_forced = False
         self._process_group_clean: Optional[bool] = None
+        self._orphan_processes: Optional[int] = None
 
     def handshake(
         self,
@@ -1029,6 +1030,17 @@ class WorkerBridge:
             return
         self.owner.record_result(child_run_id, "worker.exit", self._last_exit_receipt, f"{child_run_id}:worker-exit", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
         self._exit_receipt_recorded = True
+        # Symmetric Provider-side ledger: the worker IS the Provider engagement
+        # for this child run, so the Provider-side accounting is recorded exactly
+        # once (paired with the local worker.exit ledger above) at the same
+        # termination boundary.  A harness (e.g. local_run) recording the parent
+        # run's Provider ledger is a separate run and is not deduplicated here.
+        try:
+            self.owner.record_provider_exit_ledger_once(child_run_id, self.provider_identity.to_dict())
+        except Exception:
+            # The local receipt above is the authoritative local accounting; a
+            # Provider-ledger write failure must never mask it.
+            pass
 
     def _build_environment(
         self,
@@ -1102,7 +1114,7 @@ class WorkerBridge:
             "process_id": process_id,
             "process_group_id": process_id,
             "process_group_clean": process_group_clean is True,
-            "orphan_processes": 0 if process_group_clean is True else UNKNOWN,
+            "orphan_processes": UNKNOWN if self._orphan_processes is None else self._orphan_processes,
             "stderr_sha256": "sha256:" + self._stderr_digest.hexdigest(),
             "stderr_bytes": self._stderr_bytes,
             "argv_digest": _sha256_json(list(command)),
@@ -1135,10 +1147,15 @@ class WorkerBridge:
                         self._termination_forced = True
             else:
                 returncode = process.returncode
+            # Snapshot orphans while the leader is still alive so the
+            # parent->child chain is intact; setsid-escaped children acquire a
+            # different session id and survive killpg on the parent group.
+            orphans = detect_orphan_processes(pid)
             # _ensure_process_group_clean is the authoritative source of truth
             # for process_group_clean; it re-checks the group and may SIGKILL
-            # stragglers, never reporting an un-reaped leader as clean.
-            self._ensure_process_group_clean(pid)
+            # stragglers, then sweeps setsid-escaped orphans, never reporting
+            # an un-reaped leader (or orphan) as clean.
+            self._ensure_process_group_clean(pid, orphans)
             if returncode is not None and self._active_command is not None:
                 self._last_exit_receipt = self._exit_receipt(returncode, self._active_command)
             for stream in (process.stdin, process.stdout, process.stderr):
@@ -1152,7 +1169,9 @@ class WorkerBridge:
                 self.process = None
                 self._active_command = None
 
-    def _ensure_process_group_clean(self, process_group_id: int) -> bool:
+    def _ensure_process_group_clean(
+        self, process_group_id: int, orphans: Optional[List[int]] = None
+    ) -> bool:
         clean = self._wait_for_process_group_exit(process_group_id, 0.25)
         if not clean:
             with self._state_lock:
@@ -1163,8 +1182,23 @@ class WorkerBridge:
             except (ProcessLookupError, PermissionError):
                 pass
             clean = self._wait_for_process_group_exit(process_group_id, DEFAULT_PROCESS_STOP_TIMEOUT)
+        # Orphan sweep: setsid-escaped descendants survive killpg and must be
+        # reaped explicitly.  ``None`` means enumeration was unsupported ->
+        # fail-closed to UNKNOWN rather than a false zero.
+        if orphans is None:
+            orphan_count: Optional[int] = None
+        else:
+            for orphan_pid in orphans:
+                try:
+                    os.kill(orphan_pid, signal.SIGKILL)
+                except (ProcessLookupError, PermissionError):
+                    pass
+            orphan_count = len(orphans)
+            if orphan_count > 0:
+                clean = False
         with self._state_lock:
             self._process_group_clean = clean
+            self._orphan_processes = orphan_count
         return clean
 
     @staticmethod
@@ -1210,10 +1244,100 @@ def _is_sha256(value: str) -> bool:
     return len(value) == 71 and value.startswith("sha256:") and all(character in "0123456789abcdef" for character in value[7:])
 
 
+def _iter_all_processes() -> Optional[List[Tuple[int, int, int, int]]]:
+    """Snapshot ``(pid, ppid, pgid, sid)`` for every process on the host.
+
+    Returns ``None`` when process enumeration is unavailable (no ``ps`` binary
+    or an unsupported column set).  Callers must treat ``None`` as "orphan
+    detection unsupported" and fall back to the fail-closed ``UNKNOWN`` caliber
+    rather than assuming zero orphans.
+    """
+
+    try:
+        completed = subprocess.run(
+            ["ps", "-o", "pid=", "-o", "ppid=", "-o", "pgid=", "-o", "sess=", "-ax"],
+            capture_output=True,
+            text=True,
+            timeout=2.0,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if completed.returncode != 0:
+        return None
+    rows: List[Tuple[int, int, int, int]] = []
+    for line in completed.stdout.splitlines():
+        fields = line.split()
+        if len(fields) != 4:
+            continue
+        try:
+            rows.append((int(fields[0]), int(fields[1]), int(fields[2]), int(fields[3])))
+        except ValueError:
+            continue
+    return rows
+
+
+def _collect_descendants(root_pid: int, tree: List[Tuple[int, int, int, int]]) -> List[int]:
+    children: Dict[int, List[int]] = {}
+    for pid, ppid, _pgid, _sid in tree:
+        children.setdefault(ppid, []).append(pid)
+    seen: set[int] = set()
+    stack = [root_pid]
+    while stack:
+        current = stack.pop()
+        for child in children.get(current, ()):
+            if child not in seen:
+                seen.add(child)
+                stack.append(child)
+    return [pid for pid in seen if pid != root_pid]
+
+
+def _find_orphans_in_tree(
+    root_pid: int, tree: List[Tuple[int, int, int, int]]
+) -> List[int]:
+    """Pure orphan filter over a ``(pid, ppid, pgid, sid)`` snapshot.
+
+    Returns descendant pids of ``root_pid`` whose session id differs from the
+    root's session id -- i.e. processes that escaped the parent group via
+    ``os.setsid()`` and survive ``os.killpg``.  The root itself is never
+    reported.  If the root is absent from the snapshot (already exited) the
+    result is empty; callers that need to distinguish "unsupported" from "no
+    orphans" must check the source snapshot separately.
+    """
+
+    sid_by_pid = {pid: sid for pid, _ppid, _pgid, sid in tree}
+    root_sid = sid_by_pid.get(root_pid)
+    if root_sid is None:
+        return []
+    return [pid for pid in _collect_descendants(root_pid, tree) if sid_by_pid.get(pid) != root_sid]
+
+
+def detect_orphan_processes(root_pid: int) -> Optional[List[int]]:
+    """Return descendant pids of ``root_pid`` that escaped its session via setsid.
+
+    A child that calls ``os.setsid()`` becomes its own session leader (a new
+    session id) and therefore escapes ``os.killpg`` aimed at the parent process
+    group.  Those processes are orphans: still alive after the parent group is
+    torn down, but no longer reachable by a group signal.
+
+    Must be called while ``root_pid`` is still alive so the parent->child chain
+    is intact.  Returns ``None`` when process enumeration is unsupported or the
+    root has already exited (caller records ``UNKNOWN`` instead of a false
+    zero).
+    """
+
+    tree = _iter_all_processes()
+    if tree is None:
+        return None
+    if not any(pid == root_pid for pid, _ppid, _pgid, _sid in tree):
+        return None
+    return _find_orphans_in_tree(root_pid, tree)
+
+
 __all__ = [
     "WORKER_BRIDGE_SCHEMA",
     "WorkerBridge",
     "WorkerBridgeError",
     "WorkerCodingResult",
     "WorkerHandshakeResult",
+    "detect_orphan_processes",
 ]

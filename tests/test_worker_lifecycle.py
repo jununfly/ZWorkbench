@@ -13,9 +13,11 @@ from zworkbench import (
     ComponentIdentity,
     CompositionOwner,
     ProviderIdentity,
+    UNKNOWN,
     WorkerBridge,
     WorkerBridgeError,
 )
+from zworkbench.worker_bridge import _iter_all_processes
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -125,7 +127,13 @@ class WorkerLifecycleTests(unittest.TestCase):
         receipt = self._exit_receipt()
         self.assertEqual(receipt["termination_reason"], "timeout")
         self.assertTrue(receipt["process_group_clean"])
-        self.assertEqual(receipt["orphan_processes"], 0)
+        # Fail-closed contract: if process enumeration is unavailable the
+        # receipt records UNKNOWN (never a falsely confident zero); otherwise a
+        # clean group teardown with no setsid escape reports 0.
+        if _iter_all_processes() is None:
+            self.assertEqual(receipt["orphan_processes"], UNKNOWN)
+        else:
+            self.assertEqual(receipt["orphan_processes"], 0)
         self.assertEqual(self.owner.get_run("parent-1")["status"], "safe_stopped")
         self.assertEqual(self.owner.get_run("child-1")["status"], "safe_stopped")
         self.assertIsNone(self.bridge.process)
@@ -168,7 +176,10 @@ class WorkerLifecycleTests(unittest.TestCase):
         self.assertEqual(getattr(outcome["error"], "code", None), "worker_parent_stopped")
         receipt = self._exit_receipt()
         self.assertTrue(receipt["process_group_clean"])
-        self.assertTrue(receipt["orphan_processes"] == 0)
+        if _iter_all_processes() is None:
+            self.assertEqual(receipt["orphan_processes"], UNKNOWN)
+        else:
+            self.assertEqual(receipt["orphan_processes"], 0)
         with self.assertRaises(ProcessLookupError):
             os.kill(descendant_pid, 0)
 
@@ -208,6 +219,20 @@ class WorkerLifecycleTests(unittest.TestCase):
         self.assertEqual(child["metadata"]["recovery_of_child_run_id"], "child-1")
         self.assertEqual(child["metadata"]["attempt_id"], "attempt-2")
         self.assertEqual(self._exit_receipt("child-2")["exit_code"], 0)
+
+
+    def test_worker_records_exactly_one_provider_exit_ledger(self) -> None:
+        # 1-3-2 pairing contract: the Worker adapter records the Provider-side
+        # exit ledger exactly once per child run, even though _record_exit is
+        # invoked on both the clean-return and exception paths (the idempotent
+        # _once guard prevents a duplicate on the crash path).
+        thread, outcome = self._start("crash")
+        thread.join(timeout=4.0)
+        self.assertFalse(thread.is_alive())
+        ledger = self.owner.provider_exit_ledger_for_run("child-1")
+        self.assertEqual(len(ledger), 1)
+        self.assertEqual(ledger[0]["provider"], "fake-loopback")
+        self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
 
 
 if __name__ == "__main__":

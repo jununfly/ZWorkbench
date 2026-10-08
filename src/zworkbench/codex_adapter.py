@@ -251,6 +251,10 @@ class CodexAppServerAdapter:
 
         if self.process is not None and self.process.poll() is None:
             return {"result": {"already_started": True}}
+        # Resident runtime registry: claim a slot before spawning the long-lived
+        # app-server process (sub-07 Backlog #3). Released in close(). Fail-closed
+        # if the ≤3 cap is exceeded.
+        self.owner.resident_registry.acquire(f"codex-app-server:{self.code_home}", "codex-app-server")
         self.code_home.mkdir(parents=True, exist_ok=True)
         self.cwd.mkdir(parents=True, exist_ok=True)
         self.event_log.parent.mkdir(parents=True, exist_ok=True)
@@ -559,6 +563,14 @@ class CodexAppServerAdapter:
                 "environment_digest": environment_digest,
             }
             self.owner.complete_run(run_id, semantic)
+            # Symmetric Provider-side ledger: recorded at the same terminal
+            # boundary as the local result above, exactly once per run.
+            try:
+                self.owner.record_provider_exit_ledger_once(run_id, dict(self.provider_identity))
+            except Exception:
+                # Local result + terminal status are authoritative; a
+                # Provider-ledger write failure must never mask them.
+                pass
             return CodexExecution(
                 run_id,
                 thread_id,
@@ -633,6 +645,11 @@ class CodexAppServerAdapter:
         """
 
         category = classify_provider_failure(error)
+        try:
+            self.owner.record_provider_exit_ledger_once(run_id, dict(self.provider_identity))
+        except Exception:
+            # Provider-ledger write must never mask the original provider failure.
+            pass
         try:
             self.owner.record_result(
                 run_id,
@@ -709,6 +726,9 @@ class CodexAppServerAdapter:
     def close(self) -> None:
         """Stop app-server and persist stderr without deleting case state."""
 
+        # Release the resident-service slot claimed in start(). Idempotent: a
+        # close before any successful start (or a no-op start) is harmless.
+        self.owner.resident_registry.release(f"codex-app-server:{self.code_home}")
         process = self.process
         if process is None:
             return
