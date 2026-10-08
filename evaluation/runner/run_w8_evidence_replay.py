@@ -33,6 +33,7 @@ from zworkbench import (  # noqa: E402
     CassetteIdentity,
     ComponentIdentity,
     CompositionOwner,
+    IdentityChain,
     OwnerBackedReplayService,
     ProviderIdentity,
     ReplayIdentity,
@@ -80,6 +81,25 @@ def make_source(owner: CompositionOwner) -> str:
 
 
 def make_identity(source_event_digest: str, cassette: Optional[CassetteIdentity] = None) -> ReplayIdentity:
+    # Fixture-scoped correlation chain. The H5 runner is owner-backed +
+    # fixture-composed evidence, not DSH-native, so these are explicit fixture
+    # identifiers (prefixed ``h5-fixture-``) rather than real production
+    # correlation ids. All ten fields are populated so the identity is complete
+    # and recorded_view / simulated_replay keep their ``viewed`` / ``simulated``
+    # statuses; ``missing-identity`` is still exercised separately via
+    # ``policy_digest=UNKNOWN``.
+    identity_chain = IdentityChain(
+        parent_run_id="h5-fixture-source-run",
+        child_run_id="h5-fixture-child-run",
+        attempt_id="h5-fixture-attempt-1",
+        dsh_session_id="h5-fixture-dsh-session-1",
+        dsh_turn_id="h5-fixture-dsh-turn-1",
+        worker_run_id="h5-fixture-worker-run-1",
+        codex_thread_id="h5-fixture-codex-thread-1",
+        codex_turn_id="h5-fixture-codex-turn-1",
+        event_id="h5-fixture-event-1",
+        artifact_id="h5-fixture-artifact-1",
+    )
     return ReplayIdentity(
         harness_identity=ComponentIdentity("dsh-fixture", "1.0.0", digest_bytes(b"h5-dsh"), "evaluation-fixture"),
         plugin_identities=(),
@@ -90,6 +110,7 @@ def make_identity(source_event_digest: str, cassette: Optional[CassetteIdentity]
             endpoint="http://127.0.0.1:11434",
             transport="loopback-only",
         ),
+        identity_chain=identity_chain,
         tool_schema_digest=digest_bytes(b"h5-tool-schema"),
         policy_digest=digest_bytes(b"h5-policy"),
         workspace_digest=digest_bytes(b"h5-workspace"),

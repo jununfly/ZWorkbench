@@ -63,6 +63,20 @@ def _text(value: Any, field_name: str) -> str:
     return value
 
 
+def _is_missing(value: Any) -> bool:
+    """Treat None, the UNKNOWN sentinel and empty/whitespace strings as missing.
+
+    Construction-time validators (``_text``) already reject empty strings, so a
+    populated identity field is normally either UNKNOWN or a real value.  This
+    helper hardens the completeness API (``missing_fields`` / ``is_complete``)
+    so that an empty or whitespace-only string cannot masquerade as "filled".
+    """
+
+    if not isinstance(value, str):
+        return True
+    return value == UNKNOWN or value.strip() == ""
+
+
 def _json_value(value: Any, field_name: str) -> Any:
     try:
         json.dumps(value, ensure_ascii=False)
@@ -172,7 +186,7 @@ class IdentityChain:
         return tuple(
             field_name
             for field_name in self.FIELD_NAMES
-            if getattr(self, field_name) == UNKNOWN
+            if _is_missing(getattr(self, field_name))
         )
 
     def is_complete(self) -> bool:
@@ -232,7 +246,7 @@ class ProviderIdentity:
 
     def is_complete(self) -> bool:
         return all(
-            value != UNKNOWN
+            not _is_missing(value)
             for value in (self.provider, self.model, self.endpoint, self.transport)
         )
 
@@ -275,7 +289,7 @@ class ComponentIdentity:
         return tuple(
             field_name
             for field_name in ("name", "version", "digest", "source")
-            if getattr(self, field_name) == UNKNOWN
+            if _is_missing(getattr(self, field_name))
         )
 
     def is_complete(self) -> bool:

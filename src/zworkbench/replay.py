@@ -22,7 +22,13 @@ from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 from .composition import CompositionOwner, CompositionError, SCHEMA
-from .worker_contract import ComponentIdentity, ProviderIdentity, UNKNOWN
+from .worker_contract import (
+    ComponentIdentity,
+    IdentityChain,
+    ProviderIdentity,
+    UNKNOWN,
+    _is_missing,
+)
 
 
 REPLAY_SERVICE_SCHEMA = "zworkbench.evidence-replay/v1"
@@ -85,6 +91,7 @@ class ReplayIdentity:
     plugin_identities: Tuple[ComponentIdentity, ...]
     worker_identity: ComponentIdentity
     provider_identity: ProviderIdentity
+    identity_chain: IdentityChain
     tool_schema_digest: str
     policy_digest: str
     workspace_digest: str
@@ -100,6 +107,8 @@ class ReplayIdentity:
             raise TypeError("worker_identity must be ComponentIdentity")
         if not isinstance(self.provider_identity, ProviderIdentity):
             raise TypeError("provider_identity must be ProviderIdentity")
+        if not isinstance(self.identity_chain, IdentityChain):
+            raise TypeError("identity_chain must be IdentityChain")
         plugins = tuple(self.plugin_identities)
         if any(not isinstance(item, ComponentIdentity) for item in plugins):
             raise TypeError("plugin_identities must contain ComponentIdentity values")
@@ -122,6 +131,7 @@ class ReplayIdentity:
             "plugin_identities": [item.to_dict() for item in self.plugin_identities],
             "worker_identity": self.worker_identity.to_dict(),
             "provider_identity": self.provider_identity.to_dict(),
+            "identity_chain": self.identity_chain.to_dict(),
             "tool_schema_digest": self.tool_schema_digest,
             "policy_digest": self.policy_digest,
             "workspace_digest": self.workspace_digest,
@@ -156,8 +166,10 @@ class ReplayIdentity:
             "owner_schema",
             "source_event_digest",
         ):
-            if getattr(self, field_name) == UNKNOWN:
+            if _is_missing(getattr(self, field_name)):
                 missing.append(field_name)
+        for field_name in self.identity_chain.missing_fields():
+            missing.append(f"identity_chain.{field_name}")
         if mode in {"simulated_replay", "live_replay"}:
             if self.cassette_identity is None:
                 missing.append("cassette_identity")
@@ -294,6 +306,7 @@ class OwnerBackedReplayService:
                 "owner_state_digest": self.owner.state_digest(),
             }
         )
+        result["zero_external_execution"] = assert_zero_external_execution(result)
         return result
 
     def _base_result(self, mode: str, replay_id: str, identity: ReplayIdentity) -> Dict[str, Any]:
@@ -411,6 +424,62 @@ def _reject_raw_credentials(value: Any, field_name: str) -> None:
     visit(value, field_name)
 
 
+# External-execution counters that must stay at their zero value for every
+# replay result. ``live_replay`` is fail-closed by design (it never starts a
+# process, calls a Provider, or writes an effect); these are the signals that
+# would betray accidental execution introduced by a future refactor.
+ZERO_EXTERNAL_EXECUTION_EXPECTED: Dict[str, Any] = {
+    "execution_performed": False,
+    "provider_requests": 0,
+    "tool_invocations": 0,
+    "external_calls": 0,
+    "side_effect_count": 0,
+}
+
+
+def assert_zero_external_execution(result: Mapping[str, Any]) -> Dict[str, Any]:
+    """Assertion-style, non-structural guard that accounts zero external execution.
+
+    ``live_replay``'s "zero external execution" is currently *structural*: the
+    method simply does not execute. That leaves no guard — a refactor that
+    accidentally made it execute would pass silently. This function turns the
+    invariant into an explicit, machine-readable assertion so a violation fails
+    closed instead of slipping through.
+
+    It is a logical assertion at the replay seam, not an OS-level sandbox; it
+    complements (and does not replace) the host sandbox enforced at 1-8.
+
+    Raises:
+        ReplayError: if any external-execution counter indicates that execution
+            took place. The message lists the tripped fields.
+
+    Returns:
+        A ``zero_external_execution`` accounting block (asserted flag, a snapshot
+        of the five counters, and an empty ``violations`` list).
+    """
+
+    violations = [
+        field
+        for field, expected in ZERO_EXTERNAL_EXECUTION_EXPECTED.items()
+        if result.get(field) != expected
+    ]
+    if violations:
+        raise ReplayError(
+            "live_replay zero-external-execution guard tripped: "
+            + ", ".join(violations)
+            + " indicate external execution occurred"
+        )
+    return {
+        "asserted": True,
+        "execution_performed": result.get("execution_performed", False),
+        "provider_requests": result.get("provider_requests", 0),
+        "tool_invocations": result.get("tool_invocations", 0),
+        "external_calls": result.get("external_calls", 0),
+        "side_effect_count": result.get("side_effect_count", 0),
+        "violations": [],
+    }
+
+
 __all__ = [
     "CASSETTE_SCHEMA",
     "CassetteIdentity",
@@ -419,4 +488,6 @@ __all__ = [
     "REPLAY_SERVICE_SCHEMA",
     "ReplayError",
     "ReplayIdentity",
+    "ZERO_EXTERNAL_EXECUTION_EXPECTED",
+    "assert_zero_external_execution",
 ]
