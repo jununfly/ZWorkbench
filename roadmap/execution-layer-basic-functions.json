@@ -730,13 +730,45 @@
       "id": "1-5-3",
       "uid": "01a115956203-a79a29ab11",
       "label": "P1 caller-auth 缺口（ZW_OWNER_SANDBOX=1 弱化 fail-closed）真实架构前硬前置",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "caller-auth 缺口的真实形态？",
+          "answer": "CompositionOwner 全部破坏性写方法（claim_effect/mark_effect_*/reconcile_effect/complete_run/request_approval/approve/apply/create_run/start_run/fail/safe_stop/begin_recovery）不校验调用方身份；__init__ 仅接受 db 路径，任何能打开 db 的进程即可调全部写方法（无 caller 概念）",
+          "note": ""
+        },
+        {
+          "q": "ZW_OWNER_SANDBOX=1 与 fail-closed 弱化的关系？",
+          "answer": "ZW_OWNER_SANDBOX=1 仅降级 journal 为 MEMORY+synchronous=OFF（ADR 0010 residual risk：进程崩溃丢未刷盘 owner 状态、safe-stopped 一致性边界弱化）；caller-auth 缺口使该降级下 owner 既无身份校验又无持久性保证——本节点交付 caller-auth fail-closed，且校验与 durability 解耦，ZW_OWNER_SANDBOX=1 下降级 durability 但 caller-auth 仍强制不弱化",
+          "note": ""
+        },
+        {
+          "q": "本节点交付边界？",
+          "answer": "交付 owner 侧 caller-auth 机制（fail-closed），本机单进程可验证、预留跨 agent caller 形态；不在此节点接 OPN/跨 agent 真实调用（属后续真实架构节点）",
+          "note": ""
+        },
+        {
+          "q": "caller-auth 机制形态？",
+          "answer": "caller session token：owner_callers 注册表 + authenticate_caller 建内存 session；校验 hook 挂在 _transaction 入口（读方法不走 _transaction 天然豁免）；token 存 token_hash 不存明文；fail-closed 复用 CallerAuthError",
+          "note": ""
+        },
+        {
+          "q": "caller-auth 覆盖范围？",
+          "answer": "全部破坏性写方法（create/start/complete/fail/safe_stop/begin_recovery/claim/mark/reconcile/request_approval/approve/apply + 1-5-2 的 record_* retry budget + 1-4 effect 授权）；统一经 _transaction hook 覆盖，读方法（get_*）不校验",
+          "note": ""
+        },
+        {
+          "q": "实施边界与默认 posture？",
+          "answer": "caller_auth_required 默认 false（向后兼容现有单进程 CLI，206 测试零破）；enable_caller_auth 置 true→fail-closed；真实架构（1-5-4 之后接 OPN/跨 agent caller）启用 owner 时须 enable_caller_auth——硬前置契约由后续节点执行；本节点不接 OPN 真实调用",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6-1": {
       "id": "1-6-1",
@@ -1198,7 +1230,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 23:09:01",
+    "updated": "2026-10-08 23:29:27",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
