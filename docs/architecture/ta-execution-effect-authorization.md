@@ -16,7 +16,7 @@ ZWorkbench 的 baseline 内，哪些 effect 集合是允许的、它们如何经
 
 ## Boundaries
 
-- baseline effect 集合 = {read-only（preflight 准入或 read-only effect class，二选一）、loopback / fake Provider 调用、S2 可恢复写入（approval-required，case-local，单一 owner commit，不 push）}。
+- baseline effect 集合 = {read-only（采用 (a) preflight 准入即授权、不进 claim seam；二选一中的 (b) read-only effect class 路径未采用）、loopback / fake Provider 调用、S2 可恢复写入（approval-required，case-local，单一 owner commit，不 push）}。read-only 的授权由 `LocalReadOnlyRunOrchestrator.preflight` 静态准入承载，**不调用 `CompositionOwner.claim_effect`、不创建 claimed effect 行**：admission 即授权，无外部副作用，故无需六段式 claim 记账。
 - 未知 effect class / token / scope 不匹配由 owner 强制 safe-stop（已落）。
 - 越界 workspace / 未声明网络·凭证·子进程须 safe-stop（功能已决策，但 owner 级 deny 缺 `declared_side_effects` / `exposure` 形参，须进实现 backlog）。
 - 重复请求幂等由 owner 层强保证；approval token 仅存 hash。
@@ -43,7 +43,7 @@ effect / approval / claim / reconcile 状态由 CompositionOwner 记录。declar
 
 | effect 类 | 入口 | 出口动作 | 信任边界 |
 | --- | --- | --- | --- |
-| read-only | preflight 准入（或 read-only effect class） | 不进 claim seam / 不创建 claimed effect 行 | 只读，无外部副作用 |
+| read-only | (a) preflight 准入即授权 | 不进 claim seam / 不创建 claimed effect 行 | 只读，无外部副作用；authorization 由 local_run.preflight 静态准入承载，非 claim_effect 六段式 |
 | loopback / fake Provider 调用 | claim_effect | adapter 执行 | 仅回环 / fake，无真实外部 |
 | S2 可恢复写入 | claim_effect（approval-required） | 单一 owner commit，不 push | case-local worktree，用户手动 merge 回主仓库 |
 
@@ -70,7 +70,7 @@ Q4 deny 分层：
 1. owner schema 增 `declared_side_effects` / `exposure` 字段 + deny 逻辑（Q4 preflight 类）。
 2. `create_worktree` case-local 校验；`apply_diff` 加 `resource == worktree_path` 断言 + repo 指纹校验。
 3. `complete_run` 在 read-only 路径 `finally` 显式调用，统一 run 闭合锚点。
-4. read-only 二选一（建议 (a) preflight 准入即授权、不进 claim seam）写入 doc + 补测试。
+4. ~~read-only 二选一（建议 (a) preflight 准入即授权、不进 claim seam）写入 doc + 补测试。~~ **已落文（1-4-4）**：采用 (a) preflight 准入即授权、不进 claim seam；二选一中的 (b) read-only effect class 路径未采用。local_run 的 read-only run 不调用 `claim_effect`、不创建 claimed effect 行（由 `tests/test_local_run_orchestration.py::test_read_only_run_does_not_create_claimed_effect_rows` 证明：completed run 与 denied preflight 均零 `effects` 行）。
 
 ## Source map
 

@@ -325,6 +325,85 @@ class LocalReadOnlyRunOrchestrationTests(unittest.TestCase):
                 self.assertEqual(ledger[0]["provider_remote_zero_residue"], "unknown/delegated")
 
 
+    def test_read_only_run_does_not_create_claimed_effect_rows(self) -> None:
+        # 1-4-4: read-only 采用 (a) preflight 准入即授权、不进 claim seam。
+        # 一个完整执行的 read-only run 不得创建任何 claimed effect 行——
+        # authorization 由 local_run.preflight 静态准入承载，而非 claim_effect
+        # 六段式。这把 "不进 claim seam" 从约定升级为可回归的不变式。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "fake-model",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            adapters = []
+
+            def factory(owner, factory_config):
+                adapter = RecordingAdapter(owner, factory_config)
+                adapters.append(adapter)
+                return adapter
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=factory).run(
+                "run-claim-free",
+                "inspect the local project and return fixture-ok",
+            )
+
+            self.assertEqual(result.status, "completed")
+            self.assertEqual(len(adapters), 1)
+            with CompositionOwner(config.database) as owner:
+                run = owner.get_run("run-claim-free")
+                self.assertEqual(run["status"], "completed")
+                # 核心不变式：read-only run 不进 claim seam，零 claimed effect 行。
+                self.assertEqual(run["effects"], [])
+
+    def test_denied_preflight_creates_no_effects_table(self) -> None:
+        # 1-4-4 配套：被 preflight 拒绝的 run 连 owner 数据库都不打开，
+        # 自然不可能有 claimed effect 行——"准入即授权" 的反面即 "拒绝即无痕"。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            workspace = root / "workspace"
+            workspace.mkdir()
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=workspace,
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=executable,
+                provider_identity={
+                    "provider": "remote-provider",
+                    "model": "remote-model",
+                    "endpoint": "https://api.example.invalid/v1",
+                },
+            )
+
+            def forbidden_factory(owner, factory_config):
+                raise AssertionError("adapter factory must not run after denied preflight")
+
+            result = LocalReadOnlyRunOrchestrator(config, adapter_factory=forbidden_factory).run(
+                "run-denied-claim-free",
+                "must not execute",
+            )
+
+            self.assertEqual(result.status, "denied")
+            self.assertFalse(result.preflight.allowed)
+            self.assertFalse(config.database.exists())
+
     def test_run_closes_run_in_finally_when_adapter_leaves_it_running(self) -> None:
         # 1-4-3: a successful adapter that does NOT close the run must be closed
         # by the local_run finally anchor (defense-in-depth), not left running.
