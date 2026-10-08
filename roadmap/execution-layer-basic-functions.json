@@ -114,7 +114,7 @@
       "id": "1-4",
       "uid": "01a11593cd8f-55ee8e305e",
       "label": "执行层 effect 授权（sub-04）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -577,13 +577,20 @@
       "id": "1-4-1",
       "uid": "01a115955a8f-397b912e67",
       "label": "P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "declared_side_effects/exposure 怎么建模 + 强制严格度？",
+          "answer": "方案 A：per-run 新表 declared_exposure(run_id PK, declared_side_effects_json, exposure_json{workspace_root,network,credentials,subprocess}, declared_at) + declare_exposure()/get_declared_exposure()；claim_effect 加 required_exposure 形参，仅当该 run 有声明时才校验（缺失声明走既有行为，向后兼容）。四 deny 因：side_effect_not_declared / workspace_out_of_bounds / exposure_not_declared(network|credentials|subprocess)，全部 fail-closed safe-stop。",
+          "note": "write_seam.apply_diff 在 claim 前 declare_exposure（workspace_root=case_root 或 worktree parent、network/credentials/subprocess=False）+ required_exposure={workspace}；新表已并入 _CANONICAL_TABLES（14→15）与 _check_database_integrity required 集，避免被 1-6-3 audit_owner_isolated 误判为第二 canonical。declared_exposure 进 1-6-3 审计白名单。1-4-1 收尾，四个子节点全 completed→标记 1-4 completed。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-2": {
       "id": "1-4-2",
@@ -1122,7 +1129,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 21:30:21",
+    "updated": "2026-10-08 21:44:53",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
