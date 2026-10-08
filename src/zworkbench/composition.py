@@ -40,7 +40,7 @@ from .resident_service_registry import ResidentServiceRegistry
 
 
 SCHEMA = "zworkbench-composition-owner/v1"
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 
 # Secret-shaped values that must never be persisted in owner evidence.
 _SECRET_VALUE = re.compile(r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
@@ -1024,9 +1024,9 @@ class CompositionOwner:
                     ledger_id, run_id, provider, endpoint, account_scope,
                     exit_mode, exit_status, provider_remote_zero_residue,
                     surface_observations_json, statuses_json, unknown_fields_json,
-                    local_state_fingerprint, recorded_at
+                    local_state_fingerprint, evidence_class, recorded_at
                 ) VALUES (?, ?, ?, ?, 'unknown', 'inventory-only', 'unknown/safe-stop',
-                          'unknown/delegated', ?, ?, ?, ?, ?)
+                          'unknown/delegated', ?, ?, ?, ?, 'local-inventory', ?)
                 """,
                 (
                     ledger_id,
@@ -1086,6 +1086,96 @@ class CompositionOwner:
             caliber=caliber,
             local_state_fingerprint=local_state_fingerprint,
         )
+
+    def attach_provider_exit_receipt(
+        self,
+        run_id: str,
+        receipt: Mapping[str, Any],
+    ) -> Dict[str, Any]:
+        """Attach an owner-supplied, redacted Provider exit receipt to a run.
+
+        This is the C7 reconciliation seam: the opt-in Ark inventory wizard
+        (``scripts/record_provider_exit_receipt.py``) produces a v2 receipt that
+        an account owner recorded in the Provider console.  Attaching it
+        *supplements* the default ``local-inventory`` entry with
+        ``owner-backed`` evidence (receipt fingerprint + attestation), WITHOUT
+        ever letting local or owner evidence upgrade to a Provider clearance.
+
+        Fail-closed guarantees:
+        - the receipt must be the v2 schema; unknown/mismatched schemas are rejected.
+        - ``provider_remote_zero_residue`` MUST remain ``unknown/delegated``: a
+          tampered receipt claiming remote zero residue is rejected, so a local
+          exit never becomes a Provider-exit proof.
+        - any secret-shaped string leaf is rejected; the owner store never ingests
+          raw credentials.
+        The method is append-only: a run may carry a ``local-inventory`` entry and
+        one or more ``owner-backed`` entries, making the durable distinction
+        "本地退出 ≠ Provider 退出" queryable.
+        """
+
+        self._require_text(run_id, "run_id")
+        if not isinstance(receipt, Mapping):
+            raise ValueError("receipt must be a mapping (Provider exit receipt v2)")
+        schema = receipt.get("schema")
+        if schema != "zworkbench-provider-exit-receipt/v2":
+            raise ValueError(f"receipt schema must be zworkbench-provider-exit-receipt/v2: {schema!r}")
+        remote_residue = receipt.get("provider_remote_zero_residue")
+        if remote_residue != "unknown/delegated":
+            raise ValueError(
+                "provider_remote_zero_residue must stay 'unknown/delegated'; "
+                "local/owner evidence cannot claim Provider clearance"
+            )
+        self._reject_secret_shaped_values(receipt, "receipt")
+        provider = str(receipt.get("provider") or "unknown")
+        endpoint = str(receipt.get("endpoint") or "unknown")
+        account_scope = str(receipt.get("account_scope") or "unknown")
+        exit_mode = str(receipt.get("exit_mode") or "authorized-manual-exit")
+        exit_status = str(receipt.get("exit_status") or "unknown/safe-stop")
+        local_state_fingerprint = str(receipt.get("local_state_fingerprint") or "unknown")
+        surface_observations = dict(receipt.get("surface_observations") or {})
+        statuses = dict(receipt.get("statuses") or {})
+        unknown_fields = list(receipt.get("unknown_fields") or [])
+        timestamp = self._now()
+        ledger_id = self._new_id()
+        with self._transaction() as connection:
+            self._run_row(connection, run_id)
+            connection.execute(
+                """
+                INSERT INTO provider_exit_ledger(
+                    ledger_id, run_id, provider, endpoint, account_scope,
+                    exit_mode, exit_status, provider_remote_zero_residue,
+                    surface_observations_json, statuses_json, unknown_fields_json,
+                    local_state_fingerprint, evidence_class, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, 'unknown/delegated', ?, ?, ?, ?, 'owner-backed', ?)
+                """,
+                (
+                    ledger_id,
+                    run_id,
+                    provider,
+                    endpoint,
+                    account_scope,
+                    exit_mode,
+                    exit_status,
+                    self._canonical_json(surface_observations),
+                    self._canonical_json(statuses),
+                    self._canonical_json(unknown_fields),
+                    local_state_fingerprint,
+                    timestamp,
+                ),
+            )
+            self._append_event(
+                connection,
+                run_id,
+                "provider.exit.ledger.recorded",
+                {
+                    "ledger_id": ledger_id,
+                    "provider": provider,
+                    "evidence_class": "owner-backed",
+                    "evidence_fingerprint": str(receipt.get("evidence_fingerprint") or "unknown"),
+                    "provider_remote_zero_residue": "unknown/delegated",
+                },
+            )
+        return self.get_provider_exit_ledger(ledger_id)
 
     def get_provider_exit_ledger(self, ledger_id: str) -> Dict[str, Any]:
         """Read one provider-exit ledger entry by id."""
@@ -1902,6 +1992,7 @@ class CompositionOwner:
                 statuses_json TEXT NOT NULL,
                 unknown_fields_json TEXT NOT NULL,
                 local_state_fingerprint TEXT NOT NULL,
+                evidence_class TEXT NOT NULL DEFAULT 'local-inventory',
                 recorded_at TEXT NOT NULL
             );
             CREATE INDEX IF NOT EXISTS provider_exit_ledger_by_run ON provider_exit_ledger(run_id, recorded_at);
@@ -1963,17 +2054,26 @@ class CompositionOwner:
             INSERT OR IGNORE INTO owner_meta(key, value) VALUES ('schema', 'zworkbench-composition-owner/v1');
             """
         )
-        # Migrate existing v1 databases: add the evidence_source classification
-        # without fabricating a value for rows we cannot re-derive. Legacy rows
-        # keep NULL (unknown) so the store never lies about an evidence source.
-        # Read the prior version BEFORE bumping so the migration actually fires.
+        # Migrate existing databases without fabricating values for rows we
+        # cannot re-derive. Legacy rows keep NULL (unknown) so the store never
+        # lies about an evidence source or class. Read the prior version BEFORE
+        # bumping so the migration actually fires.
         prior_version = connection.execute("PRAGMA user_version").fetchone()[0]
         if prior_version < SCHEMA_VERSION:
             for table in ("results", "events"):
                 existing_columns = {row["name"] for row in connection.execute(f"PRAGMA table_info({table})")}
                 if "evidence_source" not in existing_columns:
                     connection.execute(f"ALTER TABLE {table} ADD COLUMN evidence_source TEXT")
-        connection.execute("PRAGMA user_version = 2")
+            # C7 (1-3-5): classify each Provider exit ledger entry. Legacy rows
+            # default to 'local-inventory' — the default loopback/fake path which
+            # never claimed a Provider clearance — so the migration never
+            # fabricates an owner-backed attestation.
+            existing_exit_columns = {row["name"] for row in connection.execute("PRAGMA table_info(provider_exit_ledger)")}
+            if "evidence_class" not in existing_exit_columns:
+                connection.execute(
+                    "ALTER TABLE provider_exit_ledger ADD COLUMN evidence_class TEXT NOT NULL DEFAULT 'local-inventory'"
+                )
+        connection.execute("PRAGMA user_version = 3")
 
     @contextlib.contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
@@ -2079,6 +2179,32 @@ class CompositionOwner:
                         parts = set(normalized.split("_"))
                         if normalized in sensitive or parts & sensitive:
                             raise ValueError(f"{field_name} contains raw credential field {path}.{key}")
+                    visit(item, f"{path}.{key}")
+            elif isinstance(current, (list, tuple)):
+                for index, item in enumerate(current):
+                    visit(item, f"{path}[{index}]")
+            elif isinstance(current, str):
+                if _SECRET_VALUE.search(current):
+                    raise ValueError(f"{field_name} contains a secret-shaped value at {path}")
+
+        visit(value, field_name)
+
+    @staticmethod
+    def _reject_secret_shaped_values(value: Any, field_name: str) -> None:
+        """Reject secret-shaped *string* leaves without the credential-field-name
+        check.
+
+        The field-name check in :meth:`_reject_raw_credentials` would flag
+        legitimate redacted status keys such as ``statuses.api_key`` (whose value
+        is a status like ``deleted``, never a secret).  The C7 owner-backed
+        receipt carries exactly those redacted status maps, so this helper scans
+        only string *values* for provider secret shapes, leaving the receipt's
+        structure intact.
+        """
+
+        def visit(current: Any, path: str) -> None:
+            if isinstance(current, Mapping):
+                for key, item in current.items():
                     visit(item, f"{path}.{key}")
             elif isinstance(current, (list, tuple)):
                 for index, item in enumerate(current):
