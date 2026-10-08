@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 21:44:53
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 21:57:21
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -25,8 +25,8 @@
 │   ├── [x][Y+] 1-4-2. P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验
 │   ├── [x][Y+] 1-4-3. P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）
 │   └── [x][Y+] 1-4-4. P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试
-├── [ ][Y+] 1-5. Run 生命周期编排（sub-01）
-│   ├── [ ][Y+] 1-5-1. P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）
+├── [~][Y+] 1-5. Run 生命周期编排（sub-01）
+│   ├── [x][Y+] 1-5-1. P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）
 │   ├── [ ][Y+] 1-5-2. P1 run 级 restart 预算 + 跨层（DSH/Worker/Provider）retry 单一 owner 计账
 │   └── [ ][Y+] 1-5-3. P1 caller-auth 缺口（ZW_OWNER_SANDBOX=1 弱化 fail-closed）真实架构前硬前置
 ├── [x][Y+] 1-6. 唯一 owner 持久化（sub-03）
