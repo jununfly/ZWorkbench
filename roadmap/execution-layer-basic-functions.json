@@ -695,13 +695,35 @@
       "id": "1-5-2",
       "uid": "01a1159560cf-ce36cd1a6e",
       "label": "P1 run 级 restart 预算 + 跨层（DSH/Worker/Provider）retry 单一 owner 计账",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "跨层 retry 计账归谁所有？",
+          "answer": "全部进 CompositionOwner（单一 durable owner），沿用 Provider 层既有 provider_retry_budget/ledger 的同一模式，DSH/Worker 不再只留内存态",
+          "note": ""
+        },
+        {
+          "q": "预算耗尽语义？",
+          "answer": "复用既有 RetryBudgetExhausted 异常（fail-closed），与 effect 级/safe_stopped 路径一致，不新增异常类",
+          "note": ""
+        },
+        {
+          "q": "run 级 restart 预算是什么？",
+          "answer": "新增 run 级 restart 计数（run 被重新 bootstrap/重启的上限），fail-closed 拒绝超额重启；不与 effect/provider 预算混淆",
+          "note": ""
+        },
+        {
+          "q": "本节点交付边界到哪？",
+          "answer": "本节点交付 owner 侧三层 retry + run-restart 计账原语（schema+方法+测试），fail-closed 复用 RetryBudgetExhausted；dsh_runtime/worker_bridge 真实调用点接线是独立集成切片，单独 scope，不在此节点内",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-3": {
       "id": "1-5-3",
@@ -1159,7 +1181,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 21:57:21",
+    "updated": "2026-10-08 22:47:29",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
