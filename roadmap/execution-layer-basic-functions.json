@@ -144,7 +144,8 @@
       "children": [
         "1-5-1",
         "1-5-2",
-        "1-5-3"
+        "1-5-3",
+        "1-5-4"
       ],
       "decisions": [],
       "notes": "",
@@ -1177,11 +1178,27 @@
       "notes": "",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "uid": "01a11c0f67dc-44b308226e",
+      "label": "P1 跨层 retry/run-restart 真实调用点接线（dsh_runtime bootstrap 重触发 + worker_bridge handshake 重连接进 owner；caller-auth 收口后）",
+      "status": "pending",
+      "mode": "exploit",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "dsh_runtime 在 DSH retry / run-restart 触发时调用 owner.record_dsh_retry / record_run_restart；worker_bridge 在 Worker retry 时调用 owner.record_worker_retry",
+        "全链路 ≥1 真实 e2e：预算耗尽触发 RetryBudgetExhausted fail-closed；既有 206 测试零回归"
+      ]
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 22:47:29",
+    "updated": "2026-10-08 23:09:01",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
@@ -1226,7 +1243,13 @@
       "from": "01a11593d00c-58b1e75dca",
       "to": "01a115955a8f-397b912e67",
       "type": "blocks"
+    },
+    {
+      "id": "e10",
+      "from": "01a115956203-a79a29ab11",
+      "to": "01a11c0f67dc-44b308226e",
+      "type": "blocks"
     }
   ],
-  "edge_seq": 9
+  "edge_seq": 10
 }
