@@ -551,13 +551,20 @@
       "id": "1-3-4",
       "uid": "01a11594fc02-e53c53138c",
       "label": "P1 fail-stop 升级契约（不可处理→fail-stop，非 silent unknown）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-3-4 fail-stop 升级契约：边界与触发条件？",
+          "answer": "契约：新增 FailStopError(WorkerBridgeError)；终局边界规则——run 仅当 process_group_clean is True 才允许 clean 终局(safe_stopped/completed)，否则必须 fail-stop(强制 fail_run + 抛 FailStopError)，绝不静默 safe_stop_run/completed。强化：_ensure_process_group_clean 中 SIGKILL/孤儿清理的意外异常(非 ESRCH/EPERM)本身即 fail-stop 信号。assert_clean_termination() 为复用 chokepoint，接在失败终局(_record_failure) 与成功终局(_validate_coding_result) 两处。取舍：orphan_processes is None(ps 不可用) 不单独触发 fail-stop，因 process_group_clean 仍是可验证真实布尔(leader reaping 独立可验)，仅 process_group_clean is not True 触发；避免枚举不可用主机过度失败，同时堵住 proven-dirty 缺口。",
+          "note": "契合 sub-07 Backlog #4 与 fail-closed 原则；现有 lifecycle 测试 process_group_clean=True 不受影响；UNKNOWN 仅作 recorded evidence，不得成为 clean 终局依据"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-1": {
       "id": "1-4-1",
@@ -1054,7 +1061,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 14:55:50",
+    "updated": "2026-10-08 15:34:48",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
