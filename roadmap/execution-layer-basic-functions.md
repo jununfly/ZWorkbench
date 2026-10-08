@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 20:43:45
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 20:58:04
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -23,7 +23,7 @@
 ├── [~][Y+] 1-4. 执行层 effect 授权（sub-04）
 │   ├── [!][Y+] 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）
 │   ├── [x][Y+] 1-4-2. P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验
-│   ├── [ ][Y+] 1-4-3. P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）
+│   ├── [x][Y+] 1-4-3. P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）
 │   └── [ ][Y+] 1-4-4. P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试
 ├── [ ][Y+] 1-5. Run 生命周期编排（sub-01）
 │   ├── [ ][Y+] 1-5-1. P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）

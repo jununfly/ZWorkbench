@@ -608,13 +608,20 @@
       "id": "1-4-3",
       "uid": "01a115955d30-851e165553",
       "label": "P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "read-only 路径 run 闭合语义怎么定（与现存 test_adapter_failure 断言 running 冲突）？",
+          "answer": "X 统一兜底：local_run.run() finally 加 _ensure_run_closed 统一闭合锚点，run 仍 running 时成功->complete_run、异常->fail_run；adapter 已闭合则幂等跳过。更新 test_adapter_failure 断言 running->failed。",
+          "note": "complete_run 用 asdict(execution)（CodexExecution 是 frozen dataclass 无 to_dict，原 execution.to_dict() 抛 AttributeError 被吞导致未闭合）；锚点不依赖 adapter 内部闭合，defense-in-depth，契合 1-4-2 风格。1-4-3 收尾，1-4 仍 in_progress（1-4-1 blocked by e9、1-4-4 pending）。"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-4": {
       "id": "1-4-4",
@@ -1087,7 +1094,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-08 20:43:45",
+    "updated": "2026-10-08 20:58:04",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
