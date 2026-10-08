@@ -32,7 +32,7 @@ authority-id: design.safe-stop-unknown
 
 ## Status
 
-IMPLEMENTED（fail-closed 不变量与 unknown→safe-stop 语义已落地并测试）；但 **C7 真实世界部分（远端账户 / retention / 账单 / 本地退出 ≠ Provider 退出）仍 partial unknown**，须 owner-backed 证据补齐。
+IMPLEMENTED（fail-closed 不变量与 unknown→safe-stop 语义已落地并测试）；C7 真实世界部分（远端账户 / retention / 账单 / 本地退出 ≠ Provider 退出）的**产品补齐 seam 已落地**（`composition.py` 的 `provider_exit_ledger` 增 `evidence_class` 枚举 `local-inventory` | `owner-backed`，默认 loopback/fake 路径保持 `local-inventory` + `unknown/delegated`；新增 `attach_provider_exit_receipt` 校验 v2 owner receipt 并追加 `owner-backed` 条目，强制 `provider_remote_zero_residue='unknown/delegated'`，绝不升级为 Provider 清零证明）。**真实世界证据本身仍由账户 owner 在官方控制台采集、保持 `unknown/delegated`**——产品只补齐可复核的 durable 记账 seam，不声称远端零残留。
 
 ## Source map
 
