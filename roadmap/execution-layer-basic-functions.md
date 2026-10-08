@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 21:14:07
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-08 21:30:21
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -21,7 +21,7 @@
 │   ├── [x][Y+] 1-3-4. P1 fail-stop 升级契约（不可处理→fail-stop，非 silent unknown）
 │   └── [x][Y+] 1-3-5. C7 真实世界退出记账（safe-stop Provider-side：远端 retention/账单/本地退出≠Provider 退出，owner-backed 证据补齐）
 ├── [~][Y+] 1-4. 执行层 effect 授权（sub-04）
-│   ├── [!][Y+] 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）
+│   ├── [ ][Y+] 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程）
 │   ├── [x][Y+] 1-4-2. P1 create_worktree case-local 校验 + apply_diff 加 resource==worktree_path 断言 + repo 指纹校验
 │   ├── [x][Y+] 1-4-3. P1 complete_run 在 read-only 路径 finally 显式闭合（统一 run 闭合锚点）
 │   └── [x][Y+] 1-4-4. P1 read-only 二选一落文（preflight 准入即授权、不进 claim seam）+ 补测试
@@ -29,11 +29,11 @@
 │   ├── [ ][Y+] 1-5-1. P0 complete_run 拒绝未决 approval + 关键 identity 缺失（调 detect_identity_violations + 查 approvals pending；无 schema 变更）
 │   ├── [ ][Y+] 1-5-2. P1 run 级 restart 预算 + 跨层（DSH/Worker/Provider）retry 单一 owner 计账
 │   └── [ ][Y+] 1-5-3. P1 caller-auth 缺口（ZW_OWNER_SANDBOX=1 弱化 fail-closed）真实架构前硬前置
-├── [~][Y+] 1-6. 唯一 owner 持久化（sub-03）
+├── [x][Y+] 1-6. 唯一 owner 持久化（sub-03）
 │   ├── [x][Y+] 1-6-1. P0 secret 不入 owner：external_receipt 必经拒密 + 值级扫描
-│   ├── [ ][Y+] 1-6-2. P1 run 级 attempt 一等实体决策
-│   ├── [ ][Y+] 1-6-3. P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）
-│   ├── [ ][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
+│   ├── [x][Y+] 1-6-2. P1 run 级 attempt 一等实体决策
+│   ├── [x][Y+] 1-6-3. P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）
+│   ├── [x][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
 │   └── [x][Y+] 1-6-5. P1 create_run 不拒密：run input/metadata 归 redaction 模型（owner 存原始、view 遮罩），值级拒密仅限外部 evidence 落库 seam
 ├── [ ][Y+] 1-7. Worker 调度与监督（sub-02）
 │   ├── [ ][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
@@ -60,10 +60,9 @@
     ├── [ ][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
     ├── [ ][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
     └── [ ][X+] 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）
-<details><summary>阻塞链：2 个节点被阻塞</summary>
+<details><summary>阻塞链：1 个节点被阻塞</summary>
 
 - 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7） ← e6: 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」 [ ]
-- 1-4-1. P1 owner schema 增 declared_side_effects/exposure 字段 + Q4 preflight deny 逻辑（越界 workspace/未声明网络·凭证·子进程） ← e9: 1-6. 唯一 owner 持久化（sub-03） [~]
 
 </details>
 
