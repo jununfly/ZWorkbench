@@ -210,12 +210,36 @@ class CompositionOwner:
         return self.get_run(run_id)
 
     def complete_run(self, run_id: str, semantic_result: Any) -> Dict[str, Any]:
-        """Complete a run only when no effect remains unresolved."""
+        """Complete a run only when no effect remains unresolved.
+
+        Fail-closed guards (1-5-1): a run may not be completed while it still
+        has (a) a pending approval recorded against it, or (b) an unresolved
+        key-identity reference in the durable identity graph. Both conditions
+        mean the run's lifecycle is not yet reconciled, so completion is
+        refused and the run stays ``running`` -- mirroring the existing
+        unresolved-effect rejection path. No schema change; both checks reuse
+        existing tables/functions.
+        """
 
         with self._transaction() as connection:
             row = self._run_row(connection, run_id)
             if row["status"] != "running":
                 raise InvalidTransition(f"run {run_id} is not running: {row['status']}")
+            pending_approvals = connection.execute(
+                """
+                SELECT COUNT(*) AS count FROM approvals
+                WHERE run_id = ? AND status = 'pending'
+                """,
+                (run_id,),
+            ).fetchone()["count"]
+            if pending_approvals:
+                raise InvalidTransition(f"run {run_id} has {pending_approvals} pending approval(s)")
+            identity_violations = self.detect_identity_violations(run_id)
+            if identity_violations:
+                raise InvalidTransition(
+                    f"run {run_id} has {len(identity_violations)} unresolved identity "
+                    f"violation(s); refuse completion until reconciled"
+                )
             unresolved = connection.execute(
                 """
                 SELECT COUNT(*) AS count FROM effects
