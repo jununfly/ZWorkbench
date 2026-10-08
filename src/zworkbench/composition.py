@@ -34,7 +34,7 @@ import sqlite3
 import tempfile
 import uuid
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, List, Mapping, Optional, Sequence
+from typing import Any, ClassVar, Dict, Iterator, List, Mapping, Optional, Sequence
 
 from .resident_service_registry import ResidentServiceRegistry
 
@@ -2351,3 +2351,49 @@ class CompositionOwner:
         if user_version != SCHEMA_VERSION or not required.issubset(tables):
             return {"ok": False, "reason": "schema tables or user_version mismatch"}
         return {"ok": True, "integrity_check": result, "user_version": user_version}
+
+    # The canonical table set.  Must stay in sync with the `required` set in
+    # _check_database_integrity above: every table this owner may create is a
+    # first-class, auditable part of the single durable state.  Any other user
+    # table in this database would be a *second* canonical state (forbidden).
+    _CANONICAL_TABLES: ClassVar[frozenset[str]] = frozenset(
+        {
+            "owner_meta",
+            "runs",
+            "approvals",
+            "effects",
+            "effect_attempts",
+            "results",
+            "replays",
+            "events",
+            "provider_exit_ledger",
+            "provider_fallback_ledger",
+            "provider_attempt_ledger",
+            "provider_retry_budget",
+            "provider_retry_budget_ledger",
+            "provider_access_gate_ledger",
+        }
+    )
+
+    def audit_owner_isolated(self) -> Dict[str, Any]:
+        """Audit that this CompositionOwner is the unique durable owner.
+
+        Promotes the "no second canonical state" invariant (sub-03, node 1-6-3)
+        from discipline to a testable contract.  The set of user tables in this
+        database must be exactly ``_CANONICAL_TABLES`` (plus sqlite_sequence).
+        Any extra user table would be a second canonical state and fails the audit.
+        """
+        connection = self._require_connection()
+        actual = {
+            row[0]
+            for row in connection.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        }
+        canonical = actual & self._CANONICAL_TABLES
+        extra = actual - self._CANONICAL_TABLES - {"sqlite_sequence"}
+        return {
+            "owner_is_unique": len(extra) == 0,
+            "canonical_tables": sorted(canonical),
+            "non_canonical_tables": sorted(extra),
+            "expected_canonical_count": len(self._CANONICAL_TABLES),
+            "actual_canonical_count": len(canonical),
+        }

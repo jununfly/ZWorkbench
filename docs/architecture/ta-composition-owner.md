@@ -87,9 +87,9 @@ restore 默认拒绝覆盖已有目标，必须显式 replace；关键 identity 
 - **9 张 canonical 表、harness-neutral、幂等（`already_completed` + `physical_effect_count` 单点守卫 + 并发 `in_flight` 兜底）、uncertain→reconcile→unknown 三态 fail-closed、backup/restore 四重交叉校验 + 默认拒绝覆盖 + approval 仅存 token_hash**（IMPLEMENTED，基本可证）。
 - **缺口（UNKNOWN / backlog）：**
   - Q4「secret 不入 owner」当前**不成立**——`_reject_raw_credentials` 仅键名启发式，`complete_effect` 写 `external_receipt_json` 不经拒密，值级密钥可直落 owner 并被整库备份扩散（P0 backlog：external_receipt 必经拒密 + 值级扫描）。
-  - run 级 attempt 非一等实体（仅 effect_attempts），须决策（P1）。
-  - 「无第二 canonical」靠纪律而非技术护栏，须升为可审计契约（P1：`audit_owner_isolated()` + CI 断言）。
-  - unknown 术语须拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）。
+  - run 级 attempt 非一等实体（仅 effect_attempts）：**已决策（1-6-2）不升一等实体**——runs 表无 attempt 列，run 级 retry 由 effect_attempts 间接表达（一次 run 重试 = 重新 claim effect，attempt 自增）。owner 不持有 run 级 attempt 一等实体表。run 级 restart 预算仍是 sub-01 backlog（line 81）的独立 UNKNOWN 项。
+  - 「无第二 canonical」已升为可审计契约（**1-6-3**）：`audit_owner_isolated()` 枚举 owner 持有的全部用户表，断言恰为 14 张 canonical 表（`_CANONICAL_TABLES`），任何额外用户表即判为第二 canonical state 并 fail；该审计测试即 CI 断言载体（仓库暂无 CI yaml，测试套件为契约执行点）。
+  - unknown 术语已拆两层（**1-6-4**）：① 远端/委托侧（remote/delegated，如 provider/endpoint/account_scope、`provider_remote_zero_residue`）缺失→存字面 `unknown`（或 `unknown/delegated` caliber），表达"远端状态未知"；② 内部 identity（owner 的 durable 身份图交叉引用）缺失→**不**存字面 `unknown` 值，而是 `safe_stop_run(reason="identity_unresolved")`（F13 已实现并测试）。两层已分离且行为正确，本节点将其固化为术语约定 + 聚焦测试。
 - **sub-03 是 sub-04（effect 授权）与 sub-06（证据/回放）的硬前置**，须先稳定。
 
 ### 交叉引用
