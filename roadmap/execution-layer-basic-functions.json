@@ -1173,9 +1173,38 @@
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-10-4 S3 dogfood N=10 闸门当前是否可由 Agent 机械关闭?",
+          "answer": "否。本节点为验收闸门(acceptance evidence), 不能由 Agent 机械关闭, 理由三: (1) #40 阻塞默认入口: 代码库证明产品 CLI 默认入口为 loopback/ollama-only — cli.py:69 run 默认 --provider fake-loopback + ollama endpoint; worker_bridge.py:1329 / dsh_runtime.py:213 对非 loopback Provider 直接 raise; provider_facade.py/composition.py 强制 baseline 永不静默触达真实 Provider。即『默认入口全链路』经真实 Ark(ark-code-latest) 当前不可达, r3-real-usability-roadmap.md:256 明示『产品 CLI 默认路径仍被 #40 挡(CLI 硬编码 ollama + 拒非 loopback provider)』。 (2) N=10 被试必须是 zj 本人: r3-real-usability-roadmap.md:115 验收人=zj(N=10 被试), exercises_default_product_path=true; Agent 不能充当验收被试。 (3) 价值基线属独立节点 1-10-6, 且默认路径价值基线明确『待 #40 解后补测』。机械可验证部分(隔离 worktree+apply+local commit+receipt 可复核)已由 1-10-3 覆盖; 但真正的 S3 闸门需 zj 经默认入口连续 10 次真实运行 + 零越界 + 零 secret 落盘 + receipt 100% 可复核, 当前因 #40 不可达且被试非 Agent。结论: 本节点保持 pending/blocked, 待 #40 解后由 zj 亲自执行 N=10 验收。",
+          "note": ""
+        },
+        {
+          "q": "#40 当前真实机制态是什么（与 r3 文档 line 256 是否一致）?",
+          "answer": "#40 机制态已查清, 与 r3 文档 line 256『产品 CLI 默认路径仍被 #40 挡』部分过时: (1) run 命令真实 Ark 路径已存在且测试覆盖——--provider-config + --real-provider-gate 两 flag 直连 Ark(real_provider_gate 默认 False, HostCapabilityFacade.acquire_provider 在 gate 关时 fail-closed 抛 ProviderAccessDenied); 本机读阶段 2026-10-05 已接通, 40 单测绿。 (2) 真正缺口在 dogfood 默认入口: ui 命令(cli.py:286-308) 仅暴露 --db/--host/--port/--review, 不接 --provider-config/--real-provider-gate, 故 zworkbench ui --db 跑不出真实 Ark——这正是 S3『默认入口全链路』走不到真实 Provider 的根因。 (3) 刻意安全不变量须保留: real_provider_gate 默认关、baseline(loopback/fake) 永不静默触达真实 Provider; 解 #40 只能让真实 Ark 经显式 gate 可达, 不能把默认翻成 Ark。结论: 解 #40 = 在 ui dogfood 入口暴露 --provider-config + --real-provider-gate 并透传到 run config(保持 gate 默认 False/fail-closed) + 提供一个 N=10 dogfood 机械件供 zj 带 flag 跑真实验收; 文档 line 256 待本工作完成后更正。",
+          "note": ""
+        },
+        {
+          "q": "#40 解阻塞已落地(显式 gate 可达)?",
+          "answer": "已落地。方案=给 ui dogfood 入口加后台 run 执行器, 显式 gate 可达, real_provider_gate 默认 False/fail-closed 不变。具体改动: (1) cli.py  子命令新增可选 run-config 入参(--case-root/--workspace/--codex/--code-home/--event-log/--provider/--model/--endpoint/--provider-profile/--provider-config/--timeout/--host-enforcement/--real-provider-gate); 三者齐备时构建 LocalReadOnlyRunConfig 并切到 owner_command_source_with_executor, 否则保持原 create+start only 控制面。 (2) ui_run.py 新增 owner_command_source_with_executor: create_and_start_run 后起 daemon 线程调 LocalReadOnlyRunOrchestrator(config).run(run_id, prompt, run_claim='assume')。 (3) local_run.py/codex_adapter.py 加向后兼容 run_claim 参数('create' 默认=run 命令不动; 'assume'=ui facade 已建 run, 跳过 create/start 避免重复 create_run 报重复 run_id)。 (4) fail-closed 保持: preflight 对无 gate 的 real provider profile 仍 deny; 执行器对 denied/异常的 started run 调 owner.fail_run 收口, 绝不悬在 running。 (5) 测试 test_ui_run.py+test_ui_dogfood_cli.py 新增: 执行器把 denied run 收口为 failed、不重复 claim 已存在 run、e2e 经 CLI 启动 ui 带 execution 入参的确把 started run 驱动到终态, 全绿。 (6) 机械件就绪: zj 可  跑真实 N=10 验收。 仍待: zj 亲自跑 N=10(被试必须是 zj); r3-real-usability-roadmap.md:255-256 过时描述更正。",
+          "note": ""
+        },
+        {
+          "q": "#40 解阻塞已落地(显式 gate 可达)?",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "3a2225cf5918f89c7dc3dc80a2e67b4aa10f7f235cdd8675cfb28e955d8f2a2f"
+        },
+        {
+          "q": "#40 解阻塞已落地(显式 gate 可达)?",
+          "answer": "已落地。方案=给 ui dogfood 入口加后台 run 执行器, 显式 gate 可达, real_provider_gate 默认 False/fail-closed 不变。具体改动: (1) cli.py ui 子命令新增可选 run-config 入参(--case-root/--workspace/--codex/--code-home/--event-log/--provider/--model/--endpoint/--provider-profile/--provider-config/--timeout/--host-enforcement/--real-provider-gate); 三者齐备时构建 LocalReadOnlyRunConfig 并切到 owner_command_source_with_executor, 否则保持原 create+start only 控制面。 (2) ui_run.py 新增 owner_command_source_with_executor: create_and_start_run 后起 daemon 线程调 LocalReadOnlyRunOrchestrator(config).run(run_id, prompt, run_claim=assume)。 (3) local_run.py/codex_adapter.py 加向后兼容 run_claim 参数(create 默认=run 命令不动; assume=ui facade 已建 run, 跳过 create/start 避免重复 create_run 报重复 run_id)。 (4) fail-closed 保持: preflight 对无 gate 的 real provider profile 仍 deny; 执行器对 denied/异常的 started run 调 owner.fail_run 收口, 绝不悬在 running。 (5) 测试 test_ui_run.py+test_ui_dogfood_cli.py 新增: 执行器把 denied run 收口为 failed、不重复 claim 已存在 run、e2e 经 CLI 启动 ui 带 execution 入参的确把 started run 驱动到终态, 全绿。 (6) 机械件就绪: zj 可经 zworkbench ui --db <scratch> --case-root <c> --workspace <w> --codex <x> --provider-profile ark-code-latest --provider-config ~/.codex/config.toml --real-provider-gate 带 flag 跑真实 N=10 验收。仍待: zj 亲自跑 N=10(被试必须是 zj, 验收闸门不能由 Agent 机械关闭)。本工作同轮已把 r3-real-usability-roadmap.md:255-256 过时描述更正为 已具显式 gate + ui dogfood 后台执行器已落地。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-5": {
       "id": "1-10-5",
@@ -1307,7 +1336,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-09 10:58:52",
+    "updated": "2026-10-09 11:50:00",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
