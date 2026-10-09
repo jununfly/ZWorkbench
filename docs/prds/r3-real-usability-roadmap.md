@@ -252,8 +252,8 @@ scope 已收敛、R3/ADR 0008 已沉淀、工程切片 S0–S4 已锁定。作�
 **判读（严守 AND 门纪律，R3 仍 `target`）：**
 - 净时间：seam 级 ZW 明显更省（约 1/3.7 耗时），但 n=1/侧、墙钟受 ARK 抖动影响，仅作趋势前证；
 - 回看性：ZW **YES** vs 裸 Codex **NO** 是**结构性、可复现**差异（owner-backed receipt/replay 是裸 codex 完全没有的 durable ledger）——直接对应 **PG-3 护城河**，非单次耗时偶然；
-- 写链路 md5 一致：seam 层 **S0→S2 真写链路可驱动且可审计**（文件变更 + owner completed run + recorded-view 双证据）→ 写能力可行性已闭；但产品 CLI 默认路径仍被 **#40** 挡（CLI 硬编码 ollama + 拒非 loopback provider），**v1 是否默认出货写是产品/节奏决策，不归 U1 阻塞**。
-- **不替代 S3 闸门**：本数据在 seam 级、非默认产品路径、n=1；S3 dogfood N=10 的"默认入口价值基线 + 零越界 + receipt 100% 可复核"仍待 #40 解后补测。本实证作 PG-2/PG-3 的可行性前证，不提前宣告 R3 `implemented`。
+- 写链路 md5 一致：seam 层 **S0→S2 真写链路可驱动且可审计**（文件变更 + owner completed run + recorded-view 双证据）→ 写能力可行性已闭；但产品 CLI 默认路径仍 fail-closed **不**触达真实 Ark（`real_provider_gate` 默认 False，符合设计）；经显式 `--real-provider-gate` + `--provider-profile`/`--provider-config`，`run` 与 `ui` 入口均可达真实 Ark（**#40 已解，闸门式可达**），**v1 是否默认出货写是产品/节奏决策，不归 U1 阻塞**。
+- **不替代 S3 闸门**：本数据在 seam 级、非默认产品路径、n=1；S3 dogfood N=10 的"默认入口价值基线 + 零越界 + receipt 100% 可复核"现已可经显式 gate 在 `run`/`ui` 入口（带 `--real-provider-gate`）补测（#40 已解）。本实证作 PG-2/PG-3 的可行性前证，不提前宣告 R3 `implemented`。
 
 满足以上**全部**三层，R3 标 `implemented`（产品可用达成）；任一不满足，R3 维持 `target`。
 
