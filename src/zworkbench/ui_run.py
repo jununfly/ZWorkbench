@@ -112,6 +112,108 @@ def owner_command_source(owner: Any):
     return create_and_start_run
 
 
+def owner_command_source_with_executor(owner: Any, run_config: Any, *, timeout: float = 45.0):
+    """Command facade that also drives the started run to completion.
+
+    This is the dogfood-UI counterpart to the one-shot ``run`` command: after
+    ``create_and_start_run`` records the run (status ``running``), a daemon
+    thread runs it through :class:`LocalReadOnlyRunOrchestrator` using the
+    supplied ``run_config``. The started run is executed with ``run_claim=
+    "assume"`` so the adapter does not re-create the identity the facade already
+    minted.
+
+    The gate stays fail-closed: ``run_config.real_provider_gate`` defaults to
+    ``False`` and the baseline (loopback / fake) path never silently reaches a
+    real Provider. A run whose preflight is denied, or whose execution raises
+    before the orchestrator can close it, is moved out of ``running`` so it
+    never dangles in the owner.
+    """
+
+    base = owner_command_source(owner)
+
+    def create_and_start_run(
+        task_type: str,
+        input_value: Any,
+        metadata: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        result = base(task_type, input_value, metadata)
+        run_id = result.get("run_id")
+        prompt = _prompt_from_input(input_value)
+        thread = threading.Thread(
+            target=_execute_run,
+            args=(run_config, run_id, prompt, timeout),
+            daemon=True,
+            name="ui-run-executor-{0}".format(run_id),
+        )
+        thread.start()
+        return result
+
+    return create_and_start_run
+
+
+def _prompt_from_input(input_value: Any) -> str:
+    """Pull the user prompt out of the run input the UI sends.
+
+    Both the run-rail trigger and the composer send ``{"prompt": "...", "origin":
+    "..."}``; the composer's typed text is what the executor should run.
+    """
+
+    if isinstance(input_value, Mapping) and isinstance(input_value.get("prompt"), str):
+        return input_value["prompt"]
+    return ""
+
+
+def _execute_run(run_config: Any, run_id: Optional[str], prompt: str, timeout: float) -> None:
+    """Background executor: drive one already-started run to a terminal state."""
+
+    if not run_id:
+        return
+    from .composition import CompositionOwner
+    from .local_run import LocalReadOnlyRunOrchestrator
+
+    try:
+        result = LocalReadOnlyRunOrchestrator(run_config).run(
+            run_id, prompt, timeout=timeout, run_claim="assume"
+        )
+    except Exception:
+        # The orchestrator usually closes the run itself on its failure path
+        # (via _ensure_run_closed), but guarantee a terminal state so a started
+        # run never dangles in `running` if an unexpected error escapes it.
+        _fail_run_if_running(run_config.database, run_id, {"type": "UiExecutorError"})
+        return
+    if result.status == "denied":
+        # Preflight denied before the orchestrator opened the owner, so the run
+        # is still `running` (created by the facade). Move it to a terminal
+        # state and record the denial reason for auditability.
+        _fail_run_if_running(
+            run_config.database,
+            run_id,
+            {
+                "type": "PreflightDenied",
+                "violations": [violation.to_dict() for violation in result.preflight.violations],
+            },
+        )
+
+
+def _fail_run_if_running(database: Any, run_id: str, error: Mapping[str, Any]) -> None:
+    """Close a still-`running` run as failed, ignoring any owner error.
+
+    Used to guarantee a started run reaches a terminal state even when preflight
+    or an executor-internal error prevents the orchestrator from doing so.
+    """
+
+    try:
+        from .composition import CompositionOwner
+
+        with CompositionOwner(database) as owner:
+            if owner.get_run(run_id).get("status") == "running":
+                owner.fail_run(run_id, dict(error))
+    except Exception:
+        # The authoritative result is best-effort; an owner write failure here
+        # must not raise out of the background thread.
+        pass
+
+
 _RUN_SCRIPT = """\
 (() => {
   const BTN = document.querySelector('[data-run-trigger]');

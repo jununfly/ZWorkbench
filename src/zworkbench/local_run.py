@@ -199,12 +199,19 @@ class LocalReadOnlyRunOrchestrator:
         self.config = config
         self.adapter_factory = adapter_factory or HostCapabilityFacade.acquire_provider
 
-    def run(self, run_id: str, prompt: str, *, timeout: float = 45.0) -> LocalReadOnlyRunResult:
+    def run(self, run_id: str, prompt: str, *, timeout: float = 45.0, run_claim: str = "create") -> LocalReadOnlyRunResult:
         """Preflight and execute one local read-only run.
 
         A denied preflight does not open the owner database or call the adapter
         factory.  Once admitted, the adapter remains responsible for the run
         lifecycle and the owner remains responsible for durable state.
+
+        ``run_claim`` is forwarded to the adapter's ``execute`` (see
+        :meth:`CodexAdapter.execute`). The default ``"create"`` matches the
+        one-shot ``run`` command, which is the sole creator of the run identity.
+        The dogfood UI passes ``"assume"`` because its ``CommandFacade`` has
+        already created + started the run before handing it to the background
+        executor.
         """
 
         _require_text(run_id, "run_id")
@@ -229,6 +236,7 @@ class LocalReadOnlyRunOrchestrator:
                         "preflight": admission.to_dict(),
                     },
                     timeout=timeout,
+                    run_claim=run_claim,
                 )
                 succeeded = True
                 result = LocalReadOnlyRunResult(

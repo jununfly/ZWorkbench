@@ -305,6 +305,54 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="enable the local review annotation mode",
     )
+    # Run-execution args (optional). When --case-root, --workspace and --codex are
+    # all supplied, the dogfood UI becomes a real executor: every started run is
+    # driven to completion through LocalReadOnlyRunOrchestrator with these flags.
+    # Omitting them keeps the command create+start only (the original control
+    # surface). The real-Provider gate stays fail-closed by default.
+    ui.add_argument("--case-root", type=Path, help="case-local root directory; enables run execution when set with --workspace and --codex")
+    ui.add_argument("--workspace", type=Path, help="existing workspace inside --case-root")
+    ui.add_argument("--codex", type=Path, help="fixed executable path for Codex app-server")
+    ui.add_argument("--code-home", type=Path, help="case-local CODEX_HOME path")
+    ui.add_argument("--event-log", type=Path, help="case-local Codex event log path")
+    ui.add_argument("--provider", default="fake-loopback", help="non-secret Provider identity")
+    ui.add_argument("--model", default="fake-model", help="non-secret model identity")
+    ui.add_argument("--endpoint", default="http://127.0.0.1:11434", help="loopback Provider endpoint")
+    ui.add_argument(
+        "--provider-profile",
+        default=None,
+        help=(
+            "select an explicitly configured remote/custom Provider by name from "
+            "--provider-config; authorizes its non-loopback endpoint and switches "
+            "the adapter off the ollama default. Omit to keep the ollama fallback"
+        ),
+    )
+    ui.add_argument(
+        "--provider-config",
+        default=None,
+        help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
+    )
+    ui.add_argument("--timeout", type=float, default=45.0, help="maximum turn wait in seconds")
+    ui.add_argument(
+        "--host-enforcement",
+        action="store_true",
+        default=False,
+        help=(
+            "make ZWorkbench the single sandbox authority (ADR 0008 intent): "
+            "launch Codex with --dangerously-bypass-approvals-and-sandbox"
+        ),
+    )
+    ui.add_argument(
+        "--real-provider-gate",
+        action="store_true",
+        default=False,
+        help=(
+            "explicitly consent to a real Provider egress/billing path. Required "
+            "when --provider-profile is set; keeps the loopback/fake baseline "
+            "from silently reaching a real Provider (roadmap node 1-1-4). Without "
+            "it, a real profile is denied."
+        ),
+    )
     ui.set_defaults(handler=_ui_command)
 
     ui_build = commands.add_parser(
@@ -418,12 +466,14 @@ def _denied_payload(
     return payload
 
 
-def _run_config(args: argparse.Namespace) -> LocalReadOnlyRunConfig:
+def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> LocalReadOnlyRunConfig:
     case_root = _resolve(args.case_root)
+    if database is None:
+        database = args.db or (case_root / "state" / "composition.sqlite3")
     paths = {
         "case_root": case_root,
         "workspace": _resolve(args.workspace),
-        "database": _resolve(args.db or case_root / "state" / "composition.sqlite3"),
+        "database": _resolve(database),
         "code_home": _resolve(args.code_home or case_root / "codex-home"),
         "event_log": _resolve(args.event_log or case_root / "events" / "codex.jsonl"),
     }
@@ -921,7 +971,7 @@ def _ui_command(args: argparse.Namespace) -> int:
     from .ui_approval import owner_approval_source
     from .ui_host import serve_workbench
     from .ui_reconcile import owner_reconcile_source
-    from .ui_run import owner_command_source
+    from .ui_run import owner_command_source, owner_command_source_with_executor
     from .ui_scenario_state import owner_scenario_source
     from .ui_view_model import owner_view_source
 
@@ -932,12 +982,22 @@ def _ui_command(args: argparse.Namespace) -> int:
         )
 
     owner = CompositionOwner(args.db)
+    # Execution is opt-in: when the run-config trio (case-root / workspace / codex)
+    # is provided, started runs are driven to completion through
+    # LocalReadOnlyRunOrchestrator with the same explicit gate the `run` command
+    # uses. Without them the command stays create+start only (control surface).
+    execution_enabled = bool(args.case_root and args.workspace and args.codex)
+    if execution_enabled:
+        run_config = _run_config(args, database=args.db)
+        command_source = owner_command_source_with_executor(owner, run_config, timeout=args.timeout)
+    else:
+        command_source = owner_command_source(owner)
     stopping = threading.Event()
     host = None
     try:
         host = serve_workbench(
             view_source=owner_view_source(owner),
-            command_source=owner_command_source(owner),
+            command_source=command_source,
             approval_source=owner_approval_source(owner),
             reconcile_source=owner_reconcile_source(owner),
             scenario_source=owner_scenario_source(owner),
@@ -950,6 +1010,8 @@ def _ui_command(args: argparse.Namespace) -> int:
                 "mode": "dogfood",
                 "db": str(owner.database),
                 "review": bool(args.review),
+                "execution": "enabled" if execution_enabled else "disabled",
+                "real_provider_gate": bool(args.real_provider_gate),
                 "base_url": host.base_url,
             }
         )
