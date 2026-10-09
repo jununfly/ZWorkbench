@@ -11,8 +11,10 @@ from zworkbench.codex_adapter import (
     CodexAppServerAdapter,
     CodexAdapterError,
     CodexProtocolError,
+    CodexTurnWaitTimeout,
     FAILURE_NETWORK,
     FAILURE_RATE_LIMIT,
+    FAILURE_TURN_WAIT,
     FAILURE_UNKNOWN,
     SAFE_STOP_CATEGORIES,
     classify_provider_failure,
@@ -103,6 +105,100 @@ class CodexAdapterShapeTests(unittest.TestCase):
                 self.assertEqual(execution.status, "completed")
                 self.assertEqual(execution.text, "fixture-ok")
                 self.assertEqual(owner.get_run("run-buffered")["status"], "completed")
+
+
+class EventLogSecretRedactionTests(unittest.TestCase):
+    """The adapter event log is a raw-traffic debug artifact, but it must never
+    persist credential-shaped values: the agent's own command output can echo
+    the staged provider config (bearer token included) back through an
+    ``item/completed`` notification, and ``_append_event`` writes every message
+    verbatim.  Redaction happens at write time; the in-memory message record is
+    untouched so digests stay self-consistent with the redacted file.
+    """
+
+    def _new_adapter(self) -> tuple:
+        temporary = tempfile.mkdtemp()
+        root = Path(temporary)
+        executable = root / "codex"
+        executable.write_text("#!/bin/sh\n", encoding="utf-8")
+        executable.chmod(0o755)
+        owner = CompositionOwner(root / "owner.sqlite3")
+        adapter = CodexAppServerAdapter(
+            owner,
+            executable,
+            root / "codex-home",
+            root / "workspace",
+            event_log=root / "events.jsonl",
+        )
+        return adapter, root
+
+    # Test fixtures are built at runtime so the source never contains a
+    # vendor-real key literal (GitHub push protection rejects e.g. the
+    # VolcEngine ark-<uuid>-<suffix> shape even as a test fixture); the
+    # runtime values still match the adapter's redaction regexes.
+    FAKE_ARK_TOKEN = "ark-" + "f4k3" * 8
+    FAKE_SK_TOKEN = "sk-abc123def456ghijk"
+    FAKE_AKIA_KEY = "AKIA" + "N0TR3AL" * 3
+
+    def test_token_shaped_values_are_redacted_in_the_event_log(self) -> None:
+        adapter, root = self._new_adapter()
+        try:
+            adapter._append_event({
+                "direction": "inbound",
+                "message": {
+                    "method": "item/completed",
+                    "params": {
+                        "text": (
+                            f'experimental_bearer_token = "{self.FAKE_ARK_TOKEN}" '
+                            f"and {self.FAKE_SK_TOKEN} and {self.FAKE_AKIA_KEY}"
+                        ),
+                    },
+                },
+            })
+        finally:
+            adapter.close()
+        body = (root / "events.jsonl").read_text(encoding="utf-8")
+        self.assertNotIn(self.FAKE_ARK_TOKEN, body)
+        self.assertNotIn(self.FAKE_SK_TOKEN, body)
+        self.assertNotIn(self.FAKE_AKIA_KEY, body)
+        self.assertEqual(body.count("<redacted>"), 3)
+
+    def test_word_embedded_key_shapes_are_not_flagged(self) -> None:
+        # Same lesson as the owner-side secret scanner: "disk-full-read-access"
+        # embeds "sk-full-read-access" but is a plain flag name, not a key.
+        adapter, root = self._new_adapter()
+        try:
+            adapter._append_event({
+                "direction": "inbound",
+                "message": {
+                    "method": "item/completed",
+                    "params": {"text": "sandbox modes: disk-full-read-access task-managed-risk-scan"},
+                },
+            })
+        finally:
+            adapter.close()
+        body = (root / "events.jsonl").read_text(encoding="utf-8")
+        self.assertIn("disk-full-read-access", body)
+        self.assertIn("task-managed-risk-scan", body)
+        self.assertNotIn("<redacted>", body)
+
+    def test_redaction_is_applied_before_the_digest_is_taken(self) -> None:
+        # event_digest is sha256 over the event-log file: it must reflect the
+        # redacted bytes so the recorded digest stays reproducible from disk.
+        adapter, root = self._new_adapter()
+        try:
+            adapter._append_event({
+                "direction": "inbound",
+                "message": {"method": "item/completed", "params": {"text": "token sk-abc123def456ghijk"}},
+            })
+        finally:
+            digest = adapter.event_digest()
+            adapter.close()
+        import hashlib
+
+        body = (root / "events.jsonl").read_bytes()
+        self.assertEqual(digest, hashlib.sha256(body).hexdigest())
+        self.assertNotIn(b"sk-abc123def456ghijk", body)
 
 
 class CodexIdentityTransportBindingTests(unittest.TestCase):
@@ -213,6 +309,13 @@ class CodexFailureClassificationTests(unittest.TestCase):
     def test_timeout_is_network(self) -> None:
         self.assertEqual(classify_provider_failure(TimeoutError("request timed out")), FAILURE_NETWORK)
 
+    def test_turn_wait_timeout_is_its_own_bucket(self) -> None:
+        # A client-side turn-wait expiry (the operator's --timeout elapsed while
+        # the agent was still working) is NOT a network failure: the transport
+        # was healthy and streaming events the whole time.
+        exc = CodexTurnWaitTimeout("Codex event wait timed out")
+        self.assertEqual(classify_provider_failure(exc), FAILURE_TURN_WAIT)
+
     def test_connection_reset_is_network(self) -> None:
         self.assertEqual(classify_provider_failure(ConnectionResetError("reset")), FAILURE_NETWORK)
 
@@ -246,8 +349,11 @@ class CodexFailureClassificationTests(unittest.TestCase):
     def test_generic_exception_is_unknown(self) -> None:
         self.assertEqual(classify_provider_failure(RuntimeError("boom")), FAILURE_UNKNOWN)
 
-    def test_safe_stop_categories_are_the_three_named_buckets(self) -> None:
-        self.assertEqual(SAFE_STOP_CATEGORIES, {FAILURE_NETWORK, FAILURE_RATE_LIMIT, FAILURE_UNKNOWN})
+    def test_safe_stop_categories_are_the_named_buckets(self) -> None:
+        self.assertEqual(
+            SAFE_STOP_CATEGORIES,
+            {FAILURE_NETWORK, FAILURE_RATE_LIMIT, FAILURE_TURN_WAIT, FAILURE_UNKNOWN},
+        )
 
     # -- integration: classification is recorded and the run safe-stops -----
 
@@ -338,6 +444,42 @@ class CodexFailureClassificationTests(unittest.TestCase):
                 with self.assertRaises(CodexProtocolError):
                     adapter.execute("run-rl", "prompt", timeout=2.0)
             self._assert_classification(owner, "run-rl", FAILURE_RATE_LIMIT)
+
+    def test_turn_wait_timeout_is_classified_and_safe_stopped(self) -> None:
+        # The fake app-server answers initialize/thread/start/turn/start but
+        # never emits turn/completed: the run hits the caller's --timeout while
+        # the agent is still working.  This must classify as turn_wait (a
+        # client-side wait expiry), not network.
+        fake_codex = """
+        import json
+        import sys
+
+        def send(message):
+            sys.stdout.write(json.dumps(message, separators=(",", ":")) + "\\n")
+            sys.stdout.flush()
+
+        for line in sys.stdin:
+            message = json.loads(line)
+            if "id" not in message:
+                continue
+            request_id = message["id"]
+            method = message.get("method")
+            if method == "initialize":
+                send({"jsonrpc": "2.0", "id": request_id, "result": {}})
+            elif method == "thread/start":
+                send({"jsonrpc": "2.0", "id": request_id, "result": {"thread": {"id": "t1"}}})
+            elif method == "turn/start":
+                send({"jsonrpc": "2.0", "id": request_id, "result": {"turn": {"id": "u1"}}})
+        """
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = self._spawn_fake_codex(root, fake_codex)
+            owner = CompositionOwner(root / "owner.sqlite3")
+            adapter = self._build_adapter(owner, root, executable)
+            with adapter:
+                with self.assertRaises(CodexTurnWaitTimeout):
+                    adapter.execute("run-wait", "prompt", timeout=1.0)
+            self._assert_classification(owner, "run-wait", FAILURE_TURN_WAIT)
 
     def test_unknown_protocol_failure_is_classified_and_safe_stopped(self) -> None:
         # The fake app-server emits a non-JSON line so the adapter raises a
