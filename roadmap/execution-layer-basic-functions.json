@@ -1150,13 +1150,20 @@
       "id": "1-10-3",
       "uid": "01a1159f34d8-43cbdc3f87",
       "label": "S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "S2 写 seam 产品验收的工程判据是否已机械验证闭环?",
+          "answer": "是。S2 写 seam 工程验收五项判据全部满足并机械验证：隔离 worktree(主 workspace 不接触, worktree 路径入 owner)、diff apply+local commit(无 push, receipt.pushed=False + worktree 无 remote)、push 单独门(S4, 源码 write_seam/write_run/cli 均无 push 执行路径)、receipt 绑定 approval 范围且单一 owner(无第二个 durable owner 构造)、approval+幂等(同 idempotency key 仅一次物理 commit, 错误 token/scope 拒)。验证证据: pytest 跑 test_write_seam.py+test_write_run.py+test_cli_write.py = 24 passed, 无 skip/xfail/TODO。关键区别: 这些测试驱动的是真实 zworkbench write 产品 CLI + CompositionOwner + 真实 git worktree, 非合成评测 harness, 故工程判据为真闭环。未关闭项: parent 1-10 三道 AND 门(工程∧用户信任∧价值)中, 用户信任判据(真实 solo dogfood 写 seam)与价值基线尚未建立; 本节点只关闭 S2 自身工程验收, 不构成对终端用户的 S2『产品可用』宣告。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-4": {
       "id": "1-10-4",
@@ -1300,7 +1307,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-09 10:46:24",
+    "updated": "2026-10-09 10:58:52",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
