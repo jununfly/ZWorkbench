@@ -1078,13 +1078,54 @@
       "id": "1-10-1",
       "uid": "01a1159f33e5-887f8a1f55",
       "label": "S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "S0 enforcer 候选选型（macOS 26 实测）",
+          "answer": "选 Docker 容器；seatbelt 在 macOS 26.6.2 实测 sandbox_apply EPERM，判 not-viable，排除。bubblewrap 仅 Linux。故 macOS 强隔离唯一可行载体=容器/VM，容器优先（docker 已装）。",
+          "note": "probe 2026-10-09: sandbox-exec deny-all on true -> exit 71 EPERM"
+        },
+        {
+          "q": "S0 spike 落点（避免重蹈 ADR 0010 覆辙）",
+          "answer": "独立 evidence 脚本 scripts/host_enforcement_s0_spike.py + 产出 receipt JSON；不回写为 product module（不进 codex_adapter import），避免后人误以为包裹机制已可用。三判据=可运行断言+receipt，非 demo。",
+          "note": "ADR 0010 已 git rm host_enforcer.py，因 active path 从不 import 且 macOS 26 seatbelt 禁用"
+        },
+        {
+          "q": "判据 #1/#3 当前阻塞 gate",
+          "answer": "本机 docker daemon 未运行（colima socket 不存在），容器 deny-all+白名单+越界 capture 无法演示。gate = time=\"2026-10-09T00:43:56+08:00\" level=info msg=\"Using the existing instance `colima`\"\ntime=\"2026-10-09T00:43:56+08:00\" level=fatal msg=\"failed to start usernet `user-v2`: unlinkat /Users/bilibili/.colima/_lima/_networks/user-v2/usernet.user-v2.stdout.log: operation not permitted\" 起 daemon 后重跑 harness 的 container_enforcement_demo；镜像 python:3.13-slim 需联网拉取。判据 #2 已出真实证据（exit 71 拒启动）。",
+          "note": "probe 2026-10-09: docker info -> daemon not running"
+        },
+        {
+          "q": "判据 #1/#3 当前阻塞 gate",
+          "answer": "本机 docker daemon 未运行（colima socket 不存在），容器 deny-all+白名单+越界 capture 无法演示。gate = time=\"2026-10-09T01:10:49+08:00\" level=info msg=\"Using the existing instance `colima`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"Starting the instance `colima` with internal VM driver `vz`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Replacing `http_proxy` value `http://127.0.0.1:7890` with `http://192.168.5.2:7890`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Replacing `https_proxy` value `http://127.0.0.1:7890` with `http://192.168.5.2:7890`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Replacing `http_proxy` value `http://127.0.0.1:7890` with `http://192.168.5.2:7890`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Replacing `https_proxy` value `http://127.0.0.1:7890` with `http://192.168.5.2:7890`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] hostagent socket created at /Users/bilibili/.colima/_lima/colima/ha.sock\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Starting VZ (hint: to watch the boot progress, see `/Users/bilibili/.colima/_lima/colima/serial*.log`)\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Mounting disk `colima` on `/mnt/lima-colima`\"\ntime=\"2026-10-09T01:10:49+08:00\" level=info msg=\"[hostagent] Converting `/Users/bilibili/.colima/_lima/_disks/colima/datadisk` (raw) to a raw disk `/Users/bilibili/.colima/_lima/_disks/colima/datadisk`\"\ntime=\"2026-10-09T01:10:50+08:00\" level=info msg=\"[hostagent] [VZ] - vm state change: running\"\ntime=\"2026-10-09T01:10:54+08:00\" level=info msg=\"[hostagent] SSH server does not seem to be running on vsock port, using usernet forwarder\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"SSH Local Port: 57567\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Waiting for the essential requirement 1 of 3: `ssh`\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] The essential requirement 1 of 3 is satisfied\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Waiting for the essential requirement 2 of 3: `user session is ready for ssh`\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] The essential requirement 2 of 3 is satisfied\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Waiting for the essential requirement 3 of 3: `Explicitly start ssh ControlMaster`\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] The essential requirement 3 of 3 is satisfied\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Waiting for the guest agent to be running\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Forwarding `/var/run/docker.sock` (guest) to `/Users/bilibili/.colima/default/docker.sock` (host)\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Forwarding `/var/run/containerd/containerd.sock` (guest) to `/Users/bilibili/.colima/default/containerd.sock` (host)\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Forwarding `/var/run/docker.sock` (guest) to `/Users/bilibili/.colima/docker.sock` (host)\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Guest agent is running\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Waiting for the final requirement 1 of 1: `boot scripts must have finished`\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Time sync: guest agent is alive, starting time synchronization\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Not forwarding TCP 0.0.0.0:22\"\ntime=\"2026-10-09T01:10:55+08:00\" level=info msg=\"[hostagent] Not forwarding TCP [::]:22\"\ntime=\"2026-10-09T01:10:58+08:00\" level=info msg=\"[hostagent] The final requirement 1 of 1 is satisfied\"\ntime=\"2026-10-09T01:10:58+08:00\" level=info msg=\"READY. Run `limactl shell colima` to open the shell.\"\ninstalling: 386 OK\ninstalling: amd64 OK\n{\n  \"supported\": [\n    \"linux/arm64\",\n    \"linux/amd64\",\n    \"linux/386\"\n  ],\n  \"emulators\": [\n    \"python3.12\",\n    \"qemu-i386\",\n    \"qemu-x86_64\"\n  ]\n}\ncolima\nCurrent context is now \"colima\" 起 daemon 后重跑 harness 的 container_enforcement_demo；镜像 python:3.13-slim 需联网拉取。判据 #2 已出真实证据（exit 71 拒启动）。",
+          "note": "probe 2026-10-09: docker info -> daemon not running"
+        },
+        {
+          "q": "判据 #1/#3 当前阻塞 gate",
+          "answer": "",
+          "note": "retracted: probe 2026-10-09: docker info -> daemon not running",
+          "retracted": true,
+          "retracts": "d29ae456c6ccd48dfa8fbaa535a46caca2a82d1bc2875d6c77b468c331358a3d"
+        },
+        {
+          "q": "判据 #1/#3 当前阻塞 gate",
+          "answer": "",
+          "note": "retracted: probe 2026-10-09: docker info -> daemon not running",
+          "retracted": true,
+          "retracts": "d56f672b140777a5ed56ba1a36847c02262d5d054c9b86b2eca23f51cba59cce"
+        },
+        {
+          "q": "S0 出证结果（macOS 26 + Docker 容器）",
+          "answer": "三判据全 PASSED，verdict=ENFORCED。enforcer=docker-container（colima VM 内的 Linux 容器）；seatbelt 在 macOS 26 实测 sandbox_apply EPERM 排除。证据：scripts/host_enforcement_s0_receipt.full.json（ENFORCED）+ scripts/host_enforcement_s0_receipt.json（拒启动 exit71）。容器画像=--read-only + --network none + 仅 /work 白名单挂载；根fs写/联网均 BLOCKED，白名单 ALLOWED；3 条 violation 事件入 receipt。",
+          "note": "probe 2026-10-09 真实运行"
+        }
+      ],
+      "notes": "S0 出证完成：macOS 26 + Docker 容器 enforcer，ADR 0008 三判据全 PASSED（verdict=ENFORCED，exit 0）。seatbelt 实测 EPERM 排除。evidence: scripts/host_enforcement_s0_spike.py + scripts/host_enforcement_s0_receipt.full.json（ENFORCED）+ scripts/host_enforcement_s0_receipt.json（拒启动 exit71）。spike 为独立 evidence 脚本，不回写 product module。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-2": {
       "id": "1-10-2",
@@ -1252,7 +1293,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-09 00:11:39",
+    "updated": "2026-10-09 01:19:18",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
