@@ -32,6 +32,7 @@ import secrets
 import shutil
 import sqlite3
 import tempfile
+import threading
 import uuid
 from dataclasses import dataclass
 from typing import Any, ClassVar, Dict, Iterator, List, Mapping, Optional, Sequence
@@ -43,7 +44,10 @@ SCHEMA = "zworkbench-composition-owner/v1"
 SCHEMA_VERSION = 3
 
 # Secret-shaped values that must never be persisted in owner evidence.
-_SECRET_VALUE = re.compile(r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
+# The shape must START a token (1-10-4 dogfood fix): without the boundary,
+# words like "disk-full-read-access" / "task-..." embed "sk-..." and every
+# worker reply quoting provider flag names was rejected as a secret.
+_SECRET_VALUE = re.compile(r"(?<![A-Za-z0-9])(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
 ALLOWED_EFFECT_CLASSES = frozenset({"read-only", "idempotent", "approval-required"})
 REPLAY_MODES = frozenset({"recorded_view", "simulated_replay", "live_replay"})
 
@@ -146,14 +150,19 @@ class CompositionOwner:
     def __init__(self, database: os.PathLike[str] | str):
         self.database = Path(database).expanduser().resolve()
         self.database.parent.mkdir(parents=True, exist_ok=True)
-        self._connection = sqlite3.connect(
-            str(self.database),
-            timeout=10.0,
-            isolation_level=None,
-            check_same_thread=False,
-        )
-        self._connection.row_factory = sqlite3.Row
-        self._configure_connection()
+        # One connection PER THREAD, all against the same database file.  The
+        # owner is read concurrently by the threaded UI host (one thread per
+        # request) while its executor writes; sharing a single
+        # ``sqlite3.Connection`` across those threads corrupts row decoding and
+        # transaction state -- a long ``SELECT`` on one thread interleaves with
+        # another thread's statement on the same connection (IndexError /
+        # JSONDecodeError in _decode_row), and two writers collide on BEGIN
+        # IMMEDIATE.  Per-thread connections keep each cursor private, while WAL
+        # still gives every reader a consistent snapshot as the executor writes.
+        self._local = threading.local()
+        self._closed = False
+        self._connection = self._open_connection()
+        self._local.connection = self._connection
         self._initialize_schema()
         # Caller-auth (node 1-5-3): fail-closed guard, independent of journal
         # durability.  Whether auth is enforced is read once from owner_meta so a
@@ -170,12 +179,43 @@ class CompositionOwner:
         # empty registry, matching the per-session boundary.
         self.resident_registry = ResidentServiceRegistry()
 
-    def close(self) -> None:
-        """Close the owner connection."""
+    def _open_connection(self) -> sqlite3.Connection:
+        """Open and configure a fresh connection to the owner's database.
 
-        if self._connection is not None:
-            self._connection.close()
-            self._connection = None  # type: ignore[assignment]
+        Called once for the constructing thread, then once per additional
+        thread that touches the owner.  The connection-scoped PRAGMAs are set
+        here because they never persist in the file; ``journal_mode`` does, so
+        re-asserting it on later connections is a cheap no-op that still keeps a
+        reader from silently downgrading the journal.
+        """
+
+        connection = sqlite3.connect(
+            str(self.database),
+            timeout=10.0,
+            isolation_level=None,
+            check_same_thread=False,
+        )
+        connection.row_factory = sqlite3.Row
+        self._configure_connection(connection)
+        return connection
+
+    def close(self) -> None:
+        """Close this thread's owner connection and refuse any further use.
+
+        Worker threads each hold their own connection; those are released when
+        the thread ends.  Closing marks the owner closed so a later
+        ``_require_connection`` fails closed instead of quietly reopening
+        storage.
+        """
+
+        if self._closed:
+            return
+        self._closed = True
+        connection = self._connection
+        self._connection = None  # type: ignore[assignment]
+        self._local.connection = None
+        if connection is not None:
+            connection.close()
 
     def __enter__(self) -> "CompositionOwner":
         return self
@@ -618,7 +658,21 @@ class CompositionOwner:
                 exposure = json.loads(declared["exposure_json"])
                 workspace_root = exposure.get("workspace_root")
                 if workspace_root:
-                    resolved_resource = Path(resource).expanduser().resolve()
+                    resource_path = Path(resource).expanduser()
+                    if not resource_path.is_absolute():
+                        # Fail-closed: a relative resource resolves against the
+                        # caller's cwd, which the declaring run cannot know.
+                        # Ambiguity is denied, even when the cwd happens to
+                        # resolve the resource inside the boundary.
+                        self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "workspace_out_of_bounds"})
+                        self._append_event(
+                            connection,
+                            run_id,
+                            "effect.claim.denied",
+                            {"operation_id": operation_id, "resource": resource, "workspace_root": workspace_root, "reason": "workspace_out_of_bounds", "detail": "relative resource is ambiguous under a declared workspace boundary"},
+                        )
+                        return EffectClaim(None, "denied", 0, 0, "workspace_out_of_bounds")
+                    resolved_resource = resource_path.resolve()
                     resolved_root = Path(workspace_root).expanduser().resolve()
                     if not (resolved_resource == resolved_root or resolved_resource.is_relative_to(resolved_root)):
                         self._set_run_status(connection, run, "safe_stopped", "run.safe_stopped", {"reason": "workspace_out_of_bounds"})
@@ -2629,8 +2683,7 @@ class CompositionOwner:
     # Internal implementation
     # ------------------------------------------------------------------
 
-    def _configure_connection(self) -> None:
-        connection = self._require_connection()
+    def _configure_connection(self, connection: sqlite3.Connection) -> None:
         connection.execute("PRAGMA foreign_keys = ON")
         connection.execute("PRAGMA busy_timeout = 10000")
         # On hosts where the OS sandbox blocks WAL journal fsync into the
@@ -3007,7 +3060,7 @@ class CompositionOwner:
         self._require_text(caller_id, "caller_id")
         self._require_text(caller_token, "caller_token")
         token_hash = self._hash_token(caller_token)
-        row = self._connection.execute(
+        row = self._require_connection().execute(
             "SELECT caller_token_hash, status FROM owner_callers WHERE caller_id = ?", (caller_id,)
         ).fetchone()
         if row is None or row["status"] != "active" or row["caller_token_hash"] != token_hash:
@@ -3019,9 +3072,13 @@ class CompositionOwner:
         return self._caller_auth_required
 
     def _require_connection(self) -> sqlite3.Connection:
-        if self._connection is None:
+        if self._closed:
             raise CompositionError("composition owner is closed")
-        return self._connection
+        connection = getattr(self._local, "connection", None)
+        if connection is None:
+            connection = self._open_connection()
+            self._local.connection = connection
+        return connection
 
     @staticmethod
     def _now() -> str:
