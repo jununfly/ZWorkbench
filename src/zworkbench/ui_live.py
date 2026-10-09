@@ -73,7 +73,8 @@ _LIVE_SCRIPT = """\
   const ROOT = document.querySelector('[data-ui-ref="home.run-facts"]');
   if (!ROOT) return;
   const POLL_MS = %d;
-  const endpoint = '/api/home-facts';
+  const factsEndpoint = '/api/home-facts';
+  const conversationEndpoint = '/api/home-conversation';
   function setText(node, text) {
     if (node.textContent !== text) node.textContent = text;
   }
@@ -93,7 +94,7 @@ _LIVE_SCRIPT = """\
   }
   async function refresh() {
     try {
-      const res = await fetch(endpoint, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
+      const res = await fetch(factsEndpoint, {headers: {'Accept': 'application/json'}, cache: 'no-store'});
       if (!res.ok) return;
       const facts = await res.json() || {};
       ROOT.querySelectorAll('[data-live]').forEach(node => {
@@ -108,12 +109,27 @@ _LIVE_SCRIPT = """\
       applyStatus(facts);
     } catch (e) { /* transient network error; next tick retries */ }
   }
+  // Issue 1 — keep the conversation stream live without a full reload. The
+  // endpoint returns server-rendered markup (never built from JSON client-side);
+  // we only replace the region's innerHTML, so the script owns no injection
+  // surface.
+  async function refreshConversation() {
+    try {
+      const res = await fetch(conversationEndpoint, {headers: {'Accept': 'text/html'}, cache: 'no-store'});
+      if (!res.ok) return;
+      const html = await res.text();
+      const region = document.querySelector('[data-ui-ref="home.conversation"]');
+      if (region && region.innerHTML !== html) region.innerHTML = html;
+    } catch (e) { /* transient network error; next tick retries */ }
+  }
   refresh();
+  refreshConversation();
   setInterval(refresh, POLL_MS);
+  setInterval(refreshConversation, POLL_MS);
   // F10/1-2-4 — when the run-rail trigger creates a run, refresh immediately
   // instead of waiting for the next interval tick. The poller owns every DOM
   // update; the trigger script only dispatches this event.
-  window.addEventListener('workbench:run-created', () => { refresh(); });
+  window.addEventListener('workbench:run-created', () => { refresh(); refreshConversation(); });
 })();
 """ % LIVE_POLL_MS
 

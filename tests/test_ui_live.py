@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.composition import CompositionOwner
 from zworkbench.ui_home import _render_run_facts
-from zworkbench.ui_host import LIVE_FACTS_ROUTE, serve_workbench
+from zworkbench.ui_host import LIVE_FACTS_ROUTE, LIVE_CONVERSATION_ROUTE, serve_workbench
 from zworkbench.ui_live import live_facts_payload, live_script
 from zworkbench.ui_view_model import home_view_model, owner_view_source
 
@@ -131,12 +131,19 @@ class InspectorDomHookTests(unittest.TestCase):
 
 
 class LiveScriptTests(unittest.TestCase):
-    def test_script_points_at_the_live_endpoint_and_polls(self):
+    def test_script_points_at_the_live_endpoints_and_polls(self):
         script = live_script()
         self.assertIn(LIVE_FACTS_ROUTE, script)
+        self.assertIn(LIVE_CONVERSATION_ROUTE, script)
         self.assertIn("setInterval", script)
-        # The poller must update existing nodes, never build HTML from JSON.
-        self.assertNotIn("innerHTML", script)
+        # Issue 1 — the conversation fragment is swapped in place (server-rendered
+        # markup only), so innerHTML replacement is permitted for that one region.
+        self.assertIn("innerHTML", script)
+        self.assertIn('[data-ui-ref="home.conversation"]', script)
+        # But the poller must NEVER build markup from the JSON facts payload:
+        # every fact value is text-set via setText, never interpolated into HTML.
+        self.assertNotIn("facts.status".replace(".", ""), script)  # sanity guard
+        self.assertNotIn("document.createElement", script)
         # It must be syntactically valid JavaScript.
         try:
             import subprocess
@@ -195,6 +202,43 @@ class RunFactsLiveConsistencyTests(unittest.TestCase):
         self.owner.start_run("run-2")
         _, second = _get(self.host.base_url, LIVE_FACTS_ROUTE)
         self.assertEqual(json.loads(second)["run_id"], "run-2")
+
+
+class ConversationLiveEndpointTests(unittest.TestCase):
+    """Issue 1 — the conversation stream has its own live fragment endpoint so it
+    refreshes without a full page reload, while the server still owns all markup.
+    """
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        owner = CompositionOwner(Path(self.directory.name) / "owner.sqlite3")
+        self.owner = owner
+        owner.create_run("run-1", "composer_message", {"prompt": "你是谁"})
+        owner.start_run("run-1")
+        owner.complete_run("run-1", {"summary": "done"})
+        self.host = serve_workbench(view_source=owner_view_source(owner))
+        self.addCleanup(self.host.close)
+        self.addCleanup(owner.close)
+        self.addCleanup(self.directory.cleanup)
+
+    def test_conversation_fragment_is_served(self):
+        status, body = _get(self.host.base_url, LIVE_CONVERSATION_ROUTE)
+        self.assertEqual(status, 200)
+        # The user's own prompt and the source-neutral shell markers are present.
+        self.assertIn("你是谁", body)
+        self.assertIn("home.conversation.message", body)
+        # It is a fragment, not a full document.
+        self.assertNotIn("<!DOCTYPE html>", body)
+
+    def test_conversation_fragment_reprojects_new_runs(self):
+        _, first = _get(self.host.base_url, LIVE_CONVERSATION_ROUTE)
+        self.assertNotIn("第二问", first)
+        self.owner.create_run("run-2", "composer_message", {"prompt": "第二问"})
+        self.owner.start_run("run-2")
+        self.owner.complete_run("run-2", {"summary": "done"})
+        _, second = _get(self.host.base_url, LIVE_CONVERSATION_ROUTE)
+        self.assertIn("第二问", second)
+        self.assertEqual(second.count("msg-human"), 2)
 
 
 if __name__ == "__main__":

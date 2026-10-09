@@ -210,13 +210,17 @@ class HomeConversationTests(unittest.TestCase):
 
         model = home_view_model(FakeOwner())
         self.assertNotEqual(model["conversation"], UNKNOWN)
-        message = model["conversation"][0]
-        self.assertEqual(message["role"], "agent")
-        self.assertEqual(message["run_id"], "r1")
-        self.assertEqual(message["status"], "completed")
-        self.assertEqual(message["intent"], "已记录输入")
-        self.assertEqual(message["plan"]["steps"][0]["title"], "step1")
-        self.assertEqual(message["plan"]["steps"][0]["status"], "completed")
+        # Issue 4/5 of the 1-10-4 dogfood fixes: one run now projects as a
+        # paired human+agent message thread, in run order.
+        human, agent = model["conversation"][0], model["conversation"][1]
+        self.assertEqual(human["role"], "human")
+        self.assertEqual(human["run_id"], "r1")
+        self.assertEqual(human["intent"], "do x")
+        self.assertEqual(agent["role"], "agent")
+        self.assertEqual(agent["run_id"], "r1")
+        self.assertEqual(agent["status"], "completed")
+        self.assertEqual(agent["plan"]["steps"][0]["title"], "step1")
+        self.assertEqual(agent["plan"]["steps"][0]["status"], "completed")
 
 
 class HomePlanCardTests(unittest.TestCase):

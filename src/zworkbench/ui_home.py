@@ -16,6 +16,7 @@ from typing import Any, Dict, Iterable, Mapping, Sequence
 
 from .ui_ref import SourceAnchor, UiRefDeclaration, UiRefRegistry
 from .ui_declare import attribute_text, module_source_digest
+from .ui_view_model import UNKNOWN
 
 
 _MODULE = "src/zworkbench/ui_home.py"
@@ -569,12 +570,24 @@ def _render_conversation(view: Mapping[str, Any]) -> str:
         updated = m.get("updated_at") or "unknown"
         title = m.get("title") or run_id
         intent = m.get("intent") or "unknown"
+        status_token = m.get("status_token") or ""
+        status_token = status_token if isinstance(status_token, str) else ""
         plan = m.get("plan")
         plan_html = (
             _render_plan(plan)
             if isinstance(plan, Mapping) and (plan.get("steps") or plan.get("items"))
             else ""
         )
+        reply = m.get("reply")
+        if reply and reply != UNKNOWN:
+            reply_html = '<p class="msg-reply">{0}</p>'.format(_text(reply))
+        elif role == "agent" and status_token == "running":
+            # Issue 2 — a running run must not read as "backend idle": surface a
+            # live "processing" placeholder on the agent side so the user sees
+            # work is in flight rather than nothing happening.
+            reply_html = '<p class="msg-reply msg-reply-pending">处理中…</p>'
+        else:
+            reply_html = ""
         article = (
             '<article class="msg msg-{role}" data-ui-ref="home.conversation.message">'
             '<span class="msg-avatar" aria-hidden="true">{avatar}</span>'
@@ -586,7 +599,7 @@ def _render_conversation(view: Mapping[str, Any]) -> str:
             '<time class="msg-time">{time}</time>'
             '</div>'
             '<div class="msg-content"><p class="msg-title">{title}</p>'
-            '<p class="msg-intent">{intent}</p></div>'
+            '<p class="msg-intent">{intent}</p>{reply_html}</div>'
             '{plan}'
             '</div></article>'
         ).format(
@@ -601,6 +614,7 @@ def _render_conversation(view: Mapping[str, Any]) -> str:
             time=_text(updated),
             title=_text(title),
             intent=_text(intent),
+            reply_html=reply_html,
             plan=plan_html,
         )
         rows.append(article)
@@ -904,6 +918,7 @@ def _render_safe_stop(value: Any) -> str:
     reconcile_label = safe.get("reconcile_label_zh") or "请求 reconcile"
     disabled = bool(safe.get("reconcile_disabled", True))
     reason = safe.get("reason")
+    kind = safe.get("kind")
     violations = safe.get("violations") or []
     source_badge = "owner-backed" if source == "CompositionOwner" else "source unknown"
     violations_html = ""
@@ -925,20 +940,36 @@ def _render_safe_stop(value: Any) -> str:
     capable = bool(safe.get("reconcile_capable", False))
     run_id = safe.get("run_id")
     enabled = (not disabled) and capable
-    if disabled:
-        hint = "真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。"
-    elif not capable:
-        hint = (
-            "检测到身份越界（{reason}）。reconcile 需由控制面注入（product gate）。".format(reason=_text(reason))
-            if reason
-            else "reconcile 需由控制面注入（product gate）。"
+    # Issue 3 — a runtime failure (e.g. provider timeout) has no identity to
+    # re-parse, so the banner names the real reason and points at re-issuing the
+    # request instead of showing a reconcile button that cannot help.
+    if kind == "runtime":
+        actions_html = (
+            '<div class="safe-stop-actions">'
+            '<span class="safe-stop-hint">此为运行期中断，非身份越界；重新发起即可，无需 reconcile。</span>'
+            '</div>'
         )
     else:
-        hint = "点击请求 reconcile 以重新解析身份引用。"
-    if enabled:
-        button_attrs = 'data-reconcile-button data-reconcile-run-id="{rid}"'.format(rid=_text(run_id))
-    else:
-        button_attrs = 'aria-disabled="true" disabled'
+        if disabled:
+            hint = "真实 reconcile 触发属 product gate（F13 越界判定），本轮仅渲染请求入口。"
+        elif not capable:
+            hint = (
+                "检测到身份越界（{reason}）。reconcile 需由控制面注入（product gate）。".format(reason=_text(reason))
+                if reason
+                else "reconcile 需由控制面注入（product gate）。"
+            )
+        else:
+            hint = "点击请求 reconcile 以重新解析身份引用。"
+        if enabled:
+            button_attrs = 'data-reconcile-button data-reconcile-run-id="{rid}"'.format(rid=_text(run_id))
+        else:
+            button_attrs = 'aria-disabled="true" disabled'
+        actions_html = (
+            '<div class="safe-stop-actions">'
+            '<button type="button" class="reconcile-button" {button_attrs}>{label}</button>'
+            '<span class="safe-stop-hint">{hint}</span>'
+            '</div>'
+        ).format(button_attrs=button_attrs, label=_text(reconcile_label), hint=_text(hint))
     return (
         '<div {ref} class="safe-stop ss-stopped" role="alert">'
         '<div class="section-heading"><div><p class="eyebrow">SAFE STOP · 安全停止 / reconcile</p>'
@@ -946,18 +977,14 @@ def _render_safe_stop(value: Any) -> str:
         '<span class="section-source">{source_badge}</span></div>'
         '<p class="safe-stop-message">{message}</p>'
         '{violations_html}'
-        '<div class="safe-stop-actions">'
-        '<button type="button" class="reconcile-button" {button_attrs}>{label}</button>'
-        '<span class="safe-stop-hint">{hint}</span>'
-        '</div></div>'
+        '{actions_html}'
+        '</div>'
     ).format(
         ref=attribute_text(home_manifest(), "home.safe-stop"),
         source_badge=_text(source_badge),
         message=_text(message),
         violations_html=violations_html,
-        button_attrs=button_attrs,
-        label=_text(reconcile_label),
-        hint=_text(hint),
+        actions_html=actions_html,
     )
 
 

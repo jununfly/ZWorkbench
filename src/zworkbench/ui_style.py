@@ -730,8 +730,16 @@ body:has([data-ui-panel]:not([hidden])) {
 .msg-time { margin-left: auto; color: var(--quiet); }
 .msg-content { min-width: 0; }
 .msg-title { margin: 0; color: var(--ink); font-size: 13px; font-weight: 600; letter-spacing: -0.02em; }
-.msg-intent { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.msg-intent { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; word-break: break-word; }
+.msg-reply { margin: 7px 0 0; padding: 9px 11px; border-left: 2px solid var(--sage-strong); background: var(--surface-2, rgba(127,176,105,0.08)); color: var(--ink); font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
 .msg .plan-list { margin: 11px 0 0; }
+/* Issue 4/5 — distinguish the user's own utterance from the agent reply so the
+   stream reads as a continuous thread rather than disconnected run cards. */
+.msg-human { background: var(--surface-2, #f1f5f9); border-left: 3px solid var(--accent, #2563eb); }
+.msg-human .msg-role { color: var(--accent, #2563eb); }
+.msg-agent .msg-role { color: var(--sage-strong, #4f7a3a); }
+.msg-reply-pending { color: var(--muted); font-style: italic; border-left-style: dashed; }
+.msg-human .msg-reply { display: none; }
 
 /* Last, deliberately. These rules have the same specificity as the ones above,
    so ordering is what decides the outcome -- a media query placed earlier is
