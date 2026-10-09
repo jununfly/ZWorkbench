@@ -1,0 +1,42 @@
+{
+  "adr": "0008",
+  "spike": "S0-host-enforcement",
+  "host": {
+    "os": "Darwin 25.6.0",
+    "macos_version": "26.6.2"
+  },
+  "probes": {
+    "seatbelt": {
+      "tool": "sandbox-exec",
+      "available": false,
+      "returncode": 71,
+      "stderr": "sandbox-exec: sandbox_apply: Operation not permitted"
+    },
+    "docker_daemon": {
+      "tool": "docker-daemon",
+      "available": false,
+      "returncode": 1,
+      "stderr": "failed to connect to the docker API at unix:///Users/bilibili/.colima/default/docker.sock; check if the path is correct and if the daemon is running: dial unix /Users/bilibili/.colima/default/docker.s"
+    }
+  },
+  "enforcers_available": [],
+  "started_at": "2026-10-08T16:43:24.591445+00:00",
+  "criteria": {
+    "c2_refuse_to_start": {
+      "status": "PASSED",
+      "evidence": "无可用 enforcer（seatbelt 禁用 / docker daemon 未运行）；harness 以非 0 退出拒绝启动未沙箱 Worker，不降级。"
+    },
+    "c1_deny_all_whitelist": {
+      "status": "BLOCKED",
+      "evidence": "enforcer 不可用，无法演示 deny-all+白名单；需 docker daemon 运行后重跑。"
+    },
+    "c3_violation_receipt": {
+      "status": "BLOCKED",
+      "evidence": "enforcer 不可用，无法演示越界 capture；需 docker daemon 运行后重跑。"
+    }
+  },
+  "violation_events": [],
+  "refuse_to_start": true,
+  "verdict": "REFUSED_TO_START",
+  "finished_at": "2026-10-08T16:43:24.747616+00:00"
+}

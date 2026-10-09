@@ -1,0 +1,58 @@
+{
+  "adr": "0008",
+  "spike": "S0-host-enforcement",
+  "host": {
+    "os": "Darwin 25.6.0",
+    "macos_version": "26.6.2"
+  },
+  "probes": {
+    "seatbelt": {
+      "tool": "sandbox-exec",
+      "available": false,
+      "returncode": 71,
+      "stderr": "sandbox-exec: sandbox_apply: Operation not permitted"
+    },
+    "docker_daemon": {
+      "tool": "docker-daemon",
+      "available": true,
+      "returncode": 0,
+      "stderr": ""
+    }
+  },
+  "enforcers_available": [
+    "docker-container"
+  ],
+  "started_at": "2026-10-08T17:18:45.961822+00:00",
+  "criteria": {
+    "c1_deny_all_whitelist": {
+      "status": "PASSED",
+      "evidence": "容器 --read-only + --network none + 仅 /work 白名单挂载；越界写/联网被拒、白名单放行。"
+    },
+    "c3_violation_receipt": {
+      "status": "PASSED",
+      "evidence": "3 条越界/放行尝试事件已入 receipt。"
+    },
+    "c2_refuse_to_start": {
+      "status": "PASSED",
+      "evidence": "enforcer 可用；可用性探测即 fail-closed 闸门的一部分。"
+    }
+  },
+  "violation_events": [
+    {
+      "attempt": "write_rootfs",
+      "outcome": "BLOCKED:OSError"
+    },
+    {
+      "attempt": "write_whitelist",
+      "outcome": "ALLOWED"
+    },
+    {
+      "attempt": "network_egress",
+      "outcome": "BLOCKED:OSError"
+    }
+  ],
+  "refuse_to_start": false,
+  "chosen_enforcer": "docker-container",
+  "verdict": "ENFORCED",
+  "finished_at": "2026-10-08T17:18:46.308926+00:00"
+}
