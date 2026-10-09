@@ -1169,7 +1169,7 @@
       "id": "1-10-4",
       "uid": "01a1159f354b-7c35f1871a",
       "label": "S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
@@ -1199,6 +1199,16 @@
         {
           "q": "#40 解阻塞已落地(显式 gate 可达)?",
           "answer": "已落地。方案=给 ui dogfood 入口加后台 run 执行器, 显式 gate 可达, real_provider_gate 默认 False/fail-closed 不变。具体改动: (1) cli.py ui 子命令新增可选 run-config 入参(--case-root/--workspace/--codex/--code-home/--event-log/--provider/--model/--endpoint/--provider-profile/--provider-config/--timeout/--host-enforcement/--real-provider-gate); 三者齐备时构建 LocalReadOnlyRunConfig 并切到 owner_command_source_with_executor, 否则保持原 create+start only 控制面。 (2) ui_run.py 新增 owner_command_source_with_executor: create_and_start_run 后起 daemon 线程调 LocalReadOnlyRunOrchestrator(config).run(run_id, prompt, run_claim=assume)。 (3) local_run.py/codex_adapter.py 加向后兼容 run_claim 参数(create 默认=run 命令不动; assume=ui facade 已建 run, 跳过 create/start 避免重复 create_run 报重复 run_id)。 (4) fail-closed 保持: preflight 对无 gate 的 real provider profile 仍 deny; 执行器对 denied/异常的 started run 调 owner.fail_run 收口, 绝不悬在 running。 (5) 测试 test_ui_run.py+test_ui_dogfood_cli.py 新增: 执行器把 denied run 收口为 failed、不重复 claim 已存在 run、e2e 经 CLI 启动 ui 带 execution 入参的确把 started run 驱动到终态, 全绿。 (6) 机械件就绪: zj 可经 zworkbench ui --db <scratch> --case-root <c> --workspace <w> --codex <x> --provider-profile ark-code-latest --provider-config ~/.codex/config.toml --real-provider-gate 带 flag 跑真实 N=10 验收。仍待: zj 亲自跑 N=10(被试必须是 zj, 验收闸门不能由 Agent 机械关闭)。本工作同轮已把 r3-real-usability-roadmap.md:255-256 过时描述更正为 已具显式 gate + ui dogfood 后台执行器已落地。",
+          "note": ""
+        },
+        {
+          "q": "1-10-4 S3 dogfood N=10 闸门口径如何定（'receipt 100% 可复核' 是否要求写链路也跑 10 次）?",
+          "answer": "口径由 zj 2026-10-10 拍板（选项 A）: 原文判据属 S2 写 seam dogfood，写链路必须真实闭环，但次数按合并计而非机械重复 10 次——机制相同则边际证据递减。证据构成: (1) 读路径 10 次 = zj 亲自经 ui dogfood 默认入口(显式 --real-provider-gate)跑完真实 Ark，10/10 completed(含重发的 run-e56f586ee38a / run-02f8f7a2179b)，零越界、零 secret 落盘(owner.db/workspace/新 run 流量 0 命中；历史 event log 2 处真 token 已脱敏清零)。(2) 写链路 5 次 = w1c/w2/w3/w4/w5，每次均由 zj 逐条人类批准(request-approval→approve→apply)，隔离 worktree + local commit，逐条复核四判据: pushed=false、worktree 无 remote、HEAD==receipt.commit_hash、sha256(diff)==receipt.diff_digest；同 idempotency key 重放返回 already_completed 且物理 commit 数不变(commit: w1c 5041e537 / w2 a06b4154 / w3 740e3431 / w4 b173c4ae / w5 c070d749)。结论: receipt 100% 可复核判据满足。",
+          "note": ""
+        },
+        {
+          "q": "1-10-4 dogfood 过程中暴露并修复的缺陷清单（含写 seam 口径外的真实翻车）?",
+          "answer": "七类，均已 TDD 修复并入库(1b81e65/ab33424/395924c): (1) owner 并发崩溃——live poller 使 CompositionOwner 多线程访问单条共享 sqlite 连接，snapshot 懒游标与写入交错致 IndexError/JSONDecodeError；改为 thread-local 连接(ConcurrentAccessIsThreadSafeTests)。(2) secret 扫描误报——sk- 正则无词边界，'disk-full-read-access' 误中致 run safe-stop；加 lookbehind 词边界。(3) turn_wait 误判 network——等待预算到期被归为 provider_failure:network 有误导性；新增 CodexTurnWaitTimeout + FAILURE_TURN_WAIT 独立分类(仍 fail-closed)，--timeout 默认 45→300。(4) event log 真 token 落盘——agent 命令输出经 item/completed 回流带原文；_append_event 写盘前按 token 形状脱敏(内存 messages 不动，digest 自动自洽)。(5) 相对 resource 边界歧义——声明 workspace_root 时相对 resource 按进程 cwd 解析(误判越界或反向放行)；fail-closed 直接判 workspace_out_of_bounds，write seam 契约 resource ≡ worktree 绝对路径(worktree_root/<run_id>)。(6) 写 seam 幂等重放崩溃——WriteRunOrchestrator.apply 对已 completed run 无条件 complete_run 致 InvalidTransition；加 completed 短路守卫 + 重放回归测试。(7) UI 交互 5 项(重发入口=页面底部 composer、横幅文案精确化、live 轮询、样式、视图模型双消息契约)。过程教训: 两次 approval 因 runbook 给错 resource 与 token 经 shell 丢失而作废(w1/w1b)，最终改为 request/approve/apply 由 Agent python 链执行、zj 只按批准闸门。",
           "note": ""
         }
       ],
@@ -1336,7 +1346,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-09 11:50:00",
+    "updated": "2026-10-10 01:10:38",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
