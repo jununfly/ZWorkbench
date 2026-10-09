@@ -161,6 +161,46 @@ class WriteRunOrchestratorTests(unittest.TestCase):
                 self.assertEqual(len(runs), 1, "the pre-existing run must be reused, not duplicated")
                 self.assertEqual(runs[0]["status"], "completed")
 
+    def test_apply_replay_with_same_idempotency_key_returns_existing_receipt(self) -> None:
+        """S2-⑤ idempotent replay: re-applying with the same idempotency key
+        must return the already-completed receipt without a second physical
+        commit and without crashing on the already-completed run state."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            repo = _make_repo(root)
+            db = root / "state" / "owner.sqlite3"
+            worktree_root = root / "worktrees"
+            run_id = "run-orch-replay"
+            resource = str(worktree_root / run_id)
+
+            with CompositionOwner(db) as owner:
+                owner.create_run(run_id, "write_seam", {"pre": True})
+                token = _approved_token(owner, run_id, "opP", "apply_diff", resource, "kP")
+
+            orchestrator = WriteRunOrchestrator(db, worktree_root=worktree_root)
+            first = orchestrator.apply(
+                run_id, repo, VALID_PATCH,
+                approval_token=token, operation_id="opP", action="apply_diff",
+                resource=resource, idempotency_key="kP",
+            )
+            self.assertEqual(first.status, "completed")
+
+            replay = orchestrator.apply(
+                run_id, repo, VALID_PATCH,
+                approval_token=token, operation_id="opP", action="apply_diff",
+                resource=resource, idempotency_key="kP",
+            )
+            # The seam marks a replay "already_completed" (established S2-⑤
+            # contract, see test_write_seam) while returning the same durable
+            # receipt payload — same effect, same commit, no second write.
+            self.assertEqual(replay.status, "already_completed")
+            self.assertEqual(replay.commit_hash, first.commit_hash, "replay must not produce a new commit")
+            self.assertEqual(replay.effect_id, first.effect_id)
+            self.assertEqual(_commit_count(Path(first.worktree_path)), 2, "exactly one physical write commit across both applies")
+
+            with CompositionOwner(db) as owner:
+                self.assertEqual(owner.get_run(run_id)["status"], "completed")
+
     def test_apply_uses_single_owner_for_worktree_and_effect(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
