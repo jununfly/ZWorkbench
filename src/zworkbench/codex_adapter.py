@@ -15,6 +15,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import selectors
 import shutil
 import socket
@@ -50,19 +51,55 @@ class CodexProtocolError(CodexAdapterError):
     """The app-server returned an invalid or unsuccessful JSON-RPC result."""
 
 
+class CodexTurnWaitTimeout(CodexAdapterError):
+    """The caller's turn-wait budget expired while the agent was still working.
+
+    This is a client-side wait expiry, NOT a transport failure: the app-server
+    may have been streaming events healthily the whole time.  Classified as its
+    own ``turn_wait`` bucket so the durable record does not misreport it as a
+    network outage.
+    """
+
+
+# ----------------------------------------------------------------------
+# Event-log credential redaction
+# ----------------------------------------------------------------------
+
+# Credential-shaped values that must never reach the event-log file.  The
+# agent's own command output can echo the staged provider config (bearer token
+# included) back through an ``item/completed`` notification.  A leading
+# lookbehind keeps word-embedded look-alikes (``disk-full-read-access`` ->
+# "sk-full-read-access") out of the match, mirroring the owner-side scanner.
+_TOKEN_SHAPED = re.compile(
+    r"(?<![A-Za-z0-9])(?:ark-[A-Za-z0-9_-]{8,}|sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})"
+)
+
+
+def _redact_credentials(text: str) -> str:
+    """Replace credential-shaped substrings with ``<redacted>``."""
+    return _TOKEN_SHAPED.sub("<redacted>", text)
+
+
 # ----------------------------------------------------------------------
 # Failure classification (issue #39 S1 / node 1-6-4)
 # ----------------------------------------------------------------------
 
 FAILURE_NETWORK = "network"
 FAILURE_RATE_LIMIT = "rate_limit"
+FAILURE_TURN_WAIT = "turn_wait"
 FAILURE_UNKNOWN = "unknown"
 
-# S1 is single-Provider with no failover: a network / rate-limit / unknown
-# provider failure is terminal and fail-closed here.  The recorded bucket is
-# the durable signal a future S2 failover would consume to choose policy
-# (network -> try a second Provider, rate_limit -> backoff, unknown -> stop).
-SAFE_STOP_CATEGORIES = frozenset({FAILURE_NETWORK, FAILURE_RATE_LIMIT, FAILURE_UNKNOWN})
+# S1 is single-Provider with no failover: a network / rate-limit / turn-wait /
+# unknown provider failure is terminal and fail-closed here.  The recorded
+# bucket is the durable signal a future S2 failover would consume to choose
+# policy (network -> try a second Provider, rate_limit -> backoff, turn_wait ->
+# re-issue with a larger --timeout, unknown -> stop).
+SAFE_STOP_CATEGORIES = frozenset({
+    FAILURE_NETWORK,
+    FAILURE_RATE_LIMIT,
+    FAILURE_TURN_WAIT,
+    FAILURE_UNKNOWN,
+})
 
 # errno values that signal a transient transport/network failure rather than a
 # local filesystem or programming error.
@@ -88,6 +125,9 @@ def classify_provider_failure(exc: BaseException) -> str:
                        pipes, and DNS resolution failures.
     * ``rate_limit`` — the Provider signalled throttling (HTTP 429 or rate-limit
                        phrasing in the JSON-RPC error payload).
+    * ``turn_wait``  — the caller's turn-wait budget (--timeout) expired while
+                       the agent was still working; the transport itself was
+                       healthy.  Re-issue with a larger --timeout.
     * ``unknown``    — anything else (protocol errors, unexpected exceptions,
                        process death).  Unclassified == not safely retryable.
 
@@ -96,6 +136,9 @@ def classify_provider_failure(exc: BaseException) -> str:
     :meth:`CodexAppServerAdapter._handle_owner_failure` for the S1 terminal
     policy.
     """
+
+    if isinstance(exc, CodexTurnWaitTimeout):
+        return FAILURE_TURN_WAIT
 
     message = str(exc).lower()
     if "429" in message or ("rate" in message and ("limit" in message or "throttl" in message)):
@@ -647,7 +690,13 @@ class CodexAppServerAdapter:
                 self.request("thread/read", {"threadId": thread_id}, timeout=5)
             except (TimeoutError, CodexAdapterError, CodexProtocolError):
                 pass
-            event = self.wait_for(predicate, timeout=max(0.1, timeout - (time.monotonic() - started)))
+            try:
+                event = self.wait_for(predicate, timeout=max(0.1, timeout - (time.monotonic() - started)))
+            except TimeoutError as exc:
+                # The caller's wait budget expired while the agent was still
+                # working.  Raise the dedicated type so the durable failure
+                # record classifies this as turn_wait, not network.
+                raise CodexTurnWaitTimeout("Codex event wait timed out") from exc
         return dict(event.get("params", {}).get("turn") or {})
 
     def _handle_owner_failure(self, run_id: str, error: Exception) -> None:
@@ -717,8 +766,9 @@ class CodexAppServerAdapter:
 
     def _append_event(self, value: Mapping[str, Any]) -> None:
         self.event_log.parent.mkdir(parents=True, exist_ok=True)
+        serialized = json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         with self.event_log.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+            handle.write(_redact_credentials(serialized) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
 

@@ -83,7 +83,7 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
     )
-    run.add_argument("--timeout", type=float, default=45.0, help="maximum turn wait in seconds")
+    run.add_argument("--timeout", type=float, default=300.0, help="maximum turn wait in seconds")
     run.add_argument(
         "--host-enforcement",
         action="store_true",
@@ -332,7 +332,7 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
     )
-    ui.add_argument("--timeout", type=float, default=45.0, help="maximum turn wait in seconds")
+    ui.add_argument("--timeout", type=float, default=300.0, help="maximum turn wait in seconds")
     ui.add_argument(
         "--host-enforcement",
         action="store_true",
