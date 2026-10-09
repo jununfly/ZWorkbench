@@ -9,6 +9,7 @@ creates + starts a run -- not a mock.
 import json
 import sys
 import tempfile
+import time
 import unittest
 import urllib.error
 import urllib.request
@@ -17,13 +18,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from zworkbench.composition import CompositionOwner
+from zworkbench.local_run import LocalReadOnlyRunConfig
 from zworkbench.ui_host import (
     LIVE_FACTS_ROUTE,
     RUN_API_ROUTE,
     RUN_SCRIPT_ROUTE,
     serve_workbench,
 )
-from zworkbench.ui_run import owner_command_source
+from zworkbench.ui_run import (
+    _prompt_from_input,
+    owner_command_source,
+    owner_command_source_with_executor,
+)
 from zworkbench.ui_view_model import owner_view_source
 
 
@@ -169,6 +175,82 @@ class RunApiEndpointTests(unittest.TestCase):
         self.assertIn(RUN_SCRIPT_ROUTE, home)
         self.assertIn("data-run-trigger", home)
         self.assertNotIn('aria-disabled="true"', home.split("rail-run-button")[1].split("</button>")[0])
+
+
+class ExecutorCommandFacadeTests(unittest.TestCase):
+    """The executing facade runs a started run to a terminal state in the owner."""
+
+    def _make_config(self, *, codex_exists: bool):
+        directory = tempfile.TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        case_root = Path(directory.name)
+        workspace = case_root / "workspace"
+        workspace.mkdir()
+        code_home = case_root / "codex-home"
+        code_home.mkdir()
+        event_log = case_root / "events" / "codex.jsonl"
+        event_log.parent.mkdir()
+        database = case_root / "owner.sqlite3"
+        codex = case_root / "codex"
+        if codex_exists:
+            codex.write_text("#!/bin/sh\n")
+            codex.chmod(0o755)
+        # Missing codex -> preflight denies; existing-but-loopback -> would attempt.
+        return LocalReadOnlyRunConfig(
+            case_root=case_root,
+            workspace=workspace,
+            database=database,
+            code_home=code_home,
+            codex_executable=codex,
+            event_log=event_log,
+            provider_identity={
+                "provider": "fake-loopback",
+                "model": "fake-model",
+                "endpoint": "http://127.0.0.1:11434",
+                "model_provider": "ollama",
+            },
+        )
+
+    def _wait_terminal(self, owner, run_id, timeout: float = 5.0):
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            if owner.get_run(run_id)["status"] != "running":
+                return owner.get_run(run_id)["status"]
+            time.sleep(0.02)
+        return owner.get_run(run_id)["status"]
+
+    def test_prompt_from_input_pulls_composer_text(self):
+        self.assertEqual(_prompt_from_input({"prompt": "hi", "origin": "composer"}), "hi")
+        self.assertEqual(_prompt_from_input({"origin": "x"}), "")
+        self.assertEqual(_prompt_from_input(None), "")
+
+    def test_executor_fails_run_when_preflight_denied(self):
+        # A missing codex executable makes preflight deny; the executor must move
+        # the started run out of `running` (no dangling run), recording the denial.
+        config = self._make_config(codex_exists=False)
+        owner = CompositionOwner(config.database)
+        self.addCleanup(owner.close)
+        cmd = owner_command_source_with_executor(owner, config, timeout=5.0)
+        result = cmd(task_type="interactive_run", input_value={"prompt": "hello"})
+        run_id = result["run_id"]
+        self.assertEqual(owner.get_run(run_id)["status"], "running")
+        status = self._wait_terminal(owner, run_id)
+        self.assertEqual(status, "failed")
+
+    def test_executor_does_not_double_claim_existing_run(self):
+        # The facade created + started the run; the executor must drive it with
+        # run_claim="assume" and not raise on the already-present run identity.
+        config = self._make_config(codex_exists=False)
+        owner = CompositionOwner(config.database)
+        self.addCleanup(owner.close)
+        cmd = owner_command_source_with_executor(owner, config, timeout=5.0)
+        result = cmd(task_type="interactive_run", input_value={"prompt": "x"})
+        self._wait_terminal(owner, result["run_id"])
+        # No CompositionError escaped: the run simply reached a terminal state.
+        self.assertIn(
+            owner.get_run(result["run_id"])["status"],
+            {"failed", "safe_stopped", "completed"},
+        )
 
 
 class ReadOnlyHostRunApiTests(unittest.TestCase):

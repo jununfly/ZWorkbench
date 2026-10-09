@@ -145,6 +145,95 @@ class DogfoodCliSmokeTests(unittest.TestCase):
             "expected a loopback-only refusal, got stdout=%r stderr=%r" % (out, err),
         )
 
+    def test_ui_command_executes_started_run_to_terminal(self):
+        # With the run-config trio supplied, the dogfood UI becomes a real
+        # executor: a started run is driven to a terminal state (not left
+        # dangling in `running`). A missing codex executable makes preflight deny,
+        # so the run is failed quickly without spawning anything.
+        import shutil
+
+        case_root = tempfile.mkdtemp()
+        workspace = Path(case_root) / "workspace"
+        workspace.mkdir()
+        code_home = Path(case_root) / "codex-home"
+        code_home.mkdir()
+        event_log = Path(case_root) / "events"
+        event_log.mkdir()
+        db = tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False)
+        db.close()
+        os.unlink(db.name)
+        codex = Path(case_root) / "missing-codex"  # not a file -> preflight denies
+
+        env = dict(os.environ)
+        env.update(PYTHONPATH=SRC, PATH=env.get("PATH", ""))
+        for key in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy"):
+            env.pop(key, None)
+        proc = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "zworkbench.cli",
+                "ui",
+                "--db",
+                db.name,
+                "--port",
+                "0",
+                "--case-root",
+                case_root,
+                "--workspace",
+                str(workspace),
+                "--codex",
+                str(codex),
+            ],
+            cwd=str(REPO_ROOT),
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            base_url = _read_until_serving(proc)
+            req = urllib.request.Request(
+                base_url + "/api/runs",
+                data=json.dumps(
+                    {"task_type": "composer_message", "input_value": {"prompt": "dogfood exec"}}
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with _no_proxy_opener().open(req) as resp:
+                self.assertEqual(resp.status, 201)
+                created = json.loads(resp.read().decode("utf-8"))
+            run_id = created["run_id"]
+
+            sys.path.insert(0, SRC)
+            from zworkbench.composition import CompositionOwner
+
+            owner = CompositionOwner(Path(db.name))
+            try:
+                deadline = time.time() + 5.0
+                status = "running"
+                while time.time() < deadline:
+                    status = owner.get_run(run_id)["status"]
+                    if status != "running":
+                        break
+                    time.sleep(0.02)
+                self.assertNotEqual(status, "running")
+            finally:
+                owner.close()
+        finally:
+            if proc.poll() is None:
+                proc.send_signal(signal.SIGTERM)
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+            if os.path.exists(db.name):
+                os.unlink(db.name)
+            shutil.rmtree(case_root, ignore_errors=True)
+            for stream in (proc.stdout, proc.stderr):
+                if stream is not None:
+                    stream.close()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

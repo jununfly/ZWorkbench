@@ -500,8 +500,21 @@ class CodexAppServerAdapter:
         input_value: Optional[Any] = None,
         metadata: Optional[Mapping[str, Any]] = None,
         timeout: float = 45.0,
+        run_claim: str = "create",
     ) -> CodexExecution:
-        """Run one Codex turn and persist its identity in the owner."""
+        """Run one Codex turn and persist its identity in the owner.
+
+        ``run_claim`` controls who owns the run's create + start lifecycle:
+
+        * ``"create"`` (default): this adapter is the sole creator of the run
+          identity. Used by the one-shot ``run`` command, which hands the
+          orchestrator a run_id that does not yet exist in the owner.
+        * ``"assume"``: the run identity was created + started by an external
+          facade (e.g. the dogfood UI ``CommandFacade``) before execution. The
+          adapter must NOT re-create the run -- ``create_run`` raises on a
+          duplicate run_id -- so it skips straight to the live Codex turn. The
+          run is expected to already be in the ``running`` state.
+        """
 
         prompt = self._require_text(prompt, "prompt")
         run_metadata = dict(metadata or {})
@@ -515,13 +528,21 @@ class CodexAppServerAdapter:
                 "model_provider": self.model_provider,
             }
         )
-        self.owner.create_run(
-            run_id,
-            task_type,
-            input_value if input_value is not None else {"prompt": prompt},
-            run_metadata,
-        )
-        self.owner.start_run(run_id)
+        if run_claim == "create":
+            self.owner.create_run(
+                run_id,
+                task_type,
+                input_value if input_value is not None else {"prompt": prompt},
+                run_metadata,
+            )
+            self.owner.start_run(run_id)
+        elif run_claim == "assume":
+            # The run identity already exists (created + started by the caller's
+            # facade). Re-creating it would raise CompositionError on the
+            # duplicate run_id, so skip create/start and run the live turn.
+            pass
+        else:
+            raise ValueError("run_claim must be 'create' or 'assume', got {0!r}".format(run_claim))
         self.active_run_id = run_id
         try:
             self.start()
