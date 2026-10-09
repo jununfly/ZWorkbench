@@ -5,6 +5,8 @@ import os
 import sqlite3
 from pathlib import Path
 import tempfile
+import threading
+import time
 import unittest
 
 from zworkbench.composition import (
@@ -303,6 +305,30 @@ class CompositionOwnerTests(unittest.TestCase):
                 "events-sha",
                 "env-sha",
                 {"provider": "fake", "api_key": "secret"},
+            )
+
+    def test_secret_scan_does_not_flag_key_shapes_embedded_in_words(self) -> None:
+        # 1-10-4 dogfood false positive: a worker reply quoting codex sandbox
+        # modes ("disk-full-read-access", "task-...") must not read as an
+        # ``sk-`` key. The scan anchors on a token boundary: the key shape must
+        # START a token, not continue a word (disk-/task-/risk- prefixes).
+        self._run()
+        recorded = self.owner.record_result(
+            "run-1",
+            "adapter",
+            {"text": "sandbox modes: read-only, workspace-write, disk-full-read-access"},
+            "source",
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
+        )
+        self.assertEqual(recorded["kind"], "adapter")
+        # A real key shape at a token boundary is still rejected.
+        with self.assertRaises(ValueError):
+            self.owner.record_result(
+                "run-1",
+                "adapter",
+                {"text": "the leaked key is sk-abc123def456ghi"},
+                "source",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
             )
 
     def test_external_receipt_rejects_raw_credentials_and_secret_values(self) -> None:
@@ -1485,6 +1511,27 @@ class DeclaredExposureTests(unittest.TestCase):
             self.assertEqual(owner.get_run("run-q4")["status"], "safe_stopped")
             owner.close()
 
+    def test_claim_denied_relative_resource_under_declared_boundary(self) -> None:
+        """A relative resource is cwd-dependent and therefore ambiguous; under a
+        declared workspace boundary the claim is denied fail-closed even when the
+        caller's cwd happens to resolve it inside the boundary."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            ws = root / "ws"
+            ws.mkdir()
+            owner = self._owner(root)
+            owner.declare_exposure("run-q4", declared_side_effects=["idempotent"], exposure={"workspace_root": str(ws)})
+            previous = os.getcwd()
+            try:
+                os.chdir(ws)  # cwd inside the boundary: the old cwd-based resolution would allow this
+                claim = owner.claim_effect("run-q4", "op-rel", "act", "a.txt", "k-rel", "idempotent", required_exposure={"workspace"})
+            finally:
+                os.chdir(previous)
+            self.assertFalse(claim.executable)
+            self.assertEqual(claim.reason, "workspace_out_of_bounds")
+            self.assertEqual(owner.get_run("run-q4")["status"], "safe_stopped")
+            owner.close()
+
     def test_claim_denied_exposure_not_declared(self) -> None:
         for capability in ("network", "credentials", "subprocess"):
             with self.subTest(capability=capability), tempfile.TemporaryDirectory() as tmp:
@@ -1511,6 +1558,104 @@ class DeclaredExposureTests(unittest.TestCase):
             self.assertTrue(claim.executable)
             self.assertEqual(claim.status, "claimed")
             owner.close()
+
+
+class ConcurrentAccessIsThreadSafeTests(unittest.TestCase):
+    """The owner is read by the threaded UI host while its executor writes.
+
+    A single shared ``sqlite3.Connection`` corrupts row decoding under that
+    concurrency: a long ``SELECT`` on one handler thread interleaves with
+    another thread's statement on the same connection, so ``_decode_row`` sees a
+    row whose columns no longer line up -- ``IndexError: tuple index out of
+    range`` or a ``JSONDecodeError`` on a scrambled JSON column. The fix gives
+    every thread its own connection to the same WAL file; these tests pin it.
+    """
+
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tempdir.cleanup)
+        self.db = Path(self.tempdir.name) / "owner.sqlite3"
+        self.owner = CompositionOwner(self.db)
+        self.addCleanup(self.owner.close)
+
+    def _seed_big_events(self, rows: int = 12000) -> None:
+        """Give ``events`` enough rows that one snapshot iteration is long.
+
+        The race needs a wide window: with a tiny table every ``SELECT`` finishes
+        before another thread can interleave, so the corruption hides.
+        """
+
+        self.owner.create_run("run-seed", "unit-test", {"prompt": "seed"})
+        raw = sqlite3.connect(str(self.db))
+        try:
+            raw.executemany(
+                "INSERT INTO events(event_id, run_id, type, payload_json, evidence_source, created_at)"
+                " VALUES (?, ?, ?, ?, ?, ?)",
+                [
+                    (
+                        "evt-%06d" % index,
+                        "run-seed",
+                        "worker.note",
+                        json.dumps({"i": index}),
+                        EVIDENCE_SOURCE_NATIVE,
+                        "2026-01-01T00:00:00.000+00:00",
+                    )
+                    for index in range(rows)
+                ],
+            )
+            raw.commit()
+        finally:
+            raw.close()
+
+    def test_each_thread_reads_through_its_own_connection(self) -> None:
+        """Connection isolation is the mechanism that removes the race."""
+
+        main_connection = self.owner._require_connection()
+        seen = {}
+
+        def worker() -> None:
+            seen["connection"] = self.owner._require_connection()
+
+        thread = threading.Thread(target=worker)
+        thread.start()
+        thread.join()
+
+        self.assertIsNot(main_connection, seen["connection"])
+
+    def test_concurrent_snapshots_during_writes_never_corrupt_rows(self) -> None:
+        """Reads through the host must not break while the executor writes."""
+
+        self._seed_big_events()
+        errors = []
+        stop = threading.Event()
+
+        def reader() -> None:
+            try:
+                while not stop.is_set():
+                    self.owner.snapshot()
+            except Exception as exc:  # noqa: BLE001 - the failure IS the assertion
+                errors.append("reader: {0!r}".format(exc))
+
+        def writer() -> None:
+            index = 0
+            prefix = threading.get_ident()
+            try:
+                while not stop.is_set():
+                    self.owner.create_run("wrun-%d-%05d" % (prefix, index), "unit-test", {"prompt": "w%d" % index})
+                    index += 1
+            except Exception as exc:  # noqa: BLE001
+                errors.append("writer: {0!r}".format(exc))
+
+        threads = [threading.Thread(target=reader) for _ in range(14)]
+        threads += [threading.Thread(target=writer) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        time.sleep(1.2)
+        stop.set()
+        for thread in threads:
+            thread.join()
+
+        self.assertEqual([], errors)
 
 
 if __name__ == "__main__":
