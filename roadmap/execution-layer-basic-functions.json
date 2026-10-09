@@ -1131,13 +1131,20 @@
       "id": "1-10-2",
       "uid": "01a1159f3465-6baecde5f1",
       "label": "S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "issue #39 前置闸门交付物是否已完成并由机械验证?",
+          "answer": "是。三项闸门全部落地且测试绿：(1) identity<->transport 单一来源绑定——src/zworkbench/codex_adapter.py:171-213 以 provider_identity 为唯一来源、缺失字段 fail-closed 拒启动、model_provider 不静默从 provider 名反填；src/zworkbench/provider_vocabulary.py 的 classify_provider_transport 为唯一传输类解析点。(2) 删 setdefault 反填——全仓源码 grep setdefault 仅余无关项(provider_vocabulary.py:20 docstring、worker_bridge.py:1390 进程追踪)，无 identity/transport 反填残留。(3) 4 条 fail-closed 测试——tests/test_codex_adapter.py::CodexIdentityTransportBindingTests 共 5 条(3 缺字段 fail-closed + 2 model_provider 来源)，外加 tests/test_provider_vocabulary.py 的 fail-closed 分类与 preflight 三 deny 分支断言。延伸 S1 Ark 无 failover 产品化由 tests/test_s1_ark_readonly_egress.py(端到端)、test_real_provider_cli.py、test_provider_facade.py 覆盖。验证：pytest 跑通 test_provider_vocabulary.py+test_codex_adapter.py=31 passed；test_s1_ark_readonly_egress.py+test_real_provider_cli.py+test_provider_facade.py=25 passed；无 skip/xfail/TODO。源码无 failover 代码，与『Ark 无 failover』一致。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-3": {
       "id": "1-10-3",
@@ -1293,7 +1300,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-09 01:19:18",
+    "updated": "2026-10-09 10:46:24",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

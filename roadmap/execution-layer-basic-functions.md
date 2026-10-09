@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-09 01:19:18
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-09 10:46:24
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -55,7 +55,7 @@
 │   └── [ ][X+] 1-9-5. 端到端首跑回归脚本（fake-loopback、零凭证、recorded_view_present 验证；依赖 #40/S0 解后补测）
 └── [ ][Y+] 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial）
     ├── [x][X+] 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」
-    ├── [ ][X+] 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）
+    ├── [x][X+] 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）
     ├── [ ][X+] 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7）
     ├── [ ][X+] 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）
     ├── [ ][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
@@ -65,6 +65,6 @@
 ### 下一步可开工（ready 前 3）
 
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
-- 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试） [ ]
 - 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7） [ ]
+- 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true） [ ]
 <!-- ROADMAP_SECTION_END -->
