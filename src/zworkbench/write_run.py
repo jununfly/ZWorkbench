@@ -79,14 +79,18 @@ class WriteRunOrchestrator:
                 reason=reason,
             )
             # The write effect completed locally; close the run as completed so
-            # the durable owner reflects a finished write (no push, ever).
-            owner.complete_run(
-                run_id,
-                {
-                    "write_receipt_commit": receipt.commit_hash,
-                    "worktree_path": str(worktree_path),
-                },
-            )
+            # the durable owner reflects a finished write (no push, ever).  On
+            # an idempotent replay (same idempotency key) the seam returns the
+            # already-completed receipt and the run is already closed — closing
+            # it twice is an InvalidTransition, so only close a non-completed run.
+            if owner.get_run(run_id)["status"] != "completed":
+                owner.complete_run(
+                    run_id,
+                    {
+                        "write_receipt_commit": receipt.commit_hash,
+                        "worktree_path": str(worktree_path),
+                    },
+                )
             return receipt
 
     @staticmethod
