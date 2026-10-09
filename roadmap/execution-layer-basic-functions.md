@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-09 11:50:00
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-10 01:10:38
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -57,7 +57,7 @@
     ├── [x][X+] 1-10-1. S0 host-enforcement spike（ADR 0008 三判据出证：独立约束路径/进程/网络，失效即拒启动）；↩ ADR 0010 撰写时编号 1-9-4（B2 spike），其 1-9-* 引用为旧编号，见 ADR 0010 顶部「路线图节点引用勘误」
     ├── [x][X+] 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）
     ├── [x][X+] 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7）
-    ├── [ ][X+] 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）
+    ├── [x][X+] 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）
     ├── [ ][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
     ├── [ ][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
     └── [ ][X+] 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）
@@ -65,6 +65,6 @@
 ### 下一步可开工（ready 前 3）
 
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
-- 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true） [ ]
 - 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push） [ ]
+- 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证） [ ]
 <!-- ROADMAP_SECTION_END -->
