@@ -76,6 +76,7 @@ REVIEW_SCRIPT_ROUTE = "/static/review.js"
 #: module docstring in ui_live for why this is a scoped exception to the
 #: "normal documents carry no script" convention).
 LIVE_FACTS_ROUTE = "/api/home-facts"
+LIVE_CONVERSATION_ROUTE = "/api/home-conversation"
 LIVE_SCRIPT_ROUTE = "/static/live.js"
 LIVE_SCRIPT_TAG = '<script src="{0}" defer></script>'.format(LIVE_SCRIPT_ROUTE)
 
@@ -622,6 +623,14 @@ def serve_workbench(
                 # invocation beyond the read-only projection.
                 self._respond(self._live_facts_json(), "application/json; charset=utf-8")
                 return
+            if route == LIVE_CONVERSATION_ROUTE:
+                # F7/1-2-3 (issue 1) — server-rendered conversation fragment for
+                # /home. The poller swaps it into the home.conversation region
+                # in place, so the stream stays live without a full reload and
+                # without the client ever building HTML from JSON. Server owns
+                # every byte of markup; the script only replaces a region.
+                self._respond(self._conversation_html(), "text/html; charset=utf-8")
+                return
             if route == LIVE_SCRIPT_ROUTE:
                 # F7/1-2-3 — the poller, served unconditionally: it is
                 # progressive enhancement for /home, not a review-mode layer.
@@ -977,6 +986,18 @@ def serve_workbench(
             return json.dumps(
                 live_facts_payload(view), ensure_ascii=False
             ).encode("utf-8")
+
+        def _conversation_html(self) -> bytes:
+            """Render /home's conversation stream as a standalone HTML fragment.
+
+            Returns only the inner markup (the ``<ol class="conversation-list">``
+            or the empty-state ``<p>``), not the surrounding region wrapper, so a
+            polling client can replace a region's ``innerHTML`` directly.
+            """
+            resolver = getattr(resolve_view, "resolve_query", None)
+            view = resolver("/home", "") if callable(resolver) else resolve_view("/home")
+            from .ui_home import _render_conversation
+            return _render_conversation(view).encode("utf-8")
 
         def log_message(self, *args: Any) -> None:
             """Keep the test output clean; the host is not an evidence source."""

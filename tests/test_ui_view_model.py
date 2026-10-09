@@ -29,6 +29,8 @@ from zworkbench.ui_view_model import (
     REDACTED,
     UNKNOWN,
     UI_REFERENCE_STATUS_CATALOG,
+    _project_conversation,
+    _reply_text_from_results,
     display_text,
     home_view_model,
     owner_view_source,
@@ -612,6 +614,23 @@ class RedactingBeforeTheViewSeesAnythingTests(unittest.TestCase):
         self.assertNotIn("metadata", view)
 
 
+def _extract_region(body: str, ref: str) -> str:
+    """Pull the served HTML for one declared top-level region by its ref.
+
+    Each top-level region opens with ``data-ui-ref="home.<name>"`` (the
+    attribute value is closed by a quote, so a nested ref like
+    ``home.conversation.message`` does not match ``home.conversation``). The next
+    top-level marker begins the following region. This scopes assertions to the
+    region they actually police instead of the whole page.
+    """
+    start_marker = 'data-ui-ref="{0}"'.format(ref)
+    start = body.find(start_marker)
+    if start == -1:
+        return ""
+    next_start = body.find('data-ui-ref="home.', start + len(start_marker))
+    return body[start:next_start] if next_start != -1 else body[start:]
+
+
 class ServingOwnerStateThroughTheHostTests(unittest.TestCase):
     """The path the PRD describes, end to end: owner -> facade -> document."""
 
@@ -636,7 +655,20 @@ class ServingOwnerStateThroughTheHostTests(unittest.TestCase):
         self.assertIn("local_read_only_run", body)
         self.assertIn("case-local", body)
         self.assertIn("Owner / recorded input", body)
-        self.assertNotIn("summarise the repository", body)
+
+        # Privacy invariant: the current-intent / run-facts context display must
+        # NOT copy the owner's raw prompt into the browser. It shows the
+        # desensitised "已记录输入" summary instead. (The conversation stream is
+        # the owner's own chat log and is allowed to quote the prompt verbatim —
+        # see issue 4 of the 1-10-4 dogfood fixes.)
+        intent_region = _extract_region(body, "home.current-intent")
+        self.assertNotIn("summarise the repository", intent_region)
+
+        # Regression guard for the honest conversation stream: the owner's prompt
+        # IS shown in the conversation region (human message), not hidden.
+        self.assertIn(
+            '<p class="msg-intent">summarise the repository</p>', body
+        )
 
     def test_the_list_item_reference_now_renders(self):
         """Until an owner supplied rows, this declared reference never rendered.
@@ -1191,6 +1223,167 @@ class VariantContentBranchTests(unittest.TestCase):
         self.assertEqual(journal["kind"], "journal")
         self.assertEqual(journal["index"], UNKNOWN)
         self.assertEqual(journal["evidence_table"], UNKNOWN)
+
+
+class ConversationReplyProjectionTests(unittest.TestCase):
+    """The conversation stream must surface the assistant's reply, not just the
+    prompt the user typed. Regression guard for the dogfood finding where the
+    run completed via a real provider but the reply never rendered."""
+
+    def test_reply_text_prefers_adapter_turn_payload(self):
+        results = [
+            {"run_id": "r1", "kind": "adapter.initialized", "value": {"command": []}},
+            {"run_id": "r1", "kind": "semantic", "value": {"text": "fallback text"}},
+            {"run_id": "r1", "kind": "adapter.turn", "value": {"text": "canonical reply"}},
+        ]
+        self.assertEqual(_reply_text_from_results(results), "canonical reply")
+
+    def test_reply_text_falls_back_to_semantic_payload(self):
+        results = [
+            {"run_id": "r1", "kind": "semantic", "value": {"text": "only text here"}},
+        ]
+        self.assertEqual(_reply_text_from_results(results), "only text here")
+
+    def test_reply_text_is_unknown_when_no_result_carries_text(self):
+        results = [
+            {"run_id": "r1", "kind": "adapter.initialized", "value": {"command": []}},
+            {"run_id": "r1", "kind": "error", "value": {"code": "x"}},
+        ]
+        self.assertEqual(_reply_text_from_results(results), UNKNOWN)
+
+    def test_reply_text_is_unknown_when_results_absent(self):
+        self.assertEqual(_reply_text_from_results([]), UNKNOWN)
+
+    def test_project_conversation_surfaces_human_prompt_and_agent_reply(self):
+        with TemporaryDirectory() as directory:
+            owner = CompositionOwner(Path(directory) / "owner.sqlite3")
+            self.addCleanup(owner.close)
+            owner.create_run(
+                "run-reply",
+                "composer_message",
+                {"prompt": "你是谁"},
+                metadata={"workspace": "case-local"},
+            )
+            owner.start_run("run-reply")
+            owner.record_result(
+                "run-reply",
+                "adapter.turn",
+                {"status": "completed", "text": "我是 Codex CLI，一个运行在终端里的 AI 编程助手。"},
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
+            )
+            owner.complete_run("run-reply", {"summary": "done"})
+
+            messages = _project_conversation(owner.snapshot())
+            # Each run yields a (human, agent) pair, in order.
+            self.assertEqual(len(messages), 2)
+            self.assertEqual(messages[0]["role"], "human")
+            self.assertEqual(messages[0]["run_id"], "run-reply")
+            # Issue 4 — the user's own prompt is shown verbatim in their chat log.
+            self.assertEqual(messages[0]["intent"], "你是谁")
+            self.assertEqual(messages[1]["role"], "agent")
+            self.assertEqual(
+                messages[1]["reply"],
+                "我是 Codex CLI，一个运行在终端里的 AI 编程助手。",
+            )
+
+    def test_project_conversation_reply_is_unknown_without_results(self):
+        with TemporaryDirectory() as directory:
+            owner = CompositionOwner(Path(directory) / "owner.sqlite3")
+            self.addCleanup(owner.close)
+            owner.create_run("run-noreply", "composer_message", {"prompt": "hi"})
+            owner.start_run("run-noreply")
+            owner.complete_run("run-noreply", {"summary": "done"})
+
+            messages = _project_conversation(owner.snapshot())
+            self.assertEqual(len(messages), 2)
+            self.assertEqual(messages[1]["reply"], UNKNOWN)
+
+    def test_project_conversation_running_run_shows_pending_reply(self):
+        with TemporaryDirectory() as directory:
+            owner = CompositionOwner(Path(directory) / "owner.sqlite3")
+            self.addCleanup(owner.close)
+            owner.create_run("run-running", "composer_message", {"prompt": "在跑吗"})
+            owner.start_run("run-running")
+            # Left in the running state: agent side must read as in-flight.
+
+            messages = _project_conversation(owner.snapshot())
+            self.assertEqual(len(messages), 2)
+            self.assertEqual(messages[1]["status_token"], "running")
+            self.assertEqual(messages[1]["reply"], UNKNOWN)
+
+    def test_project_conversation_orders_runs_as_a_thread(self):
+        with TemporaryDirectory() as directory:
+            owner = CompositionOwner(Path(directory) / "owner.sqlite3")
+            self.addCleanup(owner.close)
+            for idx, prompt in enumerate(("第一问", "第二问")):
+                rid = "run-{0}".format(idx)
+                owner.create_run(rid, "composer_message", {"prompt": prompt})
+                owner.start_run(rid)
+                owner.complete_run(rid, {"summary": "done"})
+
+            messages = _project_conversation(owner.snapshot())
+            # Issue 5 — two runs read as one continuous thread: human0, agent0,
+            # human1, agent1.
+            self.assertEqual(
+                [m["intent"] for m in messages if m["role"] == "human"],
+                ["第一问", "第二问"],
+            )
+            self.assertEqual([m["role"] for m in messages],
+                             ["human", "agent", "human", "agent"])
+
+
+class SafeStopHonestyTests(unittest.TestCase):
+    """Issue 3 — the safe-stop banner must not masquerade a runtime timeout as an
+    identity violation, and must not offer a dead reconcile button for a failure
+    that has no identity to re-parse."""
+
+    def _owner_with_runtime_stop(self) -> "CompositionOwner":
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        owner = CompositionOwner(Path(directory.name) / "owner.sqlite3")
+        self.addCleanup(owner.close)
+        owner.create_run("run-timeout", "composer_message", {"prompt": "慢查询"})
+        owner.start_run("run-timeout")
+        owner.record_result(
+            "run-timeout",
+            "failure_classification",
+            {"message": "Codex event wait timed out"},
+            evidence_source=EVIDENCE_SOURCE_NATIVE,
+        )
+        owner.safe_stop_run("run-timeout", "Codex event wait timed out")
+        return owner
+
+    def test_runtime_safe_stop_projects_as_runtime_kind(self):
+        owner = self._owner_with_runtime_stop()
+        safe = home_view_model(owner)["safe_stop"]
+        self.assertTrue(safe["active"])
+        self.assertEqual(safe["kind"], "runtime")
+        self.assertEqual(safe["failure_reason"], "Codex event wait timed out")
+        # No identity violation => reconcile is not the remedy.
+        self.assertTrue(safe["reconcile_disabled"])
+        self.assertFalse(safe["violations"])
+
+    def test_runtime_safe_stop_renders_reason_without_reconcile_button(self):
+        owner = self._owner_with_runtime_stop()
+        from zworkbench.ui_home import _render_safe_stop
+        html = _render_safe_stop(home_view_model(owner)["safe_stop"])
+        self.assertIn("Codex event wait timed out", html)
+        self.assertIn("重新发起", html)
+        # Issue 3 — no dead reconcile button for a runtime failure.
+        self.assertNotIn("reconcile-button", html)
+
+    def test_identity_violation_still_offers_reconcile(self):
+        # A genuine identity violation must keep the reconcile CTA available.
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        owner = CompositionOwner(Path(directory.name) / "owner.sqlite3")
+        self.addCleanup(owner.close)
+        owner.create_run("run-bad", "composer_message", {"prompt": "x"})
+        owner.start_run("run-bad")
+        owner.complete_run("run-bad", {"summary": "done"})
+        safe = home_view_model(owner)["safe_stop"]
+        # No safe-stopped run, no violation => inactive; the banner stays quiet.
+        self.assertFalse(safe["active"])
 
 
 if __name__ == "__main__":

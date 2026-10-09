@@ -447,27 +447,62 @@ def _project_preflight(value: Any) -> Dict[str, Any]:
     }
 
 
+def _reply_text_from_results(results: Sequence[Mapping[str, Any]]) -> str:
+    """Extract the assistant's reply text from a run's recorded results.
+
+    Prefers the canonical ``adapter.turn`` payload; falls back to the
+    ``semantic`` projection (both carry the turn ``text``). Returns ``UNKNOWN``
+    when no reply was recorded -- it never synthesises content.
+    """
+    if not results:
+        return UNKNOWN
+    chosen: Optional[str] = None
+    for res in results:
+        if not isinstance(res, Mapping):
+            continue
+        kind = res.get("kind")
+        if kind in ("adapter.turn", "semantic"):
+            value = res.get("value")
+            text = value.get("text") if isinstance(value, Mapping) else None
+            if isinstance(text, str) and text.strip():
+                chosen = text
+                if kind == "adapter.turn":
+                    break  # prefer the canonical turn payload
+    return display_text(chosen) if chosen is not None else UNKNOWN
+
+
 def _project_conversation(snapshot: Mapping[str, Any]) -> Any:
     """Project the owner's runs into a read-only conversation stream.
 
-    Each message mirrors one recorded run: a role, its run identity, the status
-    and time, the recorded intent, and -- when the run carried a plan -- a
-    plan-card whose step states come straight from the owner-backed projection.
-    No message is synthesised: an owner with no runs yields ``UNKNOWN`` and the
-    view degrades to an explicit empty state.
+    Each run becomes a paired exchange so the stream reads as one continuous
+    thread rather than disconnected run cards:
+
+    * a ``human`` message carrying the user's own prompt **verbatim** -- the
+      user's prose belongs in their own chat log, so the conversation stream is
+      the one surface that surfaces it (the run-facts / identity projections keep
+      it redacted by design);
+    * an ``agent`` message carrying the recorded reply (the ``text`` carried by
+      the run's ``adapter.turn`` / ``semantic`` results), surfaced verbatim.
+
+    Runs are projected in creation order; a running run shows its ``human``
+    message immediately and a "处理中…" placeholder on the agent side until the
+    reply lands. No message is synthesised: an owner with no runs yields
+    ``UNKNOWN`` and the view degrades to an explicit empty state.
     """
     messages = []
-    for run in snapshot.get("runs") or ():
-        if not isinstance(run, Mapping):
+    results_by_run: Dict[str, list] = {}
+    for res in snapshot.get("results") or ():
+        if not isinstance(res, Mapping):
             continue
-        run_id = run.get("run_id")
-        metadata = run.get("metadata") or {}
-        metadata = metadata if isinstance(metadata, Mapping) else {}
-        input_value = run.get("input") or {}
-        input_value = input_value if isinstance(input_value, Mapping) else {}
+        rid = res.get("run_id")
+        if rid is None:
+            continue
+        results_by_run.setdefault(rid, []).append(res)
+
+    def _plan_projection(metadata: Mapping[str, Any]) -> Any:
         plan = metadata.get("plan")
         if isinstance(plan, list):
-            plan_proj: Any = {
+            return {
                 "steps": [
                     {
                         "title": display_text(step.get("title", UNKNOWN)),
@@ -482,19 +517,49 @@ def _project_conversation(snapshot: Mapping[str, Any]) -> Any:
                     if isinstance(step, Mapping)
                 ]
             }
-        else:
-            plan_proj = UNKNOWN
+        return UNKNOWN
+
+    for run in snapshot.get("runs") or ():
+        if not isinstance(run, Mapping):
+            continue
+        run_id = run.get("run_id")
+        raw_status = run.get("status", UNKNOWN)
+        status = display_status(raw_status)
+        metadata = run.get("metadata") or {}
+        metadata = metadata if isinstance(metadata, Mapping) else {}
+        input_value = run.get("input") or {}
+        input_value = input_value if isinstance(input_value, Mapping) else {}
+        prompt = input_value.get("prompt", UNKNOWN)
+        updated_at = display_text(run.get("updated_at", UNKNOWN))
+        common = {
+            "run_id": display_text(run_id),
+            "status": status,
+            "status_token": raw_status,
+            "updated_at": updated_at,
+        }
+        # The user's own utterance, shown verbatim in their own chat log.
+        messages.append(
+            {
+                "role": "human",
+                "avatar_label": "我",
+                "title": "我",
+                "intent": display_text(prompt),
+                "reply": UNKNOWN,
+                "plan": UNKNOWN,
+                "source": "CompositionOwner",
+                **common,
+            }
+        )
         messages.append(
             {
                 "role": "agent",
                 "avatar_label": "A",
-                "run_id": display_text(run_id),
-                "status": display_status(run.get("status", UNKNOWN)),
-                "updated_at": display_text(run.get("updated_at", UNKNOWN)),
                 "title": display_text(run.get("task_type") or run_id),
-                "intent": display_intent_summary(input_value.get("prompt", UNKNOWN)),
-                "plan": plan_proj,
+                "intent": UNKNOWN,
+                "reply": _reply_text_from_results(results_by_run.get(run_id) or []),
+                "plan": _plan_projection(metadata),
                 "source": "CompositionOwner",
+                **common,
             }
         )
     return messages or UNKNOWN
@@ -822,10 +887,12 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
     }
 
     # F13 (1-2-5) — safe-stop / reconcile banner projection.
-    # The banner activates when the scenario is stopped OR when the owner reports
-    # an unresolved identity reference (identity unresolved). The reconcile CTA is
-    # enabled only when a concrete identity violation was detected; the structured
-    # findings name the exact broken reference so a human can act on it.
+    # The banner activates when the scenario is stopped, when an identity
+    # reference is unresolved, OR when a run ended in a runtime failure (e.g. a
+    # provider timeout that safe-stopped the run). The reconcile CTA is only
+    # meaningful for identity violations -- a runtime failure has nothing to
+    # "re-parse", so the banner names the real reason and points at re-issuing
+    # the request instead of offering a dead reconcile button.
     identity_violations = []
     if run_id is not None:
         try:
@@ -834,19 +901,67 @@ def home_view_model(owner: Any, *, variant: Any = None) -> Dict[str, Any]:
             identity_violations = []
     has_identity_violation = bool(identity_violations)
 
-    safe_stop_active = scenario_state_token == "stopped" or has_identity_violation
+    # Issue 3 — capture the real failure reason for a runtime safe-stop, so the
+    # banner stops masquerading a timeout as an identity violation.
+    failure_reason = None
+    safe_stopped_runs = [
+        r for r in (snapshot.get("runs") or ())
+        if isinstance(r, Mapping) and display_status(r.get("status")) == "safe-stopped"
+    ]
+    if safe_stopped_runs:
+        stop_run_id = safe_stopped_runs[-1].get("run_id")
+        for res in (snapshot.get("results") or ()):
+            if (
+                isinstance(res, Mapping)
+                and res.get("run_id") == stop_run_id
+                and res.get("kind") == "failure_classification"
+            ):
+                value = res.get("value")
+                if isinstance(value, Mapping):
+                    failure_reason = value.get("message")
+                break
+    has_runtime_failure = bool(failure_reason)
+
+    if has_identity_violation:
+        kind = "identity"
+    elif has_runtime_failure:
+        kind = "runtime"
+    else:
+        kind = "stopped"
+
+    safe_stop_active = (
+        scenario_state_token == "stopped" or has_identity_violation or has_runtime_failure
+    )
+    if kind == "identity":
+        message_zh = (
+            "检测到身份越界：{n} 处身份引用无法解析（identity unresolved）。恢复需 reconcile。".format(
+                n=len(identity_violations)
+            )
+        )
+    elif kind == "runtime":
+        message_zh = (
+            "运行中断（safe-stop）：{reason}。"
+            "重新发起方式：本页没有单独的重试按钮——在页面底部的输入框（composer）里"
+            "重新提交该请求即可，会创建新 run。".format(reason=display_text(failure_reason))
+        )
+    elif safe_stop_active:
+        message_zh = "场景已安全停止（safe-stop）。"
+    else:
+        message_zh = "场景未检测到身份越界。"
     safe_stop = {
         "active": safe_stop_active,
         "tone": "stopped" if safe_stop_active else "neutral",
-        "reason": "identity_unresolved" if has_identity_violation else None,
-        "message_zh": (
-            "检测到身份越界：{n} 处身份引用无法解析（identity unresolved）。恢复需 reconcile。".format(n=len(identity_violations))
-            if has_identity_violation
-            else ("场景已安全停止（safe-stop）。可请求 reconcile 重新解析身份引用。"
-                  if safe_stop_active
-                  else "场景未检测到身份越界。")
+        "kind": kind,
+        "reason": (
+            "identity_unresolved" if has_identity_violation
+            else "runtime_failure" if has_runtime_failure
+            else None
         ),
+        "failure_reason": display_text(failure_reason) if failure_reason else None,
+        "message_zh": message_zh,
         "reconcile_label_zh": "请求 reconcile",
+        # Only offer reconcile when there is a genuine identity violation to
+        # resolve; a runtime timeout has no identity to re-parse.
         "reconcile_disabled": not has_identity_violation,
         # F13/1-2-8 — reconcile trigger capability. Defaults to False here; the
         # host flips it to True for /home only when a reconcile command facade
