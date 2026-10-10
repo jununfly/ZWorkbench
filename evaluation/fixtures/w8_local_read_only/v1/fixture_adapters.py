@@ -81,8 +81,10 @@ class FixtureSuccessAdapter(_FixtureAdapter):
         input_value: Any = None,
         metadata: Mapping[str, Any] | None = None,
         timeout: float = 45.0,
+        run_claim: str = "create",
     ) -> CodexExecution:
         del timeout
+        del run_claim
         self.execute_calls += 1
         self._start_run(run_id, prompt, task_type, input_value, metadata or {})
         provider_identity = dict(self.config.provider_identity)
@@ -163,8 +165,10 @@ class FixtureUnknownBoundaryAdapter(_FixtureAdapter):
         input_value: Any = None,
         metadata: Mapping[str, Any] | None = None,
         timeout: float = 45.0,
+        run_claim: str = "create",
     ) -> None:
         del timeout
+        del run_claim
         self.execute_calls += 1
         run_metadata = dict(metadata or {})
         run_metadata["unknown_request"] = self.request_kind

@@ -1290,13 +1290,30 @@
       "id": "1-10-6",
       "uid": "01a1159f3633-61a6b31669",
       "label": "价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-10-6 的 scope gate 分类与本次落点?",
+          "answer": "Acceptance/evaluation（非 Product execution）：目标项目 src/ 保持只读，不动产品代码；本节点是『产品可用』三层 AND 门的第三道（价值判据），量化『比裸 Codex 省 X% 时间 / 少 Y 次人工复查』。本次落点（zj 选 A）：(1) 固化 value-baseline 测量设计（指标定义/计算口径/证据双标签 exercises_default_product_path/与 S3 N=10 合并测方案）为可复核文档；(2) 跑现有 H1-H8/C1-C7 runner 中无需真实 Provider 的离线/fixture/local-read-only 部分，汇总 pass/fail 并标注双标签；(3) 真实 n=10 价值基线（zj 作被试、走默认入口带 --real-provider-gate）显式 defer 给 zj 在场主测。严守 R3 纪律：runner 绿 ≠ 产品已实现，scaffold 与 product-path 分开计账，不提前宣告 R3 implemented。",
+          "note": ""
+        },
+        {
+          "q": "1-10-6 本次完成度与剩余 gate?",
+          "answer": "本次（2026-10-10，zj 选 A）完成＝value-baseline 测量设计固化（evaluation/value-baseline-measurement-plan.md）+ 离线 fixture runner 实测分类与 staleness 审计（evaluation/evidence/value-baseline-1-10-6/README.md，local-only）。**剩余 gate（未完、deferred）＝产品路径 N=10 价值基线正式出数**：须 zj 作被试、走默认入口带 --real-provider-gate、真实 ARK 凭证，Human-in-the-loop，本节点不代跑。故 1-10-6 节点维持 in_progress，R3 三层 AND 门的第三道（价值判据）仍待 N=10 出数后才算过；严禁把 scaffold 绿或 seam 级 C1-6 前证当作『产品可用』已达成。",
+          "note": ""
+        },
+        {
+          "q": "1-10-6 离线 stale 与 env-gated 处置以及 N-10 harness 是否就绪",
+          "answer": "(2026-10-10 续) ① corrective 已修 local_read_only：根因等于 LocalReadOnlyRunOrchestrator.run 新增 run_claim kwarg，两个 fixture adapter 的 execute 未接受导致 TypeError 在 _start_run 前炸、run 未建、get_run 报 run not found；给 fixture_adapters.py 两 execute 加 run_claim 形参后重跑 2/2 pass、各 13/13 checks。② host_boundary_min_permissions 经确认是设计内 ENV-GATED（需 macOS sandbox-exec 加 真实 Codex 0.139.0），非代码缺陷，不假修。③ N=10 价值基线 harness 就绪：evaluation/runner/run_n10_value_baseline.py 加 任务模板 tasks.json，self-test 与 dry-run 已验证（不需 ARK）；live 模式需 zj 在场加真实 ARK，本节点不代跑。结论：1-10-6 的测量设计、离线审计、local_read_only 修复、harness 就绪 已完成；价值判据正式数据收集（N=10 产品路径）仍 deferred，R3 仍 target。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-7": {
       "id": "1-10-7",
@@ -1404,7 +1421,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-10 11:14:19",
+    "updated": "2026-10-10 12:18:02",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
