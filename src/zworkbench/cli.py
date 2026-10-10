@@ -28,6 +28,13 @@ from .local_run import (
     load_provider_profiles,
     preflight,
 )
+from .push_run import PushRunOrchestrator
+from .push_seam import (
+    PushDisabledError,
+    PushPrecheckError,
+    PushSeamError,
+    PushUncertainError,
+)
 from .write_run import WriteRunOrchestrator
 from .write_seam import WriteSeamError
 
@@ -115,7 +122,10 @@ def _parser() -> argparse.ArgumentParser:
 
     # ------------------------------------------------------------------
     # write — the S2 reversible write boundary, driven from the control plane.
-    # push is intentionally absent: it is the S4 separate gate and stays off.
+    # S4 (push) is a separate gate: it is exposed here ONLY behind an explicit
+    # --push-gate flag and stays off by default (lock 2).  The push execution
+    # path lives in push_seam.py / push_run.py, never in write_seam.py /
+    # write_run.py (lock 1 + the static no-push-execution-surface guard).
     # ------------------------------------------------------------------
     write = commands.add_parser(
         "write",
@@ -190,6 +200,42 @@ def _parser() -> argparse.ArgumentParser:
     write_apply.add_argument("--base-ref", default="HEAD", help="base ref the worktree is checked out from")
     write_apply.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
     write_apply.set_defaults(handler=_write_apply_command)
+
+    # S4 push is the third blast-radius grade and a SEPARATE gate.  It is only
+    # reachable with an explicit --push-gate; without it the command is denied
+    # (lock 2).  Only a remote NAME is accepted (never a URL or path literal),
+    # so no credential can enter through argv.
+    write_push = write_commands.add_parser(
+        "push",
+        help="push a known local commit to a named remote (S4 separate gate)",
+        description=(
+            "Push a known local commit to a named git remote ref behind the S4 "
+            "gate.  The push is OFF by default and only runs with --push-gate. "
+            "Only a configured remote NAME is accepted (never a URL or path "
+            "literal); credentials come from ambient git / SSH agent.  The push "
+            "binds to an upstream apply receipt via --source-run-id / "
+            "--apply-operation-id / --expect-commit so the commit being pushed "
+            "is exactly the one the apply effect committed."
+        ),
+    )
+    write_push.add_argument("--db", required=True, type=Path, help="case-local SQLite owner path")
+    write_push.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
+    write_push.add_argument("--repo", required=True, type=Path, help="local git repo (worktree) holding the commit to push")
+    write_push.add_argument("--remote", required=True, help="configured remote NAME (not a URL or path literal)")
+    write_push.add_argument("--ref", required=True, help="branch ref to push to (e.g. main or refs/heads/main)")
+    write_push.add_argument("--expect-commit", required=True, help="commit SHA that must be at repo HEAD and upstream custody")
+    write_push.add_argument("--source-run-id", required=True, help="run id of the upstream apply effect (chained custody)")
+    write_push.add_argument("--apply-operation-id", required=True, help="operation id of the upstream apply effect")
+    write_push.add_argument("--run-id", help="durable push run identity; generated when omitted")
+    write_push.add_argument("--approval-token", required=True, help="one-use token from `write approve`")
+    write_push.add_argument("--operation-id", required=True, help="push operation identity bound to the approval")
+    write_push.add_argument("--resource", required=True, help="effect resource bound to the approval (the repo path)")
+    write_push.add_argument("--idempotency-key", required=True, help="idempotency key bound to the approval")
+    write_push.add_argument("--action", default="push_commit", help="effect action (default push_commit)")
+    write_push.add_argument("--force-with-lease", action="store_true", help="push with --force-with-lease (precise, non-empty lease)")
+    write_push.add_argument("--push-gate", action="store_true", help="REQUIRED to enable the S4 push gate (off by default)")
+    write_push.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    write_push.set_defaults(handler=_write_push_command)
 
     snapshot = commands.add_parser("snapshot", help="print the durable owner snapshot")
     snapshot.add_argument("--db", required=True, type=Path, help="SQLite composition state path")
@@ -816,6 +862,123 @@ def _write_apply_command(args: argparse.Namespace) -> int:
     payload = {
         "schema": CLI_SCHEMA,
         "command": "write-apply",
+        "status": "completed",
+        "run_id": run_id,
+        "receipt": receipt_data,
+        "owner": _owner_projection(db, run_id),
+    }
+    if summary:
+        _write_json(summary, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
+
+
+def _write_push_command(args: argparse.Namespace) -> int:
+    """Push a known local commit to a named remote behind the S4 gate.
+
+    Push is OFF by default; it only runs when --push-gate is present (lock 2).
+    Only a configured remote NAME is accepted — never a URL or path literal —
+    so no credential can enter through argv.
+    """
+
+    import uuid as _uuid
+
+    if not args.push_gate:
+        payload = _denied_payload(
+            args.run_id or "zworkbench-push-unspecified",
+            reason="S4 push gate is off; pass --push-gate to enable (off by default)",
+        )
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 2
+
+    case_root = _resolve(args.case_root)
+    db = _resolve(args.db)
+    repo = _resolve(args.repo)
+    summary = _resolve(args.summary) if args.summary else None
+    run_id = args.run_id or "zworkbench-push-" + _uuid.uuid4().hex
+
+    violations = _case_local_violations(
+        case_root,
+        (("database", db), ("repo", repo), ("summary", summary)),
+    )
+    if violations:
+        print(json.dumps(_denied_payload(run_id, violations=violations), ensure_ascii=False, indent=2))
+        return 2
+
+    orchestrator = PushRunOrchestrator(db, case_root=case_root, push_enabled=True)
+    try:
+        receipt = orchestrator.push(
+            run_id,
+            repo,
+            args.remote,
+            args.ref,
+            args.expect_commit,
+            args.source_run_id,
+            args.apply_operation_id,
+            approval_token=args.approval_token,
+            operation_id=args.operation_id,
+            action=args.action,
+            resource=args.resource,
+            idempotency_key=args.idempotency_key,
+            force_with_lease=args.force_with_lease,
+        )
+    except (PushDisabledError, PushPrecheckError) as exc:
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-push",
+            "status": "denied",
+            "run_id": run_id,
+            "reason": str(exc),
+            "owner": _owner_projection(db, run_id),
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 2
+    except PushUncertainError as exc:
+        # B-class: a push was issued but the outcome is undetermined.  The
+        # owner already marked the effect uncertain and moved the run to
+        # recovering; surface it as a distinct failure (not a clean denial).
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-push",
+            "status": "uncertain",
+            "run_id": run_id,
+            "reason": str(exc),
+            "owner": _owner_projection(db, run_id),
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1
+    except Exception as exc:
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-push",
+            "status": "failed",
+            "run_id": run_id,
+            "error": {"type": type(exc).__name__},
+            "owner": _owner_projection(db, run_id),
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1
+
+    receipt_data = {
+        "effect_id": receipt.effect_id,
+        "status": receipt.status,
+        "remote": receipt.remote,
+        "ref": receipt.ref,
+        "expect_commit": receipt.expect_commit,
+        "pushed": receipt.pushed,
+        "physical_push_performed": receipt.physical_push_performed,
+        "noop": receipt.noop,
+        "external_receipt": dict(receipt.external_receipt),
+    }
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "write-push",
         "status": "completed",
         "run_id": run_id,
         "receipt": receipt_data,
