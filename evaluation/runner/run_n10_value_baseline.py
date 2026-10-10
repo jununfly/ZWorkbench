@@ -22,10 +22,14 @@ Value delta:
 Modes:
   --self-test   embedded synthetic tasks; asserts the aggregation math; exits 0.
   --dry-run     loads --tasks, synthesizes deterministic metrics, computes + prints.
-  --live        interactive; requires the human (zj) present + a REAL Provider.
-               For each task/arm: optional command wrapper OR manual timing;
-               human enters the two review counts.  Writes an evidence summary
-               (local-only, exercises_default_product_path=true).
+  --live        interactive; requires the human (zj) present + a REAL Provider
+               (the harness never reads/prints that credential).  For each task/arm:
+               EITHER a command wrapper (--zw-command / --control-command) OR manual
+               ENTER timing.  Commands may embed '{prompt}' and '{id}' placeholders
+               (substituted per task, shell-quoted) so a single command drives all N
+               tasks with REAL wall-clock (the agent's runtime).  With
+               --skip-review-prompts the two review counts default to 0 (hands-off).
+               Writes an evidence summary (local-only, exercises_default_product_path=true).
 
 NOTE: --live is NOT runnable in CI/sandbox.  It needs (a) zj at the keyboard
 and (b) a real Provider credential in the environment.  The harness never
@@ -36,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import shlex
 import sys
 import time
 from dataclasses import dataclass, asdict
@@ -231,13 +236,16 @@ def _prompt_count(prompt: str) -> int:
         print("  enter a non-negative integer (empty = 0)")
 
 
-def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str]) -> TaskMetrics:
+def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str], skip_review_prompts: bool = False) -> TaskMetrics:
     print("\n--- {0} arm : task {1} ---".format(arm, task.get("id", "?")))
     print("prompt: {0}".format(task.get("prompt", "")))
     if command:
-        print("running: {0}".format(command))
+        substituted = command.replace("{prompt}", shlex.quote(str(task.get("prompt", "")))).replace(
+            "{id}", shlex.quote(str(task.get("id", "")))
+        )
+        print("running: {0}".format(substituted))
         start = time.monotonic()
-        rc = _run_command(command)
+        rc = _run_command(substituted)
         elapsed = time.monotonic() - start
         print("  command exited rc={0} in {1:.1f}s".format(rc, elapsed))
     else:
@@ -246,27 +254,31 @@ def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str]) -> TaskMet
         input("  press ENTER to STOP the timer once the task is accepted...")
         elapsed = time.monotonic() - start
         print("  measured wall-clock: {0:.1f}s".format(elapsed))
-    manual = _prompt_count("  manual re-check/re-run count: ")
-    posthoc = _prompt_count("  post-run review count: ")
+    if skip_review_prompts:
+        manual = 0
+        posthoc = 0
+    else:
+        manual = _prompt_count("  manual re-check/re-run count: ")
+        posthoc = _prompt_count("  post-run review count: ")
     return TaskMetrics(elapsed, manual, posthoc)
 
 
 def _run_command(command: str) -> int:
     import subprocess
 
-    rc = subprocess.call(command, shell=True)
+    rc = subprocess.call(command, shell=True, cwd=str(REPO_ROOT))
     return rc
 
 
-def _live(tasks: List[Dict[str, Any]], zw_command: Optional[str], control_command: Optional[str], output: Path) -> int:
+def _live(tasks: List[Dict[str, Any]], zw_command: Optional[str], control_command: Optional[str], output: Path, skip_review_prompts: bool = False) -> int:
     zw: List[TaskMetrics] = []
     control: List[TaskMetrics] = []
     print("\n=== LIVE value baseline ===")
     print("Human (zj) must be present.  A REAL Provider credential is required in the")
     print("environment for the zw arm.  This mode is NOT runnable in CI/sandbox.\n")
     for t in tasks:
-        zw.append(_live_arm("ZW (product path)", t, zw_command))
-        control.append(_live_arm("CONTROL (bare Codex)", t, control_command))
+        zw.append(_live_arm("ZW (product path)", t, zw_command, skip_review_prompts))
+        control.append(_live_arm("CONTROL (bare Codex)", t, control_command, skip_review_prompts))
     result = compute_value_baseline(zw, control)
     summary = {
         "schema": SCHEMA,
@@ -295,8 +307,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--tasks", type=Path, help="task list JSON ({0})".format(TASKS_SCHEMA))
     parser.add_argument("--output", type=Path, help="evidence directory (live mode)")
-    parser.add_argument("--zw-command", type=str, default=None, help="optional shell cmd wrapping the ZW product path for one task")
-    parser.add_argument("--control-command", type=str, default=None, help="optional shell cmd wrapping bare Codex for one task")
+    parser.add_argument("--zw-command", type=str, default=None, help="optional shell cmd; '{prompt}' and '{id}' are substituted per task; runs with cwd=repo root")
+    parser.add_argument("--control-command", type=str, default=None, help="optional shell cmd; '{prompt}' and '{id}' are substituted per task; runs with cwd=repo root")
+    parser.add_argument("--skip-review-prompts", action="store_true", help="auto-fill review counts as 0 (hands-off); else prompted per arm")
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--self-test", action="store_true", help="embedded synthetic self-test of the math")
     group.add_argument("--dry-run", action="store_true", help="load --tasks, synthesize metrics, compute")
@@ -318,7 +331,7 @@ def main() -> int:
 
     if args.live:
         out = args.output or (REPO_ROOT / "evaluation" / "evidence" / "value-baseline-1-10-6" / "live")
-        return _live(tasks, args.zw_command, args.control_command, out)
+        return _live(tasks, args.zw_command, args.control_command, out, args.skip_review_prompts)
 
     return 2
 
