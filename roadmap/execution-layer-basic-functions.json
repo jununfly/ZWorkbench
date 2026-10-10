@@ -1220,13 +1220,71 @@
       "id": "1-10-5",
       "uid": "01a1159f35bf-b3a9ef1728",
       "label": "S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-10-5 的 scope gate 分类?",
+          "answer": "Product execution（限定单个安切片）。依据：(1) 前置 S3 闸门已由 zj 2026-10-10 口径关闭（1-10-4 completed：读路径 10 次 + 写链路 5 次合并计），R3 repr.98『才开 S4 push 门』的前提满足；(2) 本节点要的是 ZWorkbench 产品自身的 push 能力（新模块 + CLI 子命令 + 产品级测试），不是析 roadmap/fixture 验收场景，故允许在 AGENTS.md 允许范围内修改 src/、tests/、docs/。边界：不得实现实时 permission UI、不得引入第二个 durable owner、不得把 push 变成默认路径（默认关不可变），不得让 write_seam/write_run 获得 push 执行路径。",
+          "note": ""
+        },
+        {
+          "q": "1-10-5 的 scope gate 分类?",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "50be64f614fe111078632253777c97690c357daf7b0f6055b88b6a8fab10da6b"
+        },
+        {
+          "q": "1-10-5 的 scope gate 分类?",
+          "answer": "Product execution（限定单个安全切片）。依据：(1) 前置 S3 闸门已由 zj 2026-10-10 口径关闭（1-10-4 completed：读路径 10 次 + 写链路 5 次合并计），R3 第 98 行『才开 S4 push 门』的前提满足；(2) 本节点要的是 ZWorkbench 产品自身的 push 能力（新模块 + CLI 子命令 + 产品级行为测试），不是评测 roadmap/fixture 的验收场景，故允许在 AGENTS.md 允许范围内改 src/、tests/、docs/。边界四条：不引入第二个 durable owner；push 默认路径关（默认关为不可变量，只有显式 gate 可开）；write_seam.py / write_run.py 仍保持零 push 执行路径（静态测试守护）；本节点不改 Provider / UI / 价值基线（属 1-10-6）。",
+          "note": ""
+        },
+        {
+          "q": "S4 push 拓扑：新模块 push_seam/push_run，还是扩展 write_seam？push 走独立 run 还是沿用 apply 的 run？",
+          "answer": "两者都选『物理隔离』。(A) 模块：新 push_seam.py（无状态 seam，从 write_seam 复用 git/哈希底层函数）+ push_run.py（控制面编排器），不把 push 能力写进 write_seam.py。理由：exposure 是 per-run 声明，apply_diff 声明的是 network/credentials/subprocess 全 False；若同模块同 run 升级成 True，等于给 apply 所在 run 的其他后续 effect 回灌网络与凭证权（特权升级味道），且『读 write_seam.py 源码即可证明零网络』这个可审计性质会被破坏。write_seam 保持零 push 执行路径，由静态测试断言源码不含 'push' 执行面。(B) run 拓扑：push 走独立 run（task_type=push_seam，metadata.parent_run_id 指向 apply 的 run），理由三：(1) owner 的 claim_effect 对 terminal run 返回 denied，apply 完成后 run 已 completed，同一 run 上做 push 必须先放开『闭合后再开』语义；(2) 每级爆炸半径各自审批=各自 run，审计可按 run 读一张边界表；(3) 依赖方向清晰：push 显式绑定上游 receipt（source_run_id + apply_operation_id + expect_commit），构成 diff apply→commit→push 的链式 custody，而非同 run 内的隐式续作。",
+          "note": ""
+        },
+        {
+          "q": "S4『默认关』有几把锁？凭证怎么处理？",
+          "answer": "三把锁 + 一条凭证纪律。(1) 锁一 库级默认关：PushSeam(push_enabled=False) 为默认，未显式开会在 claim 之前拒绝（不消耗 approval token、不建 effect 行）。(2) 锁二 CLI 显式 gate： 必须带 --push-gate，缺省即 denied（退出码 2），不是『默认允许、可选关闭』。(3) 锁三 单独审批：push 有自己 operation_id/action/resource/idempotency_key + 一次性 token，与 apply 的审批不复用（owner 层 operation_id UNIQUE 天然挡复用）。再加两条窄口：(a) 只接受 remote **名字**（git remote get-url 校验存在），拒绝 URL/路径字面量，避免凭证经 argv 灌入（凭证纪律：CLI 不接受任何 token/password 入参，只用 ambient git 凭证/SSH agent，并在 receipt 记 credential_source=ambient）；(b) remote URL 写 receipt 前剥离 userinfo，另存 full-URL 的 sha256 摘要，既保可审计又不落凭证。(c) ref 只放行 refs/heads/<branch>（tag/删除/- 开头一律拒）；force 默认不许，显式 --force-with-lease 时退化为 lease 模式 ghalt 并且期望 OID 用 push 前观测到的 remote_before（租约精确到对象，非空租约）。",
+          "note": ""
+        },
+        {
+          "q": "1-10-5 的 scope gate 分类?",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "df90a17fa35bf72238107058d763afea341bd2f6faa7071030181da5f23ca72c"
+        },
+        {
+          "q": "S4 默认关有几把锁？凭证怎么处理？",
+          "answer": "三把锁 + 一条凭证纪律。锁一（库级默认关）：PushSeam 的 push_enabled 默认 False，未显式开就在 claim 之前拒绝——不消耗 approval token、不建 effect 行。锁二（CLI 显式 gate）：write push 子命令必须带 --push-gate，缺省即 denied（退出码 2），不是『默认允许、可选关闭』。锁三（单独审批）：push 自带 operation_id / action / resource / idempotency_key + 一次性 token，与 apply 的审批不复用（owner 层 operation_id UNIQUE 天然挡复用）。另加三条窄口：(a) 只接受 remote 名字（用 git remote get-url 校验存在），拒绝 URL / 路径字面量，避免凭证经 argv 灌入；凭证纪律=CLI 不接受任何 token / password 入参，只用 ambient git 凭证 / SSH agent，receipt 记 credential_source=ambient。(b) remote URL 写 receipt 前剥离 userinfo，另存完整 URL 的 sha256，既保可审计又不落凭证。(c) ref 只放行 refs/heads/ 分支（tag / 删除 / 横杠开头一律拒）；force 默认不许，显式 --force-with-lease 时 lease 的期望 OID 取 push 前实测的 remote_before（租约精确到对象，不是空租约）。",
+          "note": ""
+        },
+        {
+          "q": "S4 的『幂等防重复物理副作用』与失败/不确定语义怎么判？",
+          "answer": "幂等分两层，失败分两类，都不糊。(1) owner 级：同 idempotency_key 重放=already_completed，直接回原 receipt，物理 push 至多一次（与 S2 同口径）。(2) 跨进程级（外部幂等，本节点的增量）：claim 之后、执行之前先 git ls-remote 探测远端 ref；若 remote_before 已等于 expect_commit，说明目标对象已在远端（别人推的 / 上次崩了但推成功了 / 重跑），跳过物理 push，receipt 记 pushed=True、physical_push_performed=False、noop=True。这样即使换进程换 key 也不会产生第二次物理副作用。(3) 失败语义两类：还没有物理动作的前置拒绝（remote 不存在 / ref 不合法 / HEAD 不等于 expect_commit / 与上游 receipt 的 commit 不匹配）走 reconcile_effect(not-applied) 让 let拖雷可重试，并 raise 对应异常，effect 不 completed、不走 success 记账；已经发出 push 命令却拿不到确定结论（git 非 0 退出 / 超时 / push 后实测 remote_after 仍不等于 expect_commit）一律 mark_effect_uncertain + run 进 recovering，绝不静默重试——对 push 这类不可逆动作，没有任何纳秒证据就声称没推=骗自己。注意：owner 的 physical_effect_count 记的是『消耗掉的 effect』，是否真的向远端写对象以 receipt 的 physical_push_performed 为准，两个口径在文档里写明，不混用。",
+          "note": ""
+        },
+        {
+          "q": "S4 push 拓扑：新模块 push_seam/push_run，还是扩展 write_seam？push 走独立 run 还是沿用 apply 的 run？",
+          "answer": "",
+          "note": "retracted:",
+          "retracted": true,
+          "retracts": "099a41c37ad1b56ee202297c44d593359d548ebcb5d96367e9853e7ac0559fda"
+        },
+        {
+          "q": "S4 的幂等防重复物理副作用、失败与不确定语义怎么判？",
+          "answer": "幂等两层、失败两类，都不糊。第一层 owner 级：同 idempotency_key 重放返回 already_completed 并回原 receipt，物理 push 至多一次（与 S2 同口径）。第二层跨进程级（本节点增量，S2 没有）：claim 之后、动远端之前先 git ls-remote 探测目标 ref，若 remote_before 已等于 expect_commit（别人推过 / 上次崩但推成功 / 重跑），跳过物理 push，receipt 记 pushed=True、physical_push_performed=False、noop=True——换进程换 key 也不会产生第二次物理副作用。失败语义两类：A 类＝还没有物理动作的前置拒绝（remote 不存在 / ref 不合法 / worktree HEAD 不等于 expect_commit / 与上游 apply receipt 的 commit 不匹配），走 reconcile_effect(not-applied) 交给有界重试，effect 不 completed、不按成功记账；B 类＝push 命令已发出但拿不到确定结论（git 非 0 退出 / 超时 / push 后复测 remote_after 仍不等于 expect_commit），一律 mark_effect_uncertain、run 进 recovering，绝不静默重试——push 不可逆，没有证据就声称『没推上去』是自欺。口径声明：owner 的 physical_effect_count 记的是消耗掉的 effect，是否真的向远端写了对象以 receipt 的 physical_push_performed 为准，两个口径在架构文档里写明、不混用。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-10-6": {
       "id": "1-10-6",
@@ -1346,7 +1404,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-10 01:10:38",
+    "updated": "2026-10-10 11:14:19",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
