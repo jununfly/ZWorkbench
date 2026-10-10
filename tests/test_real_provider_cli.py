@@ -353,26 +353,25 @@ class CliRealProviderTests(unittest.TestCase):
             )
             output = io.StringIO()
             with redirect_stdout(output):
-                status = main(
-                    [
-                        "run",
-                        "--case-root",
-                        str(root),
-                        "--workspace",
-                        str(workspace),
-                        "--prompt",
-                        "inspect the fixture and return fixture-ok",
-                        "--codex",
-                        str(codex),
-                        "--run-id",
-                        "cli-ark-1",
-                        "--provider-profile",
-                        "ark",
-                        "--provider-config",
-                        str(config_path),
-                        "--real-provider-gate",
-                    ]
-                )
+                with patch("zworkbench.cli.PROVIDER_CONFIG_PATH", config_path):
+                    status = main(
+                        [
+                            "run",
+                            "--case-root",
+                            str(root),
+                            "--workspace",
+                            str(workspace),
+                            "--prompt",
+                            "inspect the fixture and return fixture-ok",
+                            "--codex",
+                            str(codex),
+                            "--run-id",
+                            "cli-ark-1",
+                            "--provider-profile",
+                            "ark",
+                            "--real-provider-gate",
+                        ]
+                    )
             payload = __import__("json").loads(output.getvalue())
             self.assertEqual(status, 0)
             self.assertEqual(payload["status"], "completed")
@@ -399,23 +398,22 @@ class CliRealProviderTests(unittest.TestCase):
             )
             output = io.StringIO()
             with redirect_stdout(output):
-                status = main(
-                    [
-                        "run",
-                        "--case-root",
-                        str(root),
-                        "--workspace",
-                        str(workspace),
-                        "--prompt",
-                        "must not execute",
-                        "--codex",
-                        str(codex),
-                        "--provider-profile",
-                        "not-present",
-                        "--provider-config",
-                        str(config_path),
-                    ]
-                )
+                with patch("zworkbench.cli.PROVIDER_CONFIG_PATH", config_path):
+                    status = main(
+                        [
+                            "run",
+                            "--case-root",
+                            str(root),
+                            "--workspace",
+                            str(workspace),
+                            "--prompt",
+                            "must not execute",
+                            "--codex",
+                            str(codex),
+                            "--provider-profile",
+                            "not-present",
+                        ]
+                    )
             payload = __import__("json").loads(output.getvalue())
             self.assertEqual(status, 2)
             self.assertEqual(payload["status"], "denied")
@@ -432,23 +430,22 @@ class CliRealProviderTests(unittest.TestCase):
             codex = self._fake_codex(root)
             output = io.StringIO()
             with redirect_stdout(output):
-                status = main(
-                    [
-                        "run",
-                        "--case-root",
-                        str(root),
-                        "--workspace",
-                        str(workspace),
-                        "--prompt",
-                        "must not execute",
-                        "--codex",
-                        str(codex),
-                        "--provider-profile",
-                        "ark",
-                        "--provider-config",
-                        str(root / "missing.toml"),
-                    ]
-                )
+                with patch("zworkbench.cli.PROVIDER_CONFIG_PATH", root / "missing.toml"):
+                    status = main(
+                        [
+                            "run",
+                            "--case-root",
+                            str(root),
+                            "--workspace",
+                            str(workspace),
+                            "--prompt",
+                            "must not execute",
+                            "--codex",
+                            str(codex),
+                            "--provider-profile",
+                            "ark",
+                        ]
+                    )
             payload = __import__("json").loads(output.getvalue())
             self.assertEqual(status, 2)
             self.assertEqual(payload["status"], "denied")
