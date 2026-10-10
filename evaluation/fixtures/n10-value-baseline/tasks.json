@@ -1,0 +1,16 @@
+{
+  "schema": "zworkbench-n10-tasks/v1",
+  "note": "N=10 价值基线固定任务集。live 跑前须锁定此集合（固定集=有效基线）；可替换为 zj 真实会做的开发任务，但 zw 臂与 control 臂必须用同一批任务。",
+  "tasks": [
+    {"id": "t1", "prompt": "在 examples/ 下新建一个 hello.py，运行并打印当前 UTC 时间", "artifact": "examples/hello.py"},
+    {"id": "t2", "prompt": "给 src/utils.py 加一个带指数退避的 retry 装饰器，并补 pytest", "artifact": "src/utils.py"},
+    {"id": "t3", "prompt": "把项目 README 的 Installation 段落改写为简体中文", "artifact": "README.md"},
+    {"id": "t4", "prompt": "为 calculator 模块生成 pytest，覆盖加/减/乘/除", "artifact": "tests/test_calculator.py"},
+    {"id": "t5", "prompt": "在 config.toml 增加 [logging] 段并给出读取示例", "artifact": "config.toml"},
+    {"id": "t6", "prompt": "修复 lint 报出的所有 unused import，并确认 ci lint 通过", "artifact": "src/"},
+    {"id": "t7", "prompt": "为现有函数 add 写 docstring + 类型注解（改 3 处）", "artifact": "src/arith.py"},
+    {"id": "t8", "prompt": "新增一个 CLI 子命令 --version，打印包版本", "artifact": "src/cli.py"},
+    {"id": "t9", "prompt": "把一段同步 IO 改成 async/await 并补测试", "artifact": "src/io_.py"},
+    {"id": "t10", "prompt": "生成 CHANGELOG 条目，描述最近一次提交", "artifact": "CHANGELOG.md"}
+  ]
+}
