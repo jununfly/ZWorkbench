@@ -44,6 +44,12 @@ LOOPBACK = "127.0.0.1"
 #: Addresses that keep the service on this machine. Anything else would put
 #: review material, including manifest identity, on the network.
 LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
+#: The single sanctioned source for Provider profiles. The product loads
+#: Provider configuration ONLY from this file; it must never silently fall back
+#: to ~/.codex/config.toml (which can carry the operator's real bearer token and
+#: an unintended model). Roadmap node 1-10-6 incident: a run that read the
+#: operator's real Codex config burned endpoint quota on an unauthorized model.
+PROVIDER_CONFIG_PATH = Path("/Users/bilibili/Documents/zw-providers.toml")
 _SECRET_VALUE = re.compile(
     r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,}|(?:api[_-]?key|access[_-]?token|authorization)\s*[:=]\s*\S+)",
     re.IGNORECASE,
@@ -81,14 +87,11 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "select an explicitly configured remote/custom Provider by name from "
-            "--provider-config; authorizes its non-loopback endpoint and switches "
-            "the adapter off the ollama default. Omit to keep the ollama fallback"
+            "the sanctioned provider config at "
+            "/Users/bilibili/Documents/zw-providers.toml; authorizes its "
+            "non-loopback endpoint and switches the adapter off the ollama "
+            "default. Omit to keep the ollama fallback"
         ),
-    )
-    run.add_argument(
-        "--provider-config",
-        default=None,
-        help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
     )
     run.add_argument("--timeout", type=float, default=300.0, help="maximum turn wait in seconds")
     run.add_argument(
@@ -369,14 +372,11 @@ def _parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "select an explicitly configured remote/custom Provider by name from "
-            "--provider-config; authorizes its non-loopback endpoint and switches "
-            "the adapter off the ollama default. Omit to keep the ollama fallback"
+            "the sanctioned provider config at "
+            "/Users/bilibili/Documents/zw-providers.toml; authorizes its "
+            "non-loopback endpoint and switches the adapter off the ollama "
+            "default. Omit to keep the ollama fallback"
         ),
-    )
-    ui.add_argument(
-        "--provider-config",
-        default=None,
-        help="Codex-style config.toml with [model_providers.<name>] / [provider.<name>] tables",
     )
     ui.add_argument("--timeout", type=float, default=300.0, help="maximum turn wait in seconds")
     ui.add_argument(
@@ -527,7 +527,7 @@ def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> Lo
     provider_profile: Optional[ProviderProfile] = None
     provider_config_path: Optional[Path] = None
     if args.provider_profile:
-        config_path = _resolve(Path(args.provider_config)) if args.provider_config else (Path.home() / ".codex" / "config.toml")
+        config_path = PROVIDER_CONFIG_PATH
         profiles = load_provider_profiles(config_path)
         provider_config_path = config_path
         if args.provider_profile not in profiles:
