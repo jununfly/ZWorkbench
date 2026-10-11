@@ -186,7 +186,7 @@
       "id": "1-7",
       "uid": "01a11593d13d-7f655d4ee8",
       "label": "Worker 调度与监督（sub-02）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -203,7 +203,8 @@
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8": {
       "id": "1-8",
@@ -850,11 +851,17 @@
       "id": "1-7-1",
       "uid": "01a11595681b-da6cca5d91",
       "label": "P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Q4 双重钳制实现口径",
+          "answer": "Product execution。按 ta-codex-worker-bridge.md:84 权威结论实现，两处偏离均已显式化：① 用 fail-closed 的 _require_normal_replay 替代裸 assert（assert 在 python -O 下失效，违反 fail-closed 纪律），冲突码 real_mode_replay_conflict（real 模式）/replay_mode_not_normal；② real_worker_mode=True 强制要求非空 real_worker_reason（ADR 为流程要求，由 reason 引用），启用时 owner 在任何 child run 状态存在前记 worker.real_mode.gated 事件。默认关、非 bool 即 TypeError。测试：tests/test_worker_bridge.py 增 Q4DoubleClampTests 5 项，全模块 10/10 绿；worker/dsh 相关 8 模块回归 48 项中 47 过，唯一失败 test_w8_worker_lifecycle（timeout 场景 orphan_processes=UNKNOWN）经 HEAD 干净 worktree 复现确认为预存环境依赖失败（ps 枚举不可用），与本改动无关。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1290,7 +1297,7 @@
       "id": "1-10-6",
       "uid": "01a1159f3633-61a6b31669",
       "label": "价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-10",
       "children": [],
@@ -1308,6 +1315,11 @@
         {
           "q": "1-10-6 离线 stale 与 env-gated 处置以及 N-10 harness 是否就绪",
           "answer": "(2026-10-10 续) ① corrective 已修 local_read_only：根因等于 LocalReadOnlyRunOrchestrator.run 新增 run_claim kwarg，两个 fixture adapter 的 execute 未接受导致 TypeError 在 _start_run 前炸、run 未建、get_run 报 run not found；给 fixture_adapters.py 两 execute 加 run_claim 形参后重跑 2/2 pass、各 13/13 checks。② host_boundary_min_permissions 经确认是设计内 ENV-GATED（需 macOS sandbox-exec 加 真实 Codex 0.139.0），非代码缺陷，不假修。③ N=10 价值基线 harness 就绪：evaluation/runner/run_n10_value_baseline.py 加 任务模板 tasks.json，self-test 与 dry-run 已验证（不需 ARK）；live 模式需 zj 在场加真实 ARK，本节点不代跑。结论：1-10-6 的测量设计、离线审计、local_read_only 修复、harness 就绪 已完成；价值判据正式数据收集（N=10 产品路径）仍 deferred，R3 仍 target。",
+          "note": ""
+        },
+        {
+          "q": "R3 关账决策与节点收口",
+          "answer": "2026-10-11：1-10-6 的 deferred gate（产品路径 N=10 出数）已在 live-r3b 完成解除——zj 主测、10/10+10/10 全成、§9.2 回填并经 chore 0dc2f8e 关账入库。实测结论：time_saved_pct 为负（时间维度不追翻正）、review_reduction 无区分信号、replay_recorded 维度 8/8 成立；R3 三层 AND 门第三道（价值判据）已出数但总门槛不过，结论已按 zj 决策写入测量设计 §9.2（实测记录不作产品定位声明）。节点状态由 in_progress 改为 completed：出数侧全部完成，后续『write propose 重测』属新假设须预先注册门槛，不回灌本节点。",
           "note": ""
         }
       ],
@@ -1421,7 +1433,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-10 12:18:02",
+    "updated": "2026-10-11 19:18:22",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

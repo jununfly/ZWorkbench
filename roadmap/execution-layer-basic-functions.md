@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-10 01:10:38
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-11 19:18:22
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -36,8 +36,8 @@
 │   ├── [x][Y+] 1-6-3. P1 无第二 canonical 升可审计契约（audit_owner_isolated + CI 断言）
 │   ├── [x][Y+] 1-6-4. P1 unknown 术语拆两层（远端/委托侧存字面 unknown；内部 identity 缺失 safe-stop 不存值）
 │   └── [x][Y+] 1-6-5. P1 create_run 不拒密：run input/metadata 归 redaction 模型（owner 存原始、view 遮罩），值级拒密仅限外部 evidence 落库 seam
-├── [ ][Y+] 1-7. Worker 调度与监督（sub-02）
-│   ├── [ ][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
+├── [~][Y+] 1-7. Worker 调度与监督（sub-02）
+│   ├── [x][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
 │   ├── [ ][Y+] 1-7-2. P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）
 │   ├── [ ][Y+] 1-7-3. P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）
 │   └── [ ][Y+] 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）
@@ -58,13 +58,13 @@
     ├── [x][X+] 1-10-2. S1 单 Provider 产品化（Ark 无 failover；issue #39 pre-gate：identity<->transport 单一来源 + 删 setdefault 反填 + 4 条 fail-closed 测试）
     ├── [x][X+] 1-10-3. S2 写 seam 产品验收（隔离 worktree diff apply + local commit；push 单独门；owner 层见执行层 1-4/1-5/1-7）
     ├── [x][X+] 1-10-4. S3 dogfood N=10 闸门（连续 10 次默认入口全链路；acceptance evidence exercises_default_product_path=true）
-    ├── [ ][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
-    ├── [ ][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
+    ├── [x][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
+    ├── [x][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
     └── [ ][X+] 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）
 
 ### 下一步可开工（ready 前 3）
 
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
-- 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push） [ ]
-- 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证） [ ]
+- 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门） [ ]
+- 1-7-2. P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover） [ ]
 <!-- ROADMAP_SECTION_END -->
