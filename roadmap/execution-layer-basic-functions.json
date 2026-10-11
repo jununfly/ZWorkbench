@@ -193,7 +193,8 @@
         "1-7-1",
         "1-7-2",
         "1-7-3",
-        "1-7-4"
+        "1-7-4",
+        "1-7-5"
       ],
       "decisions": [
         {
@@ -869,11 +870,17 @@
       "id": "1-7-2",
       "uid": "01a11595696d-c5a0ef36ff",
       "label": "P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-7-2 覆盖审计结果 + 心跳切出",
+          "answer": "覆盖审计（2026-10-12，实测非据代码存在）：H1 已落地（tests/test_dsh_runtime.py 7 项，含 5 项负向：digest 不符/未知 manifest 字段/路径逃逸/未知 bootstrap 消息/非零退出）；H3 已落地（tests/test_worker_coding.py 4 项，含 workspace 不变与凭证拒绝）；H4 已落地（run_w8_worker_lifecycle 6 场景 cancel/timeout/crash/parent-stop/descendant/recovery）。故 10-07 文档『H1/H3/H4 fixture 全部零覆盖』结论已过时，本节点不再重复建 fixture。本片实做＝孤儿计账诚实化：runner 新增 classify_orphan_evidence + scenario_status（纯函数，可单测），orphan 证据分 zero/nonzero/unknown 三类，unknown 时场景状态为 unknown 而非 fail，套件状态 fail/unknown/pass 三态，formal_h4_status 不再在未验证时自称 verified；fail-closed 不弱化（真孤儿仍 fail、硬检查失败仍 fail）。**范围切出（须 zj 确认）**：心跳在 src/ 零命中，是产品能力（长连接存活监督）而非 fixture，文档定性 TARGET/unknown 且无设计 → 切为独立节点 1-7-5，须先 ADR 再实现；1-7-2 据此按『H1/H3/H4 fixture + 孤儿计账』口径标 completed。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1429,11 +1436,23 @@
         "全链路 ≥1 真实 e2e：预算耗尽触发 RetryBudgetExhausted fail-closed；既有 206 测试零回归"
       ],
       "rounds": 1
+    },
+    "1-7-5": {
+      "id": "1-7-5",
+      "uid": "01a12bf3027b-df43722572",
+      "label": "心跳监督（长连接存活监督）——须先 ADR：间隔/超时/owner 计账/失败语义；src/ 当前零命中，属产品能力非 fixture（由 1-7-2 切出）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-11 19:18:22",
+    "updated": "2026-10-12 01:11:48",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
