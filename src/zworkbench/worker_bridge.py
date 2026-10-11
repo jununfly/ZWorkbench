@@ -43,6 +43,8 @@ from .worker_contract import (
 
 
 WORKER_BRIDGE_SCHEMA = "zworkbench-worker-bridge/v1"
+# Node 1-7-1 (Q4 double clamp): the bridge speaks exactly one replay mode.
+NORMAL_REPLAY_MODE = "normal"
 MAX_WORKER_LINE_BYTES = 64 * 1024
 MAX_WORKER_STDERR_BYTES = 64 * 1024
 DEFAULT_PROCESS_STOP_TIMEOUT = 2.0
@@ -162,6 +164,8 @@ class WorkerBridge:
         workspace_digest: str,
         worker_args: Sequence[str] = (),
         recovery_mode: bool = False,
+        real_worker_mode: bool = False,
+        real_worker_reason: Optional[str] = None,
     ) -> None:
         if not isinstance(worker_artifact_identity, ComponentIdentity):
             raise TypeError("worker_artifact_identity must be ComponentIdentity")
@@ -182,6 +186,17 @@ class WorkerBridge:
         if not isinstance(recovery_mode, bool):
             raise TypeError("recovery_mode must be bool")
         self.recovery_mode = recovery_mode
+        # Node 1-7-1 (Q4 double clamp, constructor side): real Worker mode is an
+        # explicit, default-off declaration.  Enabling it requires an owner-gated
+        # non-empty reason (the ADR itself is a process requirement and is
+        # referenced from that reason); anything else fails closed here.
+        if not isinstance(real_worker_mode, bool):
+            raise TypeError("real_worker_mode must be bool")
+        self.real_worker_mode = real_worker_mode
+        if real_worker_mode:
+            self.real_worker_reason = self._require_text(real_worker_reason, "real_worker_reason")
+        else:
+            self.real_worker_reason = None
         self._validate_provider()
         self._state_lock = threading.RLock()
         self.process: Optional[subprocess.Popen[bytes]] = None
@@ -259,6 +274,9 @@ class WorkerBridge:
         parent = self.owner.get_run(parent_run_id)
         if parent["status"] != "running":
             raise WorkerBridgeError("parent Run must be running before Worker handshake", code="parent_not_running")
+        # Node 1-7-1: a real-mode engagement is owner-gated before any child
+        # run state exists.
+        self._record_real_mode_gate(parent_run_id, "handshake")
 
         request_identity = IdentityChain(
             parent_run_id=parent_run_id,
@@ -284,6 +302,9 @@ class WorkerBridge:
             worker_schema_identity=self.worker_schema_identity,
             payload={"operation": "handshake", "status": "requested"},
         )
+        # Node 1-7-1 (Q4 double clamp): request construction may only ever
+        # happen in normal replay mode; fail closed otherwise.
+        self._require_normal_replay(request.replay_mode)
         child_metadata = {
             "bridge_schema": WORKER_BRIDGE_SCHEMA,
             "parent_run_id": parent_run_id,
@@ -395,6 +416,9 @@ class WorkerBridge:
         parent = self.owner.get_run(parent_run_id)
         if parent["status"] != "running":
             raise WorkerBridgeError("parent Run must be running before Worker coding", code="parent_not_running")
+        # Node 1-7-1: a real-mode engagement is owner-gated before any child
+        # run state exists.
+        self._record_real_mode_gate(parent_run_id, "read_only_coding")
 
         request_identity = IdentityChain(
             parent_run_id=parent_run_id,
@@ -424,6 +448,9 @@ class WorkerBridge:
                 "artifact_root": "case-local/evidence/artifacts",
             },
         )
+        # Node 1-7-1 (Q4 double clamp): request construction may only ever
+        # happen in normal replay mode; fail closed otherwise.
+        self._require_normal_replay(request.replay_mode)
         child_metadata = {
             "bridge_schema": WORKER_BRIDGE_SCHEMA,
             "operation": "read_only_coding",
@@ -609,6 +636,43 @@ class WorkerBridge:
             self._active_parent_run_id = None
             self._active_attempt_id = None
             self._active_operation = None
+
+    def _require_normal_replay(self, replay_mode: str) -> str:
+        """Node 1-7-1 (Q4 double clamp, request-construction side).
+
+        Worker requests may only be constructed with the bridge's single
+        replay mode (``normal``).  A real-mode bridge offered any other replay
+        mode is a distinct fail-closed conflict (``real_mode_replay_conflict``);
+        any bridge offered a non-normal mode at all is rejected outright.
+        Unlike a bare ``assert``, this survives ``python -O``.
+        """
+
+        if replay_mode != NORMAL_REPLAY_MODE:
+            code = "real_mode_replay_conflict" if self.real_worker_mode else "replay_mode_not_normal"
+            raise WorkerBridgeError(
+                "Worker requests may only be constructed in normal replay mode",
+                code=code,
+            )
+        return replay_mode
+
+    def _record_real_mode_gate(self, parent_run_id: str, operation: str) -> None:
+        """Node 1-7-1: account a real-mode engagement in the owner before any
+        child run exists, so the gated reason is auditable per operation."""
+
+        if not self.real_worker_mode:
+            return
+        self.owner.record_event(
+            parent_run_id,
+            "worker.real_mode.gated",
+            {
+                "bridge_schema": WORKER_BRIDGE_SCHEMA,
+                "operation": operation,
+                "reason": self.real_worker_reason,
+                "replay_mode": NORMAL_REPLAY_MODE,
+            },
+            f"{parent_run_id}:worker-real-mode:{operation}",
+            evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED,
+        )
 
     def _prepare_recovery(self, parent_run_id: str, recovery_of_child_run_id: str) -> None:
         self._require_text(parent_run_id, "parent_run_id")
@@ -1443,6 +1507,7 @@ def detect_orphan_processes(root_pid: int) -> Optional[List[int]]:
 
 __all__ = [
     "WORKER_BRIDGE_SCHEMA",
+    "NORMAL_REPLAY_MODE",
     "WorkerBridge",
     "WorkerBridgeError",
     "WorkerCodingResult",
