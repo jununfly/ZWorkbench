@@ -81,7 +81,7 @@ stdout/stderr/line 超限、启动失败、超时或无法清理进程树时，b
   - 单发监督无心跳；长连接心跳属 TARGET/unknown。
   - cleanup 断言 + 孤儿零残留证明 UNKNOWN；exit receipt 无子进程树快照字段。
 - **IdentityChain 完成性分层（P1，须 ADR）：** parent/child/attempt/dsh/event/artifact 为 required；codex_thread/turn 仅在确认 Codex Worker 时 required，否则允许 UNKNOWN；停止 fake fixture 编造 codex 身份。
-- **Q4 双重钳制（P0）：** `worker_bridge` 请求构造处加 `assert replay_mode=="normal"`；`WorkerBridge` 加显式 `real_worker_mode: bool = False`，开真实模式须 ADR + owner gated reason。
+- **Q4 双重钳制（P0，已实现：节点 1-7-1）：** `worker_bridge` 请求构造处加 `_require_normal_replay`（fail-closed，非 `assert`——`python -O` 下不失效；real 模式下冲突码 `real_mode_replay_conflict`，其余 `replay_mode_not_normal`）；`WorkerBridge` 加显式 `real_worker_mode: bool = False`（须配非空 `real_worker_reason`，启用时 owner 记 `worker.real_mode.gated` 事件，先于任何 child run 状态）；开真实模式须 ADR + owner gated reason。
 - **真实架构前硬前置（backlog）：** host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置；`_reject_secrets` 值级扫描；`semantic_result` 出站脱敏；`codex_adapter.close()` stderr 脱敏；bridge 进程异常退出注册 reaper 兜底 killpg；worker 可执行体 digest 实测校验。
 
 ### 交叉引用
