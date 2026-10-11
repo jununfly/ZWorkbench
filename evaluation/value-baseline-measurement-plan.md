@@ -52,12 +52,13 @@
 - 计账：`exercises_default_product_path=false`；n=1；仅趋势前证。
 - 结论（2026-10-01）：ZW 净时间约 1/3.7（seam 级）、事后回看 YES vs 裸 Codex NO 为结构性差异、写链路落盘 md5 与裸 codex 一致。
 
-### 5.2 产品路径级（S3 dogfood N=10 · 价值判据正式出数 · **deferred**）
+### 5.2 产品路径级（S3 dogfood N=10 · 价值判据正式出数 · **已出数 2026-10-11，结果见 §9.2**）
 - 主语：**zj 本人**（R3 验收判据主语 = zj；非作者陌生人 <5 分钟 已降为 deferred）。
 - 入口：`run` / `ui` **默认入口** 带 `--real-provider-gate`（#40 已解，闸门式可达）。
 - 条件：连续 10 次"只读分析 → 审批 → apply → local commit"全链路、**零越界、零 secret 落盘、receipt 100% 可复核**，同时采三指标。
 - 计账：`exercises_default_product_path=true`；N=10；可并入"默认入口价值基线"与 S3 闸门合并测。
 - **harness 已就绪（2026-10-10）**：`evaluation/runner/run_n10_value_baseline.py` + 任务清单模板 `evaluation/fixtures/n10-value-baseline/tasks.json`，已完成 `--self-test`（对比数学断言通过）与 `--dry-run`（不需 ARK 验证清单加载+聚合）。见 §9。
+- **已出数（2026-10-11，live-r3b，zj 主测）**：N=10 双臂全成（ZW 10/10、control 10/10）。`time_saved_pct = -154.1%`；median per-task ratio zw/control = **3.42**（10/10 任务 ZW 更慢）；`review_reduction = 0`。**§3 门槛未过（median X < 0）**——当前产品路径不省时也不少复查，价值假设在本轮实测中被证伪。详见 §9.2；R3 仍 `target`。
 - **数据收集未执行**：需 zj 在场做真实任务 + 真实 ARK 凭证，属 Human-in-the-loop，显式 defer。
 
 ## 6. H1–H8 / C1–C7 runner 分类与离线可复核现状（2026-10-10 实测）
@@ -133,7 +134,7 @@
 - [x] local_read_only corrective 修复（API 漂移）→ 离线 runner 复绿。
 - [x] N=10 价值基线 harness 就绪 + self-test/dry-run 验证（§8）。
 - [x] seam 路径 N=10 实证（§9.1，2026-10-11，AI 代跑、`exercises_default_product_path=false`）——只测 seam 开销，**不算** R3 产品判据。
-- [ ] **产品路径 N=10 价值基线数据收集出数**（`exercises_default_product_path=true`，zj 主测）—— **deferred，未完**。
+- [x] 产品路径 N=10 价值基线数据收集出数（`exercises_default_product_path=true`，zj 主测，2026-10-11 live-r3b）——**已出数；§3 价值门槛未过（见 §9.2），R3 仍 `target`**。
 
 ### 9.1 seam 路径 N=10 实证结果（2026-10-11，非 R3 判据）
 
@@ -146,4 +147,16 @@
 - **解读**：seam 路径测得的是"ZW 安全写层 overhead vs 裸 codex"，量级 = 典型 +13%（中位数），聚合值被两个长尾任务（t6 1463s / t8 1163s）放大到 -32.5%。两窗口合并（ZW t1–t8 重跑窗口 ≠ control 窗口）引入未受控的负载噪声，见证据 JSON caveats。
 - **边界**：本节数据 `exercises_default_product_path=false`，**不满足** §5.2 R3「产品可用」判据；R3 仍 `target`。正式出数仍待 zj 主测（runbook §8.4）。
 
-> 结论：**1-10-6 测量设计 + 离线审计 + local_read_only 修复 + N=10 harness 就绪 已完成；价值判据正式出数（N=10 产品路径数据收集）仍 deferred**，故 R3 仍 `target`，不提前宣告 `implemented`。runner 绿（含 scaffold 绿）一律不冒充产品交付证据。
+### 9.2 产品路径 N=10 实证结果（2026-10-11 live-r3b，R3 正式出数 · 价值门槛未过）
+
+- **配置**：provider `ark-code-latest`（单源 `zw-providers.toml`）；ZW 臂 = 产品默认入口（`zworkbench run --real-provider-gate` 分析）→ codex exec 出 diff → write seam（request-approval → **人工 approve** → apply，人工点在计时窗口内）；control 臂 = 裸 `codex exec`（同 provider）。harness 命令模式自动计时（消除手动 ENTER 空转）。主语 = zj 本人。
+- **有效性**：ZW 10/10、control 10/10 全部成功，墙钟均在分钟~小时级（真活）；证据 `evaluation/evidence/value-baseline-1-10-6/live-r3b/n10-value-baseline.json`（local-only）。
+- **结果**：
+  - `time_saved_pct = -154.1%`（ZW 总 7767s≈2.16h vs control 3057s≈0.85h；aggregate ratio **2.54**）；
+  - **median per-task ratio zw/control = 3.42**（P 分布：1.44–16.99；**10/10 任务 ZW 更慢**，无一反超）；
+  - `review_reduction = 0`——两臂复查计数均恒为 2/任务（人工录入均匀默认），该指标本轮**无区分信号**（局限：计数反映操作者习惯而非系统差异）。
+- **对照 §3 门槛**：`median(X) > 0` **未满足**（X 中位深负）；`Y > 0` 未满足；`replay_recorded` 维度本轮未采集。三项全不成立 → **价值判据在本轮实测中被证伪**。
+- **解读**：当前产品路径对单任务的墙钟成本 ≈ 裸 codex 的 1.4–17 倍（中位 3.4 倍）。主导因素不是 seam 固定开销（§9.1 已测仅 +13% 量级），而是 ZW 臂**多跑一整段产品入口 LLM 会话（`zworkbench run` 分析）+ 人工审批等待**——编排/安全层以"额外一次完整模型会话"计价。这是 R3 风险（编排层成本反噬价值）的**直接实证**，不是测量噪声：10/10 方向一致。
+- **结论**：R3 仍 `target`（不因出数而关账）。若要在时间维度上翻正，产品路径需要结构性降本：① 免去独立的 `run` 分析会话（分析并入写链路）；② 审批异步化/批量化，不让人工等待进墙钟；③ 或承认价值主张改押 `replay_recorded`/PG-3「省心」维度（本轮未测），把省时主张撤下。
+
+> 结论：**1-10-6 测量设计 + 离线审计 + local_read_only 修复 + N=10 harness + 两档实证（seam §9.1 / 产品路径 §9.2）已全部完成**。价值判据正式出数但**未过门槛**（当前产品路径显著更慢、复查无差异），故 R3 仍 `target`——按实测证据保持 `target`，不提前宣告 `implemented`，也不因负结果谎称"已验证价值"。
