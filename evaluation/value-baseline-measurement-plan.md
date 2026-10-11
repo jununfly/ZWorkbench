@@ -132,6 +132,18 @@
 - [x] 离线 runner 分类 + staleness 审计（§6）。
 - [x] local_read_only corrective 修复（API 漂移）→ 离线 runner 复绿。
 - [x] N=10 价值基线 harness 就绪 + self-test/dry-run 验证（§8）。
+- [x] seam 路径 N=10 实证（§9.1，2026-10-11，AI 代跑、`exercises_default_product_path=false`）——只测 seam 开销，**不算** R3 产品判据。
 - [ ] **产品路径 N=10 价值基线数据收集出数**（`exercises_default_product_path=true`，zj 主测）—— **deferred，未完**。
+
+### 9.1 seam 路径 N=10 实证结果（2026-10-11，非 R3 判据）
+
+- **配置**：provider `ark-code-latest`（单源 `/Users/bilibili/Documents/zw-providers.toml`，火山方舟 endpoint）；ZW 臂 = `codex exec` + write seam 三段式（request-approval → approve → apply），control 臂 = 裸 `codex exec`；每任务独立 db + epoch 隔离 idempotency；双臂 hands-off（复查计数恒 0）。
+- **有效性**：ZW 10/10、control 10/10 全部成功（首跑 8/10 ZW 失败系昨日残留 db 的 idempotency 重放撞车 + 清理被沙箱静默吞，已用 epoch 隔离根治；失败数据未折入聚合）。
+- **结果**（`evaluation/evidence/value-baseline-1-10-6/live/n10-final-ark-code-latest.json`，local-only）：
+  - `time_saved_pct = -32.5%`（ZW 臂总 3911.6s vs control 2952.8s）；
+  - **median per-task ratio zw/control = 1.13**（典型任务 ZW 慢 ~13%）；per-task ratio 离散 0.28–2.46（10 任务中 4 个 ZW 反而更快）——**模型长尾方差主导墙钟，seam 固定开销（秒级）非主导因素**；
+  - `review_reduction = 0`（hands-off 设计下无信号）。
+- **解读**：seam 路径测得的是"ZW 安全写层 overhead vs 裸 codex"，量级 = 典型 +13%（中位数），聚合值被两个长尾任务（t6 1463s / t8 1163s）放大到 -32.5%。两窗口合并（ZW t1–t8 重跑窗口 ≠ control 窗口）引入未受控的负载噪声，见证据 JSON caveats。
+- **边界**：本节数据 `exercises_default_product_path=false`，**不满足** §5.2 R3「产品可用」判据；R3 仍 `target`。正式出数仍待 zj 主测（runbook §8.4）。
 
 > 结论：**1-10-6 测量设计 + 离线审计 + local_read_only 修复 + N=10 harness 就绪 已完成；价值判据正式出数（N=10 产品路径数据收集）仍 deferred**，故 R3 仍 `target`，不提前宣告 `implemented`。runner 绿（含 scaffold 绿）一律不冒充产品交付证据。
