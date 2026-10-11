@@ -58,7 +58,7 @@
 - 条件：连续 10 次"只读分析 → 审批 → apply → local commit"全链路、**零越界、零 secret 落盘、receipt 100% 可复核**，同时采三指标。
 - 计账：`exercises_default_product_path=true`；N=10；可并入"默认入口价值基线"与 S3 闸门合并测。
 - **harness 已就绪（2026-10-10）**：`evaluation/runner/run_n10_value_baseline.py` + 任务清单模板 `evaluation/fixtures/n10-value-baseline/tasks.json`，已完成 `--self-test`（对比数学断言通过）与 `--dry-run`（不需 ARK 验证清单加载+聚合）。见 §9。
-- **已出数（2026-10-11，live-r3b，zj 主测）**：N=10 双臂全成（ZW 10/10、control 10/10）。`time_saved_pct = -154.1%`；median per-task ratio zw/control = **3.42**（10/10 任务 ZW 更慢）；`review_reduction = 0`。**§3 门槛未过（median X < 0）**——当前产品路径不省时也不少复查，价值假设在本轮实测中被证伪。详见 §9.2；R3 仍 `target`。
+- **已出数（2026-10-11，live-r3b，zj 主测；v2 修正）**：ZW 8/10 完成（t9 入口超时、t10 seam apply deny 均 fail-closed，已从聚合剔除）+ control 10/10。修正后（8/8 配对）：`time_saved_pct = -156.7%`；median per-task ratio = **3.42**（8/8 全部 ZW 更慢）；`review_reduction = 0`；**replay_recorded = 完成任务 100%（8/8 R1–R5 全过）vs control 0/10**。§3 门槛（AND）未过——时间维度证伪、省心维度成立。详见 §9.2；R3 仍 `target`。
 - **数据收集未执行**：需 zj 在场做真实任务 + 真实 ARK 凭证，属 Human-in-the-loop，显式 defer。
 
 ## 6. H1–H8 / C1–C7 runner 分类与离线可复核现状（2026-10-10 实测）
@@ -150,13 +150,14 @@
 ### 9.2 产品路径 N=10 实证结果（2026-10-11 live-r3b，R3 正式出数 · 价值门槛未过）
 
 - **配置**：provider `ark-code-latest`（单源 `zw-providers.toml`）；ZW 臂 = 产品默认入口（`zworkbench run --real-provider-gate` 分析）→ codex exec 出 diff → write seam（request-approval → **人工 approve** → apply，人工点在计时窗口内）；control 臂 = 裸 `codex exec`（同 provider）。harness 命令模式自动计时（消除手动 ENTER 空转）。主语 = zj 本人。
-- **有效性**：ZW 10/10、control 10/10 全部成功，墙钟均在分钟~小时级（真活）；证据 `evaluation/evidence/value-baseline-1-10-6/live-r3b/n10-value-baseline.json`（local-only）。
-- **结果**：
-  - `time_saved_pct = -154.1%`（ZW 总 7767s≈2.16h vs control 3057s≈0.85h；aggregate ratio **2.54**）；
-  - **median per-task ratio zw/control = 3.42**（P 分布：1.44–16.99；**10/10 任务 ZW 更慢**，无一反超）；
-  - `review_reduction = 0`——两臂复查计数均恒为 2/任务（人工录入均匀默认），该指标本轮**无区分信号**（局限：计数反映操作者习惯而非系统差异）。
-- **对照 §3 门槛**：`median(X) > 0` **未满足**（X 中位深负）；`Y > 0` 未满足；`replay_recorded` 维度本轮未采集。三项全不成立 → **价值判据在本轮实测中被证伪**。
-- **解读**：当前产品路径对单任务的墙钟成本 ≈ 裸 codex 的 1.4–17 倍（中位 3.4 倍）。主导因素不是 seam 固定开销（§9.1 已测仅 +13% 量级），而是 ZW 臂**多跑一整段产品入口 LLM 会话（`zworkbench run` 分析）+ 人工审批等待**——编排/安全层以"额外一次完整模型会话"计价。这是 R3 风险（编排层成本反噬价值）的**直接实证**，不是测量噪声：10/10 方向一致。
-- **结论**：R3 仍 `target`（不因出数而关账）。若要在时间维度上翻正，产品路径需要结构性降本：① 免去独立的 `run` 分析会话（分析并入写链路）；② 审批异步化/批量化，不让人工等待进墙钟；③ 或承认价值主张改押 `replay_recorded`/PG-3「省心」维度（本轮未测），把省时主张撤下。
+- **有效性（v2 修正）**：ZW **8/10** 端到端成功；**t9 失败于产品入口**（`zworkbench run` turn-wait 超时 600s，status=failed，seam 未跑）、**t10 失败于 seam apply**（`git apply --check` rc=128 被 deny，effect=uncertain、run=recovering、无幻影 commit——fail-closed 按设计工作）。两失败**已从聚合剔除**（首版聚合误把它们当成功折入，v2 修正）。control 10/10 成功。**harness 缺口**：`--live` 不检查命令 rc，失败任务照常计时入库——已记录待修。
+- **修正后结果**（8/8 配对，`live-r3b/replay-audit.json`，local-only）：
+  - `time_saved_pct = -156.7%`（ZW 总 6806.9s vs control 2652.2s；aggregate ratio **2.57**）；
+  - **median per-task ratio zw/control = 3.42**（1.44–16.99；8/8 全部 ZW 更慢）；
+  - `review_reduction = 0`（两臂复查计数恒 2，无区分信号——反映操作者录入习惯而非系统差异）。
+- **replay_recorded 审计（PG-3「省心」维度）**：对 8 个完成任务做本地 R1–R5 复核（receipt 存在 / commit 落在实体 seam worktree / diff_digest 与 patch 重算 sha256 对账 / owner-run 持久化 / seam db 全链 consumed+completed）——**8/8 全过 = 完成任务 replay 100%**；control 臂 0/10（仅 transcript + /tmp 快照，无 durable ledger）。**「省心」维度成立，但 §3 门槛是 AND**：`median(X) > 0` 不满足 → 总门槛仍未过。
+- **对照 §3 门槛**：`median(X) > 0` **未满足**（深负）；`Y > 0` 未满足；`replay=100%` 满足——**AND 逻辑下总门槛不过** → 价值假设在时间维度被证伪、在省心维度成立。
+- **解读**：当前产品路径墙钟成本 ≈ 裸 codex 的 2.6 倍（聚合）/ 3.4 倍（中位），8/8 方向一致。主导因素不是 seam 固定开销（§9.1 已测仅 +13% 量级），而是 ZW 臂**多跑一整段产品入口 LLM 会话（`zworkbench run`）+ 人工审批等待**——编排/安全层以"额外一次完整模型会话"计价。t9（入口超时）还暴露 turn-wait 600s 对长任务不够。这是 R3 风险的直接实证。
+- **结论**：R3 仍 `target`。时间维度翻正需结构性降本：① 免去独立 `run` 分析会话（并入写链路）；② 审批异步化/批量化（人工等待不进墙钟）；③ 调大 run 超时适配长任务。若时间维度短期不可翻正，价值主张可改押 `replay_recorded`/PG-3 维度（本轮已实证 100% vs 0），并把省时主张如实撤下。**（2026-10-11 更新：①+② 已落码——新增 `write propose` 单会话写入口（`src/zworkbench/write_propose.py`：一次 codex exec 出 diff + request-approval 即返回，approve/apply 异步后置；4/4 测试过）+ harness rc 缺口已修（`--live` 检查命令 rc，失败任务剔除出配对聚合并 exit 1）；重测待显式授权。）**
 
-> 结论：**1-10-6 测量设计 + 离线审计 + local_read_only 修复 + N=10 harness + 两档实证（seam §9.1 / 产品路径 §9.2）已全部完成**。价值判据正式出数但**未过门槛**（当前产品路径显著更慢、复查无差异），故 R3 仍 `target`——按实测证据保持 `target`，不提前宣告 `implemented`，也不因负结果谎称"已验证价值"。
+> 结论：**1-10-6 测量设计 + 离线审计 + local_read_only 修复 + N=10 harness + 两档实证（seam §9.1 / 产品路径 §9.2 v2 修正）+ replay 审计 已全部完成**。时间维度价值被证伪（显著更慢），省心维度成立（replay 100% vs 0），§3 总门槛（AND）未过 → **R3 保持 `target`**，按实测证据不提前宣告 `implemented`，也不谎称"已验证价值"。
