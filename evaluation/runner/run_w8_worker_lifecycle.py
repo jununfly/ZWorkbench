@@ -18,7 +18,7 @@ import sys
 import tempfile
 import threading
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Mapping, Optional
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -37,8 +37,45 @@ from zworkbench import (  # noqa: E402
 )
 
 
+#: Checks that can only be evaluated when process enumeration succeeded.  A
+#: failure here means "orphan evidence unavailable", not "orphans observed".
+ORPHAN_DEPENDENT_CHECKS = frozenset({"orphan_processes_zero", "new_attempt_exit_recorded"})
+
+
 def digest(label: str) -> str:
     return "sha256:" + hashlib.sha256(label.encode("utf-8")).hexdigest()
+
+
+def scenario_status(checks: Mapping[str, bool], orphan_evidence: str) -> str:
+    """Fail-closed scenario verdict.
+
+    A failed hard check always wins; proven orphans always fail; un-enumerable
+    orphan evidence is ``unknown`` and is never reported as ``pass``.
+    """
+
+    hard_checks = {key: value for key, value in checks.items() if key not in ORPHAN_DEPENDENT_CHECKS}
+    if not all(hard_checks.values()):
+        return "fail"
+    if orphan_evidence == "nonzero":
+        return "fail"
+    if orphan_evidence == "unknown":
+        return "unknown"
+    return "pass"
+
+
+def classify_orphan_evidence(value: Any) -> str:
+    """Classify the ``orphan_processes`` exit-receipt field.
+
+    ``"zero"`` is a proven no-orphan result, ``"nonzero"`` is a proven leak,
+    and ``"unknown"`` means the bridge could not enumerate processes at all
+    (``ps`` unavailable, or the leader had already exited).  ``unknown`` is
+    never folded into either claim: it makes the scenario ``unknown`` instead
+    of ``pass`` or ``fail``.
+    """
+
+    if isinstance(value, bool) or not isinstance(value, int):
+        return "unknown"
+    return "zero" if value == 0 else "nonzero"
 
 
 def write_json(path: Path, value: Any) -> None:
@@ -291,12 +328,15 @@ def run_case(output_dir: Path, scenario: str) -> Dict[str, Any]:
             }
         )
 
+    orphan_evidence = classify_orphan_evidence(receipt_value.get("orphan_processes"))
+    status = scenario_status(checks, orphan_evidence)
     summary = {
         "schema": RUNNER_SCHEMA,
         "evidence_level": "owner-backed + fixture-composed",
         "scenario": scenario,
         "run_id": "parent-1",
-        "status": "pass" if all(checks.values()) else "fail",
+        "status": status,
+        "orphan_evidence": orphan_evidence,
         "observed": {
             "parent_status": parent["status"],
             "child_status": child["status"],
@@ -326,19 +366,44 @@ def run_suite(output_dir: Path) -> Dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     scenarios = ["cancel", "timeout", "crash", "parent-stop", "descendant", "recovery"]
     cases = [run_case(output_dir, scenario) for scenario in scenarios]
+    unknown_scenarios = [case["scenario"] for case in cases if case["status"] == "unknown"]
+    failed_scenarios = [case["scenario"] for case in cases if case["status"] == "fail"]
+    if failed_scenarios:
+        suite_status = "fail"
+    elif unknown_scenarios:
+        suite_status = "unknown"
+    else:
+        suite_status = "pass"
+    if suite_status == "pass":
+        formal_status = "pass-with-composition: local owner-backed process lifecycle and recovery verified"
+    elif suite_status == "unknown":
+        formal_status = (
+            "incomplete: lifecycle scenarios ran clean but orphan evidence is unavailable for "
+            + ", ".join(unknown_scenarios)
+            + "; no zero-orphan claim is made"
+        )
+    else:
+        formal_status = "not-verified: failing scenarios " + ", ".join(failed_scenarios)
     summary = {
         "schema": RUNNER_SCHEMA,
         "evidence_level": "owner-backed + fixture-composed",
-        "status": "pass" if all(case["status"] == "pass" for case in cases) else "fail",
+        "status": suite_status,
         "passed_scenarios": sum(case["status"] == "pass" for case in cases),
+        "unknown_scenarios": unknown_scenarios,
+        "failed_scenarios": failed_scenarios,
         "scenario_count": len(cases),
+        "orphan_evidence_counts": {
+            "zero": sum(case["orphan_evidence"] == "zero" for case in cases),
+            "nonzero": sum(case["orphan_evidence"] == "nonzero" for case in cases),
+            "unknown": sum(case["orphan_evidence"] == "unknown" for case in cases),
+        },
         "scenarios": cases,
         "checks": {
             "orphan_processes_zero": all(case["checks"].get("orphan_processes_zero", False) for case in cases),
             "status_loss_zero": all(case["checks"].get("thread_stopped", False) for case in cases),
             "unauthorized_effects_zero": all(case["observed"].get("unauthorized_effects") == 0 for case in cases),
         },
-        "formal_h4_status": "pass-with-composition: local owner-backed process lifecycle and recovery verified",
+        "formal_h4_status": formal_status,
         "non_claims": [
             "H4 evidence does not upgrade H5 evidence/replay or real remote Provider compatibility.",
             "A local process-group check does not substitute for OS/host sandbox enforcement evidence.",
