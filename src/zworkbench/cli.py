@@ -9,7 +9,9 @@ composition owner remains the durable source of truth.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import subprocess
 import sys
 import threading
 from pathlib import Path
@@ -36,6 +38,12 @@ from .push_seam import (
     PushUncertainError,
 )
 from .write_run import WriteRunOrchestrator
+from .write_propose import (
+    ProposeError,
+    generate_proposed_diff,
+    remove_worktree,
+    stage_codex_home,
+)
 from .write_seam import WriteSeamError
 
 
@@ -142,6 +150,35 @@ def _parser() -> argparse.ArgumentParser:
         ),
     )
     write_commands = write.add_subparsers(dest="write_command", required=True)
+
+    write_propose = write_commands.add_parser(
+        "propose",
+        help="one-session write entry: codex writes a diff, approval stays pending",
+        description=(
+            "Structural cost reduction for the write path (1-10-6 §9.2): ONE "
+            "codex exec session (analysis + writing merged) runs in a "
+            "disposable worktree; the resulting unified diff is saved "
+            "case-locally and bound to a PENDING owner approval.  Approval is "
+            "async by construction — run `write approve` + `write apply` "
+            "later with the printed apply_hint bindings, so the human wait "
+            "never enters the propose wall-clock.  The provider comes only "
+            "from the single-source config (staged byte-for-byte into "
+            "CODEX_HOME); push is never performed here (S4 separate gate)."
+        ),
+    )
+    write_propose.add_argument("--db", required=True, type=Path, help="case-local SQLite owner path")
+    write_propose.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
+    write_propose.add_argument("--repo", required=True, type=Path, help="existing git repo to branch the scratch worktree from")
+    write_propose.add_argument("--worktree-root", required=True, type=Path, help="case-local directory where `write apply` will later create the seam worktree")
+    write_propose.add_argument("--prompt", required=True, help="task prompt for the single codex session")
+    write_propose.add_argument("--codex", default="codex", help="codex binary (default: codex on PATH)")
+    write_propose.add_argument("--sandbox", default="danger-full-access", help="codex exec sandbox mode (default danger-full-access)")
+    write_propose.add_argument("--timeout", type=float, default=1800.0, help="codex exec timeout in seconds (default 1800)")
+    write_propose.add_argument("--run-id", help="durable run identity; generated when omitted")
+    write_propose.add_argument("--operation-id", help="operation identity for the approval; derived from run-id when omitted")
+    write_propose.add_argument("--idempotency-key", help="idempotency key; derived from run-id when omitted")
+    write_propose.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    write_propose.set_defaults(handler=_write_propose_command)
 
     write_request = write_commands.add_parser(
         "request-approval",
@@ -717,6 +754,127 @@ def _ensure_run_for_approval(owner: CompositionOwner, run_id: str) -> None:
     except CompositionError:
         # Reuse an existing run (e.g. a read-only run that produced the diff).
         pass
+
+
+def _write_propose_command(args: argparse.Namespace) -> int:
+    """One-session write entry: codex writes a diff, approval stays pending.
+
+    Structural cost reduction (1-10-6 §9.2): analysis + writing merged into a
+    single codex exec session; approval is async (approve/apply later), so the
+    human wait never enters the propose wall-clock.  Push is never performed.
+    """
+
+    case_root = _resolve(args.case_root)
+    db = _resolve(args.db)
+    repo = _resolve(args.repo)
+    worktree_root = _resolve(args.worktree_root)
+    summary = _resolve(args.summary) if args.summary else None
+    scratch_root = case_root / ".zw-propose" / "scratch"
+    patch_dir = case_root / ".zw-propose" / "patches"
+    code_home = case_root / ".zw-propose" / "codex-home"
+    run_id = args.run_id or ("zwpropose-" + uuid.uuid4().hex)
+    operation_id = args.operation_id or ("apply-" + run_id)
+    idempotency_key = args.idempotency_key or ("propose-" + run_id)
+    resource = str(worktree_root / run_id)
+
+    violations = _case_local_violations(
+        case_root,
+        (
+            ("database", db),
+            ("repo", repo),
+            ("worktree_root", worktree_root),
+            ("scratch_root", scratch_root),
+            ("patch_dir", patch_dir),
+            ("code_home", code_home),
+            ("summary", summary),
+        ),
+    )
+    if violations:
+        print(json.dumps(_denied_payload(run_id, violations=violations), ensure_ascii=False, indent=2))
+        return 2
+    if _SECRET_VALUE.search(args.prompt):
+        print(json.dumps(_denied_payload(
+            run_id,
+            violations=(PreflightViolation(
+                "prompt_contains_credential_pattern",
+                "prompt contains a credential-like value and was not recorded",
+            ),),
+        ), ensure_ascii=False, indent=2))
+        return 2
+
+    def _fail(status: str, error: Dict[str, str]) -> int:
+        payload = {
+            "schema": CLI_SCHEMA,
+            "command": "write-propose",
+            "status": status,
+            "run_id": run_id,
+            "error": error,
+        }
+        if summary:
+            _write_json(summary, payload)
+        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        return 1
+
+    try:
+        staged_home = stage_codex_home(PROVIDER_CONFIG_PATH, code_home)
+    except ProposeError as exc:
+        return _fail("provider_config_missing", {"type": "ProposeError", "message": str(exc)})
+
+    scratch = scratch_root / run_id
+    scratch_root.mkdir(parents=True, exist_ok=True)
+    patch_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        patch_text = generate_proposed_diff(
+            repo, args.codex, args.prompt, scratch, staged_home,
+            sandbox=args.sandbox, timeout=args.timeout,
+        )
+    except ProposeError as exc:
+        return _fail("codex_session_failed", {"type": "ProposeError", "message": str(exc)})
+    except subprocess.TimeoutExpired:
+        return _fail("codex_session_timeout", {"type": "TimeoutExpired", "message": "codex exec timed out"})
+    if not patch_text.strip():
+        return _fail("empty_diff", {"type": "ProposeError",
+                                    "message": "codex session produced no diff; approval not requested"})
+
+    patch_path = patch_dir / (run_id + ".patch")
+    patch_path.write_text(patch_text, encoding="utf-8")
+    diff_digest = hashlib.sha256(patch_text.encode("utf-8")).hexdigest()
+
+    with CompositionOwner(db) as owner:
+        _ensure_run_for_approval(owner, run_id)
+        approval = owner.request_approval(
+            run_id, operation_id, "apply_diff", resource, idempotency_key,
+            "write propose single-session diff",
+        )
+    payload = {
+        "schema": CLI_SCHEMA,
+        "command": "write-propose",
+        "status": "completed",
+        "run_id": run_id,
+        "approval_id": approval["approval_id"],
+        "approval_status": approval["status"],
+        "operation_id": operation_id,
+        "idempotency_key": idempotency_key,
+        "resource": resource,
+        "patch_path": str(patch_path),
+        "diff_digest": diff_digest,
+        "apply_hint": {
+            "db": str(db),
+            "case_root": str(case_root),
+            "repo": str(repo),
+            "worktree_root": str(worktree_root),
+            "run_id": run_id,
+            "operation_id": operation_id,
+            "idempotency_key": idempotency_key,
+            "resource": resource,
+            "patch_path": str(patch_path),
+        },
+        "owner": _owner_projection(db, run_id),
+    }
+    if summary:
+        _write_json(summary, payload)
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0
 
 
 def _write_request_approval_command(args: argparse.Namespace) -> int:
