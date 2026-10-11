@@ -236,9 +236,17 @@ def _prompt_count(prompt: str) -> int:
         print("  enter a non-negative integer (empty = 0)")
 
 
-def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str], skip_review_prompts: bool = False) -> TaskMetrics:
+def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str], skip_review_prompts: bool = False) -> tuple:
+    """Run one (task, arm) measurement.  Returns (TaskMetrics, ok).
+
+    ok=False means the arm's command FAILED (non-zero rc).  A failed task is
+    recorded but NEVER folded into the value baseline means (lesson from the
+    2026-10-11 live-r3b run where two silent ZW failures polluted the
+    aggregate until the v2 replay audit caught them).
+    """
     print("\n--- {0} arm : task {1} ---".format(arm, task.get("id", "?")))
     print("prompt: {0}".format(task.get("prompt", "")))
+    ok = True
     if command:
         substituted = command.replace("{prompt}", shlex.quote(str(task.get("prompt", "")))).replace(
             "{id}", shlex.quote(str(task.get("id", "")))
@@ -247,7 +255,12 @@ def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str], skip_revie
         start = time.monotonic()
         rc = _run_command(substituted)
         elapsed = time.monotonic() - start
-        print("  command exited rc={0} in {1:.1f}s".format(rc, elapsed))
+        if rc != 0:
+            ok = False
+            print("  COMMAND FAILED rc={0} after {1:.1f}s -- task recorded as FAILED,"
+                  " excluded from the paired baseline".format(rc, elapsed))
+        else:
+            print("  command exited rc={0} in {1:.1f}s".format(rc, elapsed))
     else:
         input("  press ENTER to START the timer, then complete the task in the product/Codex...")
         start = time.monotonic()
@@ -260,7 +273,7 @@ def _live_arm(arm: str, task: Dict[str, Any], command: Optional[str], skip_revie
     else:
         manual = _prompt_count("  manual re-check/re-run count: ")
         posthoc = _prompt_count("  post-run review count: ")
-    return TaskMetrics(elapsed, manual, posthoc)
+    return TaskMetrics(elapsed, manual, posthoc), ok
 
 
 def _run_command(command: str) -> int:
@@ -273,19 +286,40 @@ def _run_command(command: str) -> int:
 def _live(tasks: List[Dict[str, Any]], zw_command: Optional[str], control_command: Optional[str], output: Path, skip_review_prompts: bool = False) -> int:
     zw: List[TaskMetrics] = []
     control: List[TaskMetrics] = []
+    zw_ok: Dict[int, bool] = {}
+    ctrl_ok: Dict[int, bool] = {}
     print("\n=== LIVE value baseline ===")
     print("Human (zj) must be present.  A REAL Provider credential is required in the")
     print("environment for the zw arm.  This mode is NOT runnable in CI/sandbox.\n")
-    for t in tasks:
-        zw.append(_live_arm("ZW (product path)", t, zw_command, skip_review_prompts))
-        control.append(_live_arm("CONTROL (bare Codex)", t, control_command, skip_review_prompts))
-    result = compute_value_baseline(zw, control)
+    for i, t in enumerate(tasks):
+        m, ok = _live_arm("ZW (product path)", t, zw_command, skip_review_prompts)
+        zw.append(m)
+        zw_ok[i] = ok
+        m, ok = _live_arm("CONTROL (bare Codex)", t, control_command, skip_review_prompts)
+        control.append(m)
+        ctrl_ok[i] = ok
+
+    # HONEST AGGREGATION: only tasks where BOTH arms succeeded enter the value
+    # baseline; failures are reported separately and never folded into means.
+    paired = [i for i in range(len(tasks)) if zw_ok.get(i) and ctrl_ok.get(i)]
+    failed = {
+        "zw": [tasks[i].get("id", str(i)) for i in range(len(tasks)) if not zw_ok.get(i)],
+        "control": [tasks[i].get("id", str(i)) for i in range(len(tasks)) if not ctrl_ok.get(i)],
+    }
+    if failed["zw"] or failed["control"]:
+        print("\n!! FAILED tasks excluded from the paired baseline: zw={0} control={1}".format(
+            failed["zw"], failed["control"]))
+    result = compute_value_baseline([zw[i] for i in paired], [control[i] for i in paired])
+
     summary = {
         "schema": SCHEMA,
         "mode": "live",
         "exercises_default_product_path": True,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "task_count": len(tasks),
+        "paired_successful": len(paired),
+        "failed": failed,
+        "aggregation": "paired-successful tasks only; failures never folded into means",
         "zw_metrics": [m.to_dict() for m in zw],
         "control_metrics": [m.to_dict() for m in control],
         "value_baseline": result,
@@ -300,7 +334,7 @@ def _live(tasks: List[Dict[str, Any]], zw_command: Optional[str], control_comman
     print("\n=== RESULT ===")
     print(json.dumps(result, ensure_ascii=False, indent=2))
     print("\nevidence written to: {0}".format(output / "n10-value-baseline.json"))
-    return 0
+    return 1 if (failed["zw"] or failed["control"]) else 0
 
 
 def main() -> int:
