@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shlex
+import shutil
 import subprocess
 import sys
 import threading
@@ -79,10 +81,25 @@ def _parser() -> argparse.ArgumentParser:
             "CODEX_HOME and event log must remain case-local."
         ),
     )
-    run.add_argument("--case-root", required=True, type=Path, help="existing case-local root directory")
-    run.add_argument("--workspace", required=True, type=Path, help="existing workspace inside --case-root")
+    run.add_argument(
+        "--case-root",
+        type=Path,
+        default=None,
+        help="case-local root directory; defaults to the current working directory for zero-config first runs",
+    )
+    run.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        help="workspace inside --case-root; defaults to --case-root (the current project)",
+    )
     run.add_argument("--prompt", required=True, help="one read-only task prompt")
-    run.add_argument("--codex", required=True, type=Path, help="fixed executable path for Codex app-server")
+    run.add_argument(
+        "--codex",
+        type=Path,
+        default=None,
+        help="Codex app-server executable; auto-detected from PATH when omitted",
+    )
     run.add_argument("--run-id", help="durable run identity; generated when omitted")
     run.add_argument("--db", type=Path, help="case-local SQLite owner path")
     run.add_argument("--code-home", type=Path, help="case-local CODEX_HOME path")
@@ -129,6 +146,15 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
     run.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
+    run.add_argument(
+        "--open",
+        action="store_true",
+        default=False,
+        help=(
+            "run 成功完成后自动拉起只读 ui-host（loopback 端口）回看价值视图；"
+            "ui-host 不接 Provider、不开 owner DB、不发起 run。denied/failed 不拉起"
+        ),
+    )
     run.set_defaults(handler=_run_command)
 
     # ------------------------------------------------------------------
@@ -467,6 +493,49 @@ def _parser() -> argparse.ArgumentParser:
     )
     ui_build.set_defaults(handler=_ui_build_command)
 
+    # ------------------------------------------------------------------
+    # doctor — the read-only first-run self-check (roadmap 1-9-2).  It
+    # probes codex executability, the case directory conventions and
+    # loopback provider reachability WITHOUT writing anything: no state/
+    # events/codex-home creation, no owner DB, no run.  Non-loopback
+    # endpoints are reported unknown and never contacted.
+    # ------------------------------------------------------------------
+    doctor = commands.add_parser(
+        "doctor",
+        help="read-only first-run self-check (readiness report + fix hints)",
+        description=(
+            "Probe first-run readiness without writing anything: Codex "
+            "executability, case directory conventions and loopback Provider "
+            "reachability. Prints a JSON readiness report; every failing "
+            "check carries an actionable fix hint. Non-loopback endpoints "
+            "are reported unknown and never contacted."
+        ),
+    )
+    doctor.add_argument(
+        "--case-root",
+        type=Path,
+        default=None,
+        help="case-local root directory to probe; defaults to the current working directory",
+    )
+    doctor.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        help="workspace to probe; defaults to --case-root",
+    )
+    doctor.add_argument(
+        "--codex",
+        type=Path,
+        default=None,
+        help="Codex executable to probe; auto-detected from PATH when omitted",
+    )
+    doctor.add_argument(
+        "--endpoint",
+        default="http://127.0.0.1:11434",
+        help="Provider endpoint to probe (loopback endpoints only are contacted)",
+    )
+    doctor.set_defaults(handler=_doctor_command)
+
     return parser
 
 
@@ -550,12 +619,21 @@ def _denied_payload(
 
 
 def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> LocalReadOnlyRunConfig:
-    case_root = _resolve(args.case_root)
+    # Zero-config first-run defaults (roadmap 1-9-1): omit --case-root/--workspace/
+    # --codex and they are derived instead of rejected. case-root falls back to the
+    # current directory, workspace to case-root, and codex to a PATH probe.
+    case_root = _resolve(args.case_root) if args.case_root is not None else Path.cwd()
+    workspace = _resolve(args.workspace) if args.workspace is not None else case_root
     if database is None:
         database = args.db or (case_root / "state" / "composition.sqlite3")
+    codex_executable = (
+        _resolve(args.codex)
+        if args.codex is not None
+        else Path(shutil.which("codex") or "codex")
+    )
     paths = {
         "case_root": case_root,
-        "workspace": _resolve(args.workspace),
+        "workspace": workspace,
         "database": _resolve(database),
         "code_home": _resolve(args.code_home or case_root / "codex-home"),
         "event_log": _resolve(args.event_log or case_root / "events" / "codex.jsonl"),
@@ -592,7 +670,7 @@ def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> Lo
         workspace=paths["workspace"],
         database=paths["database"],
         code_home=paths["code_home"],
-        codex_executable=_resolve(args.codex),
+        codex_executable=codex_executable,
         event_log=paths["event_log"],
         provider_identity=provider_identity,
         authorized_providers=authorized_providers,
@@ -625,6 +703,62 @@ def _owner_projection(database: Path, run_id: str) -> Dict[str, Any]:
             ),
             "event_count": sum(item.get("run_id") == run_id for item in snapshot["events"]),
         }
+
+
+def _build_next_steps(
+    config: LocalReadOnlyRunConfig, run_id: str
+) -> list[Dict[str, Any]]:
+    """Stitch a completed run to the value loop: the concrete next actions a
+    human can take without re-reading the source.
+
+    Each entry names a CLI command, a Chinese purpose, whether it touches a
+    Provider / mutates owner state, and any precondition to satisfy first. The
+    list is deliberately honest about the one write step (``write propose``):
+    its ``--repo`` is not part of the read-only run contract, so the command
+    carries a placeholder and the precondition names the missing input.
+    """
+
+    db = shlex.quote(str(config.database))
+    case_root = shlex.quote(str(config.case_root))
+    return [
+        {
+            "command": "zworkbench doctor --case-root {0}".format(case_root),
+            "purpose_zh": "验证首跑环境就绪（Codex 可执行 / case 目录约定 / loopback 可达）",
+            "read_only": True,
+            "precondition": None,
+        },
+        {
+            "command": "zworkbench ui-host --open",
+            "purpose_zh": "在 loopback 只读端口打开评审 UI，回看本 run 的价值视图",
+            "read_only": True,
+            "precondition": "run 已完成（本 run 末带 --open 即走此路）",
+        },
+        {
+            "command": "zworkbench snapshot --db {0}".format(db),
+            "purpose_zh": "查看 owner 持久状态快照（runs / events / replays 投影）",
+            "read_only": True,
+            "precondition": None,
+        },
+        {
+            "command": "zworkbench export --db {0} <导出目录>".format(db),
+            "purpose_zh": "导出可移植的 owner JSON 状态，便于归档或转交审阅",
+            "read_only": True,
+            "precondition": None,
+        },
+        {
+            "command": (
+                "zworkbench write propose --db {0} --case-root {1} "
+                "--repo <本地 git 仓库> --worktree-root <隔离 worktree 目录> "
+                "--prompt '<从本 run 结论出发的写任务>'".format(db, case_root)
+            ),
+            "purpose_zh": (
+                "从本次只读 run 的结论出发，单会话起草一次可逆写"
+                "（审批异步、push 默认关闭）"
+            ),
+            "read_only": False,
+            "precondition": "需指定一个本地 git 仓库作为 --repo，且 worktree-root 在 case-root 内",
+        },
+    ]
 
 
 def _write_json(path: Path, payload: Mapping[str, Any]) -> None:
@@ -709,10 +843,11 @@ def _run_command(args: argparse.Namespace) -> int:
             "preflight": admission.to_dict(),
             "error": {"type": type(exc).__name__},
             "owner": projection,
+            "next_steps": _build_next_steps(config, run_id),
         }
         if args.summary:
             _write_json(_resolve(args.summary), payload)
-        print(json.dumps(payload, ensure_ascii=False, indent=2))
+        print(json.dumps(payload, ensure_ascii=False, indent=2), flush=True)
         return 1
 
     payload: Dict[str, Any] = {
@@ -725,6 +860,7 @@ def _run_command(args: argparse.Namespace) -> int:
         "execution": result.to_dict().get("execution"),
         "owner": _owner_projection(config.database, run_id),
         "artifacts": {},
+        "next_steps": _build_next_steps(config, run_id),
     }
     artifact_error: Optional[Dict[str, str]] = None
     if config.database.is_file() and (args.export or args.backup):
@@ -740,7 +876,15 @@ def _run_command(args: argparse.Namespace) -> int:
 
     if args.summary:
         _write_json(_resolve(args.summary), payload)
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    print(json.dumps(payload, ensure_ascii=False, indent=2), flush=True)
+    # 1-9-3 --open: only a completed run has something worth reviewing, so the
+    # read-only ui-host (loopback only, no DB, no run) is launched after the
+    # payload is flushed. A denied/failed run never opens a host. The host
+    # blocks on its own signal-wait loop; the run returns 0 once the user
+    # interrupts it and the port is released.
+    if args.open and result.status == "completed":
+        open_args = argparse.Namespace(host=LOOPBACK, port=0, review=False)
+        _ui_host_command(open_args)
     return 1 if artifact_error else (0 if result.status == "completed" else 1)
 
 
@@ -1360,6 +1504,27 @@ def _ui_command(args: argparse.Namespace) -> int:
     finally:
         owner.close()
     return 0
+
+
+def _doctor_command(args: argparse.Namespace) -> int:
+    """Read-only first-run self-check; exit 0 when ready, 1 when not.
+
+    Zero-config defaults mirror `run` (roadmap 1-9-1): case-root falls back
+    to the current directory and workspace to case-root, but doctor only
+    *reports* the derived paths — it never creates them.
+    """
+    from .doctor import run_doctor
+
+    case_root = _resolve(args.case_root) if args.case_root is not None else Path.cwd()
+    report = run_doctor(
+        case_root=case_root,
+        workspace=_resolve(args.workspace) if args.workspace is not None else None,
+        codex=_resolve(args.codex) if args.codex is not None else None,
+        endpoint=args.endpoint,
+    )
+    payload = {"command": "doctor", **report.to_dict()}
+    print(json.dumps(payload, ensure_ascii=False, indent=2))
+    return 0 if report.ready else 1
 
 
 def _ui_build_command(args: argparse.Namespace) -> int:
