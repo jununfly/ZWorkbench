@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from zworkbench import LocalReadOnlyRunConfig, preflight
+from zworkbench import LocalReadOnlyRunConfig, PreflightViolation, preflight
 
 
 class LocalReadOnlyRunPreflightTests(unittest.TestCase):
@@ -305,6 +305,43 @@ class LocalReadOnlyRunPreflightTests(unittest.TestCase):
                 "provider_identity_missing_or_invalid",
                 {violation.code for violation in result.violations},
             )
+
+
+class PreflightViolationHintTests(unittest.TestCase):
+    def test_to_dict_includes_hint_when_present(self) -> None:
+        violation = PreflightViolation("codex_executable_missing", "msg", hint="run zworkbench doctor")
+        self.assertEqual(
+            violation.to_dict(),
+            {"code": "codex_executable_missing", "message": "msg", "hint": "run zworkbench doctor"},
+        )
+
+    def test_to_dict_includes_null_hint_when_absent(self) -> None:
+        violation = PreflightViolation("mode_not_local_read_only", "msg")
+        self.assertEqual(violation.to_dict()["hint"], None)
+
+    def test_preflight_denied_violations_carry_actionable_hints(self) -> None:
+        # 1-9-4 fail-closed UX 成本回收：每一个被拒绝的 preflight 原因都必须带
+        # 一条非空、可操作的 hint，绝不能只抛一个 code 让用户自己猜。
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            config = LocalReadOnlyRunConfig(
+                case_root=root,
+                workspace=root / "workspace",  # 未创建 -> workspace_missing
+                database=root / "state" / "composition.sqlite3",
+                code_home=root / "codex-home",
+                codex_executable=root / "codex",  # 不存在 -> codex_executable_missing
+                provider_identity={
+                    "provider": "fake-loopback",
+                    "model": "m",
+                    "endpoint": "http://127.0.0.1:11434",
+                },
+            )
+            result = preflight(config)
+            self.assertEqual(result.status, "deny")
+            self.assertTrue(result.violations)
+            for violation in result.violations:
+                self.assertIsNotNone(violation.hint)
+                self.assertTrue(violation.hint.strip())
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ import hashlib
 import json
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -563,6 +564,7 @@ def _case_local_violations(root: Path, paths: Iterable[Tuple[str, Optional[Path]
                 PreflightViolation(
                     "cli_path_outside_case_root",
                     "{0} must remain inside case_root".format(name),
+                    "把 {0} 输出路径放进 case-root 内（首跑要求 case-local）".format(name),
                 )
             )
     return violations
@@ -582,6 +584,7 @@ def _path_conflict_violations(
                     PreflightViolation(
                         "cli_path_conflict",
                         "{0} must not overwrite {1}".format(output_name, protected_name),
+                        "为导出/备份选择不与受保护路径（{1}）冲突的唯一路径".format(output_name, protected_name),
                     )
                 )
     for index, (left_name, left_path) in enumerate(output_paths):
@@ -591,6 +594,7 @@ def _path_conflict_violations(
                     PreflightViolation(
                         "cli_path_conflict",
                         "{0} and {1} must use different paths".format(left_name, right_name),
+                        "为 {0} 与 {1} 选择不同的输出路径".format(left_name, right_name),
                     )
                 )
     return violations
@@ -705,6 +709,47 @@ def _owner_projection(database: Path, run_id: str) -> Dict[str, Any]:
         }
 
 
+def _classify_run_error(exc: BaseException) -> Tuple[str, str]:
+    """Classify a run-time exception for operator-facing UX (roadmap 1-9-4).
+
+    Returns ``(category, retry_hint)``. The category is purely informational:
+    the run status stays ``failed`` (fail-closed), this only shapes the message
+    so a human knows whether to enlarge ``--timeout``, check the provider, or
+    reach for ``zworkbench doctor``. Kept as a pure function for testing.
+    """
+
+    from .codex_adapter import (
+        CodexAdapterError,
+        CodexProtocolError,
+        CodexTurnWaitTimeout,
+    )
+
+    if isinstance(exc, CodexTurnWaitTimeout):
+        return (
+            "timeout",
+            "turn-wait 预算耗尽：增大 --timeout 重试，或运行 zworkbench doctor 确认 provider 可达",
+        )
+    if isinstance(exc, (TimeoutError, ConnectionError, socket.timeout)):
+        return (
+            "timeout",
+            "连接/传输超时：检查 provider endpoint 可达性（zworkbench doctor），或增大 --timeout",
+        )
+    if isinstance(exc, CodexProtocolError):
+        return (
+            "protocol",
+            "Codex 协议/provider 不兼容：运行 zworkbench doctor 检查 codex 可执行文件与 provider endpoint",
+        )
+    if isinstance(exc, CodexAdapterError):
+        return (
+            "adapter",
+            "adapter 异常：运行 zworkbench doctor 排查环境，并查看 owner ledger",
+        )
+    return (
+        "execution",
+        "运行 zworkbench doctor 排查环境；若可重试，增大 --timeout 或修正 provider 配置",
+    )
+
+
 def _build_next_steps(
     config: LocalReadOnlyRunConfig, run_id: str
 ) -> list[Dict[str, Any]]:
@@ -776,7 +821,7 @@ def _run_command(args: argparse.Namespace) -> int:
     if args.timeout <= 0:
         payload = _denied_payload(
             run_id,
-            violations=(PreflightViolation("timeout_not_positive", "timeout must be positive"),),
+            violations=(PreflightViolation("timeout_not_positive", "timeout must be positive", "timeout 须为正数（秒），例如 --timeout 300"),),
         )
         print(json.dumps(payload, ensure_ascii=False, indent=2))
         return 2
@@ -820,6 +865,7 @@ def _run_command(args: argparse.Namespace) -> int:
                 PreflightViolation(
                     "prompt_contains_credential_pattern",
                     "prompt contains a credential-like value and was not recorded",
+                    "prompt 含疑似凭证的值已被拒；移除 api key / token / bearer 等敏感串后再提交",
                 ),
             ),
         )
@@ -834,6 +880,7 @@ def _run_command(args: argparse.Namespace) -> int:
     try:
         result = LocalReadOnlyRunOrchestrator(config).run(run_id, args.prompt, timeout=args.timeout)
     except Exception as exc:
+        category, retry_hint = _classify_run_error(exc)
         projection = _owner_projection(config.database, run_id)
         payload = {
             "schema": CLI_SCHEMA,
@@ -841,7 +888,8 @@ def _run_command(args: argparse.Namespace) -> int:
             "status": "failed",
             "run_id": run_id,
             "preflight": admission.to_dict(),
-            "error": {"type": type(exc).__name__},
+            "error": {"type": type(exc).__name__, "category": category},
+            "retry_hint": retry_hint,
             "owner": projection,
             "next_steps": _build_next_steps(config, run_id),
         }
