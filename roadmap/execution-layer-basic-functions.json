@@ -916,7 +916,23 @@
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-7-4 的产品/验收定位？",
+          "answer": "Acceptance/coordination（非产品实现）。与 1-8 共享硬前置字面重合（host sandbox/值级拒密/出站脱敏/reaper killpg/digest 一一对应 1-8-1~1-8-5），Worker 路径无法独立落地多数项，故 1-7-4 定为 Worker 路径对 1-8 成果的验收/接线闸门，不在 Worker 代码里重复实现。加 blocks 边 1-8-1~5→1-7-4，1-7-4 保持 pending/blocked，先推 1-8。",
+          "note": ""
+        },
+        {
+          "q": "1-7-4 各子项在 Worker 路径的现状审计？",
+          "answer": "reaper killpg(1-8-4)：已实现（worker_bridge terminate_process+L1306、os.killpg L774/L1350、orphan sweep L1370+、setsid 逃逸处理 L1491+）；digest(1-8-5)：部分，artifact/argv/stderr/workspace digest 已做（L1083-1101/L1287-1289），可执行体 digest 钉死未确认；值级拒密(1-8-2)：部分，prompt 输入有 SECRET_VALUE_PATTERN 扫描（L53/L407），stdout/stderr 输出未扫描；出站脱敏(1-8-3)：待查 codex_adapter.close() stderr 脱敏；host sandbox(1-8-1)：未实现，无 seatbelt/namespace/unshare 强制。此清单即 1-8 必须交付的 Worker 接入判据。",
+          "note": ""
+        },
+        {
+          "q": "1-8-3 出站脱敏在 Worker/Codex 路径的现状（修正“待查”）？",
+          "answer": "部分/缺口。codex_adapter._redact_credentials（L78）仅用于 event-log 写出（L771），而 close() 在 L813 把 stderr 直接 write_text 到 codex-stderr.log 未过脱敏；worker_bridge 仅对 stderr 取 digest 不上内容。即 1-8-3 的“close() stderr 出站脱敏”在 Worker/Codex 路径确实存在真实缺口，须由 1-8-3 落地后才能被 1-7-4 验收。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -1470,7 +1486,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 11:41:48",
+    "updated": "2026-10-12 14:03:43",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
@@ -1485,12 +1501,6 @@
       "from": "01a11593d26f-eec051e58f",
       "to": "01a11593cec5-353bf96053",
       "type": "informs"
-    },
-    {
-      "id": "e5",
-      "from": "01a115956bd5-c2f3fb7fdd",
-      "to": "01a11593d26f-eec051e58f",
-      "type": "derives-from"
     },
     {
       "id": "e6",
@@ -1521,7 +1531,37 @@
       "from": "01a115956203-a79a29ab11",
       "to": "01a11c0f67dc-44b308226e",
       "type": "blocks"
+    },
+    {
+      "id": "e11",
+      "from": "01a115956d16-feaa4b89cb",
+      "to": "01a115956bd5-c2f3fb7fdd",
+      "type": "blocks"
+    },
+    {
+      "id": "e12",
+      "from": "01a115956e4a-359455e5cf",
+      "to": "01a115956bd5-c2f3fb7fdd",
+      "type": "blocks"
+    },
+    {
+      "id": "e13",
+      "from": "01a115956f7d-08936576c3",
+      "to": "01a115956bd5-c2f3fb7fdd",
+      "type": "blocks"
+    },
+    {
+      "id": "e14",
+      "from": "01a1159570ad-6d4f801673",
+      "to": "01a115956bd5-c2f3fb7fdd",
+      "type": "blocks"
+    },
+    {
+      "id": "e15",
+      "from": "01a1159571e0-f8c0e53f8f",
+      "to": "01a115956bd5-c2f3fb7fdd",
+      "type": "blocks"
     }
   ],
-  "edge_seq": 10
+  "edge_seq": 15
 }
