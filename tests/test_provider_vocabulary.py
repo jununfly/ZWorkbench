@@ -22,13 +22,16 @@ import unittest
 from pathlib import Path
 
 from zworkbench import LocalReadOnlyRunConfig, preflight
+from zworkbench.local_run import ProviderProfile
 from zworkbench.provider_vocabulary import (
+    DEFAULT_MODEL_PROVIDER,
     KNOWN_DENY_CODES,
     PROVIDER_VOCABULARY,
     TRANSPORT_LOOPBACK_ONLY,
     TRANSPORT_NETWORK_EGRESS,
     classify_provider_transport,
     is_known_provider,
+    resolve_model_provider,
 )
 
 _SRC_DIR = pathlib.Path(__file__).resolve().parents[1] / "src" / "zworkbench"
@@ -77,6 +80,11 @@ class ProviderVocabularyTests(unittest.TestCase):
             "provider_identity_missing_or_invalid",
             "state_outside_case_root",
             "codex_executable_missing",
+            # The real-Provider branches must stay covered: without them this
+            # guard passes vacuously and unregistered real-provider codes slip
+            # through unnoticed (issue #40).
+            "real_provider_config_missing",
+            "real_provider_gate_disabled",
         ):
             self.assertIn(expected, emitted)
 
@@ -140,12 +148,44 @@ class ProviderVocabularyTests(unittest.TestCase):
         # adapter / worker bridge after the 1-6-2 wiring.
         self.assertEqual(TRANSPORT_LOOPBACK_ONLY, "loopback-only")
 
+    # --- model_provider resolution (issue #40 A) -------------------------
+    #
+    # The vocabulary owns provider -> model_provider. Product code must never
+    # inline "ollama": it must resolve through the SSOT so a declared remote
+    # provider identity cannot silently run on the ollama backend.
+
+    def test_resolve_model_provider_follows_vocabulary(self) -> None:
+        self.assertEqual(resolve_model_provider("fake-loopback"), "ollama")
+        self.assertEqual(resolve_model_provider("ollama"), "ollama")
+        self.assertEqual(resolve_model_provider("ark"), "custom")
+        self.assertEqual(resolve_model_provider("custom"), "custom")
+
+    def test_resolve_model_provider_is_fail_closed(self) -> None:
+        # Unknown / empty / non-string names fall back to the loopback default,
+        # never to a remote backend.
+        self.assertEqual(resolve_model_provider("unknown-provider"), DEFAULT_MODEL_PROVIDER)
+        self.assertEqual(resolve_model_provider(""), DEFAULT_MODEL_PROVIDER)
+        self.assertEqual(resolve_model_provider(None), DEFAULT_MODEL_PROVIDER)
+        self.assertEqual(resolve_model_provider(42), DEFAULT_MODEL_PROVIDER)
+
+    def test_default_model_provider_is_ollama(self) -> None:
+        # Pins the historical v1 fallback: #40 must not change baseline behaviour.
+        self.assertEqual(DEFAULT_MODEL_PROVIDER, "ollama")
+
+    def test_vocabulary_model_provider_matches_resolver(self) -> None:
+        # No drift between the table and the resolver.
+        for name, entry in PROVIDER_VOCABULARY.items():
+            self.assertEqual(resolve_model_provider(name), entry.model_provider)
+
 
 def _make_config(
     *,
     provider_identity=None,
     database=None,
     codex_executable=None,
+    provider_profile=None,
+    provider_config_path=None,
+    real_provider_gate=False,
 ) -> LocalReadOnlyRunConfig:
     root = Path(tempfile.mkdtemp())
     workspace = root / "workspace"
@@ -166,7 +206,29 @@ def _make_config(
             "model": "fake-model",
             "endpoint": "http://127.0.0.1:11434",
         },
+        provider_profile=provider_profile,
+        provider_config_path=provider_config_path,
+        real_provider_gate=real_provider_gate,
     )
+
+
+def _ark_profile() -> ProviderProfile:
+    return ProviderProfile(
+        name="ark",
+        model_provider="custom",
+        model="coding-model",
+        base_url="https://ark.example.com/api/coding/v3",
+        wire_api="responses",
+    )
+
+
+def _ark_identity() -> dict:
+    return {
+        "provider": "ark",
+        "model": "coding-model",
+        "endpoint": "https://ark.example.com/api/coding/v3",
+        "model_provider": "custom",
+    }
 
 
 def _sweep_configs():
@@ -206,6 +268,22 @@ def _sweep_configs():
     # codex_executable_missing
     missing = _make_config()
     yield _make_config(codex_executable=missing.case_root / "does-not-exist")
+
+    # real_provider_config_missing: a profile was selected but no
+    # --provider-config path backs it.
+    yield _make_config(provider_identity=_ark_identity(), provider_profile=_ark_profile())
+
+    # real_provider_gate_disabled: profile + config path present, but the
+    # explicit real-Provider gate was never enabled.
+    gate_root = Path(tempfile.mkdtemp())
+    config_file = gate_root / "zw-providers.toml"
+    config_file.write_text('[model_providers.ark]\nbase_url = "https://ark.example.com"\n', encoding="utf-8")
+    yield _make_config(
+        provider_identity=_ark_identity(),
+        provider_profile=_ark_profile(),
+        provider_config_path=config_file,
+        real_provider_gate=False,
+    )
 
 
 if __name__ == "__main__":

@@ -462,7 +462,8 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         "provider_not_loopback",
         "Provider endpoint must resolve to localhost/loopback, or name an "
         "explicitly authorized remote provider from config",
-        "首跑仅允许 loopback（localhost / 127.0.0.1）；真实 Provider 需 --provider-config 显式授权",
+        "首跑仅允许 loopback（localhost / 127.0.0.1）；真实 Provider 须显式授权："
+        "CLI 加 --provider-profile <name> --real-provider-gate",
     )
     violations.extend(provider_violations)
     check(
@@ -470,7 +471,9 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         config.provider_profile is None or config.provider_config_path is not None,
         "real_provider_config_missing",
         "an explicit real Provider profile requires an explicit --provider-config path",
-        "显式真实 Provider profile 必须配套 --provider-config <path>",
+        "真实 Provider profile 必须配套 provider 配置路径（当前由 CLI --provider-profile "
+        "从 sanctioned provider config 加载并自动带入；直接使用 API 时须显式传 "
+        "provider_config_path）",
     )
     real_requested = config.provider_profile is not None
     check(
@@ -479,6 +482,8 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         "real_provider_gate_disabled",
         "an explicit real Provider profile requires real_provider_gate=True; "
         "the baseline (loopback / fake) path must never silently reach a real Provider",
+        "真实 Provider 需显式开启授权门：CLI 加 --real-provider-gate（配合 "
+        "--provider-profile <name>）；baseline（loopback/fake）永不静默触达真实 Provider",
     )
     provider_json_safe = _is_json_serializable(config.provider_identity)
     check(
