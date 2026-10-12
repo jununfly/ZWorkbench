@@ -888,13 +888,25 @@
       "id": "1-7-3",
       "uid": "01a115956aa1-47096799d1",
       "label": "P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-7-3 ADR 0011 已起草（proposed，待 zj 确认）",
+          "answer": "ADR 0011（docs/zj-adr/0011-identity-chain-completion-is-layered.md）已按 zj 选 A 起草，状态 proposed，未动产品代码。根因核实：bridge 用 is_complete() 要求 10 字段全齐 → 逼得 fake fixture 在 worker_fixture.py:45-46 硬编码 codex-thread-1/codex-turn-1，测试反过头断言伪造值（test_worker_bridge.py:101-102、test_worker_coding.py:126-127）。ADR 决策：① Required 层 8 字段恒必填，codex_thread/turn_id 为 Conditional；② 是否 Codex Worker 由 worker_schema_identity.name 命中白名单的**声明**判定，与 1-7-1 real_worker_mode 正交；③ 新增 is_complete_for/missing_required_fields/missing_conditional_fields，is_complete 保留严格语义，结果分类写 identity_completion（complete / complete_with_declared_unknown）；④ 非 Codex Worker 响应携带非 UNKNOWN 的 codex id 一律 fail-closed，错误码 codex_identity_fabricated。**待 zj 确认后再标 accepted 并开工**；实现范围＝worker_contract + worker_bridge + 两个 fixture + 相关测试。",
+          "note": ""
+        },
+        {
+          "q": "1-7-3 实现完成 + 测试结论（含全量套件 22 失败定性）",
+          "answer": "ADR 0011 已由 zj 认可转 accepted，按决策实现完成。改动：worker_contract.py 分层（CODEX_WORKER_SCHEMAS 白名单精确匹配、is_codex_worker/is_complete_for/missing_required_fields/missing_conditional_fields/identity_completion；is_complete 收窄为只查 Required 8 字段，is_complete_for 按 worker 类型判 Conditional；verify_no_fabricated_identity 反伪造 fail-closed，错误码 codex_identity_fabricated）；worker_bridge.py handshake/coding 响应校验改用 is_complete_for + identity_completion 落 WorkerHandshakeResult/WorkerCodingResult；三个 fixture 停止伪造 codex 身份（handshake/coding 的 unknown 场景改为 Required 层缺失）；4 处测试断言同步。验收（定向，本节点实际改动范围）：test_worker_bridge+test_worker_contract+test_worker_coding+test_worker_fail_stop+test_w8_worker_lifecycle+test_dsh_runtime+test_w8_dsh_evidence_replay = 58/58 绿。**全量 discover（1206）出现 22 失败，已定性非本节点回归**：17 个 test_ui_* 需浏览器（沙箱无浏览器，预存环境失败，未触碰 UI 代码）；5 个 worker 进程类（test_worker_lifecycle×2 + test_worker_orphan_detection×3）仅在全量套件上下文失败、任何隔离/定向（含 H4 runner 前置）运行均通过——属全量套件资源争用/模块间全局污染，其依赖的进程 spawn 行为未被本节点改动。Worker 真实报错定性由后台日志复核中，结论不回灌本节点验收口径。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-7-4": {
       "id": "1-7-4",
@@ -1445,14 +1457,20 @@
       "mode": "explore",
       "parent": "1-7",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "心跳切出的范围确认（zj）",
+          "answer": "zj 于 2026-10-12 确认：认可心跳从 1-7-2 切出为本节点（1-7-5）。1-7-2 维持 completed（口径＝H1/H3/H4 fixture 覆盖审计 + 孤儿计账诚实化），心跳不再回灌 1-7-2。本节点前置＝先写 ADR 再实现：须定死心跳间隔、超时判定、owner 计账字段（事件 kind 与 evidence_source）、心跳丢失的失败语义（safe-stop 还是 uncertain）、以及与 1-8-4 reaper/killpg 兜底的关系。ADR 未落地前本节点保持 pending，不写产品代码。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 01:11:48",
+    "updated": "2026-10-12 11:41:48",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
