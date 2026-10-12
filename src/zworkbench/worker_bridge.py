@@ -29,9 +29,15 @@ from ._digest import sha256_json as _sha256_json
 from .composition import (
     CompositionError,
     CompositionOwner,
+    EVIDENCE_SOURCE_NATIVE,
     EVIDENCE_SOURCE_OUTER_COMPOSED,
 )
 from .subprocess_supervisor import LineStreamSupervisor, terminate_process
+from .worker_heartbeat import (
+    WORKER_HEARTBEAT_INTERVAL_SEC,
+    WORKER_HEARTBEAT_TIMEOUT_SEC,
+    HeartbeatMonitor,
+)
 from .worker_contract import (
     ComponentIdentity,
     IdentityChain,
@@ -170,6 +176,8 @@ class WorkerBridge:
         recovery_mode: bool = False,
         real_worker_mode: bool = False,
         real_worker_reason: Optional[str] = None,
+        heartbeat_interval: float = WORKER_HEARTBEAT_INTERVAL_SEC,
+        heartbeat_timeout: float = WORKER_HEARTBEAT_TIMEOUT_SEC,
     ) -> None:
         if not isinstance(worker_artifact_identity, ComponentIdentity):
             raise TypeError("worker_artifact_identity must be ComponentIdentity")
@@ -201,6 +209,12 @@ class WorkerBridge:
             self.real_worker_reason = self._require_text(real_worker_reason, "real_worker_reason")
         else:
             self.real_worker_reason = None
+        if heartbeat_interval <= 0:
+            raise ValueError("heartbeat_interval must be positive")
+        if heartbeat_timeout <= 0:
+            raise ValueError("heartbeat_timeout must be positive")
+        self.heartbeat_interval = float(heartbeat_interval)
+        self.heartbeat_timeout = float(heartbeat_timeout)
         self._validate_provider()
         self._state_lock = threading.RLock()
         self.process: Optional[subprocess.Popen[bytes]] = None
@@ -219,6 +233,12 @@ class WorkerBridge:
         self._termination_forced = False
         self._process_group_clean: Optional[bool] = None
         self._orphan_processes: Optional[int] = None
+        # ADR 0012: liveness accounting.  `last_activity_ts` is bumped on every
+        # stdout byte read and at each process spawn; the monitor thread turns
+        # a stale value into a fail-closed safe-stop.
+        self._last_activity_ts = 0.0
+        self._heartbeat: Optional[HeartbeatMonitor] = None
+        self._heartbeat_lost = False
 
     def _record_worker_retry(self, parent_run_id: str, operation: str) -> None:
         """Tally one Worker-layer attempt in the single owner (node 1-5-4).
@@ -367,6 +387,7 @@ class WorkerBridge:
             self._record_failure(parent_run_id, child_run_id, error)
             raise error
         finally:
+            self._stop_heartbeat()
             self._stop_process()
             self._deactivate_operation()
 
@@ -527,6 +548,7 @@ class WorkerBridge:
             self._record_failure(parent_run_id, child_run_id, error)
             raise error
         finally:
+            self._stop_heartbeat()
             self._stop_process()
             self._deactivate_operation()
 
@@ -803,7 +825,66 @@ class WorkerBridge:
             return "cancelled"
         if error.code == "worker_exit_nonzero":
             return "child_crash"
+        if error.code == "heartbeat_lost":
+            return "heartbeat"
         return "bridge_failure"
+
+    # --- ADR 0012: Worker long-connection liveness (heartbeat) supervision ---
+
+    def _mark_activity(self) -> None:
+        """Record that the Worker produced observable activity just now."""
+
+        self._last_activity_ts = time.monotonic()
+
+    def _start_heartbeat(self, parent_run_id: str, child_run_id: str) -> None:
+        """Spawn the background liveness monitor for the current subprocess."""
+
+        self._stop_heartbeat()
+        self._heartbeat = HeartbeatMonitor(
+            interval=self.heartbeat_interval,
+            timeout=self.heartbeat_timeout,
+            get_last_activity=lambda: self._last_activity_ts,
+            on_lost=lambda lost_at: self._on_heartbeat_lost(child_run_id, parent_run_id, lost_at),
+        )
+        self._heartbeat.start()
+
+    def _stop_heartbeat(self) -> None:
+        """Stop and detach the liveness monitor (idempotent, thread-safe)."""
+
+        monitor = self._heartbeat
+        self._heartbeat = None
+        if monitor is not None:
+            monitor.stop()
+
+    def _on_heartbeat_lost(self, child_run_id: str, parent_run_id: str, lost_at: float) -> None:
+        """Fail-closed liveness verdict: the Worker went silent, so its current
+        result is untrustworthy.  Claim the verdict only if no prior stop
+        (cancel/parent-stop) already owns it, then reuse the existing reaper."""
+
+        with self._state_lock:
+            if self._termination_code is not None:
+                return
+            self._termination_code = "heartbeat_lost"
+            self._termination_reason = "heartbeat"
+            self._heartbeat_lost = True
+        try:
+            self.owner.record_event(
+                child_run_id,
+                "worker.heartbeat.lost",
+                {
+                    "last_activity_ts": self._last_activity_ts,
+                    "timeout": self.heartbeat_timeout,
+                    "lost_at": lost_at,
+                },
+                f"{child_run_id}:heartbeat-lost",
+                evidence_source=EVIDENCE_SOURCE_NATIVE,
+            )
+        except Exception:
+            # The verdict is authoritative regardless of ledger write success.
+            pass
+        # Reuse the existing reaper (killpg on the process group); this unblocks
+        # the blocked stdout read so the caller observes the lost verdict.
+        self._signal_process(signal.SIGTERM)
 
     def _run_process(
         self,
@@ -835,6 +916,9 @@ class WorkerBridge:
             raise WorkerBridgeError("Worker failed to start", code="worker_start_failed") from exc
         if self.process.stdin is None or self.process.stdout is None or self.process.stderr is None:
             raise WorkerBridgeError("Worker streams are unavailable", code="worker_stream_missing")
+        self._last_activity_ts = time.monotonic()
+        self._heartbeat_lost = False
+        self._start_heartbeat(parent_run_id, child_run_id)
         try:
             self.process.stdin.write((request.to_json() + "\n").encode("utf-8"))
             self.process.stdin.flush()
@@ -845,6 +929,7 @@ class WorkerBridge:
         response: Optional[WorkerEnvelope] = None
 
         def on_line(line: bytes) -> None:
+            self._mark_activity()
             nonlocal response
             if response is not None:
                 raise WorkerBridgeError("Worker emitted more than one handshake response", code="handshake_extra_message")
@@ -862,9 +947,16 @@ class WorkerBridge:
             on_iteration=self._raise_if_stop_requested,
         )
         deadline = time.monotonic() + timeout
-        supervisor.read(self.process, deadline=deadline)
+        try:
+            supervisor.read(self.process, deadline=deadline)
+        except WorkerBridgeError:
+            if self._heartbeat_lost:
+                self._raise_if_stop_requested()
+            raise
         self._stderr_digest = supervisor.stderr_digest
         self._stderr_bytes = supervisor.stderr_bytes
+        if self._heartbeat_lost:
+            self._raise_if_stop_requested()
         if response is None:
             self._raise_if_stop_requested()
             exit_code = self._wait_for_exit(deadline)
@@ -909,6 +1001,9 @@ class WorkerBridge:
             raise WorkerBridgeError("Worker failed to start", code="worker_start_failed") from exc
         if self.process.stdin is None or self.process.stdout is None or self.process.stderr is None:
             raise WorkerBridgeError("Worker streams are unavailable", code="worker_stream_missing")
+        self._last_activity_ts = time.monotonic()
+        self._heartbeat_lost = False
+        self._start_heartbeat(parent_run_id, child_run_id)
         try:
             self.process.stdin.write((request.to_json() + "\n").encode("utf-8"))
             self.process.stdin.flush()
@@ -919,6 +1014,7 @@ class WorkerBridge:
         responses: list[WorkerEnvelope] = []
 
         def on_line(line: bytes) -> None:
+            self._mark_activity()
             if len(responses) >= 2:
                 raise WorkerBridgeError("Worker emitted more than two coding messages", code="coding_extra_message")
             responses.append(self._parse_response(line))
@@ -935,9 +1031,16 @@ class WorkerBridge:
             on_iteration=self._raise_if_stop_requested,
         )
         deadline = time.monotonic() + timeout
-        supervisor.read(self.process, deadline=deadline)
+        try:
+            supervisor.read(self.process, deadline=deadline)
+        except WorkerBridgeError:
+            if self._heartbeat_lost:
+                self._raise_if_stop_requested()
+            raise
         self._stderr_digest = supervisor.stderr_digest
         self._stderr_bytes = supervisor.stderr_bytes
+        if self._heartbeat_lost:
+            self._raise_if_stop_requested()
         if len(responses) < 2:
             exit_code = self._wait_for_exit(deadline)
             self._last_exit_receipt = self._exit_receipt(exit_code, command)
