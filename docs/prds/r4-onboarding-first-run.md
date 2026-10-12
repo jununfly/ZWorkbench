@@ -2,7 +2,7 @@
 doc-kind: product-requirements
 authority: supporting
 status: target
-implementation-status: unknown
+implementation-status: implemented
 ---
 
 # R4：首跑与 onboarding 设计
@@ -64,6 +64,32 @@ implementation-status: unknown
 - 验收线机械判定：脚本退出码 0 且 `recorded_view_present == true`；对照三项指标（C1-6）已于 2026-10-01 落盘 `evaluation/evidence/competitive-baseline/`（ZWorkbench owner-backed replay 一项明确更优），价值证明条件已满足，首跑价值演示可据实测陈述。
 
 **做到什么程度算完**：脚本绿 + 至少 2 份真实走查记录（计时起点 = 第一条命令；走查者须为未参与本仓开发者或隔周作者本人；记录总耗时 / 卡点数 / 最终是否看到 recorded view；卡点数 ≤ 2）。
+
+### 验收进度（如实分栏，2026-10-13 复核）
+
+复现环境：干净 venv（Python 3.13.12，`python -m venv`）→ `pip install .`（wheel `zworkbench-0.1.0`）；源码副本装在 `/tmp` 的工作副本上，未污染本仓工作树；全程 `ARK_API_KEY` / `OPENAI_API_KEY` 已 unset，走 `fake-loopback`、零外部凭证。
+
+| 判据 | 状态 | 证据 |
+|---|---|---|
+| 端到端脚本可重放（exit 0 且 `recorded_view_present == true`） | ✅ | `scripts/first_run_e2e_regression.py` 在干净 venv 下 `EXIT=0`，输出 `PASS: first run completed and recorded_view_present == true`；另以安装产物 console script `zworkbench run` 交叉跑通（`status=completed`，owner `recorded_view_present=true`，replay `zw-r4-console:recorded-view`，turn 文本 `CONSOLE-SCRIPT-OK`） |
+| `doctor` 零凭证全绿 | ✅ | `zworkbench doctor` 三项 `pass`（codex_executable / case_layout / loopback_provider），`status=ready`，`EXIT=0` |
+| `doctor` / 首跑零副作用 | ✅ | doctor 前后 case_root 目录树不变（无 `state/` `codex-home/` `events/`），本仓 `git status --short` 前后 diff 为空 |
+| 「目录缺失」失败含可执行修复动作 | ✅ | `doctor --case-root <不存在路径>` → `not_ready`，`EXIT=1`，hint = 「create the missing directory, or pass --case-root (and --workspace) pointing at existing directories」 |
+| 「超时」失败含可执行修复动作 | ✅ | 挂起式 fake codex + `--timeout 2` → `status=failed`，`error={"type":"TimeoutError","category":"timeout"}`，`retry_hint` = 「连接/传输超时：检查 provider endpoint 可达性（zworkbench doctor），或增大 --timeout」 |
+| 至少 2 份真实走查记录（走查者须为未参与本仓开发者或隔周作者本人；记录总耗时 / 卡点数 / 最终是否看到 recorded view；卡点数 ≤ 2） | ⏭️ **owner 豁免**（0 / 2） | 2026-10-13 zj 显式决定：不做外部/隔周走查，视为通过。**这是判据豁免，不是判据满足** |
+
+### 豁免留痕（waiver）
+
+- 时间：2026-10-13；决策人：zj（本 PRD 作者 / owner）。
+- 内容：§端到端回归脚本验收线 中「至少 2 份真实走查记录」一条**整体豁免**，不再作为 R4 收口前置。
+- 已满足的部分：上表机械判据 5 项全部 owner-backed（干净 venv `pip install .` 复跑，逐条证据见上）。
+- 随豁免一并接受、但未消解的风险：
+  - **无真实新手视角**：本仓作者之外的首次走查从未发生，安装/首跑路径上「新人卡在哪」零数据；
+  - **卡点数 ≤ 2 无观测**：这是设计目标里唯一直接衡量 onboarding 摩擦的指标，现为零观测；
+  - 上述两项是**已知盲区**（不是未知风险），一旦对外分发须优先补外部走查。
+- 重开条件：产品进入「给非作者使用」阶段时本豁免自动失效，须补齐 2 份走查记录。
+
+因此 `implementation-status` 记为 `implemented`：机械判据全部 owner-backed，人证判据经 owner 显式豁免。**须区分**：这不等于「走查已做过」。
 
 ## 约束与依赖
 
