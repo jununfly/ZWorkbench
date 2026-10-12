@@ -35,6 +35,12 @@ KNOWN_TRANSPORTS: FrozenSet[str] = frozenset(
     {TRANSPORT_LOOPBACK_ONLY, TRANSPORT_NETWORK_EGRESS}
 )
 
+#: The historical v1 adapter backend. Product code must never inline this
+#: string: it is the fail-closed fallback returned by
+#: :func:`resolve_model_provider` when a provider name is unknown, empty or
+#: absent (issue #40 — the baseline must keep resolving to ollama).
+DEFAULT_MODEL_PROVIDER = "ollama"
+
 
 @dataclass(frozen=True)
 class ProviderVocabEntry:
@@ -108,6 +114,8 @@ KNOWN_DENY_CODES: FrozenSet[str] = frozenset(
         "provider_endpoint_invalid",
         "provider_endpoint_scheme_not_supported",
         "provider_endpoint_embeds_credentials",
+        "real_provider_config_missing",
+        "real_provider_gate_disabled",
         # cli admission path
         "cli_path_outside_case_root",
         "cli_path_conflict",
@@ -134,6 +142,28 @@ def classify_provider_transport(provider_name: object, *, authorized: bool) -> s
     if entry.transport == TRANSPORT_NETWORK_EGRESS and not authorized:
         return TRANSPORT_LOOPBACK_ONLY
     return entry.transport
+
+
+def resolve_model_provider(provider_name: object) -> str:
+    """Resolve the Codex ``model_provider`` backend for a provider identity name.
+
+    This is the single place that turns a ZWorkbench provider identity into the
+    backend name handed to the adapter. It is fail-closed: an unknown, empty or
+    non-string name resolves to :data:`DEFAULT_MODEL_PROVIDER` (``ollama``), so
+    the loopback baseline keeps its historical behaviour and no caller can
+    silently fall through to a remote backend.
+
+    Issue #40: product code must not inline ``"ollama"``. A declared remote
+    provider (``ark`` / ``custom``) resolves to its vocabulary backend instead
+    of being rewritten to the local ollama server.
+    """
+
+    if not isinstance(provider_name, str) or not provider_name:
+        return DEFAULT_MODEL_PROVIDER
+    entry = PROVIDER_VOCABULARY.get(provider_name)
+    if entry is None:
+        return DEFAULT_MODEL_PROVIDER
+    return entry.model_provider
 
 
 def is_known_provider(provider_name: str) -> bool:

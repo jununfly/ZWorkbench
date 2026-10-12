@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any, Mapping
 
 from .codex_adapter import CodexAppServerAdapter
 from .composition import CompositionOwner, ProviderAccessDenied
+from .provider_vocabulary import resolve_model_provider
 
 
 if TYPE_CHECKING:  # pragma: no cover - import only for static type checking
@@ -59,8 +60,10 @@ class HostCapabilityFacade:
         the adapter is wired to that provider only if ``config.real_provider_gate``
         is enabled; otherwise the acquisition is refused fail-closed with
         :class:`ProviderAccessDenied` so the baseline never silently reaches a
-        real Provider.  When no real profile is selected, the historical ollama
-        default is used (loopback, ``model_provider="ollama"``).
+        real Provider.  When no real profile is selected, the backend is resolved
+        from the declared provider identity through the vocabulary SSOT
+        (:func:`provider_vocabulary.resolve_model_provider`), which falls back to
+        the historical ollama loopback default.
 
         The real profile wires the adapter to that provider: the profile's
         ``model_provider`` (e.g. ``custom``), an empty ``config_overrides`` so
@@ -82,7 +85,9 @@ class HostCapabilityFacade:
                 config.code_home,
                 config.workspace,
                 model=str(config.provider_identity["model"]),
-                model_provider="ollama",
+                # Issue #40: resolve the backend from the declared identity via
+                # the vocabulary SSOT rather than pinning "ollama" inline.
+                model_provider=resolve_model_provider(config.provider_identity.get("provider")),
                 provider_identity=config.provider_identity,
                 sandbox=config.sandbox,
                 approval_policy=config.approval_policy,

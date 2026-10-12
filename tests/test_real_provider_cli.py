@@ -172,6 +172,68 @@ class OllamaDefaultFallbackTests(unittest.TestCase):
                     adapter.close()
 
 
+class ModelProviderResolutionTests(unittest.TestCase):
+    """Issue #40 A: the backend must come from the vocabulary SSOT.
+
+    The CLI builds ``provider_identity["model_provider"]``; it must be resolved
+    from the declared ``--provider`` name instead of being pinned to "ollama",
+    while the loopback baseline keeps resolving to ollama.
+    """
+
+    def _identity_for(self, provider: str, root: Path) -> dict:
+        import argparse
+
+        from zworkbench import cli
+
+        args = argparse.Namespace(
+            case_root=root,
+            workspace=None,
+            db=None,
+            code_home=None,
+            event_log=None,
+            codex=Path("/bin/echo"),
+            run_id="resolution-probe",
+            provider=provider,
+            model="probe-model",
+            endpoint="http://127.0.0.1:11434",
+            provider_profile=None,
+            timeout=5.0,
+            host_enforcement=False,
+            real_provider_gate=False,
+            export=None,
+            backup=None,
+            summary=None,
+            open=False,
+        )
+        return dict(cli._run_config(args).provider_identity)
+
+    def test_loopback_defaults_resolve_to_ollama(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "workspace").mkdir()
+            for name in ("fake-loopback", "ollama"):
+                identity = self._identity_for(name, root)
+                self.assertEqual(identity["model_provider"], "ollama", name)
+
+    def test_declared_remote_provider_resolves_to_its_backend(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "workspace").mkdir()
+            for name, expected in (("ark", "custom"), ("custom", "custom")):
+                identity = self._identity_for(name, root)
+                self.assertEqual(identity["model_provider"], expected, name)
+                # The declared provider name is preserved: only the backend is
+                # resolved, the identity is not rewritten.
+                self.assertEqual(identity["provider"], name)
+
+    def test_unknown_provider_falls_back_to_ollama(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "workspace").mkdir()
+            identity = self._identity_for("some-unregistered-provider", root)
+            self.assertEqual(identity["model_provider"], "ollama")
+
+
 class AuthorizedRemoteProviderTests(unittest.TestCase):
     def test_authorized_remote_provider_passes_preflight(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

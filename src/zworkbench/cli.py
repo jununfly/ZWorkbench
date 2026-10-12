@@ -33,6 +33,7 @@ from .local_run import (
     load_provider_profiles,
     preflight,
 )
+from .provider_vocabulary import resolve_model_provider
 from .push_run import PushRunOrchestrator
 from .push_seam import (
     PushDisabledError,
@@ -663,11 +664,15 @@ def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> Lo
             "model_provider": profile.model_provider,
         }
     else:
+        # Issue #40: the backend is resolved from the declared provider identity
+        # through the vocabulary SSOT instead of being pinned to "ollama". An
+        # unknown/absent provider still resolves to the ollama fallback, so the
+        # loopback baseline behaviour is unchanged.
         provider_identity = {
             "provider": args.provider,
             "model": args.model,
             "endpoint": args.endpoint,
-            "model_provider": "ollama",
+            "model_provider": resolve_model_provider(args.provider),
         }
     config = LocalReadOnlyRunConfig(
         case_root=paths["case_root"],
