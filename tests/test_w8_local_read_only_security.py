@@ -4,7 +4,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from evaluation.runner.run_w8_local_read_only_security import run_security_suite
+from evaluation.runner.run_w8_local_read_only_security import (
+    network_tripwire,
+    run_security_suite,
+)
 
 
 class W8LocalReadOnlySecurityTests(unittest.TestCase):
@@ -48,3 +51,32 @@ class W8LocalReadOnlySecurityTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class W8NetworkTripwireTests(unittest.TestCase):
+    def test_tripwire_allows_local_unix_socket_but_blocks_inet(self) -> None:
+        import os
+        import socket
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as temporary:
+            sock_path = os.path.join(temporary, "local.sock")
+            server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            server.bind(sock_path)
+            server.listen(1)
+            try:
+                with network_tripwire() as attempts:
+                    # A local Unix-domain socket is local IPC, not network egress:
+                    # the tripwire must let it through and must NOT record it.
+                    client = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    client.connect(sock_path)
+                    client.close()
+                    # A real network (AF_INET) connect must be recorded as a
+                    # forbidden attempt and must never reach the wire.
+                    inet = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    with self.assertRaises(AssertionError):
+                        inet.connect(("127.0.0.1", 9))
+                self.assertEqual(len(attempts), 1)
+                self.assertEqual(attempts[0]["operation"], "socket.connect")
+            finally:
+                server.close()
