@@ -211,7 +211,7 @@
       "id": "1-8",
       "uid": "01a11593d26f-eec051e58f",
       "label": "真实架构硬前置（共享）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -226,10 +226,21 @@
           "q": "共享硬前置的语义？",
           "answer": "host sandbox/值级拒密/脱敏/reaper/digest 为真实架构前硬前置；baseline（loopback/fake）内不要求，真实 Provider/Worker 接入前必须落地",
           "note": "与 sub-02/sub-03 的 caller-auth、secret 值级前置同源"
+        },
+        {
+          "q": "本轮范围与执行顺序？",
+          "answer": "Product execution。顺序 1-8-2→1-8-3→1-8-4→1-8-5（四小项 TDD 先行）；1-8-1（host sandbox）本轮不实现，单独 grill + ADR（seatbelt 包裹 vs 扩展 host_enforcement 契约）后再做。1-8 保持 in_progress 直至全部子项收口。",
+          "note": ""
+        },
+        {
+          "q": "1-8-2~1-8-5 实现结论与验证结果？",
+          "answer": "已实现并 TDD 收口：新建 src/zworkbench/credential_scan.py（价值级凭证形状扫描/脱敏，ark-/sk-/AKIA 形状，含 lookbehind 防误杀 disk-full-read-access）；1-8-2 在 worker stderr 数据回调（subprocess_supervisor.on_stderr_data）与 coding result payload（排除 semantic_result）两处 fail-closed 拒绝，错误码 worker_stderr_credential_forbidden / worker_output_credential_forbidden，凭证违规走 safe-stop 计账（_CREDENTIAL_REJECTION_CODES，不触发 fail-stop 清理契约）；1-8-3 semantic_result 经 redact_credential_shaped_values 脱敏后入 owner、codex_adapter.close() 写 codex-stderr.log 前过 _redact_credentials；1-8-5 WorkerBridge 构造期测量 executable_digest 入 exit receipt，可 pinned 校验（worker_executable_digest_mismatch）。tests/test_worker_coding.py + test_codex_adapter.py 全绿（55 passed）。1-8-4 reaper killpg 按 1-7-4 审计为已实现；其 live reaper 测试在本机 macOS sandbox（ps 被拦截、killpg 会话行为差异）下既有失败，非本轮回归——真实环境应通过。1-8-1 仍 pending，单独 grill + ADR 后再实现，故 1-8 保持 in_progress。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-1-1": {
       "id": "1-1-1",
@@ -940,35 +951,80 @@
       "id": "1-8-1",
       "uid": "01a115956d16-feaa4b89cb",
       "label": "host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-8-1 host sandbox 机制选哪条？",
+          "answer": "选 (a) host-require 契约（fail-closed）：worker_bridge 启动 coding worker 前先证明宿主提供 OS 沙箱边界，检不出即 refuse-to-start，绝不降级裸跑。依据 ADR 0008 #2（enforcer 不可用→拒绝启动）精神；seatbelt 包裹在 macOS 26 不可行（ADR 0010：enforcer 已 git rm 删除、B2 spike 判 not-viable），故不重建包裹层。范围限于 coding worker 子进程（见 Q2）。",
+          "note": ""
+        },
+        {
+          "q": "1-8-1 gate 谁的写？",
+          "answer": "选 (i) 仅 coding worker 的 Workspace 写。1-8 是 Worker coding 路径（read_only_coding）；write-seam apply/commit/push 的 OS 前置属 1-10 节点，不在 1-8-1 范围，避免 scope 扩散。",
+          "note": ""
+        },
+        {
+          "q": "怎么证明宿主提供了 OS 沙箱边界（attestation）？",
+          "answer": "选 (a3) operator 契约主闸 + (a2) 检测辅信号(warn-only)：require_host_sandbox=True 时必须提供 attestation（构造参数 host_sandbox_attestation 或 env ZW_HOST_SANDBOX_ATTESTED），两者皆空即 refuse-to-start(fail-closed)；detect_os_sandbox() 仅当确证宿主无边界(False)时拒绝(conflict=fail-closed)，无法判定(None)时放行。不取 (a1) 运行时越界探针。详见 docs/zj-adr/0010 修正案 + src/zworkbench/host_sandbox.py。",
+          "note": ""
+        },
+        {
+          "q": "交付物形态？",
+          "answer": "选 (x)：代码护栏(WorkerBridge 启动前 refuse-to-start) + ADR 0010 收窄(对 coding-worker 路径加 fail-closed 修正案) + roadmap 节点收口。已落地。",
+          "note": ""
+        },
+        {
+          "q": "与既有 host_enforcement flag 的语义隔离？",
+          "answer": "选 (ii) 独立信号：WorkerBridge 新增 require_host_sandbox 构造参数(fail-closed refuse-to-start)，与 codex_adapter.host_enforcement(ADR 0010 下 fail-open) 语义完全分离、互不混用；文档与词汇表同步。",
+          "note": ""
+        },
+        {
+          "q": "refuse-to-start 的错误契约？",
+          "answer": "选 (x)：新错误码 host_sandbox_absent，fail-stop 语义(safe_stop=False)；在 _activate_operation 之前 raise，runs 不进入 safe_stop 计账（前置条件失败，非 worker 违规）；已补入 WORKER_ERROR_CODES 词汇表。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-2": {
       "id": "1-8-2",
       "uid": "01a115956e4a-359455e5cf",
       "label": "值级拒密 _reject_secrets 扫描（覆盖 external_receipt + stdout/stderr）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "拒密/脱敏边界怎么划？",
+          "answer": "结构拒密+内容脱敏：1-8-2 覆盖 worker stdout envelope 协议字段 + worker stderr，发现凭证形状值即 fail-closed 拒绝（WorkerBridgeError，safe-stop 计账）；semantic_result 自由文本内容不在此拒密（移交 1-8-3 脱敏），避免同一条数据两个策略打架；external_receipt 已由 1-6-1 覆盖不重复实现。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-3": {
       "id": "1-8-3",
       "uid": "01a115956f7d-08936576c3",
       "label": "semantic_result / codex_adapter.close() stderr 出站脱敏",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "semantic_result / close() stderr 出站脱敏语义？",
+          "answer": "bridge 边界对 semantic_result 的 string leaves 脱敏（_redact_credentials 同形状）后再入 owner——result 是外部进程产出的自由文本，拒密会误杀合法产物（如引用 fixture 中凭证形状字符串）；codex_adapter.close() 写 codex-stderr.log 前过 _redact_credentials。digest/字节数口径不受脱敏影响的位置须显式声明。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -976,7 +1032,7 @@
       "id": "1-8-4",
       "uid": "01a1159570ad-6d4f801673",
       "label": "bridge 进程异常退出 reaper 兜底 killpg",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
@@ -988,7 +1044,7 @@
       "id": "1-8-5",
       "uid": "01a1159571e0-f8c0e53f8f",
       "label": "worker 可执行体 digest 实测校验",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-8",
       "children": [],
@@ -1487,7 +1543,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 15:17:06",
+    "updated": "2026-10-12 18:12:07",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

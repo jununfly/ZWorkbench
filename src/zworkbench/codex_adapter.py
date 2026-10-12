@@ -809,8 +809,11 @@ class CodexAppServerAdapter:
                 terminate_process(process, term_timeout=6.0, kill_timeout=6.0)
             stderr_bytes = process.stderr.read() if process.stderr else b""
             stderr = stderr_bytes.decode("utf-8", errors="replace") if isinstance(stderr_bytes, bytes) else stderr_bytes
+            # Node 1-8-3: codex-stderr.log is an outbound durable sink; the
+            # app-server may echo a provider token back on startup failures, so
+            # redact credential shapes before persisting.
             stderr_path = self.event_log.with_name("codex-stderr.log")
-            stderr_path.write_text(stderr, encoding="utf-8")
+            stderr_path.write_text(_redact_credentials(stderr), encoding="utf-8")
         finally:
             if process.stdout is not None:
                 try:

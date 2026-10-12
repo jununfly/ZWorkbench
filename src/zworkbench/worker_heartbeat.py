@@ -116,16 +116,20 @@ WORKER_ERROR_CODES = frozenset(
         "worker_cleanup_unverified",
         "worker_exit_nonzero",
         "worker_exit_timeout",
+        "worker_executable_digest_mismatch",
         "worker_not_active",
+        "worker_output_credential_forbidden",
         "worker_parent_stopped",
         "worker_process_missing",
         "worker_request_failed",
         "worker_start_failed",
+        "worker_stderr_credential_forbidden",
         "worker_stream_missing",
         "worker_stderr_too_large",
         "worker_timeout",
         "workspace_missing",
         "heartbeat_lost",
+        "host_sandbox_absent",
     }
 )
 
