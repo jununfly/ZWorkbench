@@ -186,7 +186,7 @@
       "id": "1-7",
       "uid": "01a11593d13d-7f655d4ee8",
       "label": "Worker 调度与监督（sub-02）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -923,7 +923,7 @@
       "id": "1-7-4",
       "uid": "01a115956bd5-c2f3fb7fdd",
       "label": "P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1-7",
       "children": [],
@@ -942,10 +942,16 @@
           "q": "1-8-3 出站脱敏在 Worker/Codex 路径的现状（修正“待查”）？",
           "answer": "部分/缺口。codex_adapter._redact_credentials（L78）仅用于 event-log 写出（L771），而 close() 在 L813 把 stderr 直接 write_text 到 codex-stderr.log 未过脱敏；worker_bridge 仅对 stderr 取 digest 不上内容。即 1-8-3 的“close() stderr 出站脱敏”在 Worker/Codex 路径确实存在真实缺口，须由 1-8-3 落地后才能被 1-7-4 验收。",
           "note": ""
+        },
+        {
+          "q": "1-7-4 验收结论：Worker/Codex 路径对 1-8 五项成果的接线核查？",
+          "answer": "全部接线确认（非死代码），逐项证据：1-8-1 host sandbox — worker_bridge ctor 加 require_host_sandbox/host_sandbox_attestation(L197-198,256-257)；运行前 _verify_host_sandbox_boundary() 调用(L462)→verify_host_sandbox_boundary(L886-901)，缺失/无 attestation 即 raise host_sandbox_absent(safe_stop=False)；默认 require=False 需 caller 显式开启，符合 ADR 0010 + grill Q1=a/Q2=(i)（仅 coding worker fail-closed 前置契约）。1-8-2 值级拒密 — import credential_scan(L25-30)；subprocess_supervisor.on_stderr_data 回调接线(L1028,1113→L143-144)；_scan_stderr_for_secrets(L907) fail-closed(worker_stderr_credential_forbidden)；prompt 扫描(L475)；_validate_coding_result 对 envelope reject(L1261, worker_output_credential_forbidden)；semantic_result redact 入 owner(L1315)。1-8-3 出站脱敏 — codex_adapter._redact_credentials(L78)；close() 写 codex-stderr.log 前脱敏(L816，填补旧缺口)；event-log 脱敏(L771)；semantic_result redact(worker_bridge L1315)。1-8-4 reaper killpg — worker_bridge os.killpg 三调用点(L843 终止 / L1559 孤儿 SIGKILL sweep / L1608 存活探测)，setsid 逃逸处理(L1706/L1723)。1-8-5 digest — ctor 实测 executable_digest(L211)，pinned 校验(L212-217, worker_executable_digest_mismatch)，exit receipt 含 executable_digest(L1497)，_measure_executable_digest(L1632)。行为验证：test_worker_coding+test_codex_adapter+test_worker_heartbeat = 58 passed / 7 subtests passed(14.33s) 无回归。结论：Worker 路径已真正接入 1-8 全部共享硬前置，1-7-4 验收/接线闸门通过。",
+          "note": ""
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-8-1": {
       "id": "1-8-1",
@@ -1543,7 +1549,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 18:12:07",
+    "updated": "2026-10-12 20:32:33",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
