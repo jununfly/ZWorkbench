@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 01:11:48
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 11:41:48
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -39,7 +39,7 @@
 ├── [~][Y+] 1-7. Worker 调度与监督（sub-02）
 │   ├── [x][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
 │   ├── [x][Y+] 1-7-2. P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）
-│   ├── [ ][Y+] 1-7-3. P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）
+│   ├── [x][Y+] 1-7-3. P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）
 │   ├── [ ][Y+] 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）
 │   └── [ ][X+] 1-7-5. 心跳监督（长连接存活监督）——须先 ADR：间隔/超时/owner 计账/失败语义；src/ 当前零命中，属产品能力非 fixture（由 1-7-2 切出）
 ├── [ ][Y+] 1-8. 真实架构硬前置（共享）
@@ -67,5 +67,5 @@
 
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
 - 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门） [ ]
-- 1-7-3. P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份） [ ]
+- 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验） [ ]
 <!-- ROADMAP_SECTION_END -->
