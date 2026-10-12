@@ -39,6 +39,7 @@ from .worker_contract import (
     UNKNOWN,
     WorkerContractError,
     WorkerEnvelope,
+    codex_identity_required,
 )
 
 
@@ -91,6 +92,8 @@ class WorkerHandshakeResult:
     workspace_digest: str
     status: str
     exit_code: int
+    #: ADR 0011: ``complete`` or ``complete_with_declared_unknown``.
+    identity_completion: str
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a non-secret result suitable for CompositionOwner."""
@@ -99,6 +102,7 @@ class WorkerHandshakeResult:
             "bridge_schema": WORKER_BRIDGE_SCHEMA,
             "status": self.status,
             "identity": self.identity.to_dict(),
+            "identity_completion": self.identity_completion,
             "provider_identity": self.provider_identity.to_dict(),
             "worker_artifact_identity": self.worker_artifact_identity.to_dict(),
             "worker_schema_identity": self.worker_schema_identity.to_dict(),
@@ -969,7 +973,14 @@ class WorkerBridge:
     def _validate_response(self, response: WorkerEnvelope, request: WorkerEnvelope) -> WorkerHandshakeResult:
         if response.message_type != "handshake.response":
             raise WorkerBridgeError("Worker response is not handshake.response", code="handshake_message_invalid")
-        if not response.identity.is_complete():
+        # ADR 0011: layered completion + no fabricated Codex identity.
+        requires_codex = codex_identity_required(self.worker_schema_identity)
+        if not requires_codex and response.identity.fabricated_codex_fields():
+            raise WorkerBridgeError(
+                "Worker presented a Codex identity it did not declare",
+                code="codex_identity_fabricated",
+            )
+        if not response.identity.is_complete_for(requires_codex):
             raise WorkerBridgeError("Worker handshake identity is incomplete", code="handshake_identity_incomplete")
         static_identity_fields = (
             "parent_run_id",
@@ -1007,6 +1018,7 @@ class WorkerBridge:
             policy_digest=response.policy_digest,
             environment_digest=response.environment_digest,
             workspace_digest=response.workspace_digest,
+            identity_completion=response.identity.completion_level(requires_codex),
             status="handshake_complete",
             exit_code=self._last_exit_receipt["exit_code"] if self._last_exit_receipt else 0,
         )
@@ -1020,7 +1032,13 @@ class WorkerBridge:
     ) -> WorkerCodingResult:
         if response.message_type != "result":
             raise WorkerBridgeError("Worker coding response is not result", code="coding_message_invalid")
-        if not response.identity.is_complete():
+        requires_codex = codex_identity_required(self.worker_schema_identity)
+        if not requires_codex and response.identity.fabricated_codex_fields():
+            raise WorkerBridgeError(
+                "Worker presented a Codex identity it did not declare",
+                code="codex_identity_fabricated",
+            )
+        if not response.identity.is_complete_for(requires_codex):
             raise WorkerBridgeError("Worker coding identity is incomplete", code="coding_identity_incomplete")
         identity_fields = (
             "parent_run_id",

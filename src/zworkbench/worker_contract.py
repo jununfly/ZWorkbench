@@ -130,6 +130,24 @@ def _reject_secrets(value: Mapping[str, Any], field_name: str) -> None:
     visit(value, field_name)
 
 
+#: ADR 0011: Worker schema names that are *declared* to be a real Codex Worker.
+#: Matching is exact; ``codex-app-server-fixture`` is a pinned fixture and is
+#: deliberately not a member, so its Codex identity must stay UNKNOWN.
+CODEX_WORKER_SCHEMA_NAMES = frozenset({"codex-app-server"})
+
+
+def codex_identity_required(worker_schema_identity: Any) -> bool:
+    """Whether a Worker **declares** itself to be Codex (ADR 0011).
+
+    Declaration is exact-match on ``worker_schema_identity.name``, never a
+    prefix or substring test.  It is orthogonal to ``real_worker_mode``: the
+    latter says "real subprocess", this says "which kind of Worker".
+    """
+
+    name = getattr(worker_schema_identity, "name", None)
+    return isinstance(name, str) and name in CODEX_WORKER_SCHEMA_NAMES
+
+
 @dataclass(frozen=True)
 class IdentityChain:
     """Correlation chain shared by parent Run, DSH, Worker and Codex."""
@@ -182,12 +200,76 @@ class IdentityChain:
             )
         return cls(**{field_name: data[field_name] for field_name in cls.FIELD_NAMES})
 
+    #: ADR 0011: always-required, ZWorkbench-owned correlation fields.
+    REQUIRED_FIELDS = (
+        "parent_run_id",
+        "child_run_id",
+        "attempt_id",
+        "dsh_session_id",
+        "dsh_turn_id",
+        "worker_run_id",
+        "event_id",
+        "artifact_id",
+    )
+
+    #: ADR 0011: Worker-owned; required only for a declared Codex Worker.
+    CONDITIONAL_FIELDS = ("codex_thread_id", "codex_turn_id")
+
     def missing_fields(self) -> Tuple[str, ...]:
         return tuple(
             field_name
             for field_name in self.FIELD_NAMES
             if _is_missing(getattr(self, field_name))
         )
+
+    def missing_required_fields(self) -> Tuple[str, ...]:
+        """Required-layer gaps; never legal to declare as UNKNOWN."""
+
+        return tuple(
+            field_name
+            for field_name in self.REQUIRED_FIELDS
+            if _is_missing(getattr(self, field_name))
+        )
+
+    def missing_conditional_fields(self) -> Tuple[str, ...]:
+        """Conditional-layer gaps (Codex identity); legal when declared UNKNOWN."""
+
+        return tuple(
+            field_name
+            for field_name in self.CONDITIONAL_FIELDS
+            if _is_missing(getattr(self, field_name))
+        )
+
+    def fabricated_codex_fields(self) -> Tuple[str, ...]:
+        """Codex fields carrying a real-looking value (ADR 0011)."""
+
+        return tuple(
+            field_name
+            for field_name in self.CONDITIONAL_FIELDS
+            if not _is_missing(getattr(self, field_name))
+        )
+
+    def is_complete_for(self, requires_codex_identity: bool) -> bool:
+        """Layered completion (ADR 0011).
+
+        A declared-Codex Worker needs both layers; any other Worker completes
+        with the Codex layer explicitly UNKNOWN.
+        """
+
+        if self.missing_required_fields():
+            return False
+        if requires_codex_identity and self.missing_conditional_fields():
+            return False
+        return True
+
+    def completion_level(self, requires_codex_identity: bool) -> str:
+        """``complete`` or ``complete_with_declared_unknown`` (ADR 0011)."""
+
+        if not self.is_complete_for(requires_codex_identity):
+            return "incomplete"
+        if self.missing_conditional_fields():
+            return "complete_with_declared_unknown"
+        return "complete"
 
     def is_complete(self) -> bool:
         return not self.missing_fields()
@@ -529,7 +611,11 @@ class WorkerEnvelope:
         return cls.from_dict(decoded)
 
     def missing_completion_fields(self) -> Tuple[str, ...]:
-        missing = list(self.identity.missing_fields())
+        # ADR 0011: layered completion -- the Codex layer is only required when
+        # the Worker declares itself to be Codex.
+        missing = list(self.identity.missing_required_fields())
+        if codex_identity_required(self.worker_schema_identity):
+            missing.extend(self.identity.missing_conditional_fields())
         for prefix, component in (
             ("worker_artifact_identity", self.worker_artifact_identity),
             ("worker_schema_identity", self.worker_schema_identity),
@@ -563,6 +649,15 @@ class WorkerEnvelope:
                 "Worker result is not explicitly completed",
                 missing=("payload.status=completed",),
             )
+        # ADR 0011: a Worker that does not declare itself Codex must not present
+        # a Codex identity; that is fabrication, not evidence.
+        if not codex_identity_required(self.worker_schema_identity):
+            fabricated = self.identity.fabricated_codex_fields()
+            if fabricated:
+                raise WorkerContractError(
+                    "Worker presented a Codex identity it did not declare",
+                    code="codex_identity_fabricated",
+                )
         missing = self.missing_completion_fields()
         if missing:
             raise CompletionBlocked(
@@ -658,12 +753,14 @@ class CapabilityFacade:
 
 
 __all__ = [
+    "CODEX_WORKER_SCHEMA_NAMES",
     "KNOWN_EFFECT_CLASSES",
     "KNOWN_MESSAGE_TYPES",
     "REPLAY_MODES",
     "WORKER_CONTRACT_SCHEMA",
     "UNKNOWN",
     "CapabilityDecision",
+    "codex_identity_required",
     "CapabilityFacade",
     "CapabilityRequest",
     "ComponentIdentity",
