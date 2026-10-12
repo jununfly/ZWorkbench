@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a11593c852-2bbadcdb79",
       "label": "执行层基本功能 — 讨论结论落地路线",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -1231,7 +1231,7 @@
       "id": "1-10",
       "uid": "01a1159f3371-0278a8f182",
       "label": "solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial）",
-      "status": "pending",
+      "status": "completed",
       "mode": "exploit",
       "parent": "1",
       "children": [
@@ -1629,7 +1629,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 21:34:32",
+    "updated": "2026-10-12 21:42:38",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
