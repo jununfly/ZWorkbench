@@ -1168,13 +1168,35 @@
       "id": "1-9-4",
       "uid": "01a1159f319e-fbc75ce771",
       "label": "fail-closed UX 成本回收（PreflightViolation.hint + timeout/failed 区分 + 重试提示）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "PreflightViolation.hint 的形状与填充范围？",
+          "answer": "新增可选字段 hint: Optional[str]=None。to_dict() 恒输出 {code, message, hint}（hint 缺失为 null）。在 local_run.py 的 preflight check 闭包与 _validate_provider_identity、cli.py 的 _case_local_violations / _path_conflict_violations / 内联 timeout_not_positive / prompt_contains_credential_pattern 全部填充可操作 hint。每条 hint 是可复制修复动作：codex_executable_missing→安装 Codex CLI 或 --codex <path>；case_root_missing→先建目录或 --case-root <dir>；provider_not_loopback→首跑仅允许 loopback，真实 Provider 需 --provider-config 显式授权；cli_path_outside_case_root→把导出/备份路径放进 case-root 内。",
+          "note": "hint 是 fail-closed 的可操作化，不改拒绝语义"
+        },
+        {
+          "q": "timeout/failed 如何区分？",
+          "answer": "在 cli.py _run_command 的 except Exception 路径新增 _classify_run_error(exc) 把异常分类进 error.category：CodexTurnWaitTimeout→timeout（操作者 --timeout 耗尽）；TimeoutError/socket.timeout/ConnectionError→timeout（传输超时）；CodexProtocolError→protocol；其他 CodexAdapterError→adapter；其余→execution。error.type 保留原异常类名。status 仍是 failed（fail-closed 语义不动，仅做 UX 分类）。不复用 codex_adapter.classify_provider_failure，因其桶词汇（network/rate_limit/turn_wait/unknown）与操作者可重试引导不同，单独写 CLI 级分类器便于测试。",
+          "note": "分类只为 UX，不改失败终态"
+        },
+        {
+          "q": "重试提示挂在哪里？",
+          "answer": "failed payload 增加顶层 retry_hint(str)，按 error.category 给人类可读下一步：timeout→turn-wait 预算耗尽：增大 --timeout 重试，或 zworkbench doctor 查 provider 可达；protocol→Codex 协议/provider 不兼容：zworkbench doctor 检查 codex 与 endpoint；adapter→adapter 异常：zworkbench doctor 排查环境 + 查 owner ledger；execution→zworkbench doctor 排查环境，可重试则增大 --timeout 或修正 provider。denied payload 不重复加顶层 retry_hint，依赖各 violation 的 hint 已说明如何修复并重跑（避免信息重复）。",
+          "note": "重试提示仅 failed 顶层，denied 用 violation.hint"
+        },
+        {
+          "q": "实现载体与验收判据？",
+          "answer": "改 src/zworkbench/local_run.py（PreflightViolation + preflight 全 hint）+ src/zworkbench/cli.py（_run_command 失败分类 + retry_hint + 内联 violation hint）。测试加进 tests/test_local_run.py（PreflightViolation.hint 序列化 + preflight denied 每个 violation 带非空 hint）与 tests/test_cli_zero_config_run.py（failed 分类 timeout/protocol + retry_hint；denied violation 带 hint）。验收：fake-codex 模拟 CodexTurnWaitTimeout/CodexProtocolError→对应 category + retry_hint 正确；真实冒烟确认 JSON 形状；相邻 run/cli/doctor 回归全绿。",
+          "note": "纯函数便于测试"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-9-5": {
       "id": "1-9-5",
@@ -1590,7 +1612,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 21:05:55",
+    "updated": "2026-10-12 21:20:01",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
