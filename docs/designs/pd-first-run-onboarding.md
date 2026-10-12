@@ -3,7 +3,7 @@ doc-kind: design
 authority: supporting
 axis: product-design
 status: target
-implementation-status: unknown
+implementation-status: implemented
 source: ../prds/r4-onboarding-first-run.md
 source-id: prd-r4-onboarding-first-run
 authority-id: design.first-run-onboarding
@@ -37,7 +37,14 @@ authority-id: design.first-run-onboarding
 
 ## Status
 
-TARGET / UNKNOWN — 设计已收敛，但端到端首跑价值演示仍待 owner-backed 证据（依赖 #40 解后补测，见 R3 价值基线实证纪律）。
+TARGET / IMPLEMENTED — 2026-10-13 于干净 venv（Python 3.13.12 + `pip install .`）复跑，Scope 四项owner-backed：
+
+- **首跑最小形态**：`zworkbench run --prompt` 自动脚手架，退出码 0 且 `recorded_view_present == true`；`--codex` PATH 探测在 `doctor` 的 `codex_executable` 检查中实测命中（codex-cli 0.139.0）；Provider 默认走 loopback、零凭证。
+- **只读自检 `doctor`**：三项全绿（`ready` / exit 0），失败项带 fix hint；零写盘（case_root 目录树与仓库 `git status` 前后均无变化）。
+- **价值演示缝合**：stdout `next_steps` 实测 5 项且含可复制的 `ui-host` 命令。`--open`（子进程拉起 `ui-host`）由 1-9-3 测试覆盖，**本轮复跑未做浏览器级验证**。
+- **fail-closed UX**：「目录缺失」→ hint；「超时」→ `error.category=timeout` + `retry_hint`。
+
+R4 侧「≥2 份真实走查记录」由 owner 豁免（见 R4「豁免留痕」节）；本页 Boundaries 已声明「非作者陌生人」为 UX 目标轨、非判据，不受影响。
 
 ## Source map
 

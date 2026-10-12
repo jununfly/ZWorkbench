@@ -3,7 +3,7 @@ doc-kind: design
 authority: supporting
 axis: experience-path
 status: target
-implementation-status: unknown
+implementation-status: implemented
 source: ../prds/r4-onboarding-first-run.md
 source-id: prd-r4-onboarding-first-run
 authority-id: design.first-run-journey
@@ -38,7 +38,13 @@ authority-id: design.first-run-journey
 
 ## Status
 
-TARGET / UNKNOWN — 端到端脚本与 `recorded_view_present` 验证仍待 owner-backed 证据（依赖 #40 解后补测）。
+TARGET / IMPLEMENTED — 2026-10-13 三项机械验收线在干净 venv（Python 3.13.12 + `pip install .`）中全部 owner-backed 复跑通过：
+
+- 端到端脚本 `scripts/first_run_e2e_regression.py` 退出码 0 且 `recorded_view_present == true`；另以安装产物 console script `zworkbench run` 交叉跑通（`status=completed`，replay `zw-r4-console:recorded-view`）。
+- `zworkbench doctor` 零凭证三项全绿（`ready`，exit 0），case_root 目录树与仓库 `git status` 前后均无变化。
+- 「目录缺失」→ `not_ready` + 可执行 hint；「超时」（挂起 fake codex + `--timeout 2`）→ `error.category=timeout` + 非空 `retry_hint`。
+
+注：R4 侧「≥2 份真实走查记录」一条由 owner 豁免（见 R4「豁免留痕」节）；本路径的 Boundaries 已声明「非作者陌生人 <5 分钟」属 UX 目标轨、非判据，故不受该豁免影响。
 
 ## Source map
 

@@ -21,12 +21,19 @@ can be re-run any number of times and always starts from a clean slate.
 Exit code: ``0`` on PASS, ``1`` on FAIL.
 
 --------------------------------------------------------------------------------
-Gate (do NOT silently skip): the *formal* owner-backed 补测 — a clean venv with
-``pip install .`` plus opening the recorded view in a real browser — still
-depends on issue #40 / the S0 host-enforcement spike being resolved first. This
-script proves the scriptable first-run contract holds today; it does NOT flip
-R4's design-doc status from TARGET/UNKNOWN, and it is intentionally NOT wired
-into a hard CI gate until #40/S0 land (see roadmap 1-9-5 decision log).
+Gate (do NOT silently skip): #40 已于 2026-10-13 关闭，本脚本的机械判据（干净 venv
+``pip install .`` + fake-loopback 零凭证 + ``recorded_view_present == true``）
+已在干净 venv 中复核通过，证据见
+``docs/prds/r4-onboarding-first-run.md`` 的「验收进度」分栏。
+
+R4 is now ``implemented`` (2026-10-13): the mechanical criteria are owner-backed,
+and the "two human 走查记录" criterion was explicitly **waived** by the owner —
+see the 「豁免留痕」 section of ``docs/prds/r4-onboarding-first-run.md``. A waiver
+is not evidence: the first-run journey still has zero observation from a
+non-author perspective, and the "卡点数 <= 2" target remains unmeasured.
+
+This script stays unwired from any hard CI gate by deliberate product choice
+(see roadmap 1-9-5 decision log), not because it is unreliable.
 --------------------------------------------------------------------------------
 """
 
