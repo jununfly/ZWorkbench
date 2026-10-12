@@ -8,10 +8,17 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import sys
 import time
 
 
 SCHEMA = "zworkbench.worker.v1"
+
+# Node 1-8-2/1-8-3 leak scenarios.  Built by runtime concatenation so the
+# fixture source never contains a vendor-real key literal (GitHub push
+# protection rejects the ark- shape even as a test fixture); the runtime
+# value still matches the bridge's credential-shape scanner.
+LEAK_TOKEN = "sk-" + "f4k3t0k3n" * 2
 
 
 def sha256(path: Path) -> str:
@@ -32,6 +39,9 @@ def main() -> int:
             "nonzero",
             "malformed",
             "hang",
+            "stderr-secret",
+            "envelope-secret",
+            "semantic-secret",
         ),
         default="success",
     )
@@ -62,6 +72,11 @@ def main() -> int:
     if scenario == "extra-message":
         print(json.dumps(handshake, ensure_ascii=False, sort_keys=True, separators=(",", ":")), flush=True)
         return 0
+    if scenario == "stderr-secret":
+        # Node 1-8-2: a Worker that leaks a credential shape to stderr is a
+        # real-mode hard-precondition blocker; the bridge must fail closed.
+        sys.stderr.write("provider key leaked: " + LEAK_TOKEN + "\n")
+        sys.stderr.flush()
 
     artifact_root = Path(os.environ["ZWORKBENCH_ARTIFACT_ROOT"]).resolve()
     artifact_root.mkdir(parents=True, exist_ok=True)
@@ -90,6 +105,20 @@ def main() -> int:
     if scenario == "result-unknown":
         # Required-layer gap (ADR 0011); a conditional UNKNOWN is legal now.
         result_identity["worker_run_id"] = "unknown"
+    payload = {
+        "status": "completed",
+        "operation": "read_only_coding",
+        "semantic_result": {"status": "completed", "text": "fixture-ok"},
+        "artifacts": artifacts,
+    }
+    if scenario == "envelope-secret":
+        # Node 1-8-2: a credential-shaped value in a structural payload field
+        # must be rejected at the bridge boundary (fail-closed).
+        payload["note"] = "echo: " + LEAK_TOKEN
+    if scenario == "semantic-secret":
+        # Node 1-8-3: free-text semantic_result content is redacted on the
+        # way into the owner, not rejected.
+        payload["semantic_result"] = {"status": "completed", "text": "checked " + LEAK_TOKEN}
     result = {
         "schema": SCHEMA,
         "message_type": "result",
@@ -102,12 +131,7 @@ def main() -> int:
         "worker_artifact_identity": request["worker_artifact_identity"],
         "worker_schema_identity": request["worker_schema_identity"],
         "capability_request": None,
-        "payload": {
-            "status": "completed",
-            "operation": "read_only_coding",
-            "semantic_result": {"status": "completed", "text": "fixture-ok"},
-            "artifacts": artifacts,
-        },
+        "payload": payload,
     }
     if scenario == "workspace-mutation":
         workspace = Path.cwd() / "worker-must-not-write.txt"

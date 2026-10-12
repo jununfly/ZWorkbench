@@ -47,3 +47,28 @@ ADR 0008 的 **S0 spike 意图与未来 B2 分层 fail-closed 仍完全有效**�
 - 偏离范围：production 路径（默认不设该 env）保持 `WAL` + `FULL`，不受影响。
 - residual risk：opt-in 路径下进程崩溃可能丢失未刷盘的 owner 状态（runs / approvals / effects / replay metadata），safe-stopped 一致性边界弱化。当前 scope 仅本地 sandbox 宿主跑 harness，可接受；**但禁止在 production 环境设 `ZW_OWNER_SANDBOX=1`**。
 - 与 1-9 系列"macOS 沙箱阻断 fsync / sandbox-exec"同根因，纳入同一次 review 审计。
+
+## Amendment: coding Worker 的 host sandbox 前置契约（node 1-8-1）
+
+Node 1-8-1 要求把"host sandbox"作为 coding Worker 真实 Workspace 写入的**前置条件**。本修正案不推翻 ADR 0010 的结论，而是在其之上为 **`WorkerBridge` 的 coding 子进程**补一个**独立、fail-closed 的前置契约**，与 `codex_adapter.host_enforcement`（本 ADR 判定为 fail-open）**语义隔离**。
+
+### 为什么需要独立契约
+
+- coding Worker 子进程与 codex 同样继承 macOS 禁止嵌套 `sandbox_apply` 的限制：`subprocess.Popen` 拉起的 Worker 在主力宿主（本机 Terminal / CI）上**包不住 OS 沙箱**。
+- 但 1-8-1 的节点前提（"真实 Workspace 写入前置"）不能因此退化为"无前置"。ADR 0008 精神 #2（enforcer 不可用→拒绝启动）要求：**检不出边界就 refuse-to-start，绝不降级裸跑**。
+- 因此采用 **operator-attested host-require 契约**：不重建 OS 包裹层（enforcer 已删、B2 判 not-viable），改由 operator 显式声明宿主提供边界；缺声明即拒绝启动。
+
+### 契约内容（`src/zworkbench/host_sandbox.py`）
+
+1. `WorkerBridge` 新增独立构造参数 `require_host_sandbox: bool = False`（**默认关**，保证 dev/test 路径零回归）与 `host_sandbox_attestation: Optional[str]`。
+2. 当 `require_host_sandbox=True` 时，必须在 `read_only_coding` 启动子进程**之前**提供 attestation——来自构造参数 `host_sandbox_attestation` 或环境变量 `ZW_HOST_SANDBOX_ATTESTED`。**两者皆空 → `WorkerBridgeError(code="host_sandbox_absent", safe_stop=False)` 拒绝启动（fail-stop，非 safe-stop）**。
+3. 辅助检测 `detect_os_sandbox()`（best-effort）：仅在能**确证**宿主无边界时返回 `False`（当前仅 macOS `APP_SANDBOX_CONTAINER_ID` 缺失不判 False，Linux `Seccomp:2` 判 True，其余返回 `None`）。当 operator 已 attest 但检测**确证**矛盾（`False`）时同样拒绝启动（conflict = fail-closed）；检测**无法判定**（`None`）时放行（warn-only），避免无法自省的主机被误杀。
+4. 边界缺失属**前置条件失败**，不是 Worker 违规：`_verify_host_sandbox_boundary()` 在 `_activate_operation` 之前 raise，parent run 保持 `running`、child run 永不创建，错误以 fail-stop 语义外抛。
+
+### 与 ADR 0010 / ADR 0008 的关系
+
+- **不改变 ADR 0010 结论**：`codex_adapter.host_enforcement` 在非 seatbelt 宿主仍是 fail-open 的便利开关，文档语义不变。
+- **落实 ADR 0008 精神 #2**：coding Worker 路径上"enforcer 不可用→拒绝启动"以 operator-attested 形式复活；代价是**安全控制依赖 operator 诚实声明**，故 residual risk 仍挂账（恶意/误配 operator 可伪造 attestation）。这是 macOS 包裹不可行下的诚实折中，已在 1-8-1 决策记录中固化。
+- 错误码 `host_sandbox_absent` 已纳入 `worker_heartbeat.WORKER_ERROR_CODES` 词汇表；测试见 `tests/test_worker_coding.py`（absent → fail-closed / attested → 正常 / 默认关 → 不门控）。
+- **不越界**：1-8-1 仅覆盖 coding Worker 子进程；write-seam apply/commit/push 的 host 边界属 node 1-10，本修正案不触及。
+

@@ -19,10 +19,15 @@ import sys
 import threading
 import time
 from dataclasses import dataclass
-import re
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 from urllib.parse import urlsplit
 
+from .credential_scan import (
+    contains_credential_shape,
+    redact_credential_shaped_values,
+    reject_credential_shaped_values,
+)
+from .host_sandbox import verify_host_sandbox_boundary
 from .provider_vocabulary import TRANSPORT_LOOPBACK_ONLY
 
 from ._digest import sha256_json as _sha256_json
@@ -56,16 +61,15 @@ MAX_WORKER_LINE_BYTES = 64 * 1024
 MAX_WORKER_STDERR_BYTES = 64 * 1024
 DEFAULT_PROCESS_STOP_TIMEOUT = 2.0
 SAFE_INHERITED_ENVIRONMENT = frozenset({"PATH", "TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL", "TZ"})
-SECRET_VALUE_PATTERN = re.compile(r"(?:sk-[A-Za-z0-9_-]{12,}|AKIA[0-9A-Z]{12,})")
 
 
 class WorkerBridgeError(RuntimeError):
     """A Worker handshake failure that requires owner safe-stop."""
 
-    def __init__(self, message: str, *, code: str):
+    def __init__(self, message: str, *, code: str, safe_stop: bool = True):
         super().__init__(message)
         self.code = code
-        self.safe_stop = True
+        self.safe_stop = safe_stop
 
 
 class FailStopError(WorkerBridgeError):
@@ -82,6 +86,17 @@ class FailStopError(WorkerBridgeError):
     def __init__(self, message: str, *, code: str):
         super().__init__(message, code=code)
         self.safe_stop = False
+
+
+# Node 1-8-2: content-policy credential rejections are safe-stop by design.  The
+# Worker output was rejected before any dangerous data entered the owner, so the
+# run is abandoned cleanly -- it is NOT a termination-cleanliness failure, and
+# must not be fail-stopped merely because no exit receipt exists yet.
+_CREDENTIAL_REJECTION_CODES = frozenset({
+    "prompt_credential_forbidden",
+    "worker_stderr_credential_forbidden",
+    "worker_output_credential_forbidden",
+})
 
 
 @dataclass(frozen=True)
@@ -176,8 +191,11 @@ class WorkerBridge:
         recovery_mode: bool = False,
         real_worker_mode: bool = False,
         real_worker_reason: Optional[str] = None,
+        expected_executable_digest: Optional[str] = None,
         heartbeat_interval: float = WORKER_HEARTBEAT_INTERVAL_SEC,
         heartbeat_timeout: float = WORKER_HEARTBEAT_TIMEOUT_SEC,
+        require_host_sandbox: bool = False,
+        host_sandbox_attestation: Optional[str] = None,
     ) -> None:
         if not isinstance(worker_artifact_identity, ComponentIdentity):
             raise TypeError("worker_artifact_identity must be ComponentIdentity")
@@ -187,6 +205,17 @@ class WorkerBridge:
             raise TypeError("provider_identity must be ProviderIdentity")
         self.owner = owner
         self.executable = self._resolve_executable(executable)
+        # Node 1-8-5: the Worker executable is measured (never trusted-declared)
+        # into a sha256 digest.  When a pin is supplied it is verified here,
+        # fail-closed, before any process is spawned.
+        self.executable_digest = self._measure_executable_digest(self.executable)
+        if expected_executable_digest is not None:
+            self._require_text(expected_executable_digest, "expected_executable_digest")
+            if self.executable_digest != expected_executable_digest:
+                raise WorkerBridgeError(
+                    "Worker executable digest does not match the pinned expectation",
+                    code="worker_executable_digest_mismatch",
+                )
         self.case_root = Path(case_root).expanduser().resolve()
         self.worker_args = tuple(self._require_arg(item) for item in worker_args)
         self.worker_artifact_identity = worker_artifact_identity
@@ -215,6 +244,17 @@ class WorkerBridge:
             raise ValueError("heartbeat_timeout must be positive")
         self.heartbeat_interval = float(heartbeat_interval)
         self.heartbeat_timeout = float(heartbeat_timeout)
+        # Node 1-8-1: host sandbox boundary as a real pre-condition for the
+        # coding Worker's Workspace writes.  Off by default so dev/test paths are
+        # unaffected; production deployments turn it on and MUST supply an
+        # operator attestation (constructor arg or ZW_HOST_SANDBOX_ATTESTED env).
+        # The gate is enforced in _verify_host_sandbox_boundary before any process
+        # is spawned; a missing/conflicting boundary refuses to start (fail-stop,
+        # not safe-stop) -- see src/zworkbench/host_sandbox.py and ADR 0010.
+        if not isinstance(require_host_sandbox, bool):
+            raise TypeError("require_host_sandbox must be bool")
+        self.require_host_sandbox = require_host_sandbox
+        self.host_sandbox_attestation = host_sandbox_attestation
         self._validate_provider()
         self._state_lock = threading.RLock()
         self.process: Optional[subprocess.Popen[bytes]] = None
@@ -406,6 +446,11 @@ class WorkerBridge:
     ) -> WorkerCodingResult:
         """Run one strict handshake-to-result read-only coding turn.
 
+        Node 1-8-1: the host sandbox boundary is enforced BEFORE any Worker
+        state exists.  A missing/conflicting boundary is a precondition failure,
+        not a Worker violation, so the runs are never touched (parent stays
+        running, child is never created) and the error propagates as fail-stop.
+
         The Worker receives a handshake request whose operation is
         ``read_only_coding``.  It must emit exactly one complete
         ``handshake.response`` followed by exactly one complete ``result``.
@@ -413,6 +458,8 @@ class WorkerBridge:
         before the child Run can complete.  The parent remains running for
         later H4/H5 orchestration.
         """
+
+        self._verify_host_sandbox_boundary()
 
         for value, name in (
             (parent_run_id, "parent_run_id"),
@@ -425,7 +472,7 @@ class WorkerBridge:
             self._require_text(value, name)
         if recovery_of_child_run_id is not None:
             self._require_text(recovery_of_child_run_id, "recovery_of_child_run_id")
-        if SECRET_VALUE_PATTERN.search(prompt):
+        if contains_credential_shape(prompt):
             raise WorkerBridgeError("coding prompt contains a credential-like value", code="prompt_credential_forbidden")
         if timeout <= 0:
             raise ValueError("timeout must be positive")
@@ -836,6 +883,39 @@ class WorkerBridge:
 
         self._last_activity_ts = time.monotonic()
 
+    def _verify_host_sandbox_boundary(self) -> None:
+        """Node 1-8-1: fail-closed gate run before the coding Worker spawns.
+
+        Delegates the operator-attested host-require contract to
+        ``verify_host_sandbox_boundary``.  Raises ``WorkerBridgeError`` with
+        ``code="host_sandbox_absent"`` and ``safe_stop=False`` when the boundary
+        is required but missing or contradicted, so the failure is a fail-stop
+        precondition error rather than a safe-stop Worker accounting event.
+        """
+
+        if not self.require_host_sandbox:
+            return
+        attestation = self.host_sandbox_attestation or os.environ.get(
+            "ZW_HOST_SANDBOX_ATTESTED"
+        )
+        verify_host_sandbox_boundary(
+            require=True,
+            attestation=attestation,
+            environ=os.environ,
+        )
+
+    def _scan_stderr_for_secrets(self, data: bytes) -> None:
+        # Node 1-8-2: a credential-shaped value on the Worker's stderr is a
+        # real-mode hard-precondition blocker.  Fail closed before any owner
+        # state is written -- the leak happened regardless of the run's later
+        # success.
+        text = data.decode("utf-8", errors="replace")
+        if contains_credential_shape(text):
+            raise WorkerBridgeError(
+                "Worker stderr contained a credential-shaped value",
+                code="worker_stderr_credential_forbidden",
+            )
+
     def _start_heartbeat(self, parent_run_id: str, child_run_id: str) -> None:
         """Spawn the background liveness monitor for the current subprocess."""
 
@@ -945,6 +1025,7 @@ class WorkerBridge:
             on_incomplete_line=lambda: WorkerBridgeError("Worker emitted incomplete JSONL", code="handshake_incomplete_jsonl"),
             on_empty_line=lambda: WorkerBridgeError("Worker emitted an empty JSONL message", code="handshake_empty_line"),
             on_iteration=self._raise_if_stop_requested,
+            on_stderr_data=self._scan_stderr_for_secrets,
         )
         deadline = time.monotonic() + timeout
         try:
@@ -1029,6 +1110,7 @@ class WorkerBridge:
             on_incomplete_line=lambda: WorkerBridgeError("Worker emitted incomplete JSONL", code="coding_incomplete_jsonl"),
             on_empty_line=lambda: WorkerBridgeError("Worker emitted an empty JSONL message", code="coding_empty_line"),
             on_iteration=self._raise_if_stop_requested,
+            on_stderr_data=self._scan_stderr_for_secrets,
         )
         deadline = time.monotonic() + timeout
         try:
@@ -1168,6 +1250,17 @@ class WorkerBridge:
             if getattr(response, field_name) != getattr(request, field_name):
                 raise WorkerBridgeError(f"Worker coding {field_name} does not match request", code="coding_provenance_mismatch")
         payload = dict(response.payload)
+        # Node 1-8-2: reject credential-shaped values in structural payload
+        # fields before the contract-shape gate, so an unknown extra field
+        # carrying a secret is still caught.  semantic_result content is
+        # deliberately excluded here -- it is free text and is redacted (not
+        # rejected) on the way into the owner under node 1-8-3, so the same
+        # data is never governed by two policies.
+        envelope_scan = {key: value for key, value in payload.items() if key != "semantic_result"}
+        try:
+            reject_credential_shaped_values(envelope_scan, "payload")
+        except ValueError as exc:
+            raise WorkerBridgeError(f"Worker coding {exc}", code="worker_output_credential_forbidden")
         if set(payload) != {"status", "operation", "semantic_result", "artifacts"}:
             raise WorkerBridgeError("Worker coding result payload shape is unknown", code="coding_payload_unknown")
         if payload["status"] != "completed" or payload["operation"] != "read_only_coding":
@@ -1215,7 +1308,11 @@ class WorkerBridge:
             policy_digest=response.policy_digest,
             environment_digest=response.environment_digest,
             workspace_digest=response.workspace_digest,
-            semantic_result=dict(semantic_result),
+            # Node 1-8-3: redact credential-shaped values in the free-text
+            # semantic_result before it enters the owner (WorkerCodingResult ->
+            # worker.coding ledger).  Rejection would wrongly fail legitimate
+            # results that quote a credential-shaped fixture string.
+            semantic_result=redact_credential_shaped_values(semantic_result),
             artifacts=checked_artifacts,
             status="completed",
             exit_code=self._last_exit_receipt["exit_code"] if self._last_exit_receipt else 0,
@@ -1243,19 +1340,27 @@ class WorkerBridge:
         payload = {"code": error.code, "error_type": type(error).__name__, "message": str(error)}
         try:
             self.owner.record_result(child_run_id, "worker.error", payload, f"{child_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
-            child_receipt = self._last_exit_receipt or {}
-            if child_receipt.get("process_group_clean") is True:
+            if error.code in _CREDENTIAL_REJECTION_CODES:
+                # Content-policy rejection: abandon the run cleanly.  The Worker
+                # output was rejected before any dangerous data entered the owner.
                 self.owner.safe_stop_run(child_run_id, f"worker:{error.code}")
             else:
-                # The child's own termination was not provably clean; fail-stop
-                # it instead of silently safe-stopping.
-                self.owner.fail_run(child_run_id, "worker:child-cleanup-unverified")
+                child_receipt = self._last_exit_receipt or {}
+                if child_receipt.get("process_group_clean") is True:
+                    self.owner.safe_stop_run(child_run_id, f"worker:{error.code}")
+                else:
+                    # The child's own termination was not provably clean; fail-stop
+                    # it instead of silently safe-stopping.
+                    self.owner.fail_run(child_run_id, "worker:child-cleanup-unverified")
         except Exception:
             # The original error remains caller-visible; the owner is
             # inspected separately if a secondary ledger write fails.
             pass
         try:
             self.owner.record_result(parent_run_id, "worker.error", payload, f"{parent_run_id}:worker-error:{error.code}", evidence_source=EVIDENCE_SOURCE_OUTER_COMPOSED)
+            if error.code in _CREDENTIAL_REJECTION_CODES:
+                self.owner.safe_stop_run(parent_run_id, f"worker:{error.code}")
+                return
             receipt = self._last_exit_receipt or {}
             cleanup_verified = receipt.get("process_group_clean") is True
             if not cleanup_verified:
@@ -1389,6 +1494,7 @@ class WorkerBridge:
             "orphan_processes": UNKNOWN if self._orphan_processes is None else self._orphan_processes,
             "stderr_sha256": "sha256:" + self._stderr_digest.hexdigest(),
             "stderr_bytes": self._stderr_bytes,
+            "executable_digest": self.executable_digest,
             "argv_digest": _sha256_json(list(command)),
             "shell": False,
             "start_new_session": True,
@@ -1521,6 +1627,12 @@ class WorkerBridge:
         if not path.is_file():
             raise FileNotFoundError(f"Worker executable not found: {executable}")
         return path
+
+    @staticmethod
+    def _measure_executable_digest(executable: Path) -> str:
+        # Node 1-8-5: measured (not declared) sha256 of the Worker binary so the
+        # exit receipt records the actual code that executed.
+        return "sha256:" + hashlib.sha256(Path(executable).read_bytes()).hexdigest()
 
     @staticmethod
     def _require_text(value: str, name: str) -> str:

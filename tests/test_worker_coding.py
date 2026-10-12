@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 import sys
 import tempfile
@@ -35,7 +36,13 @@ def tree_digest(root: Path) -> dict[str, str]:
 
 
 class WorkerCodingTests(unittest.TestCase):
-    def _case(self, scenario: str = "success"):
+    def _case(
+        self,
+        scenario: str = "success",
+        expected_executable_digest: str | None = None,
+        require_host_sandbox: bool = False,
+        host_sandbox_attestation: str | None = None,
+    ):
         temporary = tempfile.TemporaryDirectory()
         root = Path(temporary.name)
         case_root = root / "case"
@@ -47,6 +54,13 @@ class WorkerCodingTests(unittest.TestCase):
         owner = CompositionOwner(case_root / "state" / "composition.sqlite3")
         owner.create_run("parent-1", "dsh.bootstrap", {"operation": "read-only-coding"})
         owner.start_run("parent-1")
+        kwargs: dict = {}
+        if expected_executable_digest is not None:
+            kwargs["expected_executable_digest"] = expected_executable_digest
+        if require_host_sandbox:
+            kwargs["require_host_sandbox"] = True
+        if host_sandbox_attestation is not None:
+            kwargs["host_sandbox_attestation"] = host_sandbox_attestation
         bridge = WorkerBridge(
             owner,
             sys.executable,
@@ -73,11 +87,21 @@ class WorkerCodingTests(unittest.TestCase):
             policy_digest=digest("read-only-policy"),
             environment_digest=digest("coding-environment"),
             workspace_digest=digest("coding-workspace"),
+            **kwargs,
         )
         return temporary, case_root, workspace, artifact_root, owner, bridge
 
-    def _run(self, scenario: str = "success"):
-        self.temporary, self.case_root, self.workspace, self.artifact_root, self.owner, self.bridge = self._case(scenario)
+    def _run(
+        self,
+        scenario: str = "success",
+        require_host_sandbox: bool = False,
+        host_sandbox_attestation: str | None = None,
+    ):
+        self.temporary, self.case_root, self.workspace, self.artifact_root, self.owner, self.bridge = self._case(
+            scenario,
+            require_host_sandbox=require_host_sandbox,
+            host_sandbox_attestation=host_sandbox_attestation,
+        )
         return self.bridge.read_only_coding(
             "parent-1",
             child_run_id="child-1",
@@ -188,6 +212,108 @@ class WorkerCodingTests(unittest.TestCase):
         self.assertEqual(self.owner.get_run("parent-1")["status"], "running")
         self.assertEqual(len(self.owner.snapshot()["runs"]), 1)
         self.assertEqual(self.owner.get_run("parent-1")["results"], [])
+
+    # ------------------------------------------------------------------
+    # Node 1-8-2: value-level credential-shape rejection on the Worker
+    # output surface (stdout structural fields + stderr), fail-closed.
+    # ------------------------------------------------------------------
+
+    def test_credential_shaped_worker_stderr_fails_closed(self) -> None:
+        with self.assertRaises(WorkerBridgeError) as raised:
+            self._run("stderr-secret")
+        self.assertEqual(raised.exception.code, "worker_stderr_credential_forbidden")
+        self.assertEqual(self.owner.get_run("parent-1")["status"], "safe_stopped")
+        self.assertEqual(self.owner.get_run("child-1")["status"], "safe_stopped")
+        self.assertIsNone(self.bridge.process)
+
+    def test_credential_shaped_envelope_field_fails_closed(self) -> None:
+        # A credential-shaped value inside a structural payload field is
+        # rejected at parse time; semantic_result content is deliberately
+        # excluded from this rejection (node 1-8-3 redacts it instead).
+        with self.assertRaises(WorkerBridgeError) as raised:
+            self._run("envelope-secret")
+        self.assertEqual(raised.exception.code, "worker_output_credential_forbidden")
+        self.assertEqual(self.owner.get_run("parent-1")["status"], "safe_stopped")
+        self.assertEqual(self.owner.get_run("child-1")["status"], "safe_stopped")
+        self.assertIsNone(self.bridge.process)
+
+    # ------------------------------------------------------------------
+    # Node 1-8-3: free-text semantic_result content is redacted on the
+    # way into the owner, not rejected.
+    # ------------------------------------------------------------------
+
+    def test_credential_shaped_semantic_result_is_redacted_not_rejected(self) -> None:
+        result = self._run("semantic-secret")
+        self.assertEqual(result.status, "completed")
+        text = result.semantic_result["text"]
+        self.assertIn("<redacted>", text)
+        self.assertNotIn("sk-", text)
+        child = self.owner.get_run("child-1")
+        self.assertEqual(child["status"], "completed")
+        coding_records = [item["value"] for item in child["results"] if item["kind"] == "worker.coding"]
+        self.assertTrue(coding_records)
+        self.assertNotIn("sk-", json.dumps(coding_records, ensure_ascii=False))
+
+    # ------------------------------------------------------------------
+    # Node 1-8-5: the Worker executable digest is measured (not declared)
+    # into the exit receipt and can be pinned at construction time.
+    # ------------------------------------------------------------------
+
+    def test_exit_receipt_pins_measured_executable_digest(self) -> None:
+        result = self._run()
+        self.assertEqual(result.status, "completed")
+        child = self.owner.get_run("child-1")
+        receipts = [item["value"] for item in child["results"] if item["kind"] == "worker.exit"]
+        self.assertEqual(len(receipts), 1)
+        expected = "sha256:" + hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest()
+        self.assertEqual(receipts[0]["executable_digest"], expected)
+
+    def test_expected_executable_digest_mismatch_fails_closed_at_construction(self) -> None:
+        with self.assertRaises(WorkerBridgeError) as raised:
+            self._case(expected_executable_digest="sha256:" + "0" * 64)
+        self.assertEqual(raised.exception.code, "worker_executable_digest_mismatch")
+
+    def test_expected_executable_digest_match_constructs(self) -> None:
+        measured = "sha256:" + hashlib.sha256(Path(sys.executable).read_bytes()).hexdigest()
+        _, _, _, _, _, bridge = self._case(expected_executable_digest=measured)
+        self.assertIsNotNone(bridge)
+
+    def test_host_sandbox_absent_refuses_to_start_fail_closed(self) -> None:
+        # Node 1-8-1: when require_host_sandbox=True but no operator attestation
+        # is supplied, the Worker must refuse to start (fail-closed).  This is a
+        # precondition failure, so the parent run is left untouched and no child
+        # run is ever created.
+        self.temporary, self.case_root, self.workspace, self.artifact_root, self.owner, self.bridge = self._case(
+            require_host_sandbox=True
+        )
+        with self.assertRaises(WorkerBridgeError) as raised:
+            self._run(require_host_sandbox=True)
+        self.assertEqual(raised.exception.code, "host_sandbox_absent")
+        self.assertFalse(getattr(raised.exception, "safe_stop", True))
+        self.assertEqual(self.owner.get_run("parent-1")["status"], "running")
+        self.assertEqual(len(self.owner.snapshot()["runs"]), 1)
+        self.assertIsNone(self.bridge.process)
+
+    def test_host_sandbox_attested_starts_normally(self) -> None:
+        # Node 1-8-1: with require_host_sandbox=True and a valid operator
+        # attestation, the gate passes and the coding turn completes.
+        self.temporary, self.case_root, self.workspace, self.artifact_root, self.owner, self.bridge = self._case(
+            require_host_sandbox=True, host_sandbox_attestation="operator-asserts-host-boundary-present"
+        )
+        result = self._run(
+            require_host_sandbox=True,
+            host_sandbox_attestation="operator-asserts-host-boundary-present",
+        )
+        self.assertEqual(result.status, "completed")
+        self.assertEqual(self.owner.get_run("parent-1")["status"], "running")
+        self.assertEqual(self.owner.get_run("child-1")["status"], "completed")
+
+    def test_host_sandbox_off_by_default_does_not_gate(self) -> None:
+        # Backward compatibility: existing deployments (no require flag) are not
+        # gated by the host-sandbox contract.
+        self.temporary, self.case_root, self.workspace, self.artifact_root, self.owner, self.bridge = self._case()
+        result = self._run()
+        self.assertEqual(result.status, "completed")
 
     def test_real_adapter_consumes_completion_buffered_before_turn_start_response(self) -> None:
         fake_codex = """

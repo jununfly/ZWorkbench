@@ -83,6 +83,7 @@ class LineStreamSupervisor:
         on_incomplete_line: Optional[Callable[[], Exception]] = None,
         on_empty_line: Optional[Callable[[], Exception]] = None,
         on_iteration: Optional[Callable[[], None]] = None,
+        on_stderr_data: Optional[Callable[[bytes], None]] = None,
     ) -> None:
         self.on_line = on_line
         self.line_cap_bytes = line_cap_bytes
@@ -94,6 +95,7 @@ class LineStreamSupervisor:
         self._on_incomplete_line = on_incomplete_line
         self._on_empty_line = on_empty_line
         self._on_iteration = on_iteration
+        self._on_stderr_data = on_stderr_data
         self.stderr_digest = hashlib.sha256()
         self.stderr_bytes = 0
 
@@ -138,6 +140,8 @@ class LineStreamSupervisor:
                         if self.stderr_cap_bytes is not None and self.stderr_bytes > self.stderr_cap_bytes:
                             self._raise(self._on_stderr_too_large, RuntimeError("stderr exceeds size limit"))
                         self.stderr_digest.update(data)
+                        if self._on_stderr_data is not None:
+                            self._on_stderr_data(data)
                         continue
                     stdout_buffer.extend(data)
                     if self.line_cap_bytes is not None and len(stdout_buffer) > self.line_cap_bytes:

@@ -5,6 +5,7 @@ import json
 import sys
 import tempfile
 import textwrap
+import types
 import unittest
 
 from zworkbench.codex_adapter import (
@@ -199,6 +200,54 @@ class EventLogSecretRedactionTests(unittest.TestCase):
         body = (root / "events.jsonl").read_bytes()
         self.assertEqual(digest, hashlib.sha256(body).hexdigest())
         self.assertNotIn(b"sk-abc123def456ghijk", body)
+
+
+class StderrLogRedactionTests(unittest.TestCase):
+    """Node 1-8-3: close() persists the app-server stderr to
+    ``codex-stderr.log``.  That file is an outbound durable sink, so it must
+    go through the same credential redaction as the event log (the provider
+    token can be echoed back by the app-server on startup failures).
+    """
+
+    # Runtime concatenation: never a vendor-real key literal in source.
+    FAKE_ARK_TOKEN = "ark-" + "f4k3" * 8
+
+    def test_close_stderr_log_is_redacted(self) -> None:
+        import io
+
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            executable = root / "codex"
+            executable.write_text("#!/bin/sh\n", encoding="utf-8")
+            executable.chmod(0o755)
+            with CompositionOwner(root / "owner.sqlite3") as owner:
+                adapter = CodexAppServerAdapter(
+                    owner,
+                    executable,
+                    root / "codex-home",
+                    root / "workspace",
+                    event_log=root / "events.jsonl",
+                )
+                stderr_buffer = io.BytesIO(
+                    ("config error: token=" + self.FAKE_ARK_TOKEN + "\n").encode("utf-8")
+                )
+                stdout_handle = io.BytesIO(b"")
+                stdin_handle = io.BytesIO(b"")
+                process = types.SimpleNamespace(
+                    poll=lambda: 0,  # already exited: teardown skips killpg
+                    stderr=stderr_buffer,
+                    stdout=stdout_handle,
+                    stdin=stdin_handle,
+                )
+                adapter.process = process
+                adapter.selector = types.SimpleNamespace(
+                    unregister=lambda fileobj: None,
+                )
+                adapter.close()
+                body = (root / "events.jsonl").with_name("codex-stderr.log").read_text(encoding="utf-8")
+                self.assertIn("<redacted>", body)
+                self.assertNotIn(self.FAKE_ARK_TOKEN, body)
+                self.assertIn("config error: token=", body)
 
 
 class CodexIdentityTransportBindingTests(unittest.TestCase):

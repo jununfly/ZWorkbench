@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 15:17:06
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 18:12:07
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -40,14 +40,14 @@
 │   ├── [x][Y+] 1-7-1. P0 Q4 双重钳制（worker_bridge 构造处 assert replay_mode==normal + WorkerBridge 加 real_worker_mode: bool=False）
 │   ├── [x][Y+] 1-7-2. P1 H1/H3/H4 fixture 补齐（BLOCKED→落地，含心跳/lifecycle cancel/stop_parent/recover）
 │   ├── [x][Y+] 1-7-3. P1 IdentityChain 完成性分层（须 ADR：required vs UNKNOWN 分级，停止 fake 编造 codex 身份）
-│   ├── [!][Y+] 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）
+│   ├── [ ][Y+] 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验）
 │   └── [x][X+] 1-7-5. 心跳监督（长连接存活监督）——须先 ADR：间隔/超时/owner 计账/失败语义；src/ 当前零命中，属产品能力非 fixture（由 1-7-2 切出）
-├── [ ][Y+] 1-8. 真实架构硬前置（共享）
-│   ├── [ ][Y+] 1-8-1. host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置
-│   ├── [ ][Y+] 1-8-2. 值级拒密 _reject_secrets 扫描（覆盖 external_receipt + stdout/stderr）
-│   ├── [ ][Y+] 1-8-3. semantic_result / codex_adapter.close() stderr 出站脱敏
-│   ├── [ ][Y+] 1-8-4. bridge 进程异常退出 reaper 兜底 killpg
-│   └── [ ][Y+] 1-8-5. worker 可执行体 digest 实测校验
+├── [x][Y+] 1-8. 真实架构硬前置（共享）
+│   ├── [x][Y+] 1-8-1. host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置
+│   ├── [x][Y+] 1-8-2. 值级拒密 _reject_secrets 扫描（覆盖 external_receipt + stdout/stderr）
+│   ├── [x][Y+] 1-8-3. semantic_result / codex_adapter.close() stderr 出站脱敏
+│   ├── [x][Y+] 1-8-4. bridge 进程异常退出 reaper 兜底 killpg
+│   └── [x][Y+] 1-8-5. worker 可执行体 digest 实测校验
 ├── [ ][Y+] 1-9. 首跑与 onboarding（R4 缺口：target/unknown）
 │   ├── [ ][X+] 1-9-1. 零配置首跑脚手架（run --prompt 自动 case-root/workspace/state + --codex PATH 探测 + 默认 fake-loopback）
 │   ├── [ ][X+] 1-9-2. 只读自检 doctor（探测 Codex 可执行性 / case 目录约定 / loopback 可达 + readiness 报告 + 每项 fix hint）
@@ -62,16 +62,10 @@
     ├── [x][X+] 1-10-5. S4 push 单独门（Git push 网关控，爆炸半径分级：diff apply→commit→push）
     ├── [x][X+] 1-10-6. 价值基线实证（H1-H8/C1-C7 runner 出数：省 X% 时间 / 少 Y 次复查；作为继续投安全外壳前置论证）
     └── [ ][X+] 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门）
-<details><summary>阻塞链：1 个节点被阻塞</summary>
-
-- 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验） ← e11: 1-8-1. host sandbox（seatbelt/namespace/unshare）作为真实 Workspace 写入前置 [ ], e12: 1-8-2. 值级拒密 _reject_secrets 扫描（覆盖 external_receipt + stdout/stderr） [ ], e13: 1-8-3. semantic_result / codex_adapter.close() stderr 出站脱敏 [ ], e14: 1-8-4. bridge 进程异常退出 reaper 兜底 killpg [ ], e15: 1-8-5. worker 可执行体 digest 实测校验 [ ]
-
-</details>
-
 
 ### 下一步可开工（ready 前 3）
 
 - 1-10. solo 真实可用 / 真实可用路线图（R3 缺口：in-progress/partial） [ ]
 - 1-10-7. H6-full / H7 / H8 deferred-until-demand（标 deferred，不参与『可用』AND 门） [ ]
-- 1-8. 真实架构硬前置（共享） [ ]
+- 1-7-4. P1 真实 Worker 硬前置（host sandbox / 值级拒密 / 出站脱敏 / reaper killpg / digest 校验） [ ]
 <!-- ROADMAP_SECTION_END -->
