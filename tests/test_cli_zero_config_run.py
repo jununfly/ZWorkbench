@@ -284,6 +284,120 @@ class ZeroConfigRunTests(unittest.TestCase):
         self.assertEqual(payload["status"], "denied")
         self.assertEqual(called["count"], 0)
 
+    def test_classify_run_error_maps_exception_families(self) -> None:
+        # 1-9-4 timeout/failed 区分：纯函数把异常归到 operator-facing 桶。
+        import socket
+
+        from zworkbench.cli import _classify_run_error
+        from zworkbench.codex_adapter import (
+            CodexAdapterError,
+            CodexProtocolError,
+            CodexTurnWaitTimeout,
+        )
+
+        self.assertEqual(_classify_run_error(CodexTurnWaitTimeout("x"))[0], "timeout")
+        self.assertEqual(_classify_run_error(TimeoutError("x"))[0], "timeout")
+        self.assertEqual(_classify_run_error(socket.timeout("x"))[0], "timeout")
+        self.assertEqual(_classify_run_error(ConnectionError("x"))[0], "timeout")
+        self.assertEqual(_classify_run_error(CodexProtocolError("x"))[0], "protocol")
+        self.assertEqual(_classify_run_error(CodexAdapterError("x"))[0], "adapter")
+        self.assertEqual(_classify_run_error(RuntimeError("x"))[0], "execution")
+        for exc in (
+            CodexTurnWaitTimeout("x"),
+            TimeoutError("x"),
+            CodexProtocolError("x"),
+            CodexAdapterError("x"),
+            RuntimeError("x"),
+        ):
+            _, hint = _classify_run_error(exc)
+            self.assertTrue(hint.strip())
+
+    def test_failed_run_reports_timeout_category_and_retry_hint(self) -> None:
+        # 1-9-4 失败分类接入真实 payload：timeout 异常 -> error.category=timeout
+        # + 顶层 retry_hint 指回 --timeout / doctor。status 仍是 failed（fail-closed 不变）。
+        from unittest import mock
+
+        from zworkbench.codex_adapter import CodexTurnWaitTimeout
+
+        codex = self._fake_codex(self.root)
+
+        def _boom(*args, **kwargs):
+            raise CodexTurnWaitTimeout("turn wait expired")
+
+        with mock.patch("zworkbench.cli.LocalReadOnlyRunOrchestrator.run", _boom):
+            status, payload = self._run(
+                [
+                    "run",
+                    "--prompt",
+                    "p",
+                    "--codex",
+                    str(codex),
+                    "--run-id",
+                    "ux-timeout-1",
+                    "--timeout",
+                    "1",
+                ]
+            )
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["status"], "failed")
+        self.assertEqual(payload["error"]["category"], "timeout")
+        self.assertEqual(payload["error"]["type"], "CodexTurnWaitTimeout")
+        self.assertIn("retry_hint", payload)
+        self.assertIn("--timeout", payload["retry_hint"])
+
+    def test_failed_run_reports_protocol_category_and_retry_hint(self) -> None:
+        # protocol 异常 -> error.category=protocol + retry_hint 指向 doctor。
+        from unittest import mock
+
+        from zworkbench.codex_adapter import CodexProtocolError
+
+        codex = self._fake_codex(self.root)
+
+        def _boom(*args, **kwargs):
+            raise CodexProtocolError("turn/start failed: missing turn.id")
+
+        with mock.patch("zworkbench.cli.LocalReadOnlyRunOrchestrator.run", _boom):
+            status, payload = self._run(
+                [
+                    "run",
+                    "--prompt",
+                    "p",
+                    "--codex",
+                    str(codex),
+                    "--run-id",
+                    "ux-protocol-1",
+                    "--timeout",
+                    "1",
+                ]
+            )
+        self.assertEqual(status, 1)
+        self.assertEqual(payload["status"], "failed")
+        self.assertEqual(payload["error"]["category"], "protocol")
+        self.assertIn("doctor", payload["retry_hint"])
+
+    def test_denied_violation_carries_actionable_hint(self) -> None:
+        # 1-9-4 denied payload 的每个 violation 带非空 hint（fail-closed 可操作化）。
+        os.environ["PATH"] = ""
+        status, payload = self._run(
+            [
+                "run",
+                "--case-root",
+                str(self.root),
+                "--workspace",
+                str(self.root),
+                "--prompt",
+                "p",
+                "--run-id",
+                "ux-denied-hint",
+            ]
+        )
+        self.assertEqual(status, 2)
+        self.assertEqual(payload["status"], "denied")
+        violations = payload["preflight"]["violations"]
+        self.assertTrue(violations)
+        target = next(v for v in violations if v["code"] == "codex_executable_missing")
+        self.assertIn("--codex", target["hint"])
+
 
 if __name__ == "__main__":
     unittest.main()

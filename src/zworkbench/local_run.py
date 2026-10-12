@@ -99,9 +99,10 @@ class PreflightViolation:
 
     code: str
     message: str
+    hint: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, str]:
-        return {"code": self.code, "message": self.message}
+    def to_dict(self) -> Dict[str, Optional[str]]:
+        return {"code": self.code, "message": self.message, "hint": self.hint}
 
 
 @dataclass(frozen=True)
@@ -356,10 +357,10 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
     checks: Dict[str, bool] = {}
     violations: list[PreflightViolation] = []
 
-    def check(name: str, passed: bool, code: str, message: str) -> None:
+    def check(name: str, passed: bool, code: str, message: str, hint: Optional[str] = None) -> None:
         checks[name] = passed
         if not passed:
-            violations.append(PreflightViolation(code, message))
+            violations.append(PreflightViolation(code, message, hint))
 
     root = config.case_root
     root_is_directory = root.is_dir()
@@ -368,6 +369,7 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         root_is_directory,
         "case_root_missing_or_not_directory",
         "case_root must already exist as a directory",
+        "先创建 case 目录，或用 --case-root <已存在的目录> 指定",
     )
 
     check(
@@ -375,18 +377,21 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         config.mode == LOCAL_READ_ONLY_MODE,
         "mode_not_local_read_only",
         "mode must be local_read_only",
+        "首跑固定 local_read_only 模式，勿改 --mode",
     )
     check(
         "read_only_sandbox",
         config.sandbox == READ_ONLY_SANDBOX,
         "sandbox_not_read_only",
         "sandbox must be read-only",
+        "首跑固定 read-only sandbox，勿改 --sandbox",
     )
     check(
         "approval_policy_never",
         config.approval_policy == NO_APPROVAL_POLICY,
         "approval_policy_not_disabled",
         "the first slice must not enable an unreviewed approval path",
+        "首跑禁止启用 unreviewed 审批路径（--approval-policy never）",
     )
 
     workspace_is_directory = config.workspace.is_dir()
@@ -395,30 +400,35 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         workspace_is_directory,
         "workspace_missing_or_not_directory",
         "workspace must already exist as a directory",
+        "先创建 workspace 目录，或用 --workspace <已存在的目录> 指定",
     )
     check(
         "workspace_inside_case",
         _is_inside(root, config.workspace),
         "workspace_outside_case_root",
         "workspace must be inside case_root",
+        "把 --workspace 放进 case-root 内（首跑要求 case-local）",
     )
     check(
         "state_inside_case",
         _is_inside(root, config.database),
         "state_outside_case_root",
         "database must be inside case_root",
+        "state 数据库须放在 case-root 内（--db 默认 <case-root>/state/composition.sqlite3）",
     )
     check(
         "code_home_inside_case",
         _is_inside(root, config.code_home),
         "code_home_outside_case_root",
         "CODEX_HOME must be inside case_root",
+        "CODEX_HOME 须放在 case-root 内（--code-home 默认 <case-root>/codex-home）",
     )
     check(
         "event_log_inside_case",
         _is_inside(root, config.event_log),
         "event_log_outside_case_root",
         "event log must be inside case_root",
+        "event log 须放在 case-root 内（--event-log 默认 <case-root>/events/codex.jsonl）",
     )
 
     check(
@@ -426,12 +436,14 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         config.codex_executable.is_file(),
         "codex_executable_missing",
         "Codex executable must already exist as a file",
+        "安装 Codex CLI 后加入 PATH，或用 --codex <可执行文件绝对路径> 显式指向",
     )
     check(
         "codex_executable_executable",
         config.codex_executable.is_file() and os.access(config.codex_executable, os.X_OK),
         "codex_executable_not_executable",
         "Codex executable must be executable",
+        "确认 codex 文件有可执行权限（chmod +x），或用 --codex 指向可执行文件",
     )
 
     provider_valid, provider_violations = _validate_provider_identity(config.provider_identity)
@@ -440,6 +452,7 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         provider_valid[0],
         "provider_identity_missing_or_invalid",
         "provider identity must include provider, model and endpoint strings",
+        "provider identity 须含 provider / model / endpoint 三个非空字符串",
     )
     provider_name = config.provider_identity.get("provider")
     authorized_provider = bool(provider_name) and provider_name in config.authorized_providers
@@ -449,6 +462,7 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         "provider_not_loopback",
         "Provider endpoint must resolve to localhost/loopback, or name an "
         "explicitly authorized remote provider from config",
+        "首跑仅允许 loopback（localhost / 127.0.0.1）；真实 Provider 需 --provider-config 显式授权",
     )
     violations.extend(provider_violations)
     check(
@@ -456,6 +470,7 @@ def preflight(config: LocalReadOnlyRunConfig) -> PreflightResult:
         config.provider_profile is None or config.provider_config_path is not None,
         "real_provider_config_missing",
         "an explicit real Provider profile requires an explicit --provider-config path",
+        "显式真实 Provider profile 必须配套 --provider-config <path>",
     )
     real_requested = config.provider_profile is not None
     check(
@@ -513,6 +528,7 @@ def _validate_provider_identity(identity: Mapping[str, Any]) -> Tuple[Tuple[bool
             PreflightViolation(
                 "provider_endpoint_invalid",
                 "Provider endpoint is not a valid URL",
+                "provider endpoint 须为合法 URL（含 scheme 与 host，如 http://127.0.0.1:11434）",
             )
         )
         return (True, False), violations
@@ -521,12 +537,17 @@ def _validate_provider_identity(identity: Mapping[str, Any]) -> Tuple[Tuple[bool
             PreflightViolation(
                 "provider_endpoint_scheme_not_supported",
                 "Provider endpoint must use http or https",
+                "provider endpoint 仅支持 http / https",
             )
         )
         return (True, False), violations
     if parsed.username or parsed.password:
         violations.append(
-            PreflightViolation("provider_endpoint_embeds_credentials", "Provider endpoint must not contain credentials")
+            PreflightViolation(
+                "provider_endpoint_embeds_credentials",
+                "Provider endpoint must not contain credentials",
+                "provider endpoint 不能内联账号密码；凭证走 env_ref 注入，不落盘",
+            )
         )
         return (True, False), violations
     loopback = _is_loopback_host(host) if parsed.scheme and host else False
