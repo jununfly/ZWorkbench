@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 20:32:33
+> 数据文件: `execution-layer-basic-functions.json` | 最后更新: 2026-10-12 20:46:30
 
 [~][X+] 1. 执行层基本功能 — 讨论结论落地路线
 ├── [x][Y+] 1-1. Provider 适配与降级（sub-05）
@@ -49,7 +49,7 @@
 │   ├── [x][Y+] 1-8-4. bridge 进程异常退出 reaper 兜底 killpg
 │   └── [x][Y+] 1-8-5. worker 可执行体 digest 实测校验
 ├── [ ][Y+] 1-9. 首跑与 onboarding（R4 缺口：target/unknown）
-│   ├── [ ][X+] 1-9-1. 零配置首跑脚手架（run --prompt 自动 case-root/workspace/state + --codex PATH 探测 + 默认 fake-loopback）
+│   ├── [x][X+] 1-9-1. 零配置首跑脚手架（run --prompt 自动 case-root/workspace/state + --codex PATH 探测 + 默认 fake-loopback）
 │   ├── [ ][X+] 1-9-2. 只读自检 doctor（探测 Codex 可执行性 / case 目录约定 / loopback 可达 + readiness 报告 + 每项 fix hint）
 │   ├── [ ][X+] 1-9-3. 价值演示缝合（run 末 stdout 追加 next_steps 数组 + --open 自动拉起 ui-host，仍 loopback 只读）
 │   ├── [ ][X+] 1-9-4. fail-closed UX 成本回收（PreflightViolation.hint + timeout/failed 区分 + 重试提示）
