@@ -1091,37 +1091,78 @@
       "id": "1-9-1",
       "uid": "01a1159f3043-c5e493affc",
       "label": "零配置首跑脚手架（run --prompt 自动 case-root/workspace/state + --codex PATH 探测 + 默认 fake-loopback）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-9-1 零配置 run 的 case-root/workspace/codex 默认推导策略？",
+          "answer": "采用『最小惊讶 + 与现有 --case-root . 语义一致』方案：(1) --case-root 省略时默认 Path.cwd()，state/events/codex-home 仍落 case-root 内（沿用既有布局）；与 1-9 决策『验收轨=空 case_root 下 pip install. 』一致。(2) --workspace 省略时默认 = case_root（只读任务分析的即当前工程）。(3) --codex 省略时走 shutil.which('codex') 探测 PATH，找不到则回落字面 'codex' 由 preflight 的 codex_executable_missing 给出清晰拒绝（不静默失败）。(4) --provider 已是 fake-loopback 默认，无需改。代价：默认会在 CWD 写 state/events/codex-home 三个目录；需隔离的用户显式传 --case-root。该代价与现有『传 --case-root .』行为完全一致，非新增污染。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-9-2": {
       "id": "1-9-2",
       "uid": "01a1159f30b6-2fdbd635df",
       "label": "只读自检 doctor（探测 Codex 可执行性 / case 目录约定 / loopback 可达 + readiness 报告 + 每项 fix hint）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "doctor 的 CLI 形态与就绪判定？",
+          "answer": "独立子命令 zworkbench doctor，复用 1-9-1 的零配置默认推导（--case-root 默认 cwd、--workspace 默认 case_root、--codex 默认 PATH 探测、--endpoint 默认 http://127.0.0.1:11434）。输出统一 JSON 到 stdout：{schema, command, status: ready|not_ready, checks:[{name,status,detail,fix_hint}]}。退出码 0=ready（全部 pass）、1=not_ready（任一 fail）、2=参数非法。fix_hint 每项必给可执行修复动作，pass 项为 null。",
+          "note": "probe 形状与 run 的 JSON 风格一致"
+        },
+        {
+          "q": "doctor 的只读硬边界与三项探测方式？",
+          "answer": "硬边界=零写盘：不创建 state/events/codex-home（即使默认推导指向不存在的目录）、不打开/创建 owner DB、不发起 run。探测方式：(1) codex 可执行性=定位（--codex 或 which）后以 10s 超时执行 codex --version 捕获输出，失败/超时记 fail；(2) case 目录约定=纯 stat 检查 case_root/workspace 存在性 + 报告 db/code_home/event_log 推导路径，并断言运行前后目录树不变（测试守卫）；(3) loopback 可达=仅对 loopback endpoint 发 2s 超时 HTTP GET；非 loopback endpoint 一律报 unknown 且不发网络请求（对齐 1-9 决策：不代持凭证、不碰真实 Provider，issue #39 关闭前不得声称配置完成）。",
+          "note": "只读自检的『只读』是硬约束不是注释"
+        },
+        {
+          "q": "实现载体与验收判据？",
+          "answer": "新模块 src/zworkbench/doctor.py（纯探测逻辑，无 CLI 依赖，可注入 clock/prober 便于测试）+ cli.py 薄接线；测试 tests/test_doctor.py TDD 先行。验收判据：全绿测试覆盖——codex 缺失/存在、case_root/workspace 缺失/存在、loopback 可达/不可达/非 loopback 跳过、零写盘守卫（doctor 运行后空 case_root 目录树逐字节不变）、ready/not_ready 聚合与退出码。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-9-3": {
       "id": "1-9-3",
       "uid": "01a1159f312a-1f52738d96",
       "label": "价值演示缝合（run 末 stdout 追加 next_steps 数组 + --open 自动拉起 ui-host，仍 loopback 只读）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-9",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "next_steps 的形状与内容？",
+          "answer": "在 run 末 stdout 的 JSON payload 追加 next_steps 数组（list[dict]），每项含 command/purpose_zh/read_only/precondition 四键。内容覆盖价值闭环：doctor（验环境）、ui-host --open（只读评审）、snapshot（看 owner 状态）、export（可移植导出）、write propose（从 run 结论出发起草可逆写）。read_only=true 表示不碰 Provider / 不改 owner 持久态；write propose 为 false。write propose 的 --repo 不在 run config 内，命令用占位 <本地 git 仓库> 并在 precondition 注明需 case-root 内的 worktree-root。next_steps 在 run 真正跑出结论（completed 路径与 failed 异常路径，owner DB 存在）时附带；denied（preflight/CLI 拒绝，未建 run）不附带。",
+          "note": "缝合的是价值闭环，不是又一套 onboarding"
+        },
+        {
+          "q": "（--open）的语义与只读硬边界？",
+          "answer": "「--open」是 run 的 opt-in 标志，仅当 run 末 status=completed 时，在打印 run payload 之后自动调用只读 ui-host（loopback 强制、无 --db、无 run）。复用 _ui_host_command 只读实现，构造 argparse.Namespace(host=LOOPBACK, port=0, review=False) 调用。denied/failed 不拉起（无 UI 可看，且避免阻塞）。硬边界由复用 ui-host 保证：绝不接真实 Provider、绝不打开 owner DB、绝不发起 run。拉起前给 run payload 打印加 flush=True，确保 payload 先于 ui-host 的 serving announce 出现在 stdout。退出码：--open 阻塞直到用户中断（SIGINT/SIGTERM），ui-host 正常 close 后 run 整体返回 0（completed）。",
+          "note": "复用只读 ui-host，不新建可写宿主"
+        },
+        {
+          "q": "实现载体与验收判据？",
+          "answer": "改动落在 src/zworkbench/cli.py（_build_next_steps 纯函数 + run 解析器加 --open + _run_command 缝合），不新建模块。测试加进 tests/test_cli_zero_config_run.py（复用 fake-codex harness）。验收：completed run payload 含 next_steps 5 项且键齐全、read_only 为 bool、命令引用真实 db/case_root；denied payload 无 next_steps；--open 在 completed 时调用 _ui_host_command 且 host=LOOPBACK/review=False（monkeypatch 避免阻塞）；--open 在 denied 时不调用。TDD 先行。",
+          "note": "纯函数便于测试"
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-9-4": {
       "id": "1-9-4",
@@ -1549,7 +1590,7 @@
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 20:32:33",
+    "updated": "2026-10-12 21:05:55",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [
