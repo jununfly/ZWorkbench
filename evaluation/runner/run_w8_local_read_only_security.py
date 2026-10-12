@@ -52,12 +52,22 @@ SECURITY_RUNNER_SCHEMA = "zworkbench-w8-local-read-only-security-runner/v1"
 
 @contextmanager
 def network_tripwire() -> Iterator[list[Dict[str, Any]]]:
-    """Record and reject socket/DNS attempts made inside the fixture process."""
+    """Record and reject *network* socket/DNS attempts inside the fixture process.
+
+    The tripwire only treats network egress (AF_INET / AF_INET6) as forbidden.
+    Local Unix-domain sockets (AF_UNIX) are local IPC and are passed through
+    untouched: some runtimes broker legitimate OS operations (file open, mkdir)
+    through a local socket, and flagging those would trip on the host runtime
+    instead of on the code under test.
+    """
 
     attempts: list[Dict[str, Any]] = []
+    original_connect = socket.socket.connect
 
     def blocked_connect(_sock, address, *args, **kwargs):
-        del args, kwargs
+        # A string address is an AF_UNIX path: local IPC, not network egress.
+        if isinstance(address, str):
+            return original_connect(_sock, address, *args, **kwargs)
         attempts.append({"operation": "socket.connect", "address": repr(address)})
         raise AssertionError("network access denied by W8 fixture tripwire")
 
