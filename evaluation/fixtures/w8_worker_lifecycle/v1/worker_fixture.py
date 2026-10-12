@@ -18,10 +18,11 @@ SCHEMA = "zworkbench.worker.v1"
 
 def send_handshake(request: dict) -> None:
     identity = dict(request["identity"])
+    # ADR 0011: pinned non-Codex Worker -- declare the Codex layer UNKNOWN.
     identity.update(
         {
-            "codex_thread_id": "lifecycle-thread-1",
-            "codex_turn_id": "lifecycle-turn-1",
+            "codex_thread_id": "unknown",
+            "codex_turn_id": "unknown",
             "event_id": "lifecycle-event-1",
         }
     )

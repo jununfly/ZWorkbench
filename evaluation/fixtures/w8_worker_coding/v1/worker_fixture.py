@@ -45,10 +45,11 @@ def main() -> int:
         time.sleep(60)
         return 0
     identity = dict(request["identity"])
+    # ADR 0011: pinned non-Codex Worker -- declare the Codex layer UNKNOWN.
     identity.update(
         {
-            "codex_thread_id": "codex-thread-1",
-            "codex_turn_id": "codex-turn-1",
+            "codex_thread_id": "unknown",
+            "codex_turn_id": "unknown",
             "event_id": "worker-event-1",
         }
     )
@@ -87,7 +88,8 @@ def main() -> int:
     result_identity["event_id"] = "worker-result-event-1"
     result_identity["artifact_id"] = "worker-coding-artifact-1"
     if scenario == "result-unknown":
-        result_identity["codex_turn_id"] = "unknown"
+        # Required-layer gap (ADR 0011); a conditional UNKNOWN is legal now.
+        result_identity["worker_run_id"] = "unknown"
     result = {
         "schema": SCHEMA,
         "message_type": "result",

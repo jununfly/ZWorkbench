@@ -136,8 +136,10 @@ class FailStopContractTests(unittest.TestCase):
             dsh_session_id="dsh-session-1",
             dsh_turn_id="dsh-turn-1",
             worker_run_id="child-1",
-            codex_thread_id="thread-1",
-            codex_turn_id="turn-1",
+            # ADR 0011: this crafted envelope is validated against a pinned
+            # non-Codex schema, so the Codex layer must stay UNKNOWN.
+            codex_thread_id="unknown",
+            codex_turn_id="unknown",
             event_id="event-1",
             artifact_id="artifact-1",
         )

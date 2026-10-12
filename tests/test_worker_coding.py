@@ -123,8 +123,9 @@ class WorkerCodingTests(unittest.TestCase):
 
         self.assertEqual(result.status, "completed")
         self.assertEqual(result.semantic_result["text"], "fixture-ok")
-        self.assertEqual(result.identity.codex_thread_id, "codex-thread-1")
-        self.assertEqual(result.identity.codex_turn_id, "codex-turn-1")
+        # ADR 0011: declared UNKNOWN, not fabricated.
+        self.assertEqual(result.identity.codex_thread_id, "unknown")
+        self.assertEqual(result.identity.codex_turn_id, "unknown")
         self.assertEqual(tree_digest(self.workspace), before)
         for descriptor in result.artifacts.values():
             path = self.artifact_root / descriptor["path"]

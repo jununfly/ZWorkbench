@@ -94,12 +94,19 @@ class WorkerBridgeTests(unittest.TestCase):
         result = self._run()
 
         self.assertEqual(result.status, "handshake_complete")
-        self.assertTrue(result.identity.is_complete())
+        # ADR 0011: strict all-field completion is no longer the contract for a
+        # non-Codex Worker; completion is layered and the Codex layer is declared
+        # UNKNOWN rather than fabricated.
+        self.assertTrue(result.identity.is_complete_for(False))
+        self.assertEqual(result.identity.missing_required_fields(), ())
         self.assertEqual(result.identity.parent_run_id, "parent-1")
         self.assertEqual(result.identity.child_run_id, "child-1")
         self.assertEqual(result.identity.dsh_session_id, "dsh-session-1")
-        self.assertEqual(result.identity.codex_thread_id, "codex-thread-1")
-        self.assertEqual(result.identity.codex_turn_id, "codex-turn-1")
+        # ADR 0011: a pinned non-Codex Worker declares its Codex identity UNKNOWN
+        # instead of fabricating thread/turn ids.
+        self.assertEqual(result.identity.codex_thread_id, "unknown")
+        self.assertEqual(result.identity.codex_turn_id, "unknown")
+        self.assertEqual(result.identity_completion, "complete_with_declared_unknown")
         self.assertEqual(self.bridge.process, None)
 
         parent = self.owner.get_run("parent-1")
@@ -164,6 +171,88 @@ class WorkerBridgeTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, expected_code)
                 self.assertIsNone(self.bridge.process)
                 self.assertEqual(self.owner.get_run("child-1")["status"], "safe_stopped")
+
+
+class IdentityCompletionLayeringTests(unittest.TestCase):
+    """Node 1-7-3 / ADR 0011: layered IdentityChain completion.
+
+    A pinned non-Codex Worker must complete with a declared-UNKNOWN Codex
+    identity, and must be rejected when it fabricates one.
+    """
+
+    def _case(self, scenario: str = "success"):
+        temporary = tempfile.TemporaryDirectory()
+        root = Path(temporary.name)
+        case_root = root / "case"
+        (case_root / "workspace").mkdir(parents=True)
+        owner = CompositionOwner(case_root / "state" / "composition.sqlite3")
+        owner.create_run("parent-1", "dsh.bootstrap", {"operation": "bootstrap"})
+        owner.start_run("parent-1")
+        bridge = WorkerBridge(
+            owner,
+            sys.executable,
+            case_root,
+            worker_args=(str(FIXTURE), "--scenario", scenario),
+            worker_artifact_identity=ComponentIdentity(
+                name="codex-worker-fixture",
+                version="1.0.0",
+                digest=digest("worker-artifact"),
+                source="pinned-fixture",
+            ),
+            worker_schema_identity=ComponentIdentity(
+                name="codex-app-server-fixture",
+                version="v1",
+                digest=digest("worker-schema"),
+                source="pinned-fixture-schema",
+            ),
+            provider_identity=ProviderIdentity(
+                provider="fake-loopback",
+                model="fixture-model",
+                endpoint="http://127.0.0.1:11434",
+                transport="loopback-only",
+            ),
+            policy_digest=digest("policy"),
+            environment_digest=digest("environment"),
+            workspace_digest=digest("workspace"),
+        )
+        self.addCleanup(owner.close)
+        self.addCleanup(bridge.close)
+        self.addCleanup(temporary.cleanup)
+        return owner, bridge
+
+    def test_declared_unknown_codex_identity_completes(self) -> None:
+        owner, bridge = self._case()
+        result = bridge.handshake(
+            "parent-1",
+            child_run_id="child-1",
+            attempt_id="attempt-1",
+            dsh_session_id="dsh-session-1",
+            dsh_turn_id="dsh-turn-1",
+            timeout=1.0,
+        )
+        self.assertEqual(result.status, "handshake_complete")
+        self.assertEqual(result.identity_completion, "complete_with_declared_unknown")
+        self.assertEqual(result.identity.codex_thread_id, "unknown")
+        recorded = [
+            item
+            for item in owner.get_run("child-1")["results"]
+            if item["kind"] == "worker.handshake"
+        ]
+        self.assertEqual(recorded[0]["value"]["identity_completion"], "complete_with_declared_unknown")
+
+    def test_fabricated_codex_identity_is_rejected_fail_closed(self) -> None:
+        owner, bridge = self._case("codex-fabricated")
+        with self.assertRaises(WorkerBridgeError) as raised:
+            bridge.handshake(
+                "parent-1",
+                child_run_id="child-1",
+                attempt_id="attempt-1",
+                dsh_session_id="dsh-session-1",
+                dsh_turn_id="dsh-turn-1",
+                timeout=1.0,
+            )
+        self.assertEqual(raised.exception.code, "codex_identity_fabricated")
+        self.assertEqual(owner.get_run("child-1")["status"], "safe_stopped")
 
 
 class Q4DoubleClampTests(unittest.TestCase):

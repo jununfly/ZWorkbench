@@ -146,16 +146,57 @@ class WorkerContractTests(unittest.TestCase):
         self.assertTrue(raised.exception.safe_stop)
 
     def test_worker_completion_is_blocked_when_identity_is_unknown(self):
+        # Required layer: a ZWorkbench-owned field may never be UNKNOWN.
         envelope = make_envelope(
             message_type="result",
-            identity=replace(make_envelope().identity, codex_turn_id=UNKNOWN),
+            identity=replace(make_envelope().identity, worker_run_id=UNKNOWN),
             payload={"status": "completed"},
         )
 
         with self.assertRaises(CompletionBlocked) as raised:
             envelope.validate_worker_completion()
 
-        self.assertIn("codex_turn_id", raised.exception.missing)
+        self.assertIn("worker_run_id", raised.exception.missing)
+
+    def test_identity_completion_is_layered(self):
+        from zworkbench.worker_contract import CODEX_WORKER_SCHEMA_NAMES, codex_identity_required
+
+        identity = make_envelope().identity
+        declared_unknown = replace(identity, codex_thread_id=UNKNOWN, codex_turn_id=UNKNOWN)
+
+        # Non-Codex Worker: declared UNKNOWN Codex identity is a legal completion.
+        self.assertTrue(declared_unknown.is_complete_for(False))
+        self.assertFalse(declared_unknown.is_complete())
+        self.assertEqual(declared_unknown.missing_required_fields(), ())
+        self.assertEqual(declared_unknown.missing_conditional_fields(), ("codex_thread_id", "codex_turn_id"))
+
+        # Declared Codex Worker: the conditional layer becomes required.
+        self.assertFalse(declared_unknown.is_complete_for(True))
+        self.assertEqual(declared_unknown.missing_fields(), ("codex_thread_id", "codex_turn_id"))
+
+        # Declaration is exact-match, never prefix/substring.
+        self.assertIn("codex-app-server", CODEX_WORKER_SCHEMA_NAMES)
+        self.assertTrue(codex_identity_required(ComponentIdentity(name="codex-app-server", version="v1", digest="sha256:x", source="pinned")))
+        self.assertFalse(codex_identity_required(ComponentIdentity(name="codex-app-server-fixture", version="v1", digest="sha256:x", source="pinned-fixture-schema")))
+
+    def test_fabricated_codex_identity_is_rejected(self):
+        # A non-Codex Worker cannot invent a Codex identity to satisfy the seal.
+        envelope = make_envelope(
+            message_type="result",
+            identity=replace(make_envelope().identity, worker_run_id="worker-1"),
+            worker_schema_identity=ComponentIdentity(
+                name="codex-app-server-fixture",
+                version="v1",
+                digest="sha256:schema",
+                source="pinned-fixture-schema",
+            ),
+            payload={"status": "completed"},
+        )
+
+        with self.assertRaises(WorkerContractError) as raised:
+            envelope.validate_worker_completion()
+
+        self.assertEqual(raised.exception.code, "codex_identity_fabricated")
 
     def test_worker_completion_requires_explicit_completed_result(self):
         envelope = make_envelope(message_type="result", payload={"status": "completed"})

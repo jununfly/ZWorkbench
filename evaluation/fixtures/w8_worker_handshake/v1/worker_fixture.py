@@ -18,6 +18,7 @@ def main() -> int:
         choices=(
             "success",
             "unknown",
+            "codex-fabricated",
             "mismatch",
             "identity-mismatch",
             "provenance-mismatch",
@@ -40,15 +41,22 @@ def main() -> int:
 
     request = json.loads(line)
     identity = dict(request["identity"])
+    # ADR 0011: this fixture is a pinned non-Codex Worker, so it declares its
+    # Codex identity UNKNOWN instead of inventing thread/turn ids.
     identity.update(
         {
-            "codex_thread_id": "codex-thread-1",
-            "codex_turn_id": "codex-turn-1",
+            "codex_thread_id": "unknown",
+            "codex_turn_id": "unknown",
             "event_id": "worker-event-1",
         }
     )
+    # Required-layer gap: a ZWorkbench-owned field may never be UNKNOWN.
     if scenario == "unknown":
-        identity["codex_thread_id"] = "unknown"
+        identity["worker_run_id"] = "unknown"
+    # ADR 0011: fabrication is a declared failure mode, not a shortcut.
+    if scenario == "codex-fabricated":
+        identity["codex_thread_id"] = "codex-thread-1"
+        identity["codex_turn_id"] = "codex-turn-1"
     if scenario == "identity-mismatch":
         identity["parent_run_id"] = "other-parent"
     response = {
