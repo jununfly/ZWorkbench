@@ -1469,7 +1469,7 @@
       "id": "1-7-5",
       "uid": "01a12bf3027b-df43722572",
       "label": "心跳监督（长连接存活监督）——须先 ADR：间隔/超时/owner 计账/失败语义；src/ 当前零命中，属产品能力非 fixture（由 1-7-2 切出）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-7",
       "children": [],
@@ -1481,12 +1481,13 @@
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-07 16:56:09",
-    "updated": "2026-10-12 14:03:43",
+    "updated": "2026-10-12 15:17:06",
     "md_file": "roadmap/execution-layer-basic-functions.md"
   },
   "edges": [

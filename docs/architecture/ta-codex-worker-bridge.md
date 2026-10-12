@@ -79,7 +79,7 @@ stdout/stderr/line 超限、启动失败、超时或无法清理进程树时，b
 - **UNKNOWN / BLOCKED（须显式标注，不得据「代码存在」标 DONE）：**
   - ~~H1/H3/H4 fixture 全部零覆盖~~ **已过时（2026-10-12 审计，节点 1-7-2）**：H1 负向测试已落地（`tests/test_dsh_runtime.py` 7 项，含 digest 不符/未知 manifest 字段/路径逃逸/未知 bootstrap 消息/非零退出）；H3 已落地（`tests/test_worker_coding.py` 4 项，含 workspace 不变与凭证拒绝）；H4 已落地（`run_w8_worker_lifecycle` 6 场景：cancel/timeout/crash/parent-stop/descendant/recovery）。
   - **孤儿计账（1-7-2 修正）**：`orphan_processes` 为 UNKNOWN（`ps` 不可用或 leader 已退出）时，runner 判 `orphan_evidence=unknown`、场景状态 `unknown`、**不再冒充 zero 也不误判为 fail**；真孤儿（nonzero）与硬检查失败仍 fail。
-  - 单发监督无心跳；长连接心跳属 TARGET/unknown（`src/` 零命中，属产品能力非 fixture → 已切出为节点 1-7-5，须先 ADR）。
+  - ~~单发监督无心跳；长连接心跳属 TARGET/unknown（`src/` 零命中，属产品能力非 fixture → 已切出为节点 1-7-5，须先 ADR）~~ **已过时（2026-10-12 节点 1-7-5 + ADR 0012）**：`worker_heartbeat.py` 提供单向 supervisor 观测的心跳监督（间隔 30s / 超时 90s / `heartbeat_lost` 纯函数 / `HeartbeatMonitor` 线程，无协议 ping/pong）；`worker_bridge` 在 `_run_process`/`_run_coding_process` 生命周期挂 monitor、每次 stdout 字节更新 `last_activity_ts`、丢失即 fail-closed safe-stop 并复用 1-8-4 的 `_signal_process`→`os.killpg` reaper（不另造 kill 逻辑）；`heartbeat_lost` 不入 recoverable 集，与请求级 `worker_timeout` 正交。
   - cleanup 断言 + 孤儿零残留证明 UNKNOWN；exit receipt 无子进程树快照字段。
 - **IdentityChain 完成性分层（P1，须 ADR）：** parent/child/attempt/dsh/event/artifact 为 required；codex_thread/turn 仅在确认 Codex Worker 时 required，否则允许 UNKNOWN；停止 fake fixture 编造 codex 身份。
 - **Q4 双重钳制（P0，已实现：节点 1-7-1）：** `worker_bridge` 请求构造处加 `_require_normal_replay`（fail-closed，非 `assert`——`python -O` 下不失效；real 模式下冲突码 `real_mode_replay_conflict`，其余 `replay_mode_not_normal`）；`WorkerBridge` 加显式 `real_worker_mode: bool = False`（须配非空 `real_worker_reason`，启用时 owner 记 `worker.real_mode.gated` 事件，先于任何 child run 状态）；开真实模式须 ADR + owner gated reason。
