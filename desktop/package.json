@@ -1,0 +1,13 @@
+{
+  "name": "zworkbench-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Electron shell for ZWorkbench (roadmap 1-1-1). Spawns `zworkbench ui-host` as a child process and renders its declared views in a desktop window.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.7.0"
+  }
+}
