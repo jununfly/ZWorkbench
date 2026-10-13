@@ -4,7 +4,7 @@ authority: supporting
 axis: product-design
 status: implemented
 implementation-status: implemented
-source: ../prds/workbench-ui-interactive.md
+source-retired: prd-workbench-ui-interactive (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-workbench-ui-interactive
 authority-id: design.interactive-workbench
 ---
@@ -43,7 +43,7 @@ IMPLEMENTED — 交互写 seam 经 CDP 端到端 `tests/test_ui_interactive_cdp.
 
 ## Source map
 
-- `../prds/workbench-ui-interactive.md` §1 意图与边界、§4 决策(D1–D4)、§5 dsh-web 对齐、§9 跨文档口径。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 - 写 seam 事实源：[issue-1-workbench-ui-implementation](issue-1-workbench-ui-implementation.md)「Interactive write seams」小节。
 
 ## Related authority

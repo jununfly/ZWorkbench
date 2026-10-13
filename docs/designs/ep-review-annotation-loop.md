@@ -4,7 +4,7 @@ authority: supporting
 axis: experience-path
 status: implemented
 implementation-status: accepted
-source: ../prds/r1-ui-reference-registry.md
+source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.review-annotation-loop
 ---
@@ -44,7 +44,7 @@ IMPLEMENTED — 真实引擎（CDP）证据：`tests/test_ui_focus_order.py`、`
 
 ## Source map
 
-- `../prds/r1-ui-reference-registry.md` §Solution、§Token v1 固定合同、§Manifest 获取与源码定位合同、§Testing Decisions（Token 与深链接 / 选择与焦点 / 脱敏 / 本地与副作用 / 退出）。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

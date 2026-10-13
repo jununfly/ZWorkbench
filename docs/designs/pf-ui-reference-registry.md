@@ -4,7 +4,7 @@ authority: supporting
 axis: product-feature
 status: implemented
 implementation-status: accepted
-source: ../prds/r1-ui-reference-registry.md
+source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.ui-reference-registry-feature
 ---
@@ -37,7 +37,7 @@ IMPLEMENTED（accepted 2026-09-13）；模块见 `src/zworkbench/ui_*.py`，验�
 
 ## Source map
 
-- `../prds/r1-ui-reference-registry.md` §User Stories、§Implementation Decisions、§Token v1 固定合同、§Manifest 获取与源码定位合同、§固定语义覆盖矩阵与完成门槛。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

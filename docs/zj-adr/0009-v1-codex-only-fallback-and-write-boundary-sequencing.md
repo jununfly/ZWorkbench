@@ -43,4 +43,4 @@ sub-01 的 Q3 验收线（v1「真能用」= (i) 只读 owner-backed 证据 vs (
 - 安全洞（sub-02 S 视角）登记为 S1/S2 前置 DoD（非阻塞但须实施）：loopback 写面加 Host/Origin 校验 + nonce；approval decision 绑定 `decided_by`；脱敏下沉存储层；token 通道绑定 + TTL 下调；`external_receipt` 定义成独立证据源、缺失即 `mark_effect_uncertain`；执行级幂等测试。
 - 前置 DoD（阻塞 S1 开工）：preflight 三条 deny 分支各一条负路径断言；唯一词表映射表落 owner 侧作 SSOT + 一致性测试。
 - sub-01 Q3 验收线选边已取证闭合（2026-10-01）：C1-6 竞品对照落盘 `evaluation/evidence/competitive-baseline/`，(i) 只读 owner-backed 证据 与 (ii) S0→S2 真写链路 均经 ARK 实测（app-server `completed` + `replay_recorded=true` + 落盘文件 md5 一致），裸 codex 无 owner-backed replay。sub-01 状态 = `DONE_WITH_CONCERNS`；其余 Q1/Q2/README 改写为确定项，价值假设前移已证伪通过。
-- 关联：R3「真实可用路线图」承接本 ADR 每档 DoD 四字段（见其「S0–S4 切片 DoD」节）；onboarding 首跑设计见 `docs/prds/r4-onboarding-first-run.md`。
+- 关联：R3「真实可用路线图」承接本 ADR 每档 DoD 四字段（见其「S0–S4 切片 DoD」节）；onboarding 首跑设计见 `docs/designs/pd-first-run-onboarding.md`（原 PRD 已退役）。

@@ -4,7 +4,7 @@ authority: supporting
 axis: product-scenario
 status: target
 implementation-status: partial
-source: ../prds/r3-real-usability-roadmap.md
+source-retired: prd-r3-real-usability-roadmap (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r3-real-usability-roadmap
 authority-id: design.solo-real-provider
 ---
@@ -43,13 +43,30 @@ authority-id: design.solo-real-provider
 2. 写 seam 的 receipt / approval 数据模型不得引入**第二个 durable owner**（ADR 0001 不变量）。
 3. 写操作爆炸半径分级：diff apply（可 revert）→ local commit（可 reset）→ push（难撤回）三级，分别配 approval 粒度与 receipt；首切片限定隔离 worktree / 可丢弃 repo。
 
+## 价值基线实证（2026-10-01，seam 级前证）
+
+> 来源：本地 `evaluation/evidence/competitive-baseline/README.md`（local-only，不入库）。本实体只保留结论级数字，作为 PG-2/PG-3 的可行性前证，不替代 S3 dogfood N=10 闸门。
+> 原 PRD `r3-real-usability-roadmap.md` 已退役（2026-10-13），其实证章节沉淀于此。
+
+同任务 / 同模型（ark-code-latest）/ 同 custom provider（时间戳 20261001-201153，只读任务：列出 CompositionOwner 公共方法）：
+
+| 指标 | 裸 Codex（`codex exec`） | ZWorkbench（`codex app-server`） |
+|---|---|---|
+| 净时间 | 47.04s（rc=0，正确，10133 tokens） | 12.64s（completed，正确） |
+| 人工复查 | 0 | 0 |
+| 事后回看 | NO（仅 transcript，无 durable ledger） | YES（`replay_recorded=true`：owner run 持久化 + recorded_view receipt + event/环境 digest） |
+
+真实写任务实测（时间戳 20261001-201135）：Write 工具在 gitignore 保护目录下写入 sentinel，ZW `status=completed` / `owner_run_status=completed` / `replay_recorded=true`，落盘 30B、md5 与裸 codex 一致（`50bc0ef0…`）；ZW 墙钟 19.49s vs 裸 codex 21.8s。
+
+判读（严守 AND 门纪律，R3 仍 `target`）：净时间 ZW 约 1/3.7（n=1/侧、墙钟受 ARK 抖动，仅趋势前证）；回看性 ZW YES vs 裸 Codex NO 为结构性、可复现差异（对应 PG-3 护城河）；写链路 md5 一致证明 S0→S2 真写链路可驱动且可审计。本实证不作 R3 `implemented` 的前置宣告。
+
 ## Status
 
-TARGET / PARTIAL — S2（write seam）/ S4（Git push 门控）/ 真实 Ark 读路径的产品切片实现已落地并测试通过（规划追踪见执行层路线图 1-10-*；本实体不声称路线图节点状态，节点当前状态以 roadmap/ 为准）；H6-full / H7 / H8 仍 target / deferred-until-demand。评测脚手架（H1–H8 / C1–C7 runner）通过 ≠ 产品能力已实现，二者分开计账。
+TARGET / PARTIAL — S2（write seam）/ S4（Git push 门控）/ 真实 Ark 读路径的产品切片实现已落地并测试通过（规划追踪见执行层路线图 1-10-*；本实体不声称路线图节点状态，节点状态以 git 历史为准（roadmap/ 已退役 2026-10-13））；H6-full / H7 / H8 仍 target / deferred-until-demand。评测脚手架（H1–H8 / C1–C7 runner）通过 ≠ 产品能力已实现，二者分开计账。
 
 ## Source map
 
-- `../prds/r3-real-usability-roadmap.md` §最小可用切片、§已锁定的切片顺序、§S0–S4 切片 DoD、§产品定位与架构约束、§产品目标（PG）、§产品可用判定门槛（三层 AND 门）、§价值基线实证。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体（含「价值基线实证」章节）；章节级溯源见 git 历史。
 
 ## Related authority
 

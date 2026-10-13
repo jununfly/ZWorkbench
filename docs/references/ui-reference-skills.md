@@ -5,8 +5,8 @@ authority: supporting
 
 # UI Reference skills binding
 
-ZWorkbench keeps the product contract in [R1](../prds/r1-ui-reference-registry.md)
-and the extraction decision in [R2](../prds/r2-ui-reference-skills.md). The
+ZWorkbench keeps the product contract in [R1 design](../designs/pd-ui-reference-system.md)
+and the extraction decision in [R2 design](../designs/pf-ui-reference-skills.md). The
 reusable packages are separate from both product documents:
 
 - [ui-reference-protocol](../../skills/ui-reference-protocol/SKILL.md)

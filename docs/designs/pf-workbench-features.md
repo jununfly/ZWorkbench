@@ -4,7 +4,7 @@ authority: supporting
 axis: product-feature
 status: implemented
 implementation-status: implemented
-source: ../prds/workbench-ui-interactive.md
+source-retired: prd-workbench-ui-interactive (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-workbench-ui-interactive
 authority-id: design.workbench-features
 ---
@@ -51,7 +51,7 @@ IMPLEMENTED（除 F18 ⛔ 不做；F2/F3/F4/F5/F15/F19 为构建/开发期工具
 
 ## Source map
 
-- `../prds/workbench-ui-interactive.md` §3 原子化 Features 清单、§3b Round 1 范围、§3c 已交付写 seam、§4 决策(D1–D4)。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

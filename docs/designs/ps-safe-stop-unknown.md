@@ -4,7 +4,7 @@ authority: supporting
 axis: product-scenario
 status: implemented
 implementation-status: partial
-source: ../prds/r1-ui-reference-registry.md
+source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.safe-stop-unknown
 ---
@@ -36,8 +36,7 @@ IMPLEMENTED（fail-closed 不变量与 unknown→safe-stop 语义已落地并测
 
 ## Source map
 
-- `../prds/r1-ui-reference-registry.md` §Required boundaries、§State and presentation。
-- `../prds/r3-real-usability-roadmap.md` §工程判据、§风险。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 
