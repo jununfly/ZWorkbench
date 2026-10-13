@@ -1,0 +1,87 @@
+# ZWorkbench → Electron 客户端 + ES 常驻 Tab 计划草稿
+
+> 状态：**草稿（未评审、未 commit）** ｜ 创建：2026-10-13 ｜ 参照：`docs/plans/comparison-easy-stock-vs-zworkbench-2026-10-13.md`（对比点 `C01`…`C41`）
+> 目标：以 easy-stock（ES）为参照，加速 ZW 产品可用性 —— 先把 ZW 客户端改造成 Electron 桌面应用，再把 ES 的产品内容作为本工作台常驻 tab 之一。
+> 节奏：**微进度、小切片**，每个切片带可验收退出条件，避免一次性大改写。
+> ⚠️ 治理提示：本计划存于 `docs/plans/`（2026-09-27 退役态）。结论评审通过后应转 `docs/designs/*` 或 `docs/zj-adr/*` 并删除本草稿。
+
+## 0. 范围与前提（先读）
+
+- ZW 当前事实基准 = v1 **Codex-only 回退基线**（C38），DSH 主 Harness = `target/unknown`（C39），真实写/Push 仍门控未证明（C29/C40）。本计划只包装/扩展现有 v1，不假设未实现能力。
+- 两者定位正交（C01/C03）：ZW=AI 编码任务的 durable 证据/编排；ES=A 股 AI 投研桌面工作台。本计划把 ES 的**产品内容**作为 ZW 工作台的常驻 tab，**不是**合并两项目核心逻辑。
+- **许可证不再是门控**（见 §1 决策记录 D1/D2）：ZW 非商业意图、ES 内容 merge 进来作加速脚手架并随后改写 —— 落在 PolyForm Noncommercial 1.0.0 的「非商业使用/修改/衍生」许可范围内，无需作者书面授权，亦无需 ZW 先声明 LICENSE。
+
+## 1. 决策记录（2026-10-13，zj 拍板）
+
+| ID | 决策 | 依据 | 对计划影响 |
+|---|---|---|---|
+| D1 | **不做 P0.1**（ZW 不引入 LICENSE） | ZW 非商业意图，无需声明许可证 | 移除 P0.1；ZW 仓库维持现状（默认 all-rights-reserved，对个人非商业项目无碍） |
+| D2 | **不做 P0.2**（merge ES 内容进来、作开发加速、随后改掉） | 非商业场景下 PolyForm NC 已许可使用/修改/衍生；merge 内容会改写故非「原样分发」 | 移除 P0.2 硬门；Phase 2 不再依赖授权；R1 降为软性署名建议 |
+| D3 | ES 接入默认方向 = **merge-then-adapt**（见 §4） | 用户明确「merge 进来加速 + 后续改掉」 | Phase 2 起点从「自研参考 B」调整为「带 ES 脚手架的适配改写」 |
+
+> 软性建议（非门控）：merge 进来的 ES 派生文件保留 ES 的版权/许可证声明并注明变更（PolyForm NC 要求），属好习惯。
+
+## 2. 总体路径
+
+```
+Phase 1  Electron 化 ZW 客户端（薄壳，零 UI 重写）   ──▶ 第一个可交付：ZW 变桌面应用
+Phase 2  ES 产品内容作为常驻 Tab（merge-then-adapt）
+```
+
+## 3. Phase 1 — Electron 化 ZW 客户端（薄壳优先）
+
+设计原则：复用现有 `ui-host`（ADR 0003 server-rendered HTML，C21）与 loopback 宿主（C22），**不重写 UI**，仅加 Electron 外壳。
+
+| 切片 | 动作 | 退出条件（可验收） |
+|---|---|---|
+| 1.1 | 引入 Electron 薄壳：main 进程启动 `zworkbench ui-host`（或打包的 Python），BrowserWindow 指向 loopback URL | `npm start` 打开桌面窗口，显示现有 home/task-detail/record-view 三视图 |
+| 1.2 | 加原生菜单/托盘/单实例锁；保留 CLI（`zworkbench` 命令仍可用，不回归） | 菜单可触发 ui-host；CLI 行为不变 |
+| 1.3 | 打包：electron-builder 产出 macOS/Windows 安装包，解决「无桌面安装包」缺口（C04/C34） | DMG/EXE 安装后零配置启动，等价于 ES 的分发体验 |
+| 1.4 | 将「引入 Node/Electron 依赖」登记为**显式偏离零依赖（C32）**的 tracked deviation（写 design/ADR 备注），保证纯 Python 核心不被污染 | deviation 记录存在；`pyproject.toml` 仍 `dependencies=[]` |
+
+> 此阶段不动 ZW 的证据核心（CompositionOwner，C26）与安全模型（safe-stop，C28）。Electron 只是宿主，不是第二个 owner。
+
+## 4. Phase 2 — ES 产品内容作为常驻 Tab（merge-then-adapt）
+
+**接入方式**（D3 后默认 = 方案 A'）：
+
+| 方案 | 做法 | 优劣 | 关联对比点 |
+|---|---|---|---|
+| A' merge-then-adapt（**默认**） | 把 ES 的 A 股研究功能/数据适配/分析逻辑作为**初始脚手架**带进 ZW（Python 后端 + 新 tab），随后迭代改写、逐步并入 CompositionOwner 单一 owner | 最快拿到 ES 产品能力、加速可用性；需处理语言差异（ES=Go/React，ZW=Python）与随后改写成本 | C20,C26,C32,C36 |
+| B 自研参考 | 在 ZW 重做 ES 功能，仅参考交互、不拷代码/品牌 | 统一技术栈、天然接入 owner；工作量大、慢 | C26,C36 |
+| C 外链视图 | tab 用 webview 指向独立运行的 ES 实例 | 零 merge；但 ES 需单独安装运行，不算「merge 内容」 | C22 |
+
+**推荐起点 = A'（merge-then-adapt）**，契合你「merge 进来加速、随后改掉」的指令；B/C 仍可作局部兜底（如某 tab 暂用外链验证数据）。
+
+微进度切片（以 A' 为前提）：
+
+| 切片 | 动作 | 退出条件 |
+|---|---|---|
+| 2.1 | 在 Electron 多视图中加「常驻 tab 容器 + 路由」，先空 tab 占位 | 桌面应用内出现可切换的常驻 tab 位 |
+| 2.2 | 最小切片：先 merge/适配**一个** ES 风格 tab 原型（建议「行情总览」C07 或「个股分级研究」C08，最独立、价值高），验证数据接入（C36 多源适配/回退）与本地证据快照 | 该 tab 在应用内常驻可用，数据来自本地快照 |
+| 2.3 | 证据层对齐：研究结论接入 CompositionOwner 单一 owner（C26），与编码任务证据并存 | 证据可追溯、不与编码 owner 冲突（C27） |
+| 2.4 | 逐步补齐其余 tab（连板 C09 / 题材雷达 C09 / 大V复盘 C12 / 持仓巡检 C10 / AI 优化 C11 / 游资心法 C19），每 tab 一个微切片；merge 进来的 ES 脚手架在此阶段被逐步改写吸收 | 逐个 tab 常驻可用 |
+| 2.5 | 清理：移除仍残留的「原样 ES 派生」片段，确认 ES 声明/变更注明到位（D2 软性建议） | 无未注明来源的 ES 派生代码 |
+
+## 5. 风险登记
+
+| ID | 风险 | 触发 | 影响 | 缓解 | 残余 | 责任方 |
+|---|---|---|---|---|---|---|
+| R1 | 署名/合规（**已降级**） | merge ES 派生代码未保留其版权/许可证声明 | 合规瑕疵（非商业下非致命） | D2 软建议：保留 ES 声明 + 注明变更 | 低（非商业） | zjj |
+| R2 | 双技术栈膨胀 | A' 阶段带进 ES（Go/React）代码未及时改写成 Python | 体积大、维护分裂（C20/C32） | 2.4/2.5 强制改写吸收；边界隔离 | 中（A'） | zj |
+| R3 | 证据模型冲突 | ES 模块级 SQLite 与 CompositionOwner 单一 owner 并存（C26） | 回放/审计口径分裂 | 2.3 统一进 owner | 低（A'） | zjj |
+| R4 | 产品定位稀释 | 加 A 股研究扩展 ZW 核心边界（C01/C03） | 焦点模糊、证据核心被弱化 | 明确为「工作台常驻 tab」而非核心 | 中 | zj |
+| R5 | 成熟度假设误用 | 误依赖 DSH 主 Harness（C39）或真实写门（C29/C40） | 计划悬空 | 仅包装现有 v1，不假设未实现能力 | 低 | zjj |
+| R6 | 文档治理 | 本计划存于退役态 docs/plans | 结论丢失/断链 | 评审通过后转 design/ADR 并删本草稿 | 低 | zjj |
+
+## 6. 未决 / 对齐项（需 zj 决策）
+
+1. ZW 是否引入 Node/Electron 依赖（偏离零依赖 C32）？接受则走 1.4 登记。
+2. ES 内容接入方式确认：A' merge-then-adapt（默认）/ B 自研参考 / C 外链？
+3. 第一个 ES 风格 tab 选哪个（建议「个股分级研究」C08 或「行情总览」C07）？
+4. docs/plans 退役态下，本草稿评审通过后落点（design/ADR 编号）？
+
+## 7. 微进度下一步（最小可跑）
+
+- **立刻可做、零阻塞**：**1.1**（Electron 薄壳起现有 `ui-host` UI）。不触碰 ES、不触碰核心，立刻让 ZW「变成桌面应用」，对应你「加速可用性、先爬坡」的诉求。
+- Phase 2（A'）在 Phase 1 的 1.1–1.3 跑通后即可并行启动 2.1/2.2，不再有许可证前置。
