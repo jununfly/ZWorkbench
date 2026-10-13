@@ -44,10 +44,6 @@ authority: supporting
 - [ADR 0008：host enforcement 必须 fail-closed 且可测试](zj-adr/0008-host-enforcement-is-fail-closed-and-testable.md) — 真实写副作用第 0 切片（S0 spike）与 fail-closed 三判据的长期决定；authority-id: adr.host-enforcement.fail-closed-and-testable
 - [ADR 0009：v1 是 Codex-only 回退基线的合法延伸；写入边界按 R3 序列逐步放松](zj-adr/0009-v1-codex-only-fallback-and-write-boundary-sequencing.md) — v1 绕开 DSH 出货决策、C1 六条挂接约束 + C1-补、R3 序列每档 DoD 四字段、(a) 两档制预授权、C5 提升为已决；authority-id: adr.v1.codex-only-fallback-and-write-boundary-sequencing
 
-## Product requirements
-
-- [PRD 索引](prds/README.md) — 尚未实现或尚未由 owner-backed 证据证明的产品规格。
-
 ## Designs
 
 - [设计索引](designs/README.md) — 将已确认的产品目标转化为可实现、可验证的界面与交互设计规格。
@@ -59,6 +55,10 @@ authority: supporting
 ## Agent skills
 
 - [UI Reference skills binding](references/ui-reference-skills.md) — R1 产品规格与两个可独立安装的通用 UI 引用 skill 之间的 profile、验证和安全边界。
+
+## 协同讨论政策
+
+- [临时讨论文档（co-work）政策](discussions/_POLICY.md) — 多 Agent 协同讨论的临时文档生命周期与防耦合硬规则；`doc-kind: discussion-policy` / `authority: temporary`，按 policy 本身保留复用，不是长期 wiki。
 
 这一顺序优先回答“对象是什么、如何判断、如何连接、为何这样选择”，而不是复述某次
 评测、路线节点或实现过程。

@@ -108,7 +108,7 @@ unknown，而不是把实现状态误写成目标已实现。本文件只补充�
 | 记录、诊断和回放 | [架构 wiki](docs/architecture/ta-overview.md)；[composition.py](src/zworkbench/composition.py) |
 | 评测 fixture、阈值和证据 | [fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
 | 安装、升级、许可证和退出 | [optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
-| 界面引用注册表与评审标注模式 | [R1 PRD](docs/prds/r1-ui-reference-registry.md)（implementation accepted；R1 主规格仍独立验收）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
+| 界面引用注册表与评审标注模式 | [R1 设计实体](docs/designs/pd-ui-reference-system.md)（implementation accepted；R1 主规格已沉淀为设计实体集合）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
 | Python 包入口和命令 | [pyproject.toml](pyproject.toml)；[README.md](README.md)；代码中的 --help 输出是命令事实源 |
 
 ### Source map

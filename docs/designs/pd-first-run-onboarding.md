@@ -2,9 +2,9 @@
 doc-kind: design
 authority: supporting
 axis: product-design
-status: target
+status: implemented
 implementation-status: implemented
-source: ../prds/r4-onboarding-first-run.md
+source-retired: prd-r4-onboarding-first-run (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r4-onboarding-first-run
 authority-id: design.first-run-onboarding
 ---
@@ -44,14 +44,26 @@ TARGET / IMPLEMENTED — 2026-10-13 于干净 venv（Python 3.13.12 + `pip insta
 - **价值演示缝合**：stdout `next_steps` 实测 5 项且含可复制的 `ui-host` 命令。`--open`（子进程拉起 `ui-host`）由 1-9-3 测试覆盖，**本轮复跑未做浏览器级验证**。
 - **fail-closed UX**：「目录缺失」→ hint；「超时」→ `error.category=timeout` + `retry_hint`。
 
-R4 侧「≥2 份真实走查记录」由 owner 豁免（见 R4「豁免留痕」节）；本页 Boundaries 已声明「非作者陌生人」为 UX 目标轨、非判据，不受影响。
+R4 侧「≥2 份真实走查记录」由 owner 豁免（见下方「验收豁免留痕」节）；本页 Boundaries 已声明「非作者陌生人」为 UX 目标轨、非判据，不受影响。
+
+## 验收豁免留痕（waiver · 2026-10-13）
+
+R4「端到端回归脚本验收线」中「至少 2 份真实走查记录」一条由 owner（zj）整体豁免，不再作为 R4 收口前置。
+
+- **已满足**：机械判据 5 项全部 owner-backed（干净 venv `pip install .` 复跑，逐条证据见本页 Status）。
+- **随豁免一并接受、未消解的风险（已知盲区，非未知风险）**：
+  - 无真实新手视角：本仓作者之外的首次走查从未发生，安装/首跑路径上「新人卡在哪」零数据；
+  - 卡点数 ≤ 2 无观测：设计目标里唯一直接衡量 onboarding 摩擦的指标，现为零观测。
+- **重开条件**：产品进入「给非作者使用」阶段时本豁免自动失效，须补齐 2 份走查记录（走查者须为未参与本仓开发者或隔周作者本人；记录总耗时 / 卡点数 / 最终是否看到 recorded view）。
+
+> 因此 `implementation-status` 记为 `implemented`：机械判据全部 owner-backed，人证判据经 owner 显式豁免。**须区分**：这不等于「走查已做过」。
 
 ## Source map
 
-- `../prds/r4-onboarding-first-run.md` §首跑最小形态、§onboarding = 只读自检 doctor、§价值演示缝合、§fail-closed UX 成本回收、§端到端回归脚本验收线、§约束与依赖。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 
-- [R3 真实可用路线图](../prds/r3-real-usability-roadmap.md)（价值基线 / S0–S4 切片）
+- [R3 真实可用路线图（设计实体）](../designs/ps-solo-real-provider.md)（价值基线 / S0–S4 切片）
 - [ADR 0009 显式授权](../zj-adr/0009-explicit-authz-for-real-provider-and-write-seam.md)
 - 体验路径见 [ep-first-run-journey](ep-first-run-journey.md)

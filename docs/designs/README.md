@@ -5,7 +5,7 @@ authority: supporting
 
 # 设计文档
 
-本目录保存长期维护的产品设计与实现规格。产品目标和范围仍以 `docs/prds/` 为准；
+本目录保存长期维护的产品设计与实现规格（产品目标与范围现以本目录设计实体为准；原 PRD 目录已退役 2026-10-13）。
 稳定的信息架构和 ownership 仍以 `docs/architecture/` 为准；本目录不保存单次开发进度、
 截图 diff 或机器生成的历史 evidence。
 

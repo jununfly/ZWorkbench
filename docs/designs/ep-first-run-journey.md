@@ -2,9 +2,9 @@
 doc-kind: design
 authority: supporting
 axis: experience-path
-status: target
+status: implemented
 implementation-status: implemented
-source: ../prds/r4-onboarding-first-run.md
+source-retired: prd-r4-onboarding-first-run (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r4-onboarding-first-run
 authority-id: design.first-run-journey
 ---
@@ -48,7 +48,7 @@ TARGET / IMPLEMENTED — 2026-10-13 三项机械验收线在干净 venv（Python
 
 ## Source map
 
-- `../prds/r4-onboarding-first-run.md` §首跑最小形态、§价值演示缝合、§fail-closed UX 成本回收、§端到端回归脚本验收线。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

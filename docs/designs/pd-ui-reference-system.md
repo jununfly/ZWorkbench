@@ -4,7 +4,7 @@ authority: supporting
 axis: product-design
 status: implemented
 implementation-status: accepted
-source: ../prds/r1-ui-reference-registry.md
+source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.ui-reference-system
 ---
@@ -49,7 +49,7 @@ IMPLEMENTED — 2026-09-13 Human 在真实宿主验收通过（A–F 六项人�
 
 ## Source map
 
-- `../prds/r1-ui-reference-registry.md` §Solution、§Implementation Decisions、§Token v1 固定合同、§Manifest 获取与源码定位合同、§Testing Decisions、§Out of Scope、§Implementation status。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

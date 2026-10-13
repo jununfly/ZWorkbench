@@ -39,7 +39,7 @@ authority: temporary
 
 ## 操作实录：一次真实跑通的流程（作为示例，非结论）
 
-> 以下基于 H6–H8 scope 协同讨论的真实跑通整理，是本政策的**流程示例**而非结论沉淀。讨论最终结论已沉淀进 `docs/prds/r3-real-usability-roadmap.md` 与 `docs/zj-adr/0008-host-enforcement-*.md`，临时文档 `docs/discussions/h6-h8-scope-kickoff.md` 已按本政策删除。读本节看"机制怎么落地"，不要把它当结论来源。
+> 以下基于 H6–H8 scope 协同讨论的真实跑通整理，是本政策的**流程示例**而非结论沉淀。讨论最终结论已沉淀进 `docs/designs/ps-solo-real-provider.md` 与 `docs/zj-adr/0008-host-enforcement-*.md`，临时文档 `docs/discussions/h6-h8-scope-kickoff.md` 已按本政策删除。读本节看"机制怎么落地"，不要把它当结论来源。
 
 ### 生命周期的实际推进
 

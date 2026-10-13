@@ -3,7 +3,7 @@
 > 路线节点：roadmap 1-10-6（solo 真实可用 · 价值基线实证）
 > 归属：R3「真实可用路线图」三层 AND 门的**第三道（价值判据）**
 > 性质：**Acceptance/evaluation 文档**（非 Product execution）。本文件只定义"测什么、怎么算、证据怎么标"，不动产品代码 `src/`。
-> 来源权威：`docs/prds/r3-real-usability-roadmap.md` §价值判据 / §价值基线实证；`docs/designs/ps-solo-real-provider.md` §Scope（三层 AND 门）。
+> 来源权威：`docs/designs/ps-solo-real-provider.md` §价值基线实证 / §Scope（三层 AND 门）。
 
 ## 1. 目的与定位
 

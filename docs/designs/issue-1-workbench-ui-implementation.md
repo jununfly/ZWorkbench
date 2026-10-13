@@ -12,7 +12,7 @@ coverage: round-1-readonly
 # SCOPE: This spec is authoritative for the Round-1 READ-ONLY workbench UI only.
 # The interactive write seams (composer send, approval execute, scenario control,
 # safe-stop/reconcile) that post-date this spec are governed by
-# ../prds/workbench-ui-interactive.md (status: active) and registered in the
+# ../designs/pd-interactive-workbench.md (status: implemented) and registered in the
 # "Interactive write seams (post-Round-1)" subsection below so this document
 # does not drift from the shipped surface.
 ---
@@ -22,7 +22,7 @@ coverage: round-1-readonly
 本文是 Issue #1 的界面实现规格，说明如何把设计原型落成可维护、可验证的工作台界面。
 它不替代产品需求、架构 ownership 或安全边界。
 
-- 产品目标、范围和禁用能力见 [Issue #1 PRD](../prds/issue-1-workbench-ui.md)。
+- 产品目标、范围和禁用能力见 [R1 设计实体集合](../designs/pd-ui-reference-system.md)（原 Issue #1 PRD 已退役 2026-10-13）。
 - 工作记录、任务详情、recorded view 和读模型边界见
   [工作台用户界面架构](../architecture/ta-workbench-user-surface.md)。
 - 工作台宿主继续遵循 [ADR 0003](../zj-adr/0003-workbench-host-is-server-rendered-html-over-loopback.md)。

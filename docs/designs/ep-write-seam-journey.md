@@ -4,7 +4,7 @@ authority: supporting
 axis: experience-path
 status: implemented
 implementation-status: implemented
-source: ../prds/workbench-ui-interactive.md
+source-retired: prd-workbench-ui-interactive (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-workbench-ui-interactive
 authority-id: design.write-seam-journey
 ---
@@ -45,7 +45,7 @@ IMPLEMENTED — 交互写 seam 经 CDP 与可写宿主冒烟验证通过。
 
 ## Source map
 
-- `../prds/workbench-ui-interactive.md` §3c 越过 Round-1 的已交付项、§7 验收方式。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

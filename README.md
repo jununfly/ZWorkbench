@@ -10,7 +10,7 @@ zworkbench run --prompt "解释这个函数的意图"
 #   zworkbench ui --db <case_root>/state/composition.sqlite3
 ```
 
-默认边界：未知工具、越界 workspace、未确认 approval、网络/凭证要求和不可关联事件都会 safe-stop。**真实写副作用（diff apply + commit）、Git push、真实 Provider 接入都不是默认入口的隐含能力**——它们须经 S0 host enforcement 出证（当前 0 行实现，未证明）后，作为显式、可记账、进 receipt 的授权动作开启（见 ADR 0009 与 `docs/prds/r3-real-usability-roadmap.md`）。
+默认边界：未知工具、越界 workspace、未确认 approval、网络/凭证要求和不可关联事件都会 safe-stop。**真实写副作用（diff apply + commit）、Git push、真实 Provider 接入都不是默认入口的隐含能力**——它们须经 S0 host enforcement 出证（当前 0 行实现，未证明）后，作为显式、可记账、进 receipt 的授权动作开启（见 ADR 0009 与 `docs/designs/ps-solo-real-provider.md`）。
 
 本地评审入口是只读 loopback 宿主：`zworkbench ui-host` 服务三个声明视图；`zworkbench ui-host --review` 显式开启本地评审标注模式（悬停语义名、脱敏反馈 token、深链接定位）。宿主只绑定 127.0.0.1，不打开 owner 数据库，中断即释放端口。
 

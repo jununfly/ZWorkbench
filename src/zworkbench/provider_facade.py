@@ -4,7 +4,7 @@ Product code (the Control Plane / ``LocalReadOnlyRunOrchestrator``) must obtain
 a Provider adapter through this seam and never import or construct
 ``CodexAppServerAdapter`` directly.  This enforces the R3 architecture negative
 constraint ("Provider 接入必须经 Host Capability Facade，产品代码不得直连";
-``docs/prds/r3-real-usability-roadmap.md`` 架构约束第 1 条) and keeps a single,
+``docs/designs/ps-solo-real-provider.md`` 架构约束第 1 条) and keeps a single,
 durable-owner-independent boundary that the future multi-Provider (H6-full) and
 DSH runtime paths must route through.
 

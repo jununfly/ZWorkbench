@@ -4,7 +4,7 @@ authority: supporting
 axis: product-scenario
 status: implemented
 implementation-status: implemented
-source: ../prds/r1-ui-reference-registry.md
+source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.review-collaboration
 ---
@@ -36,8 +36,7 @@ IMPLEMENTED — R1 评审闭环 2026-09-13 Human 验收通过；R2 双 skill + �
 
 ## Source map
 
-- `../prds/r1-ui-reference-registry.md` §Solution、§Implementation Decisions（所有权 / 禁止数据 / 本地与副作用）。
-- `../prds/r2-ui-reference-skills.md` §Solution、§Implementation Decisions、§Testing Decisions（Cross-project portability）、§Implementation status。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 

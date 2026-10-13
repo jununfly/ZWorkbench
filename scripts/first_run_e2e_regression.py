@@ -2,7 +2,7 @@
 """End-to-end first-run regression for ZWorkbench (roadmap node 1-9-5).
 
 This is the replayable "端到端首跑回归脚本" described by R4
-(``docs/prds/r4-onboarding-first-run.md`` and
+(``docs/designs/pd-first-run-onboarding.md`` and
 ``docs/designs/ep-first-run-journey.md``). It exercises the default first-run
 path with **zero credentials** and a **fake-loopback** provider:
 
@@ -24,11 +24,11 @@ Exit code: ``0`` on PASS, ``1`` on FAIL.
 Gate (do NOT silently skip): #40 已于 2026-10-13 关闭，本脚本的机械判据（干净 venv
 ``pip install .`` + fake-loopback 零凭证 + ``recorded_view_present == true``）
 已在干净 venv 中复核通过，证据见
-``docs/prds/r4-onboarding-first-run.md`` 的「验收进度」分栏。
+``docs/designs/pd-first-run-onboarding.md`` 的「验收进度」分栏。
 
 R4 is now ``implemented`` (2026-10-13): the mechanical criteria are owner-backed,
 and the "two human 走查记录" criterion was explicitly **waived** by the owner —
-see the 「豁免留痕」 section of ``docs/prds/r4-onboarding-first-run.md``. A waiver
+see the 「豁免留痕」 section of ``docs/designs/pd-first-run-onboarding.md``. A waiver
 is not evidence: the first-run journey still has zero observation from a
 non-author perspective, and the "卡点数 <= 2" target remains unmeasured.
 

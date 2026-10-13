@@ -4,7 +4,7 @@ authority: supporting
 axis: product-feature
 status: implemented
 implementation-status: implemented
-source: ../prds/r2-ui-reference-skills.md
+source-retired: prd-r2-ui-reference-skills (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r2-ui-reference-skills
 authority-id: design.ui-reference-skills
 ---
@@ -39,7 +39,7 @@ IMPLEMENTED — 双 skill + `ui-reference-profile/v1` 校验器 + 严格运行�
 
 ## Source map
 
-- `../prds/r2-ui-reference-skills.md` §Solution、§Implementation Decisions、§Testing Decisions（Protocol/Runtime skill、Cross-project portability）、§Implementation status、§Out of Scope。
+- 原 PRD 已退役（2026-10-13），内容已沉淀至本设计实体；章节级溯源见 git 历史。
 
 ## Related authority
 
