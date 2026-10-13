@@ -21,10 +21,16 @@
 //     is how the window contents get verified in a headless environment where
 //     no human can look at the screen.
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu, Tray, nativeImage } = require('electron');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
+
+// A macOS tray icon has to be a real image and the repo ships no asset, so the
+// icon is a generated 32x32 RGBA ring inlined here (168 bytes). Template mode
+// lets macOS tint it for light/dark menu bars.
+const TRAY_ICON_DATA_URL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAb0lEQVR42u2XUQoAIAhDvf+l7QQRNcdmGOzXvcBsRjQ9uZHElA6ToKTmEEQWS2p+BZFkSc2PEFIAtAgMUdVIVIDKRqbc/rkeY5oNwH8A1CaUP8M2g4g6iuc3tAgkFpHMIpRaxHKLxcRiNbNZTilnAZ5hPd+tLErDAAAAAElFTkSuQmCC';
 
 // The CLI is resolved from the environment so a source checkout works without
 // installing the console script:
@@ -49,18 +55,30 @@ const SHOTS_HEIGHT = Number(process.env.ZW_DESKTOP_SHOTS_HEIGHT || 860);
 const SHOTS_SETTLE_MS = Number(process.env.ZW_DESKTOP_SHOTS_SETTLE_MS || 1500);
 
 const SCREENSHOT_MODE = SHOTS_DIR !== '';
+const SELFCHECK_MODE = process.env.ZW_DESKTOP_SELFCHECK === '1';
 
 // Screenshot mode must not touch the real user-data directory: it is a
 // verification run, and on a locked-down host Electron's shutdown cleanup of
 // ~/Library/Application Support can be denied, which turns a successful run
 // into a non-zero exit. Keeping the profile next to the PNGs makes the run
 // self-contained and its exit code mean "were the views broken".
-if (SCREENSHOT_MODE) {
-  app.setPath('userData', path.join(SHOTS_DIR, '_userdata'));
+if (SCREENSHOT_MODE || SELFCHECK_MODE) {
+  app.setPath('userData', path.join(SHOTS_DIR || process.env.TMPDIR || '/tmp', '_zw_verify_userdata'));
 }
 
 let host = null;
 let hostStopping = false;
+let mainWindow = null;
+let currentBaseUrl = null;
+let tray = null;
+
+// The route catalogue is the one thing both the menu and the tray menu drive,
+// so a new view only has to be declared once.
+const ROUTES = [
+  { id: 'view-home', label: '工作台', route: '/home' },
+  { id: 'view-task-detail', label: '任务详情', route: '/task-detail' },
+  { id: 'view-record-view', label: '记录视图', route: '/record-view' },
+];
 
 function spawnHost() {
   const args = [...PREARGS, 'ui-host', '--host', '127.0.0.1', '--port', '0'];
@@ -152,6 +170,92 @@ function stopHost() {
   });
 }
 
+// Loads a route into the shell's own window. Handlers resolve the window from
+// module scope rather than the click callback's window argument: an offscreen
+// or unfocused window arrives there as undefined, and a menu that silently
+// does nothing is worse than one that navigates.
+function navigateTo(route) {
+  if (!mainWindow || !currentBaseUrl) return false;
+  mainWindow.loadURL(currentBaseUrl.replace(/\/+$/, '') + route);
+  return true;
+}
+
+function buildApplicationMenu() {
+  const template = [
+    {
+      label: app.name,
+      submenu: [
+        { id: 'app-about', label: '关于 ZWorkbench', role: 'about' },
+        { type: 'separator' },
+        { id: 'app-quit', label: '退出', role: 'quit' },
+      ],
+    },
+    {
+      label: '视图',
+      submenu: [
+        ...ROUTES.map((entry) => ({
+          id: entry.id,
+          label: entry.label,
+          accelerator: undefined,
+          click: () => navigateTo(entry.route),
+        })),
+        { type: 'separator' },
+        { id: 'view-reload', label: '重新加载', role: 'reload' },
+        { id: 'view-actual-size', label: '实际大小', role: 'resetZoom' },
+        { id: 'view-toggle-devtools', label: '开发者工具', role: 'toggleDevTools' },
+      ],
+    },
+    {
+      label: '窗口',
+      submenu: [
+        { id: 'window-minimize', label: '最小化', role: 'minimize' },
+        { id: 'window-close', label: '关闭', role: 'close' },
+      ],
+    },
+  ];
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+  return menu;
+}
+
+function createTray() {
+  const image = nativeImage.createFromDataURL(TRAY_ICON_DATA_URL);
+  image.setTemplateImage(true);
+  const menu = Menu.buildFromTemplate([
+    {
+      id: 'tray-show',
+      label: '显示窗口',
+      click: () => {
+        if (!mainWindow) return;
+        if (mainWindow.isVisible()) mainWindow.show();
+        mainWindow.focus();
+      },
+    },
+    { type: 'separator' },
+    ...ROUTES.map((entry) => ({
+      id: 'tray-' + entry.id,
+      label: entry.label,
+      click: () => {
+        navigateTo(entry.route);
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      },
+    })),
+    { type: 'separator' },
+    { id: 'tray-quit', label: '退出', role: 'quit' },
+  ]);
+  const instance = new Tray(image);
+  instance.setToolTip('ZWorkbench');
+  instance.setContextMenu(menu);
+  tray = instance;
+  // The menu is returned as well as attached: recent Electron removed
+  // Tray.getContextMenu(), so callers that want to assert on it have to hold
+  // the reference themselves.
+  return menu;
+}
+
 function createWindow(baseUrl) {
   const window = new BrowserWindow({
     width: 1280,
@@ -162,7 +266,11 @@ function createWindow(baseUrl) {
       nodeIntegration: false,
     },
   });
+  window.on('closed', () => {
+    if (mainWindow === window) mainWindow = null;
+  });
   window.loadURL(baseUrl);
+  mainWindow = window;
   return window;
 }
 
@@ -355,25 +463,165 @@ async function runScreenshotMode(baseUrl) {
   return anyBroken ? 1 : 0;
 }
 
-app.whenReady().then(async () => {
-  let exitCode = 0;
-  try {
-    host = spawnHost();
-    const baseUrl = await waitForServing(host);
-    process.stdout.write('[desktop] serving at ' + baseUrl + '\n');
-    if (SCREENSHOT_MODE) {
-      exitCode = await runScreenshotMode(baseUrl);
-    } else {
-      createWindow(baseUrl);
-      return; // stay alive until the window closes
-    }
-  } catch (error) {
-    process.stderr.write('[desktop] ' + error.message + '\n');
-    exitCode = 1;
+// Poll the renderer for its pathname. This is what turns "the menu works"
+// from a claim into an observation: the menu item is clicked for real and the
+// window is then asked where it ended up.
+function waitForPathname(window, expected, timeoutMs) {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const tick = async () => {
+      let pathname = null;
+      try {
+        pathname = await window.webContents.executeJavaScript('location.pathname');
+      } catch (error) {
+        pathname = null;
+      }
+      if (pathname === expected) return resolve({ ok: true, pathname });
+      if (Date.now() - started > timeoutMs) return resolve({ ok: false, pathname });
+      setTimeout(tick, 200);
+    };
+    tick();
+  });
+}
+
+// Headless self-check for slice 1.2: menu structure, real menu-driven
+// navigation, tray construction. Prints one JSON blob and exits 0/1, so the
+// shell's chrome is verifiable without anybody looking at a screen.
+async function runSelfcheckMode(baseUrl) {
+  const menu = Menu.getApplicationMenu();
+  const menuReport = { built: Boolean(menu), topLevel: [], routeItems: [] };
+  if (menu) {
+    menuReport.topLevel = menu.items.map((item) => item.label);
+    menuReport.routeItems = ROUTES.map((entry) => {
+      const item = menu.getMenuItemById(entry.id);
+      return { id: entry.id, present: Boolean(item), label: item ? item.label : null };
+    });
   }
-  await stopHost();
-  app.exit(exitCode);
-});
+
+  const window = new BrowserWindow({
+    show: false,
+    width: SHOTS_WIDTH,
+    height: SHOTS_HEIGHT,
+    webPreferences: {
+      offscreen: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  mainWindow = window;
+
+  const start = baseUrl.replace(/\/+$/, '') + '/home';
+  await window.webContents.loadURL(start);
+  await sleep(SHOTS_SETTLE_MS);
+
+  const navigation = [];
+  for (const entry of ROUTES) {
+    const item = menu ? menu.getMenuItemById(entry.id) : null;
+    if (!item) {
+      navigation.push({ id: entry.id, clicked: false, ok: false, reason: 'menu item missing' });
+      continue;
+    }
+    const before = await window.webContents.executeJavaScript('location.pathname');
+    item.click();
+    const waited = await waitForPathname(window, entry.route, 8000);
+    navigation.push({
+      id: entry.id,
+      clicked: true,
+      expected: entry.route,
+      before,
+      after: waited.pathname,
+      ok: waited.ok,
+    });
+  }
+
+  let trayReport;
+  try {
+    const trayMenu = createTray();
+    const ids = ['tray-show', ...ROUTES.map((entry) => 'tray-' + entry.id), 'tray-quit'];
+    trayReport = {
+      created: true,
+      template: true,
+      menuItemsPresent: ids.filter((id) => Boolean(trayMenu.getMenuItemById(id))),
+      menuItemsExpected: ids,
+    };
+  } catch (error) {
+    trayReport = { created: false, error: error.message };
+  }
+
+  window.destroy();
+  mainWindow = null;
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+
+  const ok =
+    menuReport.built &&
+    menuReport.routeItems.every((item) => item.present) &&
+    navigation.every((entry) => entry.ok) &&
+    trayReport.created;
+
+  const report = {
+    generatedAt: new Date().toISOString(),
+    baseUrl,
+    singleInstanceLock: { acquired: true },
+    menu: menuReport,
+    menuNavigation: navigation,
+    tray: trayReport,
+    ok,
+  };
+  process.stdout.write('[desktop] selfcheck ' + JSON.stringify(report, null, 2) + '\n');
+  return ok ? 0 : 1;
+}
+
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+
+if (!gotSingleInstanceLock) {
+  // A second instance must not spawn a second ui-host: it would bind another
+  // port and fork the state the first window is already showing.
+  process.stdout.write('[desktop] already running; handing over to the running instance\n');
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    mainWindow.show();
+    mainWindow.focus();
+  });
+
+  app.whenReady().then(async () => {
+    let exitCode = 0;
+    try {
+      host = spawnHost();
+      const baseUrl = await waitForServing(host);
+      currentBaseUrl = baseUrl;
+      process.stdout.write('[desktop] serving at ' + baseUrl + '\n');
+      if (SCREENSHOT_MODE) {
+        exitCode = await runScreenshotMode(baseUrl);
+      } else {
+        buildApplicationMenu();
+        if (SELFCHECK_MODE) {
+          exitCode = await runSelfcheckMode(baseUrl);
+        } else {
+          createWindow(baseUrl);
+          try {
+            createTray();
+          } catch (error) {
+            // No menu bar to sit in (headless/SSH session) is not a reason to
+            // refuse to run: the window works, only the tray is missing.
+            process.stderr.write('[desktop] tray unavailable: ' + error.message + '\n');
+          }
+          return; // stay alive until the window closes
+        }
+      }
+    } catch (error) {
+      process.stderr.write('[desktop] ' + error.message + '\n');
+      exitCode = 1;
+    }
+    await stopHost();
+    app.exit(exitCode);
+  });
+}
 
 app.on('window-all-closed', async () => {
   await stopHost();
