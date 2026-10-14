@@ -682,22 +682,32 @@
       "id": "1-5-6",
       "uid": "01a1398b69e4-4a51a41bae",
       "label": "1.5.6 coding-evidence tab 走 B2 Go 重写证据核心（C26/C28）进 app，零 Python 依赖",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
-      "children": [],
+      "children": [
+        "1-5-6-1",
+        "1-5-6-2",
+        "1-5-6-3"
+      ],
       "decisions": [
         {
           "q": "1-5-6 走 B1 sidecar 接 Python 还是 B2 Go 重写证据核心",
           "answer": "B2：Go 重写 C26/C28 证据核心进 app 的 data/api 层，彻底零 Python 依赖（推翻原 B1 sidecar 路线）",
           "note": "ADR 0015 原把 B2 留作 1→100 后续，现 zj 要求全 pivot 连证据核心一起 Go 化，提前到 1-5-6 落地"
+        },
+        {
+          "q": "1-5-6 B2 的 C26/C28 重写按哪种范围",
+          "answer": "B2-narrow：只移植差异化证据语义（durable-owner 7 状态机 + fail-closed safe-stop + 一次性 approval token + effect 归属），最小 schema（runs/approvals/effects/events/declared_exposure 约 5 核心表）；不移植 provider/dsh/worker retry ledger 与 caller-auth",
+          "note": "composition.py 实际 3396 行 / 20+ 表；字面 1:1 移植会把 app/ 用不到的 harness ledger 当死代码搬入，且最棘手的 fail-closed 逻辑在没有对应 harness 测试下重抄、易出移植 bug。B2-narrow 贴合 app/ 现状、风险低"
         }
       ],
       "notes": "2026-10-14 曾定 B1 sidecar（Go 经 loopback 调 Python 证据 API）；当晚 zj 选 B，推翻 B1 改走 B2：用 Go 重写 CompositionOwner(C26)/safe-stop(C28) 证据核心进 app 的 data/api 层，彻底不依赖 Python 进程。B2 原在 ADR 0015 留作 1→100 后续，现提前到 1-5-6 落地。",
       "layer": "plan",
       "exit_criteria": [
         "C26/C28 证据核心在 app 内可用，coding-evidence tab 直连 Go 服务、零 Python 进程依赖"
-      ]
+      ],
+      "rounds": 1
     },
     "1-5-7": {
       "id": "1-5-7",
@@ -843,11 +853,47 @@
         "tab 常驻可用：后端 /api/mastery + 前端 MasteryTab 渲染 + fallback 生效"
       ],
       "rounds": 1
+    },
+    "1-5-6-1": {
+      "id": "1-5-6-1",
+      "uid": "01a13ad1f238-1deeb1ba17",
+      "label": "1-5-6-1 Go evidence store + schema + CompositionOwner 等价状态机（5 核心表 / 7 状态：created→running→waiting_approval→recovering→completed/failed/safe_stopped）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-6-2": {
+      "id": "1-5-6-2",
+      "uid": "01a13ad1f340-4bf63fa076",
+      "label": "1-5-6-2 fail-closed safe-stop 的 effect-claim 归属逻辑 + 一次性 approval token（C28 核心：claim_effect 十几个 safe_stopped 转义）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-6-3": {
+      "id": "1-5-6-3",
+      "uid": "01a13ad1f425-49307123ed",
+      "label": "1-5-6-3 coding-evidence tab 接 Go evidence API（前端可视化 run 生命周期 + safe-stop 事件流）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 21:36:01",
+    "updated": "2026-10-14 22:42:33",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
