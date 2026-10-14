@@ -1,0 +1,87 @@
+package api
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/jununfly/ZWorkbench/app/internal/agent"
+	"github.com/jununfly/ZWorkbench/app/internal/config"
+	"github.com/jununfly/ZWorkbench/app/internal/data"
+	"github.com/jununfly/ZWorkbench/app/internal/domain"
+)
+
+// NewRouter 构建本地 API：鉴权中间件 + 路由（镜像 ES 本机鉴权范式）。
+func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, agents map[string]agent.Provider) http.Handler {
+	mux := http.NewServeMux()
+
+	// 鉴权：所有 /api/* 需 token（query 或 Bearer）
+	auth := func(next http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			tok := r.URL.Query().Get("token")
+			if tok == "" {
+				tok = bearer(r.Header.Get("Authorization"))
+			}
+			if tok != cfg.Token {
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			next(w, r)
+		}
+	}
+
+	mux.HandleFunc("/api/health", auth(func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, map[string]string{"status": "ok", "runtime": "go"})
+	}))
+
+	mux.HandleFunc("/api/tabs", auth(func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, tabs)
+	}))
+
+	// TODO(Phase 2): 镜像 ES 行情总览（C07）—— 多源适配/回退（C36）
+	mux.HandleFunc("/api/stock/overview", auth(func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, map[string]any{
+			"note":   "stub: stock overview placeholder",
+			"source": "pending",
+		})
+	}))
+
+	mux.HandleFunc("/api/agent/chat", auth(func(w http.ResponseWriter, r *http.Request) {
+		var req agent.ChatRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad request", http.StatusBadRequest)
+			return
+		}
+		p, ok := agents[req.Model]
+		if !ok {
+			for _, v := range agents { // 默认第一个可用 provider
+				p = v
+				break
+			}
+		}
+		if p == nil {
+			http.Error(w, "no provider", http.StatusServiceUnavailable)
+			return
+		}
+		resp, err := p.Chat(r.Context(), req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		writeJSON(w, resp)
+	}))
+
+	return mux
+}
+
+func bearer(h string) string {
+	const p = "Bearer "
+	if len(h) > len(p) && h[:len(p)] == p {
+		return h[len(p):]
+	}
+	return ""
+}
+
+func writeJSON(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	_ = json.NewEncoder(w).Encode(v)
+}

@@ -28,5 +28,6 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0010：活动 Codex 读路径的 host enforcement 边界=外部宿主 seatbelt（偏离 ADR 0008 的 wrap 模型）](0010-host-enforcement-active-read-path-boundary.md)（`accepted`）
 - [ADR 0011：IdentityChain 完成性分层——Codex 身份只在声明为 Codex Worker 时必填，禁止 fixture 伪造](0011-identity-chain-completion-is-layered.md)（`proposed`，待 Human 确认；对应 roadmap 1-7-3）
 - [ADR 0012：Worker 长连接心跳监督——间隔/超时/owner 计账/失败语义/与 reaper 的关系](0012-worker-heartbeat-liveness-supervision.md)（`accepted`，Human 2026-10-12 确认；对应 roadmap 1-7-5）
-- [ADR 0013：桌面壳引入 Node/Electron —— 零第三方依赖（C32）的有界偏离；`pyproject.toml` 保持 `dependencies=[]`，由静态测试守住](0013-desktop-shell-node-dependency-deviation.md)（`accepted`，Human 2026-10-13 于 roadmap Q1 确认；对应 roadmap 1-1-4）
+- [ADR 0013：桌面壳引入 Node/Electron —— 零第三方依赖（C32）的有界偏离；`pyproject.toml` 保持 `dependencies=[]`，由静态测试守住](0013-desktop-shell-node-dependency-deviation.md)（`accepted`，Human 2026-10-13 于 roadmap Q1 确认；对应 roadmap 1-1-4；**superseded by 0015**，2026-10-14 B Go 全 pivot 方向）
+- [ADR 0015：Go 全 pivot —— 取代 ADR 0013 的桌面壳偏离边界；主运行时=Go（app/），Electron 改 spawn Go 二进制，Python 核心降为可选 sidecar](0015-go-full-pivot-supersedes-0013.md)（`accepted`，Human 2026-10-14 于 roadmap 1-5 确认；`supersedes 0013`）
 - [ADR 0014：UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启；`browser()` 工厂抛 SkipTest，默认全量回归回到分钟级有界](0014-ui-engine-tests-gated-by-default.md)（`accepted`，Human 2026-10-14 于 roadmap 1-4-2 选型 a 确认）
