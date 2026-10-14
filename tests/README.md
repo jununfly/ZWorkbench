@@ -18,12 +18,15 @@ env PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py" -v
   discover -s tests -p "test_ui_<某文件>.py" -v`（建议单文件跑，不要全量串行）。
 - `chrome_available()` 语义不变：只回答"本机是否有引擎"。
 
-## 当前基线（2026-10-14）
+## 当前基线（2026-10-14，1-4-4 收口后）
 
-- 1261 tests / ~190s / skipped=110 / **failures=4**。
-- 4 个 FAIL 是既有问题（与门无关，同名单独无门跑也挂）：
-  `test_ui_deep_link` / `test_ui_overlay` / `test_ui_reference_runtime_skill` /
-  `test_ui_reference_skill_installation`。处置走 roadmap 1-4-4。
+- 1261 tests / ~188s / skipped=110 / **OK（exit 0）**——门禁首次全绿。
+- 历史 4 个 FAIL 已在 1-4-4 处置：`skill_installation`（R1/R2 指向退役的
+  `docs/prds/`，改指 `docs/designs/pf-ui-reference-*` 新实体）；
+  `deep_link`/`runtime_skill`（side-panel 3 个 ref 声明未渲染＝真回归，产品侧
+  修复；variant-canvas/journal 属 F8/F9 条件渲染，测试改按 `?variant=` 路由
+  断言）；`overlay`（剥离启发式裸 `<aside>`/`<script>` 误删业务标记，改用
+  `data-ui-overlay="review"` 与 `src="/static/review.js"` 判别）。
 
 ## 已知环境坑
 

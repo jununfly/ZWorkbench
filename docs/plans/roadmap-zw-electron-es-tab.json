@@ -388,7 +388,7 @@
       "id": "1-4",
       "uid": "01a138767053-96d79ee4e5",
       "label": "全量测试套件挂死排查与修复",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -467,7 +467,7 @@
           "note": "为什么 1-4-3 可 completed：门禁=有界可复现命令+契约登记+skip 可见（exit_criteria 的『限时跑完或显式隔离并 README 登记』两条腿都成立）；exit 0 受 1-4-4 阻塞，blocks 语义由 edge 表达"
         }
       ],
-      "notes": "门禁建立完成：规范命令+门契约+tests/README.md 登记+基线证据（1261/189.6s/110 skip/4 fail）。exit 0 被 1-4-4 blocks（edge 已加）。10 个 import error 确认为探针 runner 伪影（/tmp 脚本使 sys.path[0]=/tmp；规范 -m 命令 cwd=根目录即可），重环境模块首跑全过",
+      "notes": "exit 0 阻塞解除（1-4-4 收口）：1261/188s/OK/skipped=110",
       "layer": "plan",
       "rounds": 1
     },
@@ -475,18 +475,25 @@
       "id": "1-4-4",
       "uid": "01a13906403a-17410259e0",
       "label": "处置 4 个既有 FAIL（deep_link/overlay/runtime_skill/skill_installation）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
-      "notes": "triage 已完成：(1) skill_installation = docs 退役直接伤——R1/R2 指向已删的 docs/prds/，新家已确认：docs/designs/pf-ui-reference-registry.md（frontmatter source-retired: prd-r1）与 pf-ui-reference-skills.md（prd-r2），修法=改测试常量指向新实体；(2) deep_link/overlay/runtime_skill 三案同因——服务端渲染缺 home.side-panel.* 等 ref（profile 声明 vs 页面实际），需查 ui-reference 渲染管线，疑为更早的重构回归（历史上全量从未跑完过所以一直没暴露）。待 zj 拍板处置顺序",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "4 个 FAIL 各自是什么性质、怎么处置？",
+          "answer": "skill_installation=docs 退役直接伤，机械修（R1/R2 → docs/designs/pf-ui-reference-*，断言对齐新 frontmatter 词表）；deep_link+runtime_skill 的 side-panel 三 ref=真回归（声明未渲染，产品修复：ref 挂到常渲染元素，空态分支也携带）；variant-canvas/journal=测试契约过期（先于 F8/F9 条件布局），测试改 variant-aware（?variant=B|C 路由断言 1x，pin 不弱化）；overlay=剥离启发式过期（裸 <aside>/<script> 误删 F3 业务侧栏与 live.js），改判别标记 data-ui-overlay=review / src=review.js",
+          "note": "拒绝的替代：给 variant ref 在 A-session 加隐藏锚（污染语义）；把 variant ref 移出 home manifest（破坏 token 寻址）；放宽 audit missing==()（弱化覆盖分母）。依据 R1 契约：豁免单元不挂 ref（task-detail not_applicable 机制），故 deep_link 结构测试该类保持 bare host"
+        }
+      ],
+      "notes": "全量 gated 套件 1261 tests / 188.0s / OK (skipped=110) exit 0——门禁首次全绿，1-4 exit_criteria 达成。改动：src/zworkbench/ui_home.py（side-panel 3 ref 渲染）+ 4 个测试文件 + tests/README.md 基线更新。未 commit 等 zj 触发",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 14:08:13",
+    "updated": "2026-10-14 14:47:07",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
