@@ -34,3 +34,10 @@ packages/dsh-zworkbench-bootstrap/lib/
 # Local Python venv (created by S0 spike validation on a non-sandboxed host).
 # Reproducible install state, never source.
 .venv/
+
+# Go build output (app/cmd/server → app/bin/zworkbench-go); reproducible via `go build`.
+app/bin/
+
+# Frontend build output (Vite / electron-builder); reproducible via npm scripts.
+app/web/dist/
+app/electron/dist/
