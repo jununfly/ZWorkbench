@@ -8,7 +8,10 @@ a browser rather than a browser.
 This is test support, not a product dependency. Chrome is an external tool for
 the verification stage; ``pyproject.toml`` stays dependency-free. When Chrome
 is absent the caller skips and the surface stays ``unknown`` -- an unavailable
-engine is not evidence of correct behaviour.
+engine is not evidence of correct behaviour. Independent of presence, the
+engine tests are also *gated*: :func:`browser` raises ``unittest.SkipTest``
+unless ``ZW_UI_ENGINE=1`` is set, so the default full-suite run never pays the
+engine's per-test cost (roadmap 1-4-2).
 
 Three ordering rules are encoded here because each one fails silently:
 
@@ -36,6 +39,7 @@ import struct
 import subprocess
 import tempfile
 import time
+import unittest
 import urllib.request
 
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -275,6 +279,15 @@ class Browser:
 @contextlib.contextmanager
 def browser():
     """Start a headless browser and guarantee the process and profile go away."""
+    # Real-engine tests are gated by default (roadmap 1-4-2). In constrained
+    # execution environments the engine answers in a slow trickle, which turns
+    # each browser call into an unbounded wait and a full-suite run into hours
+    # (the 2026-10-14 "hung suite" finding: 768/1229 tests are real-engine).
+    # Opt in explicitly so the default full-suite run stays fast and bounded.
+    if os.environ.get("ZW_UI_ENGINE", "") != "1":
+        raise unittest.SkipTest(
+            "ui real-engine tests are gated by default; set ZW_UI_ENGINE=1"
+        )
     profile = tempfile.mkdtemp(prefix="zworkbench-ui-")
     probe = socket.socket()
     probe.bind(("127.0.0.1", 0))
