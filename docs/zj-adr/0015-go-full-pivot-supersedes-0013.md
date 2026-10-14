@@ -6,6 +6,8 @@ authority-id: adr.go.full.pivot
 supersedes: 0013
 ---
 
+> **Partially superseded by [ADR 0016](0016-coding-evidence-b2-pulled-forward.md) (2026-10-14):** the B1 sidecar route and the "B2 deferred to 1→100" clause in Decision 1, the "Go 经 sidecar 调用" phrasing in Decision 4, and the B2 bullet in 未解决 are superseded — coding-evidence now follows B2 (Go reimplements C26/C28 in `app/`, zero Python process). The rest of ADR 0015 remains in force.
+
 # ADR 0015：Go 全 pivot —— 取代 ADR 0013 的桌面壳偏离边界
 
 > 状态 `accepted`：Human 于 2026-10-14 在路线图 `1-5`（B 方向）明确选择「Go 全 pivot」，
