@@ -8,6 +8,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
 	"github.com/jununfly/ZWorkbench/app/internal/domain"
+	"github.com/jununfly/ZWorkbench/app/internal/market"
 )
 
 // NewRouter 构建本地 API：鉴权中间件 + 路由（镜像 ES 本机鉴权范式）。
@@ -45,12 +46,15 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, agents m
 		writeJSON(w, tabs)
 	}))
 
-	// TODO(Phase 2): 镜像 ES 行情总览（C07）—— 多源适配/回退（C36）
-	mux.HandleFunc("/api/stock/overview", auth(func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, map[string]any{
-			"note":   "stub: stock overview placeholder",
-			"source": "pending",
-		})
+	// 镜像 ES 行情总览（C07）—— C36 多源适配/回退（远程优先，失败回退本地快照）
+	mux.HandleFunc("/api/stock/overview", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := market.NewDefaultChain()
+		ov, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, ov)
 	}))
 
 	mux.HandleFunc("/api/agent/chat", auth(func(w http.ResponseWriter, r *http.Request) {
