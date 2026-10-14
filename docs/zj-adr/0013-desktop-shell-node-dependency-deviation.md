@@ -9,6 +9,10 @@ authority-id: adr.desktop.node.dependency.deviation
 
 > 状态 `accepted`：Human 于 2026-10-13 在路线图 Q1（`1-3-1`）明确选择「接受引入
 > Node/Electron 依赖，登记为 tracked deviation」。
+>
+> ⚠️ **本 ADR 已被 ADR 0015 `supersedes`（2026-10-14，B Go 全 pivot 方向）**。新边界
+> （主运行时=Go、Electron 改 spawn Go 二进制、Python 核心降为可选 sidecar）以 **ADR 0015**
+> 为准；本文件保留历史语义，不再作为偏离边界的权威出处。
 
 ## Context
 
