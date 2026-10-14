@@ -17,6 +17,14 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, agents m
 	// 鉴权：所有 /api/* 需 token（query 或 Bearer）
 	auth := func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			// 跨域（dev: Vite :5173 → Go :18080）。prod 同源时此头无害。
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
 			tok := r.URL.Query().Get("token")
 			if tok == "" {
 				tok = bearer(r.Header.Get("Authorization"))
