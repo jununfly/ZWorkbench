@@ -13,6 +13,10 @@ type Config struct {
 	Port  string
 	Token string
 	DB    string
+	// EvidenceDB 是证据库（runs/events/effects…）路径；空串 = 内存库（重启即空）。
+	// 见 roadmap 1-5-6-3 决策：默认不落盘，避免以 cwd 为基准污染工作目录；
+	// 持久化默认路径需单独立项（data dir 决策），C26 的 durability 要求列为 follow-up。
+	EvidenceDB string
 	llm LLMConfig
 	mu  sync.RWMutex
 }
@@ -40,7 +44,9 @@ func Load() *Config {
 	if db == "" {
 		db = "mem"
 	}
-	c := &Config{Port: port, Token: token, DB: db}
+	// ZW_EVIDENCE_DB 未设置 → 内存证据库；显式给路径才落 SQLite 文件。
+	evidenceDB := os.Getenv("ZW_EVIDENCE_DB")
+	c := &Config{Port: port, Token: token, DB: db, EvidenceDB: evidenceDB}
 	c.LoadLLM()
 	return c
 }

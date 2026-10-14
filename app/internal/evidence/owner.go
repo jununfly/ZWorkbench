@@ -5,7 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
+
+// defaultEventLimit 是 ListEvents 在未显式给 limit 时的上限，避免事件流无界返回。
+const defaultEventLimit = 500
 
 // ---- 状态机核心方法（C26 CompositionOwner） ----
 
@@ -259,6 +263,53 @@ func (o *Owner) ListRuns() ([]*Run, error) {
 			return nil, fmt.Errorf("扫描 run 失败：%w", err)
 		}
 		out = append(out, rowToRun(r))
+	}
+	return out, nil
+}
+
+// ListEvents 列出事件，供「事件流」视图消费（roadmap 1-5-6-3）。
+// runID 为空 = 跨 run 查询；typeFilter 为空 = 不过滤类型（传 "safe_stopped" 即安全停止事件流）。
+// limit <= 0 时取 defaultEventLimit。按 seq 升序（发生顺序）返回。
+func (o *Owner) ListEvents(runID, typeFilter string, limit int) ([]Event, error) {
+	if limit <= 0 {
+		limit = defaultEventLimit
+	}
+	q := `SELECT seq, event_id, run_id, type, payload_json, evidence_source, created_at FROM events`
+	var where []string
+	var args []any
+	if runID != "" {
+		where = append(where, `run_id=?`)
+		args = append(args, runID)
+	}
+	if typeFilter != "" {
+		where = append(where, `type=?`)
+		args = append(args, typeFilter)
+	}
+	if len(where) > 0 {
+		q += ` WHERE ` + strings.Join(where, ` AND `)
+	}
+	q += ` ORDER BY seq LIMIT ?`
+	args = append(args, limit)
+
+	rows, err := o.db.Query(q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("列举事件失败：%w", err)
+	}
+	defer rows.Close()
+	out := make([]Event, 0)
+	for rows.Next() {
+		var e Event
+		var pj string
+		var src sql.NullString // evidence_source 可空：NULL 时取空串而非扫描失败
+		if err := rows.Scan(&e.Seq, &e.EventID, &e.RunID, &e.Type, &pj, &src, &e.CreatedAt); err != nil {
+			return nil, fmt.Errorf("扫描事件失败：%w", err)
+		}
+		_ = json.Unmarshal([]byte(pj), &e.Payload)
+		e.EvidenceSource = src.String
+		out = append(out, e)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("遍历事件失败：%w", err)
 	}
 	return out, nil
 }
