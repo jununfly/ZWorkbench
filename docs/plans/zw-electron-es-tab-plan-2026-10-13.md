@@ -1,9 +1,10 @@
 # ZWorkbench → Electron 客户端 + ES 常驻 Tab 计划草稿
 
-> 状态：**草稿（未评审、未 commit）** ｜ 创建：2026-10-13 ｜ 参照：`docs/plans/comparison-easy-stock-vs-zworkbench-2026-10-13.md`（对比点 `C01`…`C41`）
+> 状态：**历史草稿（B 决策已落地）** ｜ 创建：2026-10-13 ｜ 末次变更：2026-10-14（§8 B Go 全 pivot）
 > 目标：以 easy-stock（ES）为参照，加速 ZW 产品可用性 —— 先把 ZW 客户端改造成 Electron 桌面应用，再把 ES 的产品内容作为本工作台常驻 tab 之一。
 > 节奏：**微进度、小切片**，每个切片带可验收退出条件，避免一次性大改写。
-> ⚠️ 治理提示：本计划存于 `docs/plans/`（2026-09-27 退役态）。结论评审通过后应转 `docs/designs/*` 或 `docs/zj-adr/*` 并删除本草稿。
+> ⚠️ 治理提示：本计划存于 `docs/plans/`（2026-09-27 退役态）。**2026-10-14 zj 选 B（Go 全 pivot）后，本计划的结论已迁移至 `docs/designs/zw-go-electron-architecture.md`（已接受）+ `docs/zj-adr/0015`（supersedes 0013）**，并落地为路线图节点 `1-5`。本草稿保留作决策沿革，勿作新工作的依据。
+> ⚠️ **§4 的 A'（merge-then-adapt 进 Python）与 §3 的「Phase 1 spawn Python ui-host」已被 B 推翻**：ES 内容接入改为直接镜像 ES 的 Go/React 脚手架（零翻译），Electron 改 spawn Go 二进制。详见 §8。
 
 ## 0. 范围与前提（先读）
 
@@ -85,3 +86,50 @@ Phase 2  ES 产品内容作为常驻 Tab（merge-then-adapt）
 
 - **立刻可做、零阻塞**：**1.1**（Electron 薄壳起现有 `ui-host` UI）。不触碰 ES、不触碰核心，立刻让 ZW「变成桌面应用」，对应你「加速可用性、先爬坡」的诉求。
 - Phase 2（A'）在 Phase 1 的 1.1–1.3 跑通后即可并行启动 2.1/2.2，不再有许可证前置。
+
+---
+
+## 8. 决策变更：B Go 全 pivot（2026-10-14 追加，推翻 §3/§4 路径）
+
+> 本条记录一次**方向级**决策变更。它使本草稿 §3（Phase 1 spawn Python ui-host）与 §4（A' merge-then-adapt 进 Python）失效，结论迁移至 `docs/designs/zw-go-electron-architecture.md`（已接受）与 `docs/zj-adr/0015`（supersedes 0013）。路线图同步新增节点 `1-5`。
+
+### 8.1 决策内容
+
+| 项 | 原方案（本草稿） | 新方案（B，2026-10-14） |
+|---|---|---|
+| 主运行时 | Python（`ui-host` server-rendered HTML） | **Go**（`app/`，纯 stdlib 起骨架） |
+| 桌面壳 | Electron 薄壳 spawn Python ui-host | Electron 壳 spawn **Go 二进制** |
+| 前端 | server-rendered HTML（C21） | **React + TypeScript** 富前端（镜像 ES C21） |
+| ES 内容接入 | A' merge-then-adapt 翻成 Python | **直接镜像 ES 的 Go/React 脚手架**（零翻译） |
+| 偏离边界（C32） | Python 运行时零依赖；Node/Electron 仅 desktop/ | Go 运行时零 cgo 外部依赖；Node/Electron 仅 app/electron；Python 仍零依赖（sidecar） |
+
+### 8.2 推翻 ADR 0013 的前提
+
+ADR 0013 的两个前提（Python 零依赖核心即运行时 + Electron 薄壳 spawn Python）被 B 同时推翻。**ADR 0015** 已 `supersedes` 0013 并重新划界。
+
+### 8.3 `desktop/` + Python ui-host 壳的处理
+
+已提交的 `desktop/`（1-1-1/1-1-2 完成、1-1-3 打包 in_progress）转入 **retired**：代码保留 git 历史、停止新开发、不再打包 Python 壳。新打包目标 = Go 二进制（归 `1-5-2`）。路线图节点 `1-1`（及子节点）经 `1-5` 的 `supersedes` 边 + retired 决策标注为历史。
+
+### 8.4 落地切片（路线图 `1-5`，8 个子节点）
+
+- `1-5-1` 冻结 desktop/ Python-ui-host 壳（retired）
+- `1-5-2` Go 骨架 app/ 跑通（go build + go run + 前端多 tab 壳）
+- `1-5-3` 首个真 tab：镜像 ES 行情总览 C07 最小切片
+- `1-5-4` 接真实 LLM Provider（OpenAI/DeepSeek，动机②）
+- `1-5-5` 本地证据底座 SQLite（modernc.org/sqlite 无 cgo）+ 预留 CompositionOwner 字段
+- `1-5-6` coding-evidence tab 走 B1 sidecar 接 Python 核心（C26/C28）
+- `1-5-7` 其余 tab（C08/C09/C10/C11/C12/C19），每 tab 一微切片
+- `1-5-8` ADR 0015 supersede ADR 0013 已落地
+
+### 8.5 风险与缺口（B 特有）
+
+- Go 侧零依赖守卫尚未建立（ADR 0013 的 `test_zero_dependency_guard.py` 仅守 Python 侧）；需在 `app/` 落地 `go.mod` 无 cgo 依赖 / `app/electron` 仅 devDependency 的静态断言。
+- `app/` 骨架尚未在本机 `go build` 验证（构建环境无 Go 工具链）；本地 `go build ./...` 是首个验收证据。
+
+### 8.6 参照
+
+- 架构提案（已接受）：`docs/designs/zw-go-electron-architecture.md`
+- 新 ADR：`docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`
+- 路线图节点：`1-5`（含 8 切片）、根节点决策 D4/D5、supersedes 边 e13/e14
+- 旧决策保留：D1/D2/D3（许可证/merge 授权/方向）在 B 下仍有效（仅实现路径变）；Q4（spawn ui-host）被 B 推翻，见 `1-3-4` 决策。

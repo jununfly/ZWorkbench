@@ -14,7 +14,8 @@
         "1-1",
         "1-2",
         "1-3",
-        "1-4"
+        "1-4",
+        "1-5"
       ],
       "decisions": [
         {
@@ -31,6 +32,16 @@
           "q": "D2 merge ES 内容是否需作者书面授权（原 P0.2）？",
           "answer": "不阻塞",
           "note": "zj 2026-10-13：非商业下 PolyForm NC 已许可使用/修改/衍生；merge 内容随后改写非原样分发。软性建议：保留 ES 声明+注明变更"
+        },
+        {
+          "q": "B 方向确认：是否 Go 全 pivot（推翻 ADR 0013 前提）？",
+          "answer": "确认 B：Go 全 pivot",
+          "note": "zj 2026-10-14 选定 B。推翻 ADR 0013 前提（Python 零依赖核心即运行时）；Electron 改 spawn Go 服务 + React 富前端；app/ 骨架已立（纯 stdlib，尚未 go build 验证）。desktop/ + Python ui-host 现有壳被 supersede（非删除，保留作证据）；Phase 2 A' merge-then-adapt 进 Python 作废，改为直接镜像 ES 的 Go/React 脚手架。新 ADR 0015 将 supersede 0013。详见 docs/designs/zw-go-electron-architecture.md"
+        },
+        {
+          "q": "D5 ADR 0013 与 desktop/ 壳如何处置？",
+          "answer": "ADR 0013 被新 ADR 0015 supersede；desktop/ + Python ui-host 壳 retired（保留 git 历史，不作删除）",
+          "note": "zj 2026-10-14 选 B 后：ADR 0013 前提（Python 零依赖核心即运行时 + Electron 薄壳 spawn Python）失效，由 ADR 0015 重新划界（Go 运行时零依赖 + 偏离边界）。desktop/ 已提交的 Electron 壳 + Python ui-host harness 转入 retired 状态：代码保留作证据、停止新开发、不再打包 Python 壳。新打包目标 = Go 二进制（归 1-5-2）。"
         }
       ],
       "notes": "",
@@ -58,7 +69,8 @@
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "archived": true
     },
     "1-2": {
       "id": "1-2",
@@ -79,10 +91,16 @@
           "q": "D3 ES 接入方式？",
           "answer": "A' merge-then-adapt",
           "note": "ES 功能/数据适配作初始脚手架带进 ZW Python 后端+新 tab，随后迭代改写、并入 CompositionOwner；B 自研参考 / C 外链降级为局部兜底"
+        },
+        {
+          "q": "Phase 2 A' 在 B pivot 下如何？",
+          "answer": "作废（superseded by 1-5）：A' merge-then-adapt 进 Python 不再执行",
+          "note": "2026-10-14 选 B 后，ES 内容接入改为直接镜像 ES 的 Go/React 脚手架（零翻译），归 1-5-3/1-5-7。A' 的 Python 翻译路径废弃。"
         }
       ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "archived": true
     },
     "1-3": {
       "id": "1-3",
@@ -197,6 +215,11 @@
           "q": "打包目标与首切片？",
           "answer": "先本地 macOS dmg（unsigned）作证据；Windows exe 与代码签名/公证留后续",
           "note": "electron-builder 入 desktop/ devDependencies；首切片只验证 dmg 能产出且安装后零配置启动 ui-host 子进程。签名/公证需用户证书；macOS 直出 Windows 包不可行（wine 脆弱），Windows 包改在 CI/Windows 跑。本环境无证书，先 unsigned 验证链路"
+        },
+        {
+          "q": "本切片在 B pivot 下状态？",
+          "answer": "冻结（retired）：desktop/ Python-ui-host 壳被 1-5 取代",
+          "note": "2026-10-14 zj 选 B：Electron 改 spawn Go。本切片（打包 Python 壳）不再推进，保留 git 历史作证据。新打包目标 = Go 二进制，归 1-5-2。"
         }
       ],
       "notes": "Scope gate: Product execution（实现 electron-builder 打包，补 C04/C34 缺口）。退出条件：DMG/EXE 安装后零配置启动。首切片：electron-builder 配置 + 本地 macOS 构建证据；代码签名/公证留作后续决策点（需用户证书，跨 macOS 出 Windows 包受限）",
@@ -379,6 +402,11 @@
           "q": "Q4 Electron 如何拉起 Python（ui-host）？",
           "answer": "A：Electron 主进程 spawn ui-host 子进程",
           "note": "zj 2026-10-13：关窗则后端退出；需处理端口分配、就绪探测、退出清理。B（先跑再连 loopback）降级为冒烟兜底"
+        },
+        {
+          "q": "Q4（Electron 如何拉起后端）在 B 下如何？",
+          "answer": "A 选项作废：改为 spawn Go 而非 Python ui-host",
+          "note": "2026-10-14 选 B：Electron 主进程 spawn Go 二进制（app/cmd/server），不再 spawn Python ui-host。Q4 原 A 结论被 1-5 推翻。"
         }
       ],
       "notes": "",
@@ -489,11 +517,156 @@
       "notes": "全量 gated 套件 1261 tests / 188.0s / OK (skipped=110) exit 0——门禁首次全绿，1-4 exit_criteria 达成。改动：src/zworkbench/ui_home.py（side-panel 3 ref 渲染）+ 4 个测试文件 + tests/README.md 基线更新。未 commit 等 zj 触发",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a1398a5f5f-d40e3829db",
+      "label": "Phase 3 — Go 全 pivot（B）：Electron 改 spawn Go + React 富前端（镜像 ES，supersede 1-1/1-2）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4",
+        "1-5-5",
+        "1-5-6",
+        "1-5-7",
+        "1-5-8"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "budget": {
+        "max_children": 10
+      },
+      "rounds": 1
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a1398b1f4d-45dddc8b85",
+      "label": "1.5.1 冻结 desktop/ Python-ui-host 壳（保留 git 历史，停止新开发）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "desktop/ 标记 retired；不再新增 Python ui-host 功能"
+      ]
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a1398b2056-d374df4c8f",
+      "label": "1.5.2 Go 骨架 app/ 跑通（go build + go run + 前端多 tab 壳，零业务逻辑）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "go build ./... 通过；go run 起服务；前端 tab 壳可见"
+      ]
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "uid": "01a1398b2143-e84ad8cafb",
+      "label": "1.5.3 首个真 tab：镜像 ES 行情总览 C07 最小切片",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "该 tab 常驻可用，数据来自本地快照/多源适配回退 C36"
+      ]
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "uid": "01a1398b225e-1abe5228f4",
+      "label": "1.5.4 接真实 LLM Provider（OpenAI/DeepSeek Responses API，动机②）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "settings tab 可配置 provider 并真实调用"
+      ]
+    },
+    "1-5-5": {
+      "id": "1-5-5",
+      "uid": "01a1398b68d4-46844e0967",
+      "label": "1.5.5 本地证据底座 SQLite（modernc.org/sqlite 无 cgo）+ 预留 CompositionOwner 字段",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "SqliteStore 替换 MemStore；快照含来源/时间"
+      ]
+    },
+    "1-5-6": {
+      "id": "1-5-6",
+      "uid": "01a1398b69e4-4a51a41bae",
+      "label": "1.5.6 coding-evidence tab 走 B1 sidecar 接 Python 核心（C26/C28）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "Go 经 loopback 调 Python 证据 API 成功"
+      ]
+    },
+    "1-5-7": {
+      "id": "1-5-7",
+      "uid": "01a1398b6ad5-9d490b8b29",
+      "label": "1.5.7 其余 tab（C08/C09/C10/C11/C12/C19），每 tab 一微切片",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "逐个 tab 常驻可用"
+      ]
+    },
+    "1-5-8": {
+      "id": "1-5-8",
+      "uid": "01a1398b6bd8-f363ec6dcf",
+      "label": "1.5.8 写 ADR 0015 supersede ADR 0013（重新划界 Go 运行时零依赖 + 偏离边界）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "ADR 0015 accepted，引用 0013 superseded"
+      ]
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 14:47:07",
+    "updated": "2026-10-14 16:34:07",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
@@ -568,7 +741,19 @@
       "from": "01a13906403a-17410259e0",
       "to": "01a13877218c-c92aeed596",
       "type": "blocks"
+    },
+    {
+      "id": "e13",
+      "from": "01a1398a5f5f-d40e3829db",
+      "to": "01a135dfb357-41ddfb1325",
+      "type": "supersedes"
+    },
+    {
+      "id": "e14",
+      "from": "01a1398a5f5f-d40e3829db",
+      "to": "01a135dfb420-0816295f43",
+      "type": "supersedes"
     }
   ],
-  "edge_seq": 12
+  "edge_seq": 14
 }

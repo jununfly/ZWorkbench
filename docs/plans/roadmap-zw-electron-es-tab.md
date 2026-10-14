@@ -1,13 +1,13 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-14 14:47:07
+> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-14 16:34:07
 
 [~][X+] 1. ZW → Electron 客户端 + ES 常驻 Tab
     ├── [ ][X+] 1-1. Phase 1 — Electron 化 ZW 客户端（薄壳，零 UI 重写）
     │   ├── [~][X+] 1-1-3. 1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口）
     │   ... 该层还有 3 个兄弟，0 个 in_progress ▸
-    ... 该层还有 3 个兄弟，0 个 in_progress ▸
+    ... 该层还有 4 个兄弟，1 个 in_progress ▸
 <details><summary>阻塞链：5 个节点被阻塞</summary>
 
 - 1-2-1. 2.1 常驻 tab 容器 + 路由（先空占位） ← e5: 1-1-3. 1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口） [~]
@@ -25,6 +25,7 @@ Scope gate: Product execution（实现 electron-builder 打包，补 C04/C34 缺
 
 **决策：**
 - Q: 打包目标与首切片？ → 先本地 macOS dmg（unsigned）作证据；Windows exe 与代码签名/公证留后续 (electron-builder 入 desktop/ devDependencies；首切片只验证 dmg 能产出且安装后零配置启动 ui-host 子进程。签名/公证需用户证书；macOS 直出 Windows 包不可行（wine 脆弱），Windows 包改在 CI/Windows 跑。本环境无证书，先 unsigned 验证链路)
+- Q: 本切片在 B pivot 下状态？ → 冻结（retired）：desktop/ Python-ui-host 壳被 1-5 取代 (2026-10-14 zj 选 B：Electron 改 spawn Go。本切片（打包 Python 壳）不再推进，保留 git 历史作证据。新打包目标 = Go 二进制，归 1-5-2。)
 
 ### 下一步可开工（ready 前 3）
 
