@@ -163,6 +163,23 @@ ui-host"的机械证据，不依赖任何人看屏幕。
 | CLI 不回归 | `git status` 仅 `M desktop/main.js`，**`src/` 零改动**；`zworkbench --help`、`ui-host --help` 正常 |
 | 自检总判定 | `ok: true`，退出码 0 |
 
+## 依赖偏离登记（切片 1-1-4）
+
+ZWorkbench 核心是**零第三方依赖**的纯 Python（对比项 C32）。本目录引入 Node/Electron
+是对这条约束的**有界偏离**，唯一权威记录在
+[ADR 0013](../docs/zj-adr/0013-desktop-shell-node-dependency-deviation.md)。
+
+边界三条，且由 `tests/test_zero_dependency_guard.py` 机械守住：
+
+| 边界 | 守卫 |
+|---|---|
+| `pyproject.toml` 的 `[project].dependencies` 保持 `[]` | 断言为空列表 |
+| `electron` 只是 `desktop/` 的 devDependency，不是运行时依赖 | 断言在 `devDependencies`、不在 `dependencies` |
+| Node 生态只在 `desktop/`，不进仓库根 | 断言根目录无 `package.json` |
+
+删掉整个 `desktop/` 即可撤回偏离，核心零改动 —— 这是把桌面壳设计成"外壳而非内核"
+的直接收益。
+
 ## 已知限制（留给后续切片）
 
 - **窗口关掉即退出后端**：`window-all-closed` → SIGTERM 子进程 → 退出。
@@ -171,4 +188,4 @@ ui-host"的机械证据，不依赖任何人看屏幕。
 - **单实例锁 / 原生菜单 / 托盘**：切片 `1-1-2`（已完成，见上）。
 - **`second-instance` 唤起窗口**：代码路径已接（还原+show+focus），但需两个活实例 + GUI session，无头环境只能验证到"第二实例被挡住"，唤起行为待 zj 目视。
 - **打包分发**：切片 `1-1-3`。
-- **Node 依赖偏离零依赖（C32）的登记**：切片 `1-1-4`。
+- **Node 依赖偏离零依赖（C32）的登记**：切片 `1-1-4`（已完成，见上）。
