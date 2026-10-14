@@ -16,5 +16,6 @@ func DefaultTabs() []Tab {
 		{ID: "stock-limitup", Title: "超短连板", Group: "stock"},
 		{ID: "coding-evidence", Title: "编码证据", Group: "core"},
 		{ID: "settings", Title: "设置 / LLM", Group: "system"},
+		{ID: "chat", Title: "对话", Group: "agent"},
 	}
 }

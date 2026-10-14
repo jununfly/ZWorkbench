@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jununfly/ZWorkbench/app/internal/agent"
 	"github.com/jununfly/ZWorkbench/app/internal/api"
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
@@ -21,9 +20,8 @@ func main() {
 
 	store := data.NewMemStore()
 	tabs := domain.DefaultTabs()
-	agents := agent.DefaultProviders()
 
-	handler := api.NewRouter(cfg, store, tabs, agents)
+	handler := api.NewRouter(cfg, store, tabs)
 
 	srv := &http.Server{
 		Addr:         cfg.Addr(),

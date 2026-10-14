@@ -38,6 +38,9 @@ packages/dsh-zworkbench-bootstrap/lib/
 # Go build output (app/cmd/server → app/bin/zworkbench-go); reproducible via `go build`.
 app/bin/
 
+# Local LLM provider config (contains API key); user-specific, never commit.
+app/config.json
+
 # Frontend build output (Vite / electron-builder); reproducible via npm scripts.
 app/web/dist/
 app/electron/dist/
