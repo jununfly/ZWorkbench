@@ -1,0 +1,30 @@
+{
+  "note": "SEED SNAPSHOT — offline/dev 用，非实时行情。仅作 UI/适配链路演示，不得用于任何投资决策。",
+  "as_of": "2026-10-14T15:00:00+08:00",
+  "tiers": [
+    {"days": 7, "stocks": [
+      {"code": "SZ002467", "name": "二六三", "price": 12.34, "change_pct": 10.01, "reason": "华为算力"}
+    ]},
+    {"days": 5, "stocks": [
+      {"code": "SZ000063", "name": "中兴通讯", "price": 38.50, "change_pct": 10.00, "reason": "6G"},
+      {"code": "SH603019", "name": "中科曙光", "price": 52.10, "change_pct": 10.00, "reason": "国产算力"}
+    ]},
+    {"days": 3, "stocks": [
+      {"code": "SZ300308", "name": "中际旭创", "price": 158.20, "change_pct": 20.00, "reason": "CPO"},
+      {"code": "SH688256", "name": "寒武纪", "price": 245.00, "change_pct": 20.00, "reason": "AI 芯片"}
+    ]},
+    {"days": 2, "stocks": [
+      {"code": "SZ002230", "name": "科大讯飞", "price": 48.90, "change_pct": 9.99, "reason": "大模型"},
+      {"code": "SH600100", "name": "同方股份", "price": 8.20, "change_pct": 10.00, "reason": "信创"},
+      {"code": "SZ000977", "name": "浪潮信息", "price": 33.40, "change_pct": 9.98, "reason": "服务器"}
+    ]}
+  ],
+  "themes": [
+    {"name": "华为算力", "limit_up_count": 12, "strength": 88.5, "leading": "二六三"},
+    {"name": "国产算力/CPO", "limit_up_count": 9, "strength": 82.0, "leading": "中际旭创"},
+    {"name": "AI 芯片", "limit_up_count": 6, "strength": 75.3, "leading": "寒武纪"},
+    {"name": "信创", "limit_up_count": 5, "strength": 64.1, "leading": "同方股份"},
+    {"name": "6G", "limit_up_count": 4, "strength": 58.7, "leading": "中兴通讯"}
+  ],
+  "sentiment": {"stage": "发酵", "max_board": 7, "limit_up": 62, "limit_down": 8}
+}
