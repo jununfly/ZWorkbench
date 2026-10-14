@@ -1,0 +1,21 @@
+{
+  "note": "SEED SNAPSHOT — offline/dev 用，非实时数据。仅作 UI/适配链路演示，不得用于任何投资决策。",
+  "as_of": "2026-10-14T15:00:00+08:00",
+  "total_assets": 500000,
+  "cash": 85000,
+  "pnl": 23500,
+  "risk_level": "中风险",
+  "score": 65,
+  "dimensions": [
+    {"name": "持仓逻辑质量", "weight": 35, "score": 72, "basis": "多数标的具备清晰催化，2 只逻辑偏弱"},
+    {"name": "组合结构合理性", "weight": 25, "score": 60, "basis": "集中度偏高，单一行业占比 42%"},
+    {"name": "风险管理质量", "weight": 25, "score": 64, "basis": "现金缓冲充足，但无止损纪律"},
+    {"name": "策略匹配度", "weight": 15, "score": 70, "basis": "与稳健风格基本匹配"}
+  ],
+  "holdings": [
+    {"code": "SZ300750", "name": "宁德时代", "weight": 28, "cost": 250.10, "price": 268.40, "pnl_pct": 7.32},
+    {"code": "SH600519", "name": "贵州茅台", "weight": 22, "cost": 1540.00, "price": 1520.00, "pnl_pct": -1.30},
+    {"code": "SZ002594", "name": "比亚迪", "weight": 14, "cost": 300.00, "price": 312.80, "pnl_pct": 4.27},
+    {"code": "SH601012", "name": "隆基绿能", "weight": 8, "cost": 22.40, "price": 21.10, "pnl_pct": -5.80}
+  ]
+}

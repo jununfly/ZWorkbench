@@ -1,0 +1,13 @@
+{
+  "note": "SEED SNAPSHOT — offline/dev 用，非实时数据。仅作 UI/适配链路演示，不得用于任何投资决策。",
+  "as_of": "2026-10-14T15:00:00+08:00",
+  "original_score": 65,
+  "optimized_score": 74,
+  "improvement": 10,
+  "targets": [
+    {"code": "SZ300750", "name": "宁德时代", "action": "保持", "from_weight": 28, "to_weight": 26, "reason": "逻辑仍强，适度降配释放现金"},
+    {"code": "SH601012", "name": "隆基绿能", "action": "减持", "from_weight": 8, "to_weight": 3, "reason": "基本面走弱，止损纪律触发"},
+    {"code": "SH600036", "name": "招商银行", "action": "新增", "from_weight": 0, "to_weight": 9, "reason": "低位高股息，对冲组合波动"}
+  ],
+  "conditions": "入场条件：隆基跌破 20.5 清仓；招行回踩 35 支撑确认后建仓。退出条件：组合回撤超 8% 触发再平衡。"
+}
