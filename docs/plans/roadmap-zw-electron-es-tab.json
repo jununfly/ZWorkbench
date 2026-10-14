@@ -593,16 +593,43 @@
       "id": "1-5-4",
       "uid": "01a1398b225e-1abe5228f4",
       "label": "1.5.4 接真实 LLM Provider（OpenAI/DeepSeek Responses API，动机②）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": "",
+      "decisions": [
+        {
+          "q": "传输协议选哪个？",
+          "answer": "OpenAI 兼容 Chat Completions API（POST {base_url}/chat/completions），不用较新的 Responses API——DeepSeek/OpenAI/多数兼容端点都支持，可移植性最高；Responses API 留后续评估",
+          "note": ""
+        },
+        {
+          "q": "配置怎么存？",
+          "answer": "JSON 文件 config.json（env ZW_CONFIG 覆盖，默认 cwd ./config.json），不耦合 1-5-5 的 SQLite（避免依赖未建底座）；API key 明文存本地单用户桌面文件，记录安全风险",
+          "note": ""
+        },
+        {
+          "q": "首个真实调用端点做什么？",
+          "answer": "通用对话补全 /api/llm/chat（messages→content），前端「对话」tab 验证端到端；后续可加行情分析专用端点",
+          "note": ""
+        },
+        {
+          "q": "Go 侧架构与依赖？",
+          "answer": "新增 app/internal/llm/（client.go + config.go），纯 stdlib net/http，零外部依赖，符合 ADR 0015；router 加 /api/config(GET/PUT) 与 /api/llm/chat",
+          "note": ""
+        },
+        {
+          "q": "包结构落哪？",
+          "answer": "修正 D4：不复用新建 internal/llm，改为接入已有 agent.Provider 接口 + /api/agent/chat（该端点原本就是 stub），真实 OpenAI 兼容客户端落在 agent 包；LLM 配置并入 config.Config（LLM 子结构 + config.json 持久化）。避免与既有 agent 抽象重复，符合「非侵入、复用」偏好",
+          "note": ""
+        }
+      ],
+      "notes": "落真实 OpenAI 兼容客户端进 agent 包（替代 stub）+ config.Config 持 LLM 子结构并持久化 config.json；新增 /api/config(GET/PUT) 与「设置/LLM」页 + 「对话」tab。本环境以本地 mock provider 端到端验证：PUT 配置→GET 不回显 key→POST /api/agent/chat 走真实 HTTP 调 mock 返回 content（502 未配置/401 鉴权正常）。残余：用户在自己终端填真实 DeepSeek/OpenAI key 做最终真调用（代码路径已证，仅差外部凭证）",
       "layer": "plan",
       "exit_criteria": [
         "settings tab 可配置 provider 并真实调用"
-      ]
+      ],
+      "rounds": 1
     },
     "1-5-5": {
       "id": "1-5-5",
@@ -685,7 +712,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 19:42:19",
+    "updated": "2026-10-14 20:04:37",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
