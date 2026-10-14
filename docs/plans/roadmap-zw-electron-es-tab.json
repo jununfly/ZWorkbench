@@ -567,7 +567,7 @@
       "parent": "1-5",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "验收清单(完整版见对话): A.Go编译: go build ./... exit0; go vet ./... exit0; go build -o bin/zworkbench-go ./cmd/server. B.服务冒烟: ZW_TOKEN=dev123 ZW_PORT=18080 go run ./cmd/server; curl /api/health?token=dev123 -> {status:ok,runtime:go}; 无token->401; /api/tabs -> 含stock-overview数组; /api/stock/overview -> stub; SIGTERM->shutdown无残留. C.前端dev: app/web npm install; npm run dev(:5173); 开 http://localhost:5173/?token=dev123; DOM:#root有侧栏+tab项 console无load tabs failed; 点击切换active. D.Electron: app/electron npm install; npm start默认spawn bin; 窗口Go同源托管tab壳可见; 关窗goProc kill无孤儿. 坑: dev401首因=页面URL缺?token或token不一致; Electron31下载慢用ELECTRON_MIRROR=npmmirror; 本环境无Go须本机跑.",
       "layer": "plan",
       "exit_criteria": [
         "go build ./... 通过；go run 起服务；前端 tab 壳可见"
@@ -666,7 +666,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 16:34:07",
+    "updated": "2026-10-14 16:57:21",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
