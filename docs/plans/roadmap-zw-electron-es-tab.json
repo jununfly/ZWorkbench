@@ -627,9 +627,14 @@
           "q": "复用外部 provider 配置怎么做？",
           "answer": "新增 ZW_PROVIDER_CONFIG 指向 Codex 风格 TOML（zw-providers.toml 同构）；启动时手写最小 TOML 解析（零依赖，保 ADR 0015）抽取激活的 model_provider，映射 base_url/api_key/model/enabled 并入 LLMConfig。不引入第三方 TOML 库。base_url 经归一化把 /api/coding/v3（Responses 端点）转 /api/v3（OpenAI 兼容 chat/completions），与既有客户端对齐。GET /api/config 回显 provider_config 来源",
           "note": ""
+        },
+        {
+          "q": "ZW_PROVIDER_CONFIG 支持是否保留？",
+          "answer": "不保留：2026-10-14 移除（撤销 D6）。删 providers_toml.go、Config.providerConfig 字段与 ProviderConfig() Getter、Load() 中的 ZW_PROVIDER_CONFIG 注入块、GET /api/config 的 provider_config 回显。provider 配置回归 config.json 单一来源（经 /api/config PUT 写入）。go build+vet 全过。原因：zj 决定不再复用外部 provider TOML",
+          "note": ""
         }
       ],
-      "notes": "追加：ZW_PROVIDER_CONFIG 复用外部 provider TOML（手写零依赖解析 + base_url 归一化 /api/coding/v3→/api/v3）；本地双 server 验证：真实 TOML 形状解析出 normalized base_url+key、mock TOML 走真实 HTTP 调 mock 返回 content（Bearer 透传）。未 commit",
+      "notes": "【2026-10-14 移除】ZW_PROVIDER_CONFIG 支持已撤销（对应 D6）：删除 providers_toml.go 及 Config 中 providerConfig 字段/Getter/Load 注入块、router GET /api/config 的 provider_config 回显；provider 配置回归 config.json 单一来源，仍经 /api/config PUT 写入（api_key 不回显）。go build+vet 通过。未 commit",
       "layer": "plan",
       "exit_criteria": [
         "settings tab 可配置 provider 并真实调用"
@@ -717,7 +722,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 20:19:56",
+    "updated": "2026-10-14 20:36:32",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
