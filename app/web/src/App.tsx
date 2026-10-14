@@ -9,6 +9,7 @@ import { OptimizationTab } from './tabs/OptimizationTab';
 import { MasteryTab } from './tabs/MasteryTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { ChatTab } from './tabs/ChatTab';
+import { CodingEvidenceTab } from './tabs/CodingEvidenceTab';
 import { PlaceholderTab } from './tabs/PlaceholderTab';
 
 interface Tab { id: string; title: string; group: string; }
@@ -51,7 +52,8 @@ export function App() {
         {active === 'trading-mastery' && <MasteryTab />}
         {active === 'settings' && <SettingsTab />}
         {active === 'chat' && <ChatTab />}
-        {active && !['stock-overview','stock-research','stock-limitup','stock-review','portfolio-inspection','portfolio-optimization','trading-mastery','settings','chat'].includes(active) && <PlaceholderTab id={active} />}
+        {active === 'coding-evidence' && <CodingEvidenceTab />}
+        {active && !['stock-overview','stock-research','stock-limitup','stock-review','portfolio-inspection','portfolio-optimization','trading-mastery','coding-evidence','settings','chat'].includes(active) && <PlaceholderTab id={active} />}
       </main>
     </div>
   );

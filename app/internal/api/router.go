@@ -8,6 +8,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
 	"github.com/jununfly/ZWorkbench/app/internal/domain"
+	"github.com/jununfly/ZWorkbench/app/internal/evidence"
 	"github.com/jununfly/ZWorkbench/app/internal/inspection"
 	"github.com/jununfly/ZWorkbench/app/internal/limitup"
 	"github.com/jununfly/ZWorkbench/app/internal/market"
@@ -18,7 +19,8 @@ import (
 )
 
 // NewRouter 构建本地 API：鉴权中间件 + 路由（镜像 ES 本机鉴权范式）。
-func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab) http.Handler {
+// ev 为本地证据 owner（1-5-6 的 Go evidence 包）；传 nil 时 /api/evidence/* 返回 503。
+func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evidence.Owner) http.Handler {
 	mux := http.NewServeMux()
 
 	// 鉴权：所有 /api/* 需 token（query 或 Bearer）
@@ -230,6 +232,9 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab) http.Han
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
 	}))
+
+	// 本地证据（1-5-6-3）：run 生命周期 + safe-stop 事件流 + identity 完整性。
+	registerEvidence(mux, auth, ev)
 
 	return mux
 }

@@ -620,3 +620,92 @@ func TestClaimEffectDeclaredExposureBoundary(t *testing.T) {
 		t.Fatalf("越界 effect run 应 safe_stopped，得到 %s", run.Status)
 	}
 }
+
+// TestListEvents 覆盖 1-5-6-3 事件流的三个过滤维度与 limit：
+// 跨 run 全量 / 按 run / 按类型（safe_stopped 事件流）/ run+type 组合 / limit。
+func TestListEvents(t *testing.T) {
+	ow := newTestOwner(t)
+	if _, err := ow.CreateRun("r1", "t", nil, nil); err != nil {
+		t.Fatalf("CreateRun r1: %v", err)
+	}
+	if _, err := ow.CreateRun("r2", "t", nil, nil); err != nil {
+		t.Fatalf("CreateRun r2: %v", err)
+	}
+	// r1：run.created（CreateRun 自带）+ 一条自定义事件 + run.safe_stopped
+	if _, err := ow.RecordEvent("r1", "note", map[string]any{"k": "v"}, EvidenceSourceNative); err != nil {
+		t.Fatalf("RecordEvent: %v", err)
+	}
+	if _, err := ow.SafeStopRun("r1", "test-safe-stop"); err != nil {
+		t.Fatalf("SafeStopRun: %v", err)
+	}
+
+	// 1) 跨 run 全部事件：r1 = created+note+safe_stopped = 3，r2 = created = 1
+	all, err := ow.ListEvents("", "", 0)
+	if err != nil {
+		t.Fatalf("ListEvents all: %v", err)
+	}
+	if len(all) != 4 {
+		t.Fatalf("all events = %d, want 4", len(all))
+	}
+	for i := 1; i < len(all); i++ {
+		if all[i].Seq < all[i-1].Seq {
+			t.Fatalf("事件未按 seq 升序：%+v", all)
+		}
+	}
+
+	// 2) 按 run 过滤
+	r1, err := ow.ListEvents("r1", "", 0)
+	if err != nil {
+		t.Fatalf("ListEvents r1: %v", err)
+	}
+	if len(r1) != 3 {
+		t.Fatalf("r1 events = %d, want 3（%+v）", len(r1), r1)
+	}
+	for _, e := range r1 {
+		if e.RunID != "r1" {
+			t.Fatalf("run 过滤泄漏了别的 run：%+v", e)
+		}
+	}
+
+	// 3) 按类型过滤 = safe-stop 事件流（C28 核心视图）
+	ss, err := ow.ListEvents("", "run.safe_stopped", 0)
+	if err != nil {
+		t.Fatalf("ListEvents safe_stopped: %v", err)
+	}
+	if len(ss) != 1 {
+		t.Fatalf("safe_stopped 事件 = %d, want 1（%+v）", len(ss), ss)
+	}
+	if ss[0].RunID != "r1" || ss[0].Type != "run.safe_stopped" {
+		t.Fatalf("safe_stopped 事件不对：%+v", ss[0])
+	}
+	if ss[0].Payload["reason"] != "test-safe-stop" {
+		t.Fatalf("safe_stopped 应携带 reason，得到 %+v", ss[0].Payload)
+	}
+
+	// 4) run + type 组合过滤（r2 无 safe_stopped）
+	both, err := ow.ListEvents("r2", "run.safe_stopped", 0)
+	if err != nil {
+		t.Fatalf("ListEvents r2+safe_stopped: %v", err)
+	}
+	if len(both) != 0 {
+		t.Fatalf("r2 无 safe_stopped，却得到 %d 条", len(both))
+	}
+
+	// 5) limit 生效
+	lim, err := ow.ListEvents("", "", 2)
+	if err != nil {
+		t.Fatalf("ListEvents limit: %v", err)
+	}
+	if len(lim) != 2 {
+		t.Fatalf("limit=2 得到 %d 条", len(lim))
+	}
+
+	// 6) 不存在的 run → 空列表而非错误
+	none, err := ow.ListEvents("nope", "", 0)
+	if err != nil {
+		t.Fatalf("ListEvents 不存在的 run 不应报错：%v", err)
+	}
+	if len(none) != 0 {
+		t.Fatalf("不存在的 run 应返回空，得到 %d 条", len(none))
+	}
+}
