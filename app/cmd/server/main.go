@@ -18,7 +18,19 @@ import (
 func main() {
 	cfg := config.Load()
 
-	store := data.NewMemStore()
+	// 1-5-5：ZW_DB="mem"（默认）走内存；否则走 SQLite 文件（modernc，无 cgo）。
+	var store data.Store
+	var sqliteStore *data.SqliteStore
+	if cfg.DB == "" || cfg.DB == "mem" {
+		store = data.NewMemStore()
+	} else {
+		ss, err := data.NewSqliteStore(cfg.DB)
+		if err != nil {
+			log.Fatalf("[zw] 初始化 SQLite 失败：%v", err)
+		}
+		sqliteStore = ss
+		store = ss
+	}
 	tabs := domain.DefaultTabs()
 
 	handler := api.NewRouter(cfg, store, tabs)
@@ -43,5 +55,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_ = srv.Shutdown(ctx)
+	if sqliteStore != nil {
+		_ = sqliteStore.Close()
+	}
 	log.Printf("[zw] shutdown")
 }

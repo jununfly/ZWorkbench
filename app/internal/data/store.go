@@ -3,13 +3,16 @@ package data
 import "sync"
 
 // Snapshot 是 ES 风格的证据快照：带来源与时间的版本化记录。
-// Phase 2 接 SQLite 时，字段直接映射到表。
+// 字段直接映射到 SQLite 的 snapshots 表（1-5-5）。
 type Snapshot struct {
-	ID        string `json:"id"`
-	Topic     string `json:"topic"`
-	Source    string `json:"source"`
-	Payload   string `json:"payload"`
-	CreatedAt string `json:"created_at"`
+	ID              string `json:"id"`
+	Topic           string `json:"topic"`
+	Source          string `json:"source"`
+	Payload         string `json:"payload"`
+	CreatedAt       string `json:"created_at"`
+	// CompositionOwner 预留字段：标识快照所属的 Composition 拥有者（S3 写 seam / CompositionOwner 范式）。
+	// 当前未写入，保持为空；接 Phase 3 CompositionOwner 时直接落此列，无需改表。
+	CompositionOwner string `json:"composition_owner"`
 }
 
 // Store 是本地证据底座接口。骨架先用 MemStore（离线可跑），

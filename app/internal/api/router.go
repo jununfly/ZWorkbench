@@ -84,6 +84,46 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab) http.Han
 		writeJSON(w, resp)
 	}))
 
+	// 本地证据底座（1-5-5）：列 / 存快照。让 router 既有的 store 参数真正被使用。
+	mux.HandleFunc("/api/snapshots", auth(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			topic := r.URL.Query().Get("topic")
+			writeJSON(w, store.List(topic))
+		case http.MethodPost:
+			var snap struct {
+				ID              string `json:"id"`
+				Topic           string `json:"topic"`
+				Source          string `json:"source"`
+				Payload         string `json:"payload"`
+				CreatedAt       string `json:"created_at"`
+				CompositionOwner string `json:"composition_owner"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&snap); err != nil {
+				http.Error(w, "bad request", http.StatusBadRequest)
+				return
+			}
+			if snap.ID == "" {
+				http.Error(w, "id required", http.StatusBadRequest)
+				return
+			}
+			if err := store.Save(data.Snapshot{
+				ID:              snap.ID,
+				Topic:           snap.Topic,
+				Source:          snap.Source,
+				Payload:         snap.Payload,
+				CreatedAt:       snap.CreatedAt,
+				CompositionOwner: snap.CompositionOwner,
+			}); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			writeJSON(w, map[string]any{"ok": true, "id": snap.ID})
+		default:
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
 	// 「设置 / LLM」页后端：读取/写入 provider 配置（持久化到 config.json）。
 	mux.HandleFunc("/api/config", auth(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
