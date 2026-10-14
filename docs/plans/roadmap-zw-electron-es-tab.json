@@ -547,11 +547,17 @@
       "id": "1-5-1",
       "uid": "01a1398b1f4d-45dddc8b85",
       "label": "1.5.1 冻结 desktop/ Python-ui-host 壳（保留 git 历史，停止新开发）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "desktop/ 如何标记 retired？",
+          "answer": "README 加 RETIRED/frozen banner（引用 ADR 0015 Decision 3 + 0016），保留 git 历史、停止新开发；不再新增 Python ui-host 功能、不再推进 1-1-3 打包。exit 达成。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan",
       "exit_criteria": [
@@ -747,11 +753,17 @@
       "id": "1-5-8",
       "uid": "01a1398b6bd8-f363ec6dcf",
       "label": "1.5.8 写 ADR 0015 supersede ADR 0013（重新划界 Go 运行时零依赖 + 偏离边界）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-8 还需新写 ADR 吗？",
+          "answer": "否。ADR 0015 在 1-5 选 B 时已写就：status=accepted + front-matter supersedes:0013 + Decision 2 重划零依赖边界；0013 头部已加 superseded-by-0015 banner，README 索引双向登记。exit（0015 accepted 且引用 0013 superseded）已满足。注：0015 未解决'Go 零依赖守卫'曾关联本节点，但已由 1-5-5 modernc.org/sqlite 非 cgo + 1-5-6 Go evidence 实质覆盖，非本节点 exit 范围，留作 app/ 静态守卫后续。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan",
       "exit_criteria": [
@@ -893,7 +905,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 23:40:18",
+    "updated": "2026-10-15 00:15:03",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [

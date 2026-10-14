@@ -1,6 +1,17 @@
+> ⚠️ **RETIRED / 已冻结（2026-10-14 · ADR 0015 Decision 3 · roadmap `1-5-1`）**
+>
+> 本目录是 **Python `ui-host` 桌面壳**——Electron 薄壳把 `zworkbench ui-host` 作为子进程拉起（见下方原始契约）。在路线图 `1-5`（B：Go 全 pivot）被接受后，该形态已被取代：
+>
+> - 主运行时改为 **Go**（`app/`），Electron 壳改为 spawn **Go 二进制**（`app/electron`），不再 spawn Python `ui-host`；
+> - `desktop/` 保留作架构演进历史证据，**不删除、但停止新开发**：不再新增 Python `ui-host` 功能，不再推进 `1-1-3` 的 electron-builder 打包（打包目标已转 `app/`，归 `1-5-2`）。
+>
+> 权威边界见 [ADR 0015（supersedes ADR 0013）](../docs/zj-adr/0015-go-full-pivot-supersedes-0013.md) 与 [ADR 0016（B2 提前）](../docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md)。
+>
+> 状态：`frozen` —— 仅供阅读/参考，停止新开发。
+
 # ZWorkbench desktop shell
 
-Electron 薄壳（路线图切片 `1-1-1`）。它**不是**第二个 owner：不打开 owner 数据库、
+Electron 薄壳（路线图切片 `1-1-1`，**已冻结**，见上方 banner）。它**不是**第二个 owner：不打开 owner 数据库、
 不改持久状态、不接 Provider。它只做一件事——把 `zworkbench ui-host` 作为子进程拉起，
 然后把一个桌面窗口指向它的 loopback 地址。
 
