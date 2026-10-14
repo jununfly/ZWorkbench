@@ -638,10 +638,12 @@
       "id": "1-5-7",
       "uid": "01a1398b6ad5-9d490b8b29",
       "label": "1.5.7 其余 tab（C08/C09/C10/C11/C12/C19），每 tab 一微切片",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
-      "children": [],
+      "children": [
+        "1-5-7-1"
+      ],
       "decisions": [],
       "notes": "",
       "layer": "plan",
@@ -663,11 +665,27 @@
       "exit_criteria": [
         "ADR 0015 accepted，引用 0013 superseded"
       ]
+    },
+    "1-5-7-1": {
+      "id": "1-5-7-1",
+      "uid": "01a13a3668b5-e254447ef2",
+      "label": "1.5.7.1 C09 连板/题材/情绪最小切片（映射 stock-limitup tab）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "完成（2026-10-14 本地 go build/vet/run 验证）：新增 app/internal/limitup 包（model.go + source.go + 内嵌 snapshot.json，纯 stdlib 零外部依赖，同构 market 包 C36 范式）；router 加 /api/stock/limitup 走 limitup.NewDefaultChain().Fetch；前端 LimitUpTab.tsx 渲染连板梯队(按 days 分组)+题材雷达+情绪周期条(CN 红涨绿跌)。验证：go build/vet 通过；curl 端点返回带证据字段的完整结构(source=local-snapshot,fallback=true)；无 token 401。前端视觉效果待 zj 浏览器确认(纯渲染层，JSON 契约已验)。go:embed 沿用 blank import(_ 'embed')。映射 tabs.go 既有 stock-limitup 占位。",
+      "layer": "plan",
+      "exit_criteria": [
+        "Go /api/stock/limitup 返回连板梯队+题材+情绪真实结构(source/fallback 证据)；前端 LimitUpTab 渲染，CN 红涨绿跌；go build/vet 通过"
+      ],
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 19:29:08",
+    "updated": "2026-10-14 19:42:19",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
