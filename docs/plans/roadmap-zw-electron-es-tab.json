@@ -645,16 +645,38 @@
       "id": "1-5-5",
       "uid": "01a1398b68d4-46844e0967",
       "label": "1.5.5 本地证据底座 SQLite（modernc.org/sqlite 无 cgo）+ 预留 CompositionOwner 字段",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": "",
+      "decisions": [
+        {
+          "q": "SQLite 驱动选型？",
+          "answer": "modernc.org/sqlite（纯 Go、无 cgo）——节点点名要求。虽与 ADR 0015「Go 零外部依赖」表面冲突，但属路线图授权的存储层例外；选纯 Go 而非 mattn/go-sqlite3(cgo)，正是为保持「零 cgo」：规避用户 Windows 上 libsql/sqlite FFI 间歇崩溃(0xc0000005)的跨平台构建坑。仅 storage 层引入此依赖，其余仍零依赖",
+          "note": ""
+        },
+        {
+          "q": "ZW_DB 怎么选 store？",
+          "answer": "ZW_DB=\"mem\" 或空 → MemStore（无文件副作用，保留骨架/测试离线行为）；ZW_DB=<路径> → SqliteStore(文件)。非惊喜默认，避免 cwd 误建库；切换仅一个 env。后续可 flip 默认",
+          "note": ""
+        },
+        {
+          "q": "表结构与 Snapshot 字段？",
+          "answer": "snapshots 表：id TEXT PK, topic TEXT, source TEXT, payload TEXT, created_at TEXT, composition_owner TEXT(预留,默认空)。Snapshot 结构体新增 CompositionOwner 字段；created_at 空时 Save 填当前 UTC。来源/时间已满足退出判据",
+          "note": ""
+        },
+        {
+          "q": "如何验证 SQLite 真生效？",
+          "answer": "新增 /api/snapshots：GET(?topic=) 列快照、POST 存快照；让 router 既有的 store 参数真正被使用。端到端：POST 存一条→GET 列出→重启服务(同 ZW_DB 文件)→GET 仍命中，证明持久化",
+          "note": ""
+        }
+      ],
+      "notes": "完成：modernc.org/sqlite(无 cgo) 实现 SqliteStore 满足 data.Store 接口；snapshots 表含 source/created_at + 预留 composition_owner 列；Snapshot 结构体加 CompositionOwner 字段。main.go 按 ZW_DB 选 store(mem 默认 / 路径走 SQLite)，退出 Close。新增 /api/snapshots(GET 列/POST 存) 让 router 的 store 参数真正被使用。验证：同 SQLite 文件启停两次服务，快照仍命中(持久化)；created_at 空时自动填 UTC；401 鉴权正常。副作用：go.mod 的 go 指令被依赖要求自动升到 1.26.0(本机 go1.27.2 满足)；仅 storage 层引入此依赖，其余零依赖。未 commit",
       "layer": "plan",
       "exit_criteria": [
         "SqliteStore 替换 MemStore；快照含来源/时间"
-      ]
+      ],
+      "rounds": 1
     },
     "1-5-6": {
       "id": "1-5-6",
@@ -722,7 +744,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 20:36:32",
+    "updated": "2026-10-14 20:46:01",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
