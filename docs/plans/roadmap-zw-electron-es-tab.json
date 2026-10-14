@@ -622,9 +622,14 @@
           "q": "包结构落哪？",
           "answer": "修正 D4：不复用新建 internal/llm，改为接入已有 agent.Provider 接口 + /api/agent/chat（该端点原本就是 stub），真实 OpenAI 兼容客户端落在 agent 包；LLM 配置并入 config.Config（LLM 子结构 + config.json 持久化）。避免与既有 agent 抽象重复，符合「非侵入、复用」偏好",
           "note": ""
+        },
+        {
+          "q": "复用外部 provider 配置怎么做？",
+          "answer": "新增 ZW_PROVIDER_CONFIG 指向 Codex 风格 TOML（zw-providers.toml 同构）；启动时手写最小 TOML 解析（零依赖，保 ADR 0015）抽取激活的 model_provider，映射 base_url/api_key/model/enabled 并入 LLMConfig。不引入第三方 TOML 库。base_url 经归一化把 /api/coding/v3（Responses 端点）转 /api/v3（OpenAI 兼容 chat/completions），与既有客户端对齐。GET /api/config 回显 provider_config 来源",
+          "note": ""
         }
       ],
-      "notes": "落真实 OpenAI 兼容客户端进 agent 包（替代 stub）+ config.Config 持 LLM 子结构并持久化 config.json；新增 /api/config(GET/PUT) 与「设置/LLM」页 + 「对话」tab。本环境以本地 mock provider 端到端验证：PUT 配置→GET 不回显 key→POST /api/agent/chat 走真实 HTTP 调 mock 返回 content（502 未配置/401 鉴权正常）。残余：用户在自己终端填真实 DeepSeek/OpenAI key 做最终真调用（代码路径已证，仅差外部凭证）",
+      "notes": "追加：ZW_PROVIDER_CONFIG 复用外部 provider TOML（手写零依赖解析 + base_url 归一化 /api/coding/v3→/api/v3）；本地双 server 验证：真实 TOML 形状解析出 normalized base_url+key、mock TOML 走真实 HTTP 调 mock 返回 content（Bearer 透传）。未 commit",
       "layer": "plan",
       "exit_criteria": [
         "settings tab 可配置 provider 并真实调用"
@@ -712,7 +717,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 20:04:37",
+    "updated": "2026-10-14 20:19:56",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
