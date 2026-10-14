@@ -522,7 +522,7 @@
       "id": "1-5",
       "uid": "01a1398a5f5f-d40e3829db",
       "label": "Phase 3 — Go 全 pivot（B）：Electron 改 spawn Go + React 富前端（镜像 ES，supersede 1-1/1-2）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -688,7 +688,7 @@
       "id": "1-5-6",
       "uid": "01a1398b69e4-4a51a41bae",
       "label": "1.5.6 coding-evidence tab 走 B2 Go 重写证据核心（C26/C28）进 app，零 Python 依赖",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [
@@ -894,18 +894,35 @@
       "id": "1-5-6-3",
       "uid": "01a13ad1f425-49307123ed",
       "label": "1-5-6-3 coding-evidence tab 接 Go evidence API（前端可视化 run 生命周期 + safe-stop 事件流）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5-6",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-5-6-3 的 API 面与范围？",
+          "answer": "B2-narrow 接线版：只读可视化 + 最小生命周期驱动。GET /api/evidence/runs（列表）、POST /api/evidence/runs（建 run）、GET /api/evidence/runs/{id}（含 events/effects/exposure 投影）、POST /api/evidence/runs/{id}/transition（start|complete|fail|safe_stop|recover）、GET /api/evidence/events（按 run_id / type 过滤，支撑 safe-stop 事件流）、GET /api/evidence/violations（identity 完整性）。不含 approval/effect 的写操作（1-5-6-2 已有 API 面但未对外暴露，留后续）。",
+          "note": ""
+        },
+        {
+          "q": "evidence 库持久化策略？",
+          "answer": "本节点不静默决定持久化：新增 ZW_EVIDENCE_DB 环境变量，未设置时走 :memory:（零副作用、重启即空），显式给路径才落 SQLite 文件。原因：config 目前以 cwd 为基准（config.json 同款），默认落盘会污染 cwd；持久化默认路径需单独立项（data dir 决策）。证据 durability 是 C26 要求，故此项列为 follow-up 而非忽略。",
+          "note": ""
+        },
+        {
+          "q": "1-5-6-3 交付了什么、留了什么？",
+          "answer": "交付：① evidence 包加 ListEvents（run/type/limit 三维过滤 + 上限 500，含 6 组断言测试）；② /api/evidence/* 六个端点（runs 列表/创建、run 详情、transition、events 事件流、violations），全部走既有 token 鉴权，evidence 缺失时显式 503 而非静默空白；③ ZW_EVIDENCE_DB 环境变量，未设置走 :memory:；④ 前端 CodingEvidenceTab.tsx（run 列表 + 生命周期事件流 + 全局 safe-stop 流 + violation 计数 + 建 run/驱动转移按钮）+ App.tsx 接线。验证：go build/vet/test 全绿（api、evidence 包 ok），npx tsc --noEmit 通过。留作 follow-up：持久化默认路径（现默认内存，C26 durability 需单独立项）、approval/effect 写操作对外暴露（需 human-in-the-loop 审批界面）。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-15 00:15:03",
+    "updated": "2026-10-15 01:29:25",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [

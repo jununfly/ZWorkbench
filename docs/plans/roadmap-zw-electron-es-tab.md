@@ -1,13 +1,13 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-15 00:15:03
+> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-15 01:29:25
 
 [~][X+] 1. ZW → Electron 客户端 + ES 常驻 Tab
     ├── [ ][X+] 1-1. Phase 1 — Electron 化 ZW 客户端（薄壳，零 UI 重写）
     │   ├── [~][X+] 1-1-3. 1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口）
     │   ... 该层还有 3 个兄弟，0 个 in_progress ▸
-    ... 该层还有 4 个兄弟，1 个 in_progress ▸
+    ... 该层还有 4 个兄弟，0 个 in_progress ▸
 <details><summary>阻塞链：5 个节点被阻塞</summary>
 
 - 1-2-1. 2.1 常驻 tab 容器 + 路由（先空占位） ← e5: 1-1-3. 1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口） [~]
