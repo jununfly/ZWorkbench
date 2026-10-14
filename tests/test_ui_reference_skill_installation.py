@@ -16,8 +16,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 PROTOCOL = REPO_ROOT / "skills" / "ui-reference-protocol"
 RUNTIME = REPO_ROOT / "skills" / "ui-reference-runtime"
 PROFILE = PROTOCOL / "examples" / "minimal-profile.json"
-R1 = REPO_ROOT / "docs" / "prds" / "r1-ui-reference-registry.md"
-R2 = REPO_ROOT / "docs" / "prds" / "r2-ui-reference-skills.md"
+R1 = REPO_ROOT / "docs" / "designs" / "pf-ui-reference-registry.md"
+R2 = REPO_ROOT / "docs" / "designs" / "pf-ui-reference-skills.md"
 BINDING = REPO_ROOT / "docs" / "references" / "ui-reference-skills.md"
 CONFORMANCE = (
     REPO_ROOT
@@ -265,10 +265,11 @@ class IndependentInstallationTests(unittest.TestCase):
         self.assertTrue(R1.is_file())
         self.assertIn("R1", R1.read_text(encoding="utf-8"))
         r2 = R2.read_text(encoding="utf-8")
-        self.assertIn("status: accepted", r2)
-        self.assertIn("implementation-status: complete", r2)
-        self.assertIn("r1-ui-reference-registry.md", r2)
-        self.assertIn("r2-ui-reference-skills.md", (REPO_ROOT / "docs" / "prds" / "README.md").read_text(encoding="utf-8"))
+        self.assertIn("status: implemented", r2)
+        self.assertIn("implementation-status: implemented", r2)
+        self.assertIn("pf-ui-reference-registry.md", r2)
+        designs_index = (REPO_ROOT / "docs" / "designs" / "README.md").read_text(encoding="utf-8")
+        self.assertIn("pf-ui-reference-skills.md", designs_index)
 
     def test_the_binding_doc_points_to_both_independent_skill_packages(self):
         binding = BINDING.read_text(encoding="utf-8")

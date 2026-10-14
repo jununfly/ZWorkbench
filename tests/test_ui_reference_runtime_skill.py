@@ -309,6 +309,7 @@ class StaticReferenceVerticalSliceTests(unittest.TestCase):
             "run_facts": {"status": "running"},
             "preflight_result": "ready",
             "records": [{"title": "one"}],
+            "conversation": [{"role": "agent", "title": "one", "intent": "inspect"}],
         }
 
         self.assertEqual(render_attributes(manifest, "home.root"), {"data-ui-ref": "home.root"})
@@ -318,7 +319,22 @@ class StaticReferenceVerticalSliceTests(unittest.TestCase):
         )
         audit = audit_rendered_html(manifest, render_home(view, manifest=manifest))
         self.assertEqual(audit["undeclared"], ())
-        self.assertEqual(audit["missing"], ())
+        # The F8/F9 variant refs render only under their variant layout, not in
+        # the A-session default; every non-variant ref must render here.
+        self.assertEqual(
+            audit["missing"],
+            ("home.variant-canvas", "home.variant-journal"),
+        )
+        for kind, ref in (
+            ("canvas", "home.variant-canvas"),
+            ("journal", "home.variant-journal"),
+        ):
+            variant_audit = audit_rendered_html(
+                manifest,
+                render_home(dict(view, variant_layout={"kind": kind}), manifest=manifest),
+            )
+            self.assertEqual(variant_audit["undeclared"], ())
+            self.assertNotIn(ref, variant_audit["missing"])
 
         token = build_token(
             manifest,

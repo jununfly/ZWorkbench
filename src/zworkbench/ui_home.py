@@ -324,20 +324,24 @@ def _render_record(record: Mapping[str, Any]) -> str:
     )
 
 
-def _render_side_panel(view: Mapping[str, Any]) -> str:
+def _render_side_panel(view: Mapping[str, Any], resolved: Mapping[str, Any]) -> str:
     """F3 — A-session side-panel navigation shell.
 
     Pure navigation shell: a new-record action (read-only, aria-disabled this
     round) plus recent-works and workspaces groups sourced from the
     owner-backed view model. Empty groups degrade to an explicit empty state.
+    Every declared ref renders exactly once regardless of data: the new action
+    always exists, and each group carries its ref on whichever branch renders.
     """
     new_action = (
-        '<button type="button" class="side-action" aria-disabled="true" '
+        '<button type="button" class="side-action" {new_ref} '
+        'aria-disabled="true" '
         'aria-label="新建工作记录（只读）">'
         '<span>新建工作记录</span>'
         '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>'
         '</button>'
-    )
+    ).format(new_ref=attribute_text(resolved, "home.side-panel.new"))
+    recent_ref = attribute_text(resolved, "home.side-panel.recent")
     recent = _items(view.get("recent"))
     if recent:
         recent_items = "".join(
@@ -347,9 +351,10 @@ def _render_side_panel(view: Mapping[str, Any]) -> str:
             )
             for r in recent
         )
-        recent_block = '<ul class="side-list">{0}</ul>'.format(recent_items)
+        recent_block = '<ul class="side-list"{0}>{1}</ul>'.format(recent_ref, recent_items)
     else:
-        recent_block = '<p class="side-empty">暂无近期工作</p>'
+        recent_block = '<p class="side-empty"{0}>暂无近期工作</p>'.format(recent_ref)
+    ws_ref = attribute_text(resolved, "home.side-panel.workspace")
     workspaces = _items(view.get("workspaces"))
     if workspaces:
         ws_items = "".join(
@@ -359,9 +364,9 @@ def _render_side_panel(view: Mapping[str, Any]) -> str:
             )
             for w in workspaces
         )
-        ws_block = '<ul class="side-list">{0}</ul>'.format(ws_items)
+        ws_block = '<ul class="side-list"{0}>{1}</ul>'.format(ws_ref, ws_items)
     else:
-        ws_block = '<p class="side-empty">暂无工作区</p>'
+        ws_block = '<p class="side-empty"{0}>暂无工作区</p>'.format(ws_ref)
     return (
         '{new_action}'
         '<p class="nav-label">近期工作</p>{recent_block}'
@@ -1407,7 +1412,7 @@ def render_home(view: Mapping[str, Any], *, manifest: Mapping[str, Any] = None) 
         run_rail=_render_run_rail(view.get("run_rail", {})),
         list_ref=attribute_text(resolved, "home.record-list"),
         side_panel_ref=attribute_text(resolved, "home.side-panel"),
-        side_panel=_render_side_panel(view),
+        side_panel=_render_side_panel(view, resolved),
         conv_ref=attribute_text(resolved, "home.conversation"),
         conversation=_render_conversation(view),
         composer_ref=attribute_text(resolved, "home.composer"),
