@@ -1,0 +1,567 @@
+{
+  "title": "ZW → Electron 客户端 + ES 常驻 Tab",
+  "description": "源计划 docs/plans/zw-electron-es-tab-plan-2026-10-13.md（已 commit f23cdfe）。Phase1 Electron 薄壳 / Phase2 ES 常驻 tab（A' merge-then-adapt）。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a135df829e-3db2b8e0cd",
+      "label": "ZW → Electron 客户端 + ES 常驻 Tab",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4"
+      ],
+      "decisions": [
+        {
+          "q": "Scope gate：本路线图角色分类？",
+          "answer": "Product execution",
+          "note": "ZW 真实产品工作；本轮 scope 仅限建路线图元数据（JSON+md），未改产品代码/依赖/产品文档"
+        },
+        {
+          "q": "D1 ZW 是否引入 LICENSE（原 P0.1）？",
+          "answer": "不做",
+          "note": "zj 2026-10-13：ZW 非商业意图，仓库维持无 LICENSE（默认 all-rights-reserved）"
+        },
+        {
+          "q": "D2 merge ES 内容是否需作者书面授权（原 P0.2）？",
+          "answer": "不阻塞",
+          "note": "zj 2026-10-13：非商业下 PolyForm NC 已许可使用/修改/衍生；merge 内容随后改写非原样分发。软性建议：保留 ES 声明+注明变更"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a135dfb357-41ddfb1325",
+      "label": "Phase 1 — Electron 化 ZW 客户端（薄壳，零 UI 重写）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4"
+      ],
+      "decisions": [
+        {
+          "q": "薄壳原则：是否重写 UI？",
+          "answer": "不重写",
+          "note": "复用 ui-host（ADR 0003 server-rendered HTML，C21）+ loopback 宿主（C22）；Electron 只是宿主，不是第二个 owner（C26），不动 safe-stop（C28）"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a135dfb420-0816295f43",
+      "label": "Phase 2 — ES 产品内容常驻 Tab（A' merge-then-adapt）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [
+        {
+          "q": "D3 ES 接入方式？",
+          "answer": "A' merge-then-adapt",
+          "note": "ES 功能/数据适配作初始脚手架带进 ZW Python 后端+新 tab，随后迭代改写、并入 CompositionOwner；B 自研参考 / C 外链降级为局部兜底"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a135dfb4da-ad09660cb6",
+      "label": "待决对齐项（需 zj 拍板）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3",
+        "1-3-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a135dffe9b-11be39d0d5",
+      "label": "1.1 Electron 薄壳：main 进程起 ui-host，BrowserWindow 指向 loopback",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "就绪探测方式：Electron 如何知道 ui-host 起来了？",
+          "answer": "读 stdout 的 serving 公告，不轮询端口",
+          "note": "cli.py _announce = print(json.dumps(...), flush=True) → stdout。ui-host --port 0 让 OS 分配端口，避免端口竞争；公告含 base_url。停止用 SIGTERM（ui-host trap 后打印 stopped 并 exit 0），SIGKILL 仅兜底"
+        },
+        {
+          "q": "CLI 如何定位（本机 zworkbench 不在 PATH）？",
+          "answer": "环境变量覆盖：ZWORKBENCH_CLI + ZWORKBENCH_CLI_PREARGS",
+          "note": "默认 zworkbench（PATH）；源码直跑可设 ZWORKBENCH_CLI=python3 + PREARGS=-m zworkbench.cli（cli.py 有 __main__ guard）+ PYTHONPATH=src"
+        },
+        {
+          "q": "1-1-1 验收证据是什么？",
+          "answer": "机械验证通过；窗口像素未目视确认（残余）",
+          "note": "Electron 44.7.0（Info.plist）主进程日志 [desktop] serving at http://127.0.0.1:62481；/home、/record-view、/task-detail 均 200；杀 Electron 后端口释放无孤儿后端。残余：无头环境看不到 GUI，需 zj 跑 npm start 过目"
+        },
+        {
+          "q": "本机运行要绕行什么？",
+          "answer": "env -u ELECTRON_RUN_AS_NODE + --no-sandbox（仅受限环境）",
+          "note": "环境注入 ELECTRON_RUN_AS_NODE=1 会让 require('electron') 返回路径字符串；Chromium 沙箱在受限环境无法初始化。--no-sandbox 是环境绕行，不固化进 package.json（削弱安全性）。electron 二进制走 github 卡死，改用 ELECTRON_MIRROR=npmmirror"
+        },
+        {
+          "q": "无头环境如何验证窗口真的渲染了（原残余）？",
+          "answer": "截图模式：offscreen + capturePage，像素统计判 blank；PNG 落盘给人眼",
+          "note": "main.js 加 ZW_DESKTOP_SHOTS_DIR 模式：离屏渲染逐路由 PNG + DOM 探针 + RGBA 位图统计（uniqueColors/inkRatio/dominantColor），退出码 0/1 可判定。blank = inkRatio<0.005 或 uniqueColors<8。三层证据：HTTP200 < DOM探针 < 像素统计"
+        },
+        {
+          "q": "AI 侧能否目视 PNG？",
+          "answer": "不能，当前会话模型不支持读图；已改为机器判定 + 留 PNG 给 zj",
+          "note": "2026-10-14 实测：Read 工具对 PNG 返回『当前模型不支持图片，内容被过滤』。故不把『AI 目视』当作闭合条件；像素改由位图统计判定，PNG 交给 zj 过目或换多模态模型时再看"
+        }
+      ],
+      "notes": "退出条件机械满足。像素已闭合：截图模式三视图 blank=false、退出码 0（/home 1927色 ink0.64；/record-view 399色 ink0.12；/task-detail 167色 ink0.05）。残留（非阻塞）：PNG 未经人眼目视——AI 侧读图被模型限制拒绝，需 zj 打开 .workbuddy/shots-1-1-1/ 过目。另：截图模式 userData 重定向到 _userdata，修掉沙箱清理导致的假非零退出",
+      "layer": "plan",
+      "exit_criteria": [
+        "npm start 打开桌面窗口，显示 home/task-detail/record-view 三视图"
+      ],
+      "rounds": 1
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a135dfff59-269697a6f0",
+      "label": "1.2 原生菜单/托盘/单实例锁；CLI 不回归",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "菜单『可触发 ui-host』如何在无头环境验证？",
+          "answer": "selfcheck 真点菜单项 + 断言渲染进程 pathname",
+          "note": "ZW_DESKTOP_SELFCHECK=1：调 menu.getMenuItemById(id).click()，轮询 location.pathname 直到等于目标路由或超时。实测 before/after：/home→/task-detail→/record-view 全 3 项 ok。不依赖目视"
+        },
+        {
+          "q": "托盘图标从哪来（仓库无图标资源）？",
+          "answer": "生成 32x32 RGBA 环形 PNG，base64 内嵌 main.js",
+          "note": "168 字节 / b64 224 字符，用 nativeImage.createFromDataURL + setTemplateImage(true) 让 macOS 按明暗菜单栏着色。避免新增二进制资源文件"
+        },
+        {
+          "q": "第二实例为什么必须拦住？",
+          "answer": "不拦会 spawn 第二个 ui-host、绑另一端口，把第一个窗口正在看的状态无声分叉",
+          "note": "拿不到 requestSingleInstanceLock 则打印 handing over 后 app.quit()，全程不 spawn；second-instance 事件让已有实例 restore+show+focus"
+        },
+        {
+          "q": "菜单 click handler 如何取窗口？",
+          "answer": "用模块级 mainWindow，不用 click 回调的 window 参数",
+          "note": "offscreen/未聚焦窗口时回调第二参数是 undefined，菜单会静默失效——比报错更糟"
+        }
+      ],
+      "notes": "退出条件满足。自检 ok=true 退出 0：菜单 built+3 路由项 present；菜单驱动导航 3/3（/home→/task-detail→/record-view）；托盘 5/5 菜单项。双实例实测：A serving 58991 存活，B 仅打印 handing over 且无自身 serving（未 fork 后端）；杀 A 后端口释放无孤儿。CLI 不回归：src/ 零改动 + --help/ui-host --help 正常。残余（非阻塞）：second-instance 唤起窗口需 GUI session 目视；托盘图标外观未过目",
+      "layer": "plan",
+      "exit_criteria": [
+        "菜单可触发 ui-host；zworkbench CLI 行为不变"
+      ]
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a135e0000f-ae467cf03d",
+      "label": "1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口）",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "打包目标与首切片？",
+          "answer": "先本地 macOS dmg（unsigned）作证据；Windows exe 与代码签名/公证留后续",
+          "note": "electron-builder 入 desktop/ devDependencies；首切片只验证 dmg 能产出且安装后零配置启动 ui-host 子进程。签名/公证需用户证书；macOS 直出 Windows 包不可行（wine 脆弱），Windows 包改在 CI/Windows 跑。本环境无证书，先 unsigned 验证链路"
+        }
+      ],
+      "notes": "Scope gate: Product execution（实现 electron-builder 打包，补 C04/C34 缺口）。退出条件：DMG/EXE 安装后零配置启动。首切片：electron-builder 配置 + 本地 macOS 构建证据；代码签名/公证留作后续决策点（需用户证书，跨 macOS 出 Windows 包受限）",
+      "layer": "plan",
+      "exit_criteria": [
+        "DMG/EXE 安装后零配置启动"
+      ],
+      "rounds": 1
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "uid": "01a135e000c9-d3fa843d72",
+      "label": "1.4 登记 Node/Electron 依赖为 tracked deviation（偏离零依赖 C32）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "deviation 记录落点在哪？",
+          "answer": "docs/zj-adr/0013（accepted）+ ADR README 索引",
+          "note": "不另发明位置：沿用 docs/zj-adr/ 既有格式（frontmatter + Context/Decision/Consequences），偏离类有先例 ADR 0010。0013 声明：Node/Electron 只存在于 desktop/ 且为 devDependency，pyproject.toml 保持 dependencies=[]"
+        },
+        {
+          "q": "偏离边界靠什么守住？",
+          "answer": "静态守卫测试 tests/test_zero_dependency_guard.py（3 断言），并做了负向验证",
+          "note": "断言：pyproject dependencies=[] / electron 仅 devDependency / 根目录无 package.json。守卫自身不用 tomllib（项目 requires-python>=3.9，tomllib 自 3.11 才有）——守卫不能成为版本瓶颈。负向验证：临时注入 requests 后测试确实失败（[] != ['requests']），随后已还原，git diff 为空"
+        },
+        {
+          "q": "C32 的表述是否要改？",
+          "answer": "收窄为「Python 运行时零第三方依赖」",
+          "note": "原 C32「ZW 无第三方依赖」在引入桌面壳后不再准确。ADR 0013 是该收窄的唯一权威出处；对比表不就地改，引用 ADT"
+        },
+        {
+          "q": "C32 的表述是否要改？",
+          "answer": "收窄为「Python 运行时零第三方依赖」",
+          "note": "原 C32「ZW 无第三方依赖」在引入桌面壳后不再准确。ADR 0013 是该收窄的唯一权威出处；对比表不就地改，引用 ADR 0013"
+        },
+        {
+          "q": "C32 的表述是否要改？",
+          "answer": "",
+          "note": "retracted: 原 C32「ZW 无第三方依赖」在引入桌面壳后不再准确。ADR 0013 是该收窄的唯一权威出处；对比表不就地改，引用 ADT",
+          "retracted": true,
+          "retracts": "9d0c2a08f8c76b658562015e39d05d4d875fbac644e8e75e27271f69747b9870"
+        }
+      ],
+      "notes": "退出条件满足。deviation 记录=ADR 0013（accepted，已入 ADR README 索引）；pyproject.toml dependencies=[] 且 git diff 为空（负向验证注入 requests 后守卫失败 → 已还原）。守卫生效：tests/test_zero_dependency_guard.py 3/3 通过。可发现性：desktop/README 新增「依赖偏离登记」章节指向 ADR 0013。本切片源码零改动",
+      "layer": "plan",
+      "exit_criteria": [
+        "deviation 记录存在；pyproject.toml 仍 dependencies=[]"
+      ]
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a135e02f2e-fe539ebdaf",
+      "label": "2.1 常驻 tab 容器 + 路由（先空占位）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "桌面应用内出现可切换的常驻 tab 位"
+      ]
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a135e02fe8-c04b78a9b9",
+      "label": "2.2 首个 ES 风格 tab 原型（C08 个股分级研究 / C07 行情总览）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "该 tab 常驻可用，数据来自本地快照"
+      ]
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a135e030a1-bfd00b0984",
+      "label": "2.3 证据层对齐 CompositionOwner 单一 owner（C26）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "研究结论可追溯、不与编码 owner 冲突（C27）"
+      ]
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a135e03156-dc28dbbc6c",
+      "label": "2.4 补齐其余 tab（连板/题材/大V复盘/持仓巡检/AI优化/游资心法）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "逐个 tab 常驻可用"
+      ]
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "uid": "01a135e0321b-d5ca17a779",
+      "label": "2.5 清理 ES 派生残留 + 保留声明/注明变更",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "无未注明来源的 ES 派生代码"
+      ]
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a135e0b037-98274a6677",
+      "label": "Q1 接受引入 Node/Electron 依赖？（偏离零依赖 C32）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q1 是否接受引入 Node/Electron 依赖（偏离零依赖 C32）？",
+          "answer": "接受，登记 tracked deviation",
+          "note": "zj 2026-10-13：Electron 壳引入 Node 依赖；由切片 1.4 登记为 tracked deviation，pyproject.toml 仍 dependencies=[]，纯 Python 核心不污染"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a135e0b0f0-7e2a9ecce0",
+      "label": "Q2 首个 ES 风格 tab 选型：C08 个股分级研究 vs C07 行情总览",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a135e0b1aa-60251d9da8",
+      "label": "Q3 本草稿评审通过后落点（design/ADR 编号）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-4": {
+      "id": "1-3-4",
+      "uid": "01a135e15b70-c3b07a94a3",
+      "label": "Q4 Electron 如何拉起 Python：spawn ui-host 子进程 vs 用户先跑再连 loopback",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Q4 Electron 如何拉起 Python（ui-host）？",
+          "answer": "A：Electron 主进程 spawn ui-host 子进程",
+          "note": "zj 2026-10-13：关窗则后端退出；需处理端口分配、就绪探测、退出清理。B（先跑再连 loopback）降级为冒烟兜底"
+        }
+      ],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a138767053-96d79ee4e5",
+      "label": "全量测试套件挂死排查与修复",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4"
+      ],
+      "decisions": [
+        {
+          "q": "挂死问题放哪、怎么编排？",
+          "answer": "并入 zw-electron-es-tab roadmap 作顶层 1-4（explore，预算 4子/3轮）；三切片：定位→修复/隔离→回归门禁",
+          "note": "不单开 roadmap：挂死挡的是本项目的回归门禁，与 Electron 工作同仓同节奏。1-4-2 允许'显式隔离'作为合法终点（重环境测试依赖 ps/子进程/网络，本机 sandbox 限制可能是根因之一），不一定强求修根因"
+        }
+      ],
+      "notes": "scope gate: Product execution。背景：全量 unittest discover 两次实测挂死（一次 9h42m 未完，一次 15m 仅 14 pass/8 error），疑点指向 Codex/worker/composition 等重环境测试。与 1-1 Electron 工作无直接耦合，但挡住可靠的回归门禁。注意：排查需真实跑重环境测试，本机 sandbox 下 ps 被拒可能干扰部分测试，判读时区分环境限制与真实挂死。",
+      "layer": "plan",
+      "budget": {
+        "max_children": 4,
+        "max_rounds": 3
+      },
+      "exit_criteria": [
+        "全量 unittest discover 在本机能限时（timeout）跑完且退出码 0，或重环境测试被显式隔离并在 README 登记"
+      ]
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a13876e8f0-7cbdc66ddf",
+      "label": "复现并定位挂死测试（限时+二分+逐测试计时）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "挂死的定位结论是什么？",
+          "answer": "不是单点死锁，是三层叠加：(1) 768/1229(62%) 是 test_ui_* 真引擎测试，本机 sandbox 引擎退化 8~60s/测试，全量天然小时级=『假挂死』；(2) rNxiI5 停在加载序#23(零配置 run) 是与 PnawRG 两套件并发争用端口/owner-db 锁；(3) 等待原语=tests/browser.py:132 无预算阻塞读，涓流字节绕过 10s socket 超时变成无界慢读",
+          "note": "证据：两份 faulthandler dump(10min/20min) 同一栈 browser.py read←_receive←call←open；前缀 1-22 单进程 2.4s 全过(0 error)；#23 隔离 3.2s 过。残余：solo 全量后台跑(2t6LtY)确认深处无真死锁后 1-4-1 才 completed"
+        }
+      ],
+      "notes": "solo 全量收官：1221 tests / 6705.7s(1h52m) 跑完无死锁——『挂死』确认为无预算慢磨（768 个真引擎 ui 测试 8~60s/个）+ 并发争用放大。结果 FAILED(failures=4, errors=119, skipped=1) 属引擎退化环境性结果，与本切片改动无关（旧代码启动的进程）。定位证据链见 decision",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a13877024f-a37129d2de",
+      "label": "修复挂死根因或显式隔离（skip+原因登记）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "隔离门加在哪、语义是什么？",
+          "answer": "门加在 tests/browser.py 的 browser() 工厂：ZW_UI_ENGINE!=1 抛 unittest.SkipTest；chrome_available() 语义不变；48 个 test_ui_* 文件零改动",
+          "note": "拒绝的替代：(a)改 48 个文件的 skipUnless 装饰器（侵入大、格式不一）；(b)改 chrome_available 语义（名不符实）。验证：默认单测 0.5s skip；opt-in 单测 1.9s 真引擎过；gated 全量 1221 tests / 179s（无门 6705.7s，37x 提速），110 个引擎测试全 skip，error 119→10"
+        }
+      ],
+      "notes": "隔离门完成并双向验证（skip 路径 + opt-in 路径 + gated 全量 179s）。ADR 0014 承载决策。gated 全量剩 14 个非绿（10 import error: No module evaluation×8/scripts×2 + 4 个与无门跑同名的既有 FAIL）——均为既有问题、非本切片引入，精确可见正是门的价值；移交 1-4-3 处置",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a13877218c-c92aeed596",
+      "label": "建立可靠全量回归门禁（限时跑通+退出码0）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [
+        {
+          "q": "门禁契约是什么、4 个 FAIL 放哪？",
+          "answer": "契约：repo 根目录 env PYTHONPATH=src python -m unittest discover -s tests -p test_*.py -v；ui 真引擎默认 skip（ZW_UI_ENGINE=1 opt-in，ADR 0014）；基线 1261 tests / ~190s / skipped=110。登记在新建 tests/README.md。4 个既有 FAIL 另立 1-4-4 处置",
+          "note": "为什么 1-4-3 可 completed：门禁=有界可复现命令+契约登记+skip 可见（exit_criteria 的『限时跑完或显式隔离并 README 登记』两条腿都成立）；exit 0 受 1-4-4 阻塞，blocks 语义由 edge 表达"
+        }
+      ],
+      "notes": "门禁建立完成：规范命令+门契约+tests/README.md 登记+基线证据（1261/189.6s/110 skip/4 fail）。exit 0 被 1-4-4 blocks（edge 已加）。10 个 import error 确认为探针 runner 伪影（/tmp 脚本使 sys.path[0]=/tmp；规范 -m 命令 cwd=根目录即可），重环境模块首跑全过",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "uid": "01a13906403a-17410259e0",
+      "label": "处置 4 个既有 FAIL（deep_link/overlay/runtime_skill/skill_installation）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "triage 已完成：(1) skill_installation = docs 退役直接伤——R1/R2 指向已删的 docs/prds/，新家已确认：docs/designs/pf-ui-reference-registry.md（frontmatter source-retired: prd-r1）与 pf-ui-reference-skills.md（prd-r2），修法=改测试常量指向新实体；(2) deep_link/overlay/runtime_skill 三案同因——服务端渲染缺 home.side-panel.* 等 ref（profile 声明 vs 页面实际），需查 ui-reference 渲染管线，疑为更早的重构回归（历史上全量从未跑完过所以一直没暴露）。待 zj 拍板处置顺序",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-10-13 23:26:42",
+    "updated": "2026-10-14 14:08:13",
+    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a135e0b037-98274a6677",
+      "to": "01a135dffe9b-11be39d0d5",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a135e0b037-98274a6677",
+      "to": "01a135e000c9-d3fa843d72",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a135dffe9b-11be39d0d5",
+      "to": "01a135dfff59-269697a6f0",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a135dfff59-269697a6f0",
+      "to": "01a135e0000f-ae467cf03d",
+      "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a135e0000f-ae467cf03d",
+      "to": "01a135e02f2e-fe539ebdaf",
+      "type": "blocks"
+    },
+    {
+      "id": "e6",
+      "from": "01a135e02f2e-fe539ebdaf",
+      "to": "01a135e02fe8-c04b78a9b9",
+      "type": "blocks"
+    },
+    {
+      "id": "e7",
+      "from": "01a135e0b0f0-7e2a9ecce0",
+      "to": "01a135e02fe8-c04b78a9b9",
+      "type": "blocks"
+    },
+    {
+      "id": "e8",
+      "from": "01a135e02fe8-c04b78a9b9",
+      "to": "01a135e030a1-bfd00b0984",
+      "type": "blocks"
+    },
+    {
+      "id": "e9",
+      "from": "01a135e030a1-bfd00b0984",
+      "to": "01a135e03156-dc28dbbc6c",
+      "type": "blocks"
+    },
+    {
+      "id": "e10",
+      "from": "01a135e03156-dc28dbbc6c",
+      "to": "01a135e0321b-d5ca17a779",
+      "type": "blocks"
+    },
+    {
+      "id": "e11",
+      "from": "01a135e15b70-c3b07a94a3",
+      "to": "01a135dffe9b-11be39d0d5",
+      "type": "blocks"
+    },
+    {
+      "id": "e12",
+      "from": "01a13906403a-17410259e0",
+      "to": "01a13877218c-c92aeed596",
+      "type": "blocks"
+    }
+  ],
+  "edge_seq": 12
+}
