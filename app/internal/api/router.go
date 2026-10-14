@@ -8,6 +8,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
 	"github.com/jununfly/ZWorkbench/app/internal/domain"
+	"github.com/jununfly/ZWorkbench/app/internal/limitup"
 	"github.com/jununfly/ZWorkbench/app/internal/market"
 )
 
@@ -55,6 +56,17 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, agents m
 			return
 		}
 		writeJSON(w, ov)
+	}))
+
+	// 镜像 ES 超短连板/题材/情绪（C09）—— C36 多源适配/回退（同 C07 范式）
+	mux.HandleFunc("/api/stock/limitup", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := limitup.NewDefaultChain()
+		board, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, board)
 	}))
 
 	mux.HandleFunc("/api/agent/chat", auth(func(w http.ResponseWriter, r *http.Request) {
