@@ -701,14 +701,31 @@
       "mode": "explore",
       "parent": "1-5",
       "children": [
-        "1-5-7-1"
+        "1-5-7-1",
+        "1-5-7-2",
+        "1-5-7-3",
+        "1-5-7-4",
+        "1-5-7-5",
+        "1-5-7-6"
       ],
-      "decisions": [],
-      "notes": "",
+      "decisions": [
+        {
+          "q": "1-5-7 为何被 reopen？",
+          "answer": "原 1-5-7 在仅完成 C09(1-5-7-1) 时被过早标 completed，但 label 覆盖 C08/C09/C10/C11/C12/C19、退出判据是「逐个 tab 常驻可用」，C08/C10/C11/C12/C19 既无子节点也未实现。故 reopen 为 in_progress，按 C09 三段式模板逐个补齐剩余 5 个 tab 子节点",
+          "note": ""
+        },
+        {
+          "q": "C08/C10/C11/C12/C19 的内容映射？",
+          "answer": "来自 easy-stock README「核心产品能力 01-08」权威对应：C08=05·个股分级研究、C09=02·超短连板(已做)、C10=01·大V自动复盘、C11=06·持仓AI巡检、C12=07·AI持仓优化、C19=08·游资心法与AI Copilot。C07=04·行情总览(已做)。每个 tab 按 C09 三段式(go:embed 种子快照 + C36 FallbackChain + 前端组件)做最小切片",
+          "note": ""
+        }
+      ],
+      "notes": "完成：补齐 C08 个股分级研究 / C10 大V复盘 / C11 持仓AI巡检 / C12 AI持仓优化 / C19 游资心法 5 个 tab。每个按 C09 三段式(go:embed 种子快照 + C36 FallbackChain + 前端组件)做最小切片；新增 5 个后端 domain 包(research/review/inspection/optimization/mastery) + 5 路由端点 + 5 前端 Tab + domain/tabs.go 注册 + App.tsx 路由。go build+vet 通过；本地 curl 验证 5 端点均 fallback=true(本地快照生效)、401 鉴权正常、/api/tabs 含 5 新 tab。前端 TS 未跑 Vite build(需 npm install)，但沿用既有模式类型一致。未 commit",
       "layer": "plan",
       "exit_criteria": [
         "逐个 tab 常驻可用"
-      ]
+      ],
+      "rounds": 1
     },
     "1-5-8": {
       "id": "1-5-8",
@@ -740,11 +757,91 @@
         "Go /api/stock/limitup 返回连板梯队+题材+情绪真实结构(source/fallback 证据)；前端 LimitUpTab 渲染，CN 红涨绿跌；go build/vet 通过"
       ],
       "rounds": 1
+    },
+    "1-5-7-2": {
+      "id": "1-5-7-2",
+      "uid": "01a13a7d1425-1dd643c514",
+      "label": "1.5.7.2 C08 个股分级研究最小切片（go:embed 种子 + C36 回退 + 前端）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tab 常驻可用：后端 /api/stock/research + 前端 ResearchTab 渲染 + fallback 生效"
+      ],
+      "rounds": 1
+    },
+    "1-5-7-3": {
+      "id": "1-5-7-3",
+      "uid": "01a13a7d337e-28bc78e8cf",
+      "label": "1.5.7.3 C10 大V自动复盘最小切片（go:embed 种子 + C36 回退 + 前端）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tab 常驻可用：后端 /api/stock/review + 前端 ReviewTab 渲染 + fallback 生效"
+      ],
+      "rounds": 1
+    },
+    "1-5-7-4": {
+      "id": "1-5-7-4",
+      "uid": "01a13a7d5222-dc8de2d1a2",
+      "label": "1.5.7.4 C11 持仓AI巡检最小切片（go:embed 种子 + C36 回退 + 前端）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tab 常驻可用：后端 /api/portfolio/inspection + 前端 InspectionTab 渲染 + fallback 生效"
+      ],
+      "rounds": 1
+    },
+    "1-5-7-5": {
+      "id": "1-5-7-5",
+      "uid": "01a13a7d700e-99ba1db333",
+      "label": "1.5.7.5 C12 AI持仓优化最小切片（go:embed 种子 + C36 回退 + 前端）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tab 常驻可用：后端 /api/portfolio/optimization + 前端 OptimizationTab 渲染 + fallback 生效"
+      ],
+      "rounds": 1
+    },
+    "1-5-7-6": {
+      "id": "1-5-7-6",
+      "uid": "01a13a7d8f2d-94b1a83811",
+      "label": "1.5.7.6 C19 游资心法最小切片（go:embed 种子 + C36 回退 + 前端）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-5-7",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan",
+      "exit_criteria": [
+        "tab 常驻可用：后端 /api/mastery + 前端 MasteryTab 渲染 + fallback 生效"
+      ],
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 20:46:01",
+    "updated": "2026-10-14 21:03:58",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
