@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getJSON } from './api';
 import { StockTab } from './tabs/StockTab';
 import { LimitUpTab } from './tabs/LimitUpTab';
+import { SettingsTab } from './tabs/SettingsTab';
+import { ChatTab } from './tabs/ChatTab';
 import { PlaceholderTab } from './tabs/PlaceholderTab';
 
 interface Tab { id: string; title: string; group: string; }
@@ -37,7 +39,9 @@ export function App() {
       <main style={{ flex: 1, padding: 16, overflow: 'auto' }}>
         {active === 'stock-overview' && <StockTab />}
         {active === 'stock-limitup' && <LimitUpTab />}
-        {active && active !== 'stock-overview' && active !== 'stock-limitup' && <PlaceholderTab id={active} />}
+        {active === 'settings' && <SettingsTab />}
+        {active === 'chat' && <ChatTab />}
+        {active && active !== 'stock-overview' && active !== 'stock-limitup' && active !== 'settings' && active !== 'chat' && <PlaceholderTab id={active} />}
       </main>
     </div>
   );

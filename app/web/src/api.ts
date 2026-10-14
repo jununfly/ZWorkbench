@@ -18,3 +18,15 @@ export async function getJSON(path: string): Promise<any> {
   if (!res.ok) throw new Error('HTTP ' + res.status);
   return res.json();
 }
+
+export async function reqJSON(method: string, path: string, body?: any): Promise<any> {
+  const u = new URL(apiBase() + path);
+  u.searchParams.set('token', token());
+  const res = await fetch(u.toString(), {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
