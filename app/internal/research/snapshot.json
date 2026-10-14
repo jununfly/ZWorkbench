@@ -1,0 +1,9 @@
+{
+  "note": "SEED SNAPSHOT — offline/dev 用，非实时数据。仅作 UI/适配链路演示，不得用于任何投资决策。",
+  "as_of": "2026-10-14T15:00:00+08:00",
+  "stocks": [
+    {"code": "SZ300750", "name": "宁德时代", "price": 268.40, "change_pct": 2.13, "purpose": "已有持仓", "cycle": "中期", "core": "储能出海超预期，估值回到合理区间", "support": "海外订单环比+35%；毛利率企稳", "against": "锂价波动压制短期利润"},
+    {"code": "SH600519", "name": "贵州茅台", "price": 1520.00, "change_pct": -1.02, "purpose": "观察", "cycle": "中期", "core": "批价企稳但动销平淡，等待旺季验证", "support": "分红率稳定；渠道库存去化", "against": "商务需求恢复慢"},
+    {"code": "SZ002594", "name": "比亚迪", "price": 312.80, "change_pct": 3.45, "purpose": "准备新开仓", "cycle": "波段", "core": "智驾版本迭代带动估值重估", "support": "海外销量高增；智驾渗透率提升", "against": "价格战压缩毛利"}
+  ]
+}

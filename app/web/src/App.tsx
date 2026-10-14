@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from './api';
 import { StockTab } from './tabs/StockTab';
+import { ResearchTab } from './tabs/ResearchTab';
 import { LimitUpTab } from './tabs/LimitUpTab';
+import { ReviewTab } from './tabs/ReviewTab';
+import { InspectionTab } from './tabs/InspectionTab';
+import { OptimizationTab } from './tabs/OptimizationTab';
+import { MasteryTab } from './tabs/MasteryTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { ChatTab } from './tabs/ChatTab';
 import { PlaceholderTab } from './tabs/PlaceholderTab';
@@ -38,10 +43,15 @@ export function App() {
       </aside>
       <main style={{ flex: 1, padding: 16, overflow: 'auto' }}>
         {active === 'stock-overview' && <StockTab />}
+        {active === 'stock-research' && <ResearchTab />}
         {active === 'stock-limitup' && <LimitUpTab />}
+        {active === 'stock-review' && <ReviewTab />}
+        {active === 'portfolio-inspection' && <InspectionTab />}
+        {active === 'portfolio-optimization' && <OptimizationTab />}
+        {active === 'trading-mastery' && <MasteryTab />}
         {active === 'settings' && <SettingsTab />}
         {active === 'chat' && <ChatTab />}
-        {active && active !== 'stock-overview' && active !== 'stock-limitup' && active !== 'settings' && active !== 'chat' && <PlaceholderTab id={active} />}
+        {active && !['stock-overview','stock-research','stock-limitup','stock-review','portfolio-inspection','portfolio-optimization','trading-mastery','settings','chat'].includes(active) && <PlaceholderTab id={active} />}
       </main>
     </div>
   );

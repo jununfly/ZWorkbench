@@ -8,8 +8,13 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
 	"github.com/jununfly/ZWorkbench/app/internal/domain"
+	"github.com/jununfly/ZWorkbench/app/internal/inspection"
 	"github.com/jununfly/ZWorkbench/app/internal/limitup"
 	"github.com/jununfly/ZWorkbench/app/internal/market"
+	"github.com/jununfly/ZWorkbench/app/internal/mastery"
+	"github.com/jununfly/ZWorkbench/app/internal/optimization"
+	"github.com/jununfly/ZWorkbench/app/internal/research"
+	"github.com/jununfly/ZWorkbench/app/internal/review"
 )
 
 // NewRouter 构建本地 API：鉴权中间件 + 路由（镜像 ES 本机鉴权范式）。
@@ -67,6 +72,61 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab) http.Han
 			return
 		}
 		writeJSON(w, board)
+	}))
+
+	// 镜像 ES 个股分级研究（C08）—— C36 多源适配/回退
+	mux.HandleFunc("/api/stock/research", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := research.NewDefaultChain()
+		body, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, body)
+	}))
+
+	// 镜像 ES 大V自动复盘（C10）—— C36 多源适配/回退
+	mux.HandleFunc("/api/stock/review", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := review.NewDefaultChain()
+		body, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, body)
+	}))
+
+	// 镜像 ES 持仓AI巡检（C11）—— C36 多源适配/回退
+	mux.HandleFunc("/api/portfolio/inspection", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := inspection.NewDefaultChain()
+		body, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, body)
+	}))
+
+	// 镜像 ES AI持仓优化（C12）—— C36 多源适配/回退
+	mux.HandleFunc("/api/portfolio/optimization", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := optimization.NewDefaultChain()
+		body, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, body)
+	}))
+
+	// 镜像 ES 游资心法与AI Copilot（C19）—— C36 多源适配/回退
+	mux.HandleFunc("/api/mastery", auth(func(w http.ResponseWriter, r *http.Request) {
+		chain := mastery.NewDefaultChain()
+		body, err := chain.Fetch(r.Context())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadGateway)
+			return
+		}
+		writeJSON(w, body)
 	}))
 
 	mux.HandleFunc("/api/agent/chat", auth(func(w http.ResponseWriter, r *http.Request) {
