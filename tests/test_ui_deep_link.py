@@ -103,9 +103,28 @@ class OneElementPerStructuralReferenceTests(unittest.TestCase):
         ("/record-view", record_manifest),
     )
 
+    #: Variant-conditional refs render only under their F8/F9 variant layout,
+    #: not on the A-session default. Each is pinned exactly once on its own
+    #: variant route instead of the default page.
+    VARIANT_ROUTES = {
+        "home.variant-canvas": "/home?variant=B",
+        "home.variant-journal": "/home?variant=C",
+    }
+
     def setUp(self):
+        # The default-route host serves the bare presentation model: task-detail
+        # deliberately excuses nothing there, so every structural ref renders.
         self.host = serve_workbench()
         self.addCleanup(self.host.close)
+        # The variant routes need an owner-backed source: ?variant=B|C projects
+        # the F8/F9 layouts from owner state.
+        directory = TemporaryDirectory()
+        self.addCleanup(directory.cleanup)
+        owner = CompositionOwner(Path(directory.name) / "owner.sqlite3")
+        self.addCleanup(owner.close)
+        owner.create_run("run-one", "local_read_only_run", {})
+        self.variant_host = serve_workbench(view_source=owner_view_source(owner))
+        self.addCleanup(self.variant_host.close)
 
     def test_every_structural_reference_renders_exactly_once(self):
         for route, manifest_of in self.VIEWS:
@@ -113,6 +132,19 @@ class OneElementPerStructuralReferenceTests(unittest.TestCase):
             _, body = fetch(self.host.base_url, route)
             for entry in manifest["refs"]:
                 if entry["kind"] == "list-item":
+                    continue
+                variant_route = self.VARIANT_ROUTES.get(entry["ref"])
+                if variant_route is not None:
+                    _, variant_body = fetch(self.variant_host.base_url, variant_route)
+                    self.assertEqual(
+                        variant_body.count(
+                            'data-ui-ref="{0}"'.format(entry["ref"])
+                        ),
+                        1,
+                        "{0} renders {1} more than once".format(
+                            variant_route, entry["ref"]
+                        ),
+                    )
                     continue
                 self.assertEqual(
                     body.count('data-ui-ref="{0}"'.format(entry["ref"])),

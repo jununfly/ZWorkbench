@@ -71,10 +71,14 @@ class RenderingTheOverlayTests(unittest.TestCase):
         review = fetch(self.review.base_url)
         stripped = review
         for opening, closing in (
-            ("<aside", "</aside>"),
+            # The review overlay aside, named by its attribute -- a bare
+            # "<aside" would eat the business side-panel (F3) instead.
+            ('<aside data-ui-overlay="review"', "</aside>"),
             ("<button type=\"button\" data-ui-review-entry", "</button>"),
             ("<section data-ui-panel", "</section>"),
-            ("<script", "</script>"),
+            # Named by src: the review document also carries the plain page's
+            # live.js, so a bare "<script" would eat the wrong one.
+            ('<script src="/static/review.js"', "</script>"),
         ):
             start = stripped.index(opening)
             end = stripped.index(closing, start) + len(closing)
