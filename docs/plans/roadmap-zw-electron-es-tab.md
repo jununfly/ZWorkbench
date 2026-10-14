@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-14 20:19:56
+> 数据文件: `roadmap-zw-electron-es-tab.json` | 最后更新: 2026-10-14 20:36:32
 
 [~][X+] 1. ZW → Electron 客户端 + ES 常驻 Tab
     ├── [ ][X+] 1-1. Phase 1 — Electron 化 ZW 客户端（薄壳，零 UI 重写）
