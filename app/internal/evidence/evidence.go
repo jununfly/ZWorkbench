@@ -2,10 +2,13 @@
 // 属 roadmap 1-5-6-1（B2-narrow：只移植差异化证据语义，零 Python 进程依赖）。
 //
 // 它把 Python src/zworkbench/composition.py 里的「durable-owner 7 状态机 +
-// 引用完整性（identity-violation）检测」用纯 Go + modernc.org/sqlite（无 cgo）
-// 重写进 app/。B2-narrow 范围仅含 5 张核心表：runs / approvals / effects /
-// declared_exposure / events。provider/dsh/worker 的 retry ledger 与 caller-auth
-// 不属于 app/ 工作台，按 ADR 0016 不移植。
+// 引用完整性（identity-violation）检测 + C28 一次性审批 token + fail-closed
+// effect-claim 归属」用纯 Go + modernc.org/sqlite（无 cgo）重写进 app/。
+// B2-narrow 范围仅含核心证据语义表：runs / approvals / effects /
+// effect_attempts（effects 的逐次尝试日志，claim_effect 的 bounded-retry 路径
+// 必写，属 effects 子系统而非 harness ledger）/ declared_exposure / events。
+// provider/dsh/worker 的 retry ledger 与 caller-auth 不属于 app/ 工作台，
+// 按 ADR 0016 不移植。
 package evidence
 
 import (
@@ -125,6 +128,17 @@ CREATE TABLE IF NOT EXISTS effects (
     last_error_json TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS effect_attempts (
+    attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    effect_id TEXT NOT NULL REFERENCES effects(effect_id),
+    attempt INTEGER NOT NULL,
+    status TEXT NOT NULL,
+    started_at TEXT NOT NULL,
+    finished_at TEXT,
+    result_json TEXT,
+    error_json TEXT,
+    UNIQUE(effect_id, attempt)
 );
 CREATE TABLE IF NOT EXISTS declared_exposure (
     run_id TEXT PRIMARY KEY REFERENCES runs(run_id),
@@ -268,19 +282,22 @@ type Event struct {
 	CreatedAt      string         `json:"created_at"`
 }
 
-// Effect 是副作用记录（C28 核心，写 API 在 1-5-6-2；此处仅用于读投影）。
+// Effect 是副作用记录（C28 核心：claim/complete 归属与 exactly-once 提交）。
 type Effect struct {
-	EffectID      string `json:"effect_id"`
-	RunID         string `json:"run_id"`
-	OperationID   string `json:"operation_id"`
-	EffectClass   string `json:"effect_class"`
-	Action        string `json:"action"`
-	Resource      string `json:"resource"`
-	Status        string `json:"status"`
-	Attempt       int    `json:"attempt"`
-	MaxAttempts   int    `json:"max_attempts"`
-	CreatedAt     string `json:"created_at"`
-	UpdatedAt     string `json:"updated_at"`
+	EffectID           string `json:"effect_id"`
+	RunID              string `json:"run_id"`
+	OperationID        string `json:"operation_id"`
+	IdempotencyKey     string `json:"idempotency_key"`
+	EffectClass        string `json:"effect_class"`
+	Action             string `json:"action"`
+	Resource           string `json:"resource"`
+	Status             string `json:"status"`
+	Attempt            int    `json:"attempt"`
+	MaxAttempts        int    `json:"max_attempts"`
+	PhysicalEffectCount int   `json:"physical_effect_count"`
+	ApprovalID         string `json:"approval_id,omitempty"`
+	CreatedAt          string `json:"created_at"`
+	UpdatedAt          string `json:"updated_at"`
 }
 
 // DeclaredExposure 是运行声明的副作用曝光面。
