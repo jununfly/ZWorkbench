@@ -562,7 +562,7 @@
       "id": "1-5-2",
       "uid": "01a1398b2056-d374df4c8f",
       "label": "1.5.2 Go 骨架 app/ 跑通（go build + go run + 前端多 tab 壳，零业务逻辑）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -577,16 +577,17 @@
       "id": "1-5-3",
       "uid": "01a1398b2143-e84ad8cafb",
       "label": "1.5.3 首个真 tab：镜像 ES 行情总览 C07 最小切片",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "完成（2026-10-14 本地 go build/vet/run 验证）：新增 app/internal/market 包（model.go + source.go + 内嵌 snapshot.json，纯 stdlib 零外部依赖）；/api/stock/overview 返回真实结构(source=local-snapshot,fallback=true 证明 C36 回退生效)。前端 StockTab.tsx 改为渲染总览（指数/宽度/涨跌停榜/板块，CN 红涨绿跌），不再裸 JSON。验证：go build/vet 通过；curl 端点返回带证据字段的完整结构；无 token 401。待用户浏览器确认视觉效果（纯渲染层，契约已验）。go:embed 需 blank import(_ 'embed') 已修正。",
       "layer": "plan",
       "exit_criteria": [
         "该 tab 常驻可用，数据来自本地快照/多源适配回退 C36"
-      ]
+      ],
+      "rounds": 1
     },
     "1-5-4": {
       "id": "1-5-4",
@@ -666,7 +667,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-14 16:57:21",
+    "updated": "2026-10-14 19:29:08",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
