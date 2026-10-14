@@ -96,7 +96,6 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab) http.Han
 					"enabled":     llm.Enabled,
 					"api_key_set": llm.APIKey != "",
 				},
-				"provider_config": cfg.ProviderConfig(),
 			})
 		case http.MethodPut, http.MethodPost:
 			var body struct {

@@ -13,9 +13,8 @@ type Config struct {
 	Port  string
 	Token string
 	DB    string
-	llm            LLMConfig
-	providerConfig string // 启动注入的外部 provider TOML 路径（ZW_PROVIDER_CONFIG）
-	mu             sync.RWMutex
+	llm LLMConfig
+	mu  sync.RWMutex
 }
 
 // LLMConfig 是「设置 / LLM」页可编辑的 provider 配置，持久化到 config.json。
@@ -43,22 +42,7 @@ func Load() *Config {
 	}
 	c := &Config{Port: port, Token: token, DB: db}
 	c.LoadLLM()
-	// 复用外部 provider 配置（如 zw-providers.toml）：若 ZW_PROVIDER_CONFIG 指向可读文件，
-	// 启动即合并进 LLM 配置（覆盖 config.json 中的 llm）。运行时 PUT /api/config 仍可覆盖。
-	if pc := os.Getenv("ZW_PROVIDER_CONFIG"); pc != "" {
-		if llm, ok := ParseProvidersToml(pc); ok {
-			c.SetLLM(llm)
-			c.providerConfig = pc
-		}
-	}
 	return c
-}
-
-// ProviderConfig 返回启动时所用的 provider TOML 路径（空表示未用外部文件）。
-func (c *Config) ProviderConfig() string {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.providerConfig
 }
 
 // LLM 返回当前 LLM 配置快照（并发安全）。
