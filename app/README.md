@@ -135,6 +135,45 @@ bash app/scripts/build-desktop.sh
 | `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID` | 三选一 | 凭证来源 B（teamId 必须给全） |
 | `APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER` | 三选一 | 凭证来源 C（App Store Connect API key） |
 
+#### 拿证书 + 填参模板（真公证前置）
+
+真公证的硬前置是 **Developer ID Application 证书**，只能从付费 Apple Developer Program（$99/年，个人/组织同价；Enterprise $299 不需要）拿：
+
+1. 入会 developer.apple.com/programs/（个人约 2 天过审；组织需 D-U-N-S 核验，更久）。
+2. Keychain Access → 证书助理 → 从证书颁发机构请求证书（CSR，存盘）。
+3. developer.apple.com/account → Certificates → `+` → **Developer ID Application** → 上传 CSR → 下载 `.cer` → 双击装进 login keychain。
+   校验：`security find-identity -v -p codesigning` 应列出 `Developer ID Application: <名字> (<TEAMID>)`。
+
+证书就绪后，下面三选一直接复制运行（`DEV_ID_APP` 是证书 Common Name **字符串**，不是路径）：
+
+```bash
+# 来源 A（推荐）：钥匙串 profile
+NOTARIZE=1 \
+DEV_ID_APP="Developer ID Application: <名字> (<TEAMID>)" \
+APPLE_KEYCHAIN_PROFILE=zw-notary \
+bash app/scripts/build-desktop.sh
+
+# 来源 B：Apple ID + App 专用密码
+NOTARIZE=1 \
+DEV_ID_APP="Developer ID Application: <名字> (<TEAMID>)" \
+APPLE_ID="<你的 Apple ID>" \
+APPLE_APP_SPECIFIC_PASSWORD="<app-specific-password>" \
+APPLE_TEAM_ID="<TEAMID>" \
+bash app/scripts/build-desktop.sh
+
+# 来源 C：App Store Connect API key
+NOTARIZE=1 \
+DEV_ID_APP="Developer ID Application: <名字> (<TEAMID>)" \
+APPLE_API_KEY=/path/to/AuthKey_<KEYID>.p8 \
+APPLE_API_KEY_ID="<KEYID>" \
+APPLE_API_ISSUER="<ISSUER>" \
+bash app/scripts/build-desktop.sh
+```
+
+⚠️ 两个易错点：
+- `electron-builder` **不读** `APPLE_TEAM_ID` 环境变量——只有来源 B 需要 teamId，且必须写进 `package.json` 的 `build.mac.notarize.teamId`（来源 C / 钥匙串只覆盖 identity，`notarize` 保持 undefined）。
+- 送审 + `stapler` 通常 1–30 分钟；失败看 `notarytool` 日志，多半是某个嵌套二进制没签或 entitlements 不匹配（本项目已把 Go 二进制和四键 entitlements 纳签）。
+
 执行链路：预检（缺证书/凭证**在构建前**即失败）→ Developer ID 签名（hardened runtime +
 `electron/build/entitlements.mac.plist`，并把内嵌 `zworkbench-go` 显式纳入签名清单）→ electron-builder
 送公证并 staple `.app` → dmg 产出后再送公证 + staple dmg → `codesign --verify` / `stapler validate` 留证。
