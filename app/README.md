@@ -111,6 +111,34 @@ bash app/scripts/build-desktop.sh --dir    # 只出未打包的 app 目录，用
   （默认会跳过 Info/Debug 级，检测明细通常在那两级；弹框由 `syspolicyd` 弹出，谓词别只写 XProtect）
   或把弹窗原文贴出来区分。
 
+#### 自用启动（无需 Developer ID）
+
+如果只是**你自己一台 Mac 上用**，不需要 Developer ID 证书，也不需要公证。证书和公证都只解决「分发给别人」的信任问题，不影响你本机执行。
+
+已验证：本项目 app 在本机可直接运行——从终端拉起 `.app` 后 Go 服务自启、GUI 渲染（`#root childCount=1`）、UI 配置落盘 `~/Library/Application Support/zworkbench-electron/config.json` 均正常。下面是自用启动的几种方式（都不需要证书）：
+
+1. **本地构建后直接 `open`**（最省事）：`app/electron/dist/mac-arm64/ZWorkbench.app` 是你本机产物，通常不带 quarantine 标记，直接 `open app/electron/dist/mac-arm64/ZWorkbench.app` 即可。
+2. **右键（Control+点击）打开**：走上面的 Gatekeeper 分支，第一次成功后后续双击正常。
+3. **去 quarantine 后打开**（仅当 Finder 拦时）：
+   ```bash
+   xattr -dr com.apple.quarantine app/electron/dist/mac-arm64/ZWorkbench.app
+   open app/electron/dist/mac-arm64/ZWorkbench.app
+   ```
+   ⚠️ 注意上面「坑」：不要先 `xattr -dr` 却指望「仍允许打开」入口；如需该入口，先右键打开过一次。
+
+何时才需要 Developer ID + 公证（见下节）：
+
+| 场景 | 需要？ |
+|---|---|
+| 自己一台 Mac 跑 | ❌ |
+| 自己多台 Mac 同步 | ❌（拷贝 + 去 quarantine） |
+| **发给别人 / 团队 / 公开下载** | ✅ |
+| 上架 App Store | ✅（走 Distribution 证书，非 Developer ID） |
+
+成本判断：$99/年的 Apple Developer Program 只在「要分发给他人」时有回报；solo 自用工具现阶段可省，代码侧（签名配置 + 公证门控 + 填参模板）已就绪，等真要发别人再入会、填参跑 `NOTARIZE=1` 即可。
+
+唯一保留风险：若某天 Apple 的 XProtect **特征库**真把本二进制误判（概率低，且已实跑成功说明当前未拦），自用也会卡住、只能靠公证洗白——但那已属分发场景考量，自用无碍。
+
 ### 公证接入（`NOTARIZE=1`）
 
 `build-desktop.sh` 已内置公证门控，**默认关**（不上传、不改变 unsigned 产物）。打开方式：
