@@ -45,8 +45,11 @@
     "mac": {
       "category": "public.app-category.productivity",
       "identity": null,
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "binaries": [
+        "Contents/Resources/bin/zworkbench-go"
+      ],
       "target": [
         {
           "target": "dmg",
@@ -57,7 +60,7 @@
       ]
     },
     "dmg": {
-      "sign": false
+      "sign": true
     },
     "win": {
       "target": [
