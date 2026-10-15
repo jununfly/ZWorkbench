@@ -14,6 +14,7 @@ authority: supporting
 - [界面引用注册表与本地评审标注系统](pd-ui-reference-system.md) — R1 评审标注协议、manifest/token/深链接/生命周期/所有权边界
 - [可交互完整工作台 Web-UI](pd-interactive-workbench.md) — IA 方向、交互深度、宿主边界、D1–D4 决策
 - [首跑与 onboarding](pd-first-run-onboarding.md) — 零配置首跑、只读 doctor 自检、价值演示缝合
+- [ES 常驻 Tab 产品内容设计](pd-es-resident-tabs.md) — ES 内容作常驻 tab（C07–C19 镜像 Go）；Q1–Q4 决议、C32 偏离登记、证据所有权 C26、定位护栏 C01/C03
 
 ## 体验路径 experience-path（`ep-`）
 

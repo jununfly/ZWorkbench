@@ -3,7 +3,7 @@
 > 状态：**历史草稿（B 决策已落地）** ｜ 创建：2026-10-13 ｜ 末次变更：2026-10-14（§8 B Go 全 pivot）
 > 目标：以 easy-stock（ES）为参照，加速 ZW 产品可用性 —— 先把 ZW 客户端改造成 Electron 桌面应用，再把 ES 的产品内容作为本工作台常驻 tab 之一。
 > 节奏：**微进度、小切片**，每个切片带可验收退出条件，避免一次性大改写。
-> ⚠️ 治理提示：本计划存于 `docs/plans/`（2026-09-27 退役态）。**2026-10-14 zj 选 B（Go 全 pivot）后，本计划的结论已迁移至 `docs/designs/zw-go-electron-architecture.md`（已接受）+ `docs/zj-adr/0015`（supersedes 0013）**，并落地为路线图节点 `1-5`。本草稿保留作决策沿革，勿作新工作的依据。
+> ⚠️ 治理提示：本计划存于 `docs/plans/`（2026-09-27 退役态）。**2026-10-14 zj 选 B（Go 全 pivot）后，本计划的结论已迁移至 `docs/designs/zw-go-electron-architecture.md`（已接受）+ `docs/zj-adr/0015`（supersedes 0013）**，并落地为路线图节点 `1-5`；ES 常驻 Tab 的**产品内容层**决策（Q1–Q4、C07–C19 清单、C32 偏离登记）已于 2026-10-15 落为 [`docs/designs/pd-es-resident-tabs.md`](../../designs/pd-es-resident-tabs.md)（路线图 1-3 收尾，非 ADR）。本草稿保留作决策沿革，勿作新工作的依据。
 > ⚠️ **§4 的 A'（merge-then-adapt 进 Python）与 §3 的「Phase 1 spawn Python ui-host」已被 B 推翻**：ES 内容接入改为直接镜像 ES 的 Go/React 脚手架（零翻译），Electron 改 spawn Go 二进制。详见 §8。
 
 ## 0. 范围与前提（先读）
