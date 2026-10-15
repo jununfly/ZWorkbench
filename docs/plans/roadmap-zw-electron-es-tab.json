@@ -106,7 +106,7 @@
       "id": "1-3",
       "uid": "01a135dfb4da-ad09660cb6",
       "label": "待决对齐项（需 zj 拍板）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -389,11 +389,17 @@
       "id": "1-3-2",
       "uid": "01a135e0b0f0-7e2a9ecce0",
       "label": "Q2 首个 ES 风格 tab 选型：C08 个股分级研究 vs C07 行情总览",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Q2 首个 ES 风格 tab 选型：C08 个股分级研究 vs C07 行情总览",
+          "answer": "选型问题已无悬念：C07 行情总览（节点 1-5-3）与 C08 个股分级研究（节点 1-5-7-2）均已在 1-5 交付，两者并存，无需单选。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -401,12 +407,18 @@
       "id": "1-3-3",
       "uid": "01a135e0b1aa-60251d9da8",
       "label": "Q3 本草稿评审通过后落点（design/ADR 编号）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
-      "notes": "",
+      "decisions": [
+        {
+          "q": "Q3 本草稿评审通过后落点（design/ADR 编号）",
+          "answer": "以 design 文档形式落地为长期文档：沉淀于 docs/designs/（非 ADR），随 1-5 已交付的 C07 行情总览（1-5-3）与 C08 个股分级研究（1-5-7-2）归入对应 design 实体。",
+          "note": ""
+        }
+      ],
+      "notes": "落地实体已建：docs/designs/pd-es-resident-tabs.md（2026-10-15，ES 常驻 Tab 产品内容设计，收口 Q1–Q4 + C07–C19 清单）",
       "layer": "plan"
     },
     "1-3-4": {
@@ -942,7 +954,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-15 02:02:50",
+    "updated": "2026-10-15 22:41:57",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
