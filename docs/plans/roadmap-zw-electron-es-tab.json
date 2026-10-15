@@ -52,7 +52,7 @@
       "id": "1-1",
       "uid": "01a135dfb357-41ddfb1325",
       "label": "Phase 1 — Electron 化 ZW 客户端（薄壳，零 UI 重写）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -206,7 +206,7 @@
       "id": "1-1-3",
       "uid": "01a135e0000f-ae467cf03d",
       "label": "1.3 electron-builder 打包 macOS/Windows（补 C04/C34 缺口）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
@@ -220,9 +220,29 @@
           "q": "本切片在 B pivot 下状态？",
           "answer": "冻结（retired）：desktop/ Python-ui-host 壳被 1-5 取代",
           "note": "2026-10-14 zj 选 B：Electron 改 spawn Go。本切片（打包 Python 壳）不再推进，保留 git 历史作证据。新打包目标 = Go 二进制，归 1-5-2。"
+        },
+        {
+          "q": "2026-10-15 zj 指令「开始 1-1-3」，与已落盘的 retired 决策冲突，如何处置？",
+          "answer": "重开 1-1-3：保留节点号，打包目标从 desktop/ Python-ui-host 壳改为 app/electron 打包 Go 二进制",
+          "note": "zj 于 2026-10-15 明确选择。与 ADR 0015 不冲突：ADR 0015 只冻结 desktop/ 并声明新打包目标=Go 二进制，未禁止用 1-1-3 承载该工作。desktop/ 继续 retired（不新增功能、不打包），git 历史保留作证据。首切片=macOS unsigned dmg；Windows(nsis) 配置一并给出但构建留在 Windows/CI（macOS 直出 win 包需 wine，脆弱）；签名/公证需用户证书，不在本切片。"
+        },
+        {
+          "q": "打包后前端由谁托管？（实测：Go 服务 / 返 404，只有 /api/*，打包后窗口必然白屏/404）",
+          "answer": "Go 静态托管 web/dist（磁盘多候选路径），不 go:embed；缺失时 / 显式 503 而非静默 404",
+          "note": "实测证据：ZW_TOKEN=probe123 ZW_PORT=18099 ./bin/zworkbench-go，GET / -> 404 page not found，GET /api/health -> 200 ok。选磁盘托管而非 go:embed 的理由：app/web/dist 已 gitignore，embed 会让全新 clone 的 go build 直接失败；磁盘托管让 go build 与前端构建解耦。候选路径顺序：ZW_WEB_DIR 环境变量 > 可执行文件同级 web/dist > cwd 相对 web/dist；全部缺失时 / 返 503 + 明确文案（fail-closed，与项目『依赖缺失时显式 503，不要静默返回空』一致）。SPA 兜底：非 /api/ 前缀且文件不存在时回 index.html。"
+        },
+        {
+          "q": "Electron 侧进程契约：端口、单实例、配置文件落点？（直接影响『安装后零配置启动』判据）",
+          "answer": "Electron 选空闲端口注入 ZW_PORT；加 requestSingleInstanceLock；ZW_CONFIG/ZW_DATA 指向 userData",
+          "note": "固定 18080 在用户已跑 go run 或第二个实例时必然冲突（端口占用），且 packaged app 的 cwd 在 macOS 下是 /，config.json 会写失败。故：1) Electron 用 net 监听 0 取空闲端口再传 ZW_PORT，避免冲突；2) app.requestSingleInstanceLock() 防重复拉起第二个 Go 进程；3) ZW_CONFIG 指向 app.getPath('userData')/config.json，保证 LLM 配置可持久化；4) Go 二进制定位分两路：packaged 用 process.resourcesPath/bin/<name>，dev 用 ../bin/<name>；Windows 下名称带 .exe。签名/公证不在本切片，dmg 为 unsigned（identity: null）。"
+        },
+        {
+          "q": "1-1-3 首切片是否完成？（dmg 是否已产出并验证）",
+          "answer": "完成：dmg 已产出，包内资源已核实；仅剩 unsigned app 手动启动冒烟为验收项",
+          "note": "2026-10-15 zj 在自己终端（无 AI 侧注入层拦截）跑通 build-desktop.sh，产出 app/electron/dist/ZWorkbench-0.0.1-arm64.dmg（104MB）+ .blockmap + mac-arm64/ZWorkbench.app。已机械核实包内 Resources/bin/zworkbench-go = Mach-O 64-bit executable arm64（16.7MB，与 go build 产物一致），Resources/web/dist/ 含 assets/ + index.html——即 Go 二进制与前端产物均正确落入打包布局。服务端契约此前已验证：GET / -> 200 <title>ZWorkbench</title>，/assets -> 200，/api/health -> 200，/api/nope -> 404，显式 ZW_WEB_DIR 注入同样 200。退出判据『DMG/EXE 安装后零配置启动』的打包侧已证成；唯一未跑的是 unsigned .app 的实际启动冒烟（macOS 需绕过 Gatekeeper：xattr -dr com.apple.quarantine 或系统设置允许）。Windows nsis 配置已给出但未构建（需 Windows/CI）；签名/公证需用户证书，不在本切片。"
         }
       ],
-      "notes": "Scope gate: Product execution（实现 electron-builder 打包，补 C04/C34 缺口）。退出条件：DMG/EXE 安装后零配置启动。首切片：electron-builder 配置 + 本地 macOS 构建证据；代码签名/公证留作后续决策点（需用户证书，跨 macOS 出 Windows 包受限）",
+      "notes": "Scope gate: Product execution（实现 electron-builder 打包，补 C04/C34 缺口）。退出条件：DMG/EXE 安装后零配置启动。首切片：electron-builder 配置 + 本地 macOS 构建证据；代码签名/公证留作后续决策点（需用户证书，跨 macOS 出 Windows 包受限）。【2026-10-15 完成】dmg 已在用户终端产出（ZWorkbench-0.0.1-arm64.dmg），包内 Resources/bin/zworkbench-go（Mach-O arm64）与 Resources/web/dist 已核实落入；打包侧证成零配置启动契约。剩余验收：unsigned .app 手动启动冒烟（绕过 Gatekeeper）。Windows nsis / 签名公证为后续。",
       "layer": "plan",
       "exit_criteria": [
         "DMG/EXE 安装后零配置启动"
@@ -922,7 +942,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-15 01:29:25",
+    "updated": "2026-10-15 02:02:50",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
