@@ -73,8 +73,14 @@ bash app/scripts/build-desktop.sh --dir    # 只出未打包的 app 目录，用
 | 单实例 | `requestSingleInstanceLock()` | 防止第二个实例再拉起一个 Go 进程 |
 | 启动时序 | 窗口加载前先探活端口 | 避免服务未起来导致首屏失败 |
 
-未签名：macOS 出的是 unsigned / 仅 ad-hoc 签名的 dmg，**首次启动被 Gatekeeper 拦截**
-（提示文案含「无法验证是否含恶意软件」——这是"开发者身份未知"的标准表述，不是真判毒）。
+未签名：macOS 出的是 unsigned / 仅 ad-hoc 签名的 dmg。首次启动会被拦，**弹窗文案有两条分支，处理方式完全不同**：
+
+| 弹窗文案 | 拦截者 | 有没有用户侧绕过 |
+|---|---|---|
+| 「无法验证是否含恶意软件」/「来自身份不明的开发者」 | Gatekeeper（开发者身份未知） | ✅ 右键打开 / 「仍允许打开」 |
+| 「已阻止恶意软件并移到废纸篓」 | XProtect（Apple 内置杀毒） | ❌ 无（详见下节） |
+
+下面是 **Gatekeeper 分支**（文案含「无法验证是否含恶意软件」——这是"开发者身份未知"的标准表述，不是真判毒）。
 
 打开方式（二选一，推荐第 1 种）：
 
@@ -95,26 +101,67 @@ bash app/scripts/build-desktop.sh --dir    # 只出未打包的 app 目录，用
   不给「仍允许打开」入口。
 - 当前 dmg 内所有二进制（主程序 + Electron Helper + Framework）均为 **ad-hoc 签名且完整**，
   所以这不是"签名损坏"，而是 XProtect 对"无 Apple 公证票据的非可信来源 app"的拦截。
-- **XProtect 没有用户侧绕过开关**（不像 Gatekeeper 的 Open Anyway）。可靠解法只有两条：
-  1. **公证（notarize）**：需要 Apple Developer ID 证书（$99/年）+ App Store Connect API key。
-     本脚本可加 `notarize` 阶段，提供证书后接入即可（见 `build-desktop.sh` 末尾注释）。
-  2. **自签名证书（免费，先试）**：在钥匙串建一个 Code Signing 自签根证书（"始终信任"），用它重签整个 bundle。
-     ⚠️ 重签**不要**加 `--options runtime`：hardened runtime 下 Electron 渲染进程(V8)无 JIT 权限会立刻"意外退出"。
-     正确命令（本机终端跑，.app 从 dmg 拷到本地后签）：
-     ```bash
-     codesign --force --deep --sign "ZWorkbench Dev" ~/Downloads/ZWorkbench.app
-     codesign --verify --deep --strict --verbose=2 ~/Downloads/ZWorkbench.app
-     xattr -dr com.apple.quarantine ~/Downloads/ZWorkbench.app
-     open ~/Downloads/ZWorkbench.app
-     ```
-     若之后要走公证(notarize)，再配合 `entitlements.plist`（allow-jit / allow-unsigned-executable-memory /
-     disable-library-validation）**加** `--options runtime`。
-     若 XProtect 只是卡"无有效签名"，自签能满足；若它按内容特征命中，则仍会被拦，需走公证。
-- 排查到底是哪个在拦：用户的机器上跑
-  `log show --predicate 'subsystem contains "XProtect"' --last 30m`（需 sudo/不放沙箱），
+- **XProtect 没有用户侧绕过开关**（不像 Gatekeeper 的 Open Anyway）。右键打开 / `xattr -dr` / 自签证书
+  **三者都无效**（已实测：右键打开仍被"移到废纸篓"）。可行方向只有一条：
+  **公证（notarize）**——需要付费 Apple Developer Program 的 Developer ID 证书，见下节。
+  注意公证解的是"无公证票据"类规则；若 XProtect 是按**内容特征**命中（Electron + 内嵌 Go 二进制的
+  结构可能近似已知套壳样本），公证也可能清不掉，需改打包结构或等 Apple 更新特征库。
+- 排查到底是哪个在拦：跑
+  `log show --predicate 'process contains "syspolicyd" OR process contains "XProtect" OR subsystem contains "Xprotect"' --last 30m --info --debug`
+  （默认会跳过 Info/Debug 级，检测明细通常在那两级；弹框由 `syspolicyd` 弹出，谓词别只写 XProtect）
   或把弹窗原文贴出来区分。
 
-代码签名/公证、Windows 构建、自动更新均不在本切片（公证接入可后续追加）。
+### 公证接入（`NOTARIZE=1`）
+
+`build-desktop.sh` 已内置公证门控，**默认关**（不上传、不改变 unsigned 产物）。打开方式：
+
+```bash
+# 先把凭证存进钥匙串（推荐，凭证不进命令行历史）
+xcrun notarytool store-credentials zw-notary \
+  --apple-id "<你的 Apple ID>" --team-id "<TEAMID>" --password "<App 专用密码>"
+
+NOTARIZE=1 \
+DEV_ID_APP="Developer ID Application: <名字> (<TEAMID>)" \
+APPLE_KEYCHAIN_PROFILE=zw-notary \
+bash app/scripts/build-desktop.sh
+```
+
+| 环境变量 | 必填 | 说明 |
+|---|---|---|
+| `NOTARIZE` | 是（值 `1`） | 门控开关；不设＝完全走原来的 unsigned 流程 |
+| `SIGN_ID` | 另一模式 | 只签名、不公证（见下节）；与 `NOTARIZE` / `SIGN_CERT` 互斥 |
+| `DEV_ID_APP` | 是 | 钥匙串里 Developer ID Application 证书名；脚本会先校验存在性 |
+| `APPLE_KEYCHAIN_PROFILE` | 三选一 | 推荐。凭证来源 A |
+| `APPLE_ID` + `APPLE_APP_SPECIFIC_PASSWORD` + `APPLE_TEAM_ID` | 三选一 | 凭证来源 B（teamId 必须给全） |
+| `APPLE_API_KEY` + `APPLE_API_KEY_ID` + `APPLE_API_ISSUER` | 三选一 | 凭证来源 C（App Store Connect API key） |
+
+执行链路：预检（缺证书/凭证**在构建前**即失败）→ Developer ID 签名（hardened runtime +
+`electron/build/entitlements.mac.plist`，并把内嵌 `zworkbench-go` 显式纳入签名清单）→ electron-builder
+送公证并 staple `.app` → dmg 产出后再送公证 + staple dmg → `codesign --verify` / `stapler validate` 留证。
+
+已与 `SIGN_CERT`（自签）设为互斥：自签会改写签名使公证票据失效，同时给出两者会直接报错退出。
+
+#### 只签名、不公证（`SIGN_ID`）
+
+用于**两段式验收**：先单独确认签名链路正确，再上公证。这样公证首跑失败时能区分「签名坏了」还是「Apple 拒了」。
+
+```bash
+SIGN_ID="ZWorkbench Dev" bash app/scripts/build-desktop.sh        # 出安装包
+SIGN_ID="ZWorkbench Dev" bash app/scripts/build-desktop.sh --dir  # 只出 .app，更快
+```
+
+- 走 electron-builder 的 identity 路径，**打包时**即签名（hardened runtime + `electron/build/entitlements.mac.plist`
+  + 内嵌 Go 二进制纳签），**不送 Apple 公证**。
+- 构建末尾自动打证据：`codesign --verify`（含内嵌二进制）、hardened runtime 标志、entitlements 键、
+  内嵌 `zworkbench-go` 的签名状态。任何一条不过即 `exit 1`。
+- 产物行带 `mtime`，用于区分「本次产物 vs 上次遗留」——`--dir` 的产物是 `.app`，而 `dist/` 下常还躺着上一次的 dmg。
+- 与 `NOTARIZE` / `SIGN_CERT` **均互斥**（同时给直接报错退出）。
+
+对比 `SIGN_CERT`（旧入口，保留但**仅 `--dir` 模式有效**）：它在打包**之后**用 `codesign --force --deep` 补签，
+dmg 模式下签的是中间产物、包内仍是 unsigned（脚本会明确告警）。需要「打包即签名」请用 `SIGN_ID`。
+
+签名链路已用 `SIGN_ID` 在本机实跑验证（自签证书，四项校验全过）；**公证本身尚未真跑过**（缺 Developer ID 证书）。
+Windows 构建、自动更新仍不在本切片。
 
 ## 设计要点
 
