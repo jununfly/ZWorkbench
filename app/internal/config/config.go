@@ -17,6 +17,8 @@ type Config struct {
 	// 见 roadmap 1-5-6-3 决策：默认不落盘，避免以 cwd 为基准污染工作目录；
 	// 持久化默认路径需单独立项（data dir 决策），C26 的 durability 要求列为 follow-up。
 	EvidenceDB string
+	// WebDir 是前端 dist 目录（1-1-3）。空串表示交给 webstatic 自行按候选路径解析。
+	WebDir string
 	llm LLMConfig
 	mu  sync.RWMutex
 }
@@ -46,7 +48,10 @@ func Load() *Config {
 	}
 	// ZW_EVIDENCE_DB 未设置 → 内存证据库；显式给路径才落 SQLite 文件。
 	evidenceDB := os.Getenv("ZW_EVIDENCE_DB")
-	c := &Config{Port: port, Token: token, DB: db, EvidenceDB: evidenceDB}
+	// ZW_WEB_DIR（1-1-3）：打包后由 Electron 注入 resources 下的 web/dist；
+	// 未设置时 webstatic 按候选路径自行解析。
+	webDir := os.Getenv("ZW_WEB_DIR")
+	c := &Config{Port: port, Token: token, DB: db, EvidenceDB: evidenceDB, WebDir: webDir}
 	c.LoadLLM()
 	return c
 }

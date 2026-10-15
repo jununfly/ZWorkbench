@@ -1,9 +1,13 @@
 type ZW = { apiBase?: string; getToken?: () => string };
 const w = window as any as { __ZW__?: ZW };
 
-// dev 模式（Vite）下 apiBase 指向 Go 服务；prod 下同源留空。
+// dev 模式（Vite）下 apiBase 指向 Go 服务；prod 下同源留空，由渲染进程 origin 兜底。
 export function apiBase(): string {
-  return w.__ZW__?.apiBase ?? 'http://127.0.0.1:18080';
+  const base = w.__ZW__?.apiBase;
+  if (base) return base;
+  // prod 同源模式：Electron 加载的 URL 即 Go 服务本体，用 window.location.origin
+  // 构造绝对 URL，避免 `new URL('' + path)` 因相对路径抛 Invalid URL（导致白屏）。
+  return window.location.origin;
 }
 
 export function token(): string {

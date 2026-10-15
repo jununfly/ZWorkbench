@@ -3,10 +3,75 @@
   "version": "0.0.1",
   "private": true,
   "main": "main.js",
+  "description": "ZWorkbench 桌面壳：Electron 薄壳 + Go 本地服务（零业务逻辑，只 spawn Go 二进制）",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "pack:dir": "electron-builder --dir",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
   },
   "devDependencies": {
-    "electron": "^31.0.0"
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "cn.workbuddy.zworkbench",
+    "productName": "ZWorkbench",
+    "copyright": "Copyright © 2026 jununfly",
+    "electronDist": "node_modules/electron/dist",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../bin",
+        "to": "bin",
+        "filter": [
+          "zworkbench-go",
+          "zworkbench-go.exe"
+        ]
+      },
+      {
+        "from": "../web/dist",
+        "to": "web/dist",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "sign": false
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

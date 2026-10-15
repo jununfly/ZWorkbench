@@ -16,6 +16,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/optimization"
 	"github.com/jununfly/ZWorkbench/app/internal/research"
 	"github.com/jununfly/ZWorkbench/app/internal/review"
+	"github.com/jununfly/ZWorkbench/app/internal/webstatic"
 )
 
 // NewRouter 构建本地 API：鉴权中间件 + 路由（镜像 ES 本机鉴权范式）。
@@ -235,6 +236,10 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 本地证据（1-5-6-3）：run 生命周期 + safe-stop 事件流 + identity 完整性。
 	registerEvidence(mux, auth, ev)
+
+	// 前端托管（1-1-3）：打包后窗口加载 http://127.0.0.1:<port>/ 必须拿到 SPA，
+	// 否则只会显示 404。产物缺失时该 handler 返 503 + 明确文案（fail-closed）。
+	mux.Handle("/", webstatic.NewHandler(webstatic.Dir(cfg.WebDir)))
 
 	return mux
 }
