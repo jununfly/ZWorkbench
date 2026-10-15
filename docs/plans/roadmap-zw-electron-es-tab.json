@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a135df829e-3db2b8e0cd",
       "label": "ZW → Electron 客户端 + ES 常驻 Tab",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -76,7 +76,7 @@
       "id": "1-2",
       "uid": "01a135dfb420-0816295f43",
       "label": "Phase 2 — ES 产品内容常驻 Tab（A' merge-then-adapt）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -296,12 +296,12 @@
       "id": "1-2-1",
       "uid": "01a135e02f2e-fe539ebdaf",
       "label": "2.1 常驻 tab 容器 + 路由（先空占位）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "代码已交付：app/internal/domain/tabs.go:14-21 注册 8 个 ES tab；app/internal/api/router.go:54 暴露 GET /api/tabs；app/web/src/App.tsx:46-56 侧栏渲染+条件切换+非占位白名单。运行时验证：/api/tabs 返 10 tab、dom-ready childCount=1。",
       "layer": "plan",
       "exit_criteria": [
         "桌面应用内出现可切换的常驻 tab 位"
@@ -311,12 +311,12 @@
       "id": "1-2-2",
       "uid": "01a135e02fe8-c04b78a9b9",
       "label": "2.2 首个 ES 风格 tab 原型（C08 个股分级研究 / C07 行情总览）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "C07 行情总览：StockTab.tsx(118 行)+GET /api/stock/overview(router.go:59)。C08 个股分级研究：ResearchTab.tsx(55 行)+GET /api/stock/research(router.go:81)。两者均已交付，选型无悬念。",
       "layer": "plan",
       "exit_criteria": [
         "该 tab 常驻可用，数据来自本地快照"
@@ -326,12 +326,12 @@
       "id": "1-2-3",
       "uid": "01a135e030a1-bfd00b0984",
       "label": "2.3 证据层对齐 CompositionOwner 单一 owner（C26）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "证据层对齐 CompositionOwner(C26) 已落地：app/internal/evidence/evidence.go 完整 schema(runs/approvals/effects/effect_attempts/declared_exposure/events)；owner.go 状态机核心+fail-closed 矩阵；approval.go 一次性 approval token+effect claiming；owner_test.go 单测(orphan/FK/bounded retry)；router_evidence.go registerEvidence 挂载于 router.go:238；前端 CodingEvidenceTab.tsx(255 行)。对应 roadmap 1-5-6 系列。",
       "layer": "plan",
       "exit_criteria": [
         "研究结论可追溯、不与编码 owner 冲突（C27）"
@@ -341,12 +341,12 @@
       "id": "1-2-4",
       "uid": "01a135e03156-dc28dbbc6c",
       "label": "2.4 补齐其余 tab（连板/题材/大V复盘/持仓巡检/AI优化/游资心法）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "其余 tab 全部交付：C09 超短连板 stock-limitup(LimitUpTab 111 行+/api/stock/limitup router.go:70)、C10 大V复盘 stock-review(ReviewTab 56+/api/stock/review:92)、C11 持仓巡检 portfolio-inspection(InspectionTab 88+/api/portfolio/inspection:103)、C12 持仓优化 portfolio-optimization(OptimizationTab 72+/api/portfolio/optimization:114)、C19 游资心法 trading-mastery(MasteryTab 45+/api/mastery:125)。",
       "layer": "plan",
       "exit_criteria": [
         "逐个 tab 常驻可用"
@@ -356,12 +356,12 @@
       "id": "1-2-5",
       "uid": "01a135e0321b-d5ca17a779",
       "label": "2.5 清理 ES 派生残留 + 保留声明/注明变更",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
-      "notes": "",
+      "notes": "清理 ES 残留+保留声明 实质上满足：Go 全 pivot(1-5) 后 A 路径 Python 翻译废弃，无 ES 派生残留需清理；偏离声明与保留说明已落在 docs/designs/pd-es-resident-tabs.md 与 zw-go-electron-architecture.md(偏离 C32、许可 D1/D2)。零功能缺口。",
       "layer": "plan",
       "exit_criteria": [
         "无未注明来源的 ES 派生代码"
@@ -954,7 +954,7 @@
   },
   "metadata": {
     "created": "2026-10-13 23:26:42",
-    "updated": "2026-10-15 22:41:57",
+    "updated": "2026-10-15 23:11:49",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/docs/plans/roadmap-zw-electron-es-tab.md"
   },
   "edges": [
