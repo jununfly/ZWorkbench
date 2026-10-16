@@ -488,13 +488,30 @@
       "id": "1-4-2",
       "uid": "01a140405414-f78ef8ab68",
       "label": "backup / restore",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Go 侧 backup/restore 用什么机制做 SQLite 在线备份？",
+          "answer": "modernc.org/sqlite v1.60.1 无 sqlite3 原生 connection.backup()，改用 VACUUM INTO 'file'（在线备份等价物，等价于 Python connection.backup + wal_checkpoint）；目标目录必须为空 fail-closed；产物三件套 {manifest.json, evidence.sqlite3, state.json}",
+          "note": ""
+        },
+        {
+          "q": "Go B2-narrow 的 schema 身份如何与 Python 区分？",
+          "answer": "引入独立 SchemaVersion=1（不与 Python SCHEMA_VERSION=3 混用）；Open 建表后 PRAGMA user_version=1；manifest/restore 校验 schema_version 与 user_version==SchemaVersion + 6 张核心表子集；state_digest 双向一致 + DB snapshot 与 state.json 深度一致(canonical JSON 字符串比较，规避 int64/float64 抖动)",
+          "note": ""
+        },
+        {
+          "q": "restore 的 fail-closed 与原子性是否对齐 Python？",
+          "answer": "对齐：目标非空需显式 replace；manifest 缺文件/版本不符/sha256 不符/digest 不符/integrity 非 ok/DB 与 state.json 不一致 全部拒绝；restore 用临时文件 os.Rename 原子替换(同 fs)；仅恢复 evidence 6 表(不含 results/provider ledger，后者属 1-4-3/1-4-5)",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-3": {
       "id": "1-4-3",
@@ -683,7 +700,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 17:46:16",
+    "updated": "2026-10-16 18:07:49",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
