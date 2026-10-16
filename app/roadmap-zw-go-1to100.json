@@ -334,13 +334,35 @@
       "id": "1-2-4",
       "uid": "01a1404024f5-b8de11eb42",
       "label": "持仓巡检/优化（inspection/optimization）接真实持仓输入",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "D13 配置/路由接线：portfolio 导入路径怎么注入？",
+          "answer": "沿用 mastery 的 data_files 段(1-2-3 D9)：config.DataFiles 新增 PortfolioPath 字段 + ZW_PORTFOLIO_PATH env 覆盖 + PortfolioPath() 访问器；persistFile 三段共写不变。router 两处 /api/portfolio/{inspection,optimization} 改为 NewDefaultChain(cfg.DataSource(), cfg.PortfolioPath())。前端零改动（模型字段不变）。已知缺口同 1-2-3：导入失败回退时原因不进 UI，交 1-2-5 透传。",
+          "note": ""
+        },
+        {
+          "q": "D11 inspection(C11) 真实持仓输入怎么接？为什么不是真源？失败语义？",
+          "answer": "持仓是私有数据，无公开结构化 API——硬接=编数据，故与 mastery(1-2-3 D9) 同构走「本地可导入数据集」。新增 ImportedFileSource 读 portfolio JSON（{as_of,cash,total_assets,holdings:[{code,name,weight,cost,price,pnl_pct}]}）。事实字段（total_assets/cash/pnl=Σ权重×资产×盈亏%/holdings）取自文件真实值；四维评分/风险等级/综合评分是主观评估，外部不提供→取自内嵌种子并在每条 dimension.basis 末尾追加「[本地种子·非实时]」诚实标注（不新增模型字段，前端零改动）。链序改为 导入文件→远程→内嵌快照，NewDefaultChain(cfg, portfolioPath)。失败语义：路径空=未配置→ErrUnconfigured 静默回退（零回归）；路径非空读不到/坏/无持仓=源失败 fail-closed 带路径与原因。source=imported-portfolio。",
+          "note": ""
+        },
+        {
+          "q": "D12 optimization(C12) 真实持仓输入怎么接？targets 的 from_weight 怎么变真实？",
+          "answer": "优化是巡检的派生，真实输入同样是持仓文件（与 inspection 共用同一 portfolio JSON，config 单点注入）。ImportedFileSource 读文件后：①以真实持仓覆盖 seed 里各 target 的 from_weight/name（按 code 匹配，命中则 reason 末尾追加「[基于真实持仓]」）；②招商银行这类「新增」(seed 中 from_weight=0 且无对应持仓) 保持原样，不伪造；③original_score/optimized_score/improvement/conditions 是建议，保留 seed 并在 conditions 末尾追加「[本地种子·非实时]」。source=imported-portfolio。这样「AI建议」与「真实现状」在 UI 上可区分，不把建议伪装成已执行。失败语义同 D11。",
+          "note": ""
+        },
+        {
+          "q": "D14 1-2-4 真实调用与端到端验证证据（2026-10-16）？",
+          "answer": "三态全验（ZW_PORTFOLIO_PATH 指向真实持仓 JSON）：①导入→source=imported-portfolio, fallback=false；inspection total_assets=680000/cash=120000/pnl=11005.12(加权真实值，非种子500000)/holdings=4真实标的/维度依据带「[本地种子·非实时]」；optimization 宁德时代from_weight=28→25(真实覆盖+标记)、隆基8→8(标记)、招商银行0保持未标记(新增不伪造)、conditions带「[本地种子·非实时]」。②未配置路径→local-snapshot fallback=true(total_assets=500000，零回归)。③损坏文件→回退内嵌快照 fallback=true(原因不外显，已知缺口交1-2-5)。门禁：go vet ./... 无告警，go test ./... 17 包全绿。产物：新增 inspection/import.go(+_test)、optimization/import.go(+_test)；两包 NewDefaultChain 签名加 importedPath(导入→远程→内嵌)，source.go 抽 parseSeed(*)；config DataFiles 加 PortfolioPath + ZW_PORTFOLIO_PATH + PortfolioPath()，router 两处注入。optimization 复用 inspection.PortfolioFile 保证两包同格式。零新增依赖(ADR 0015)，前端零改动(字段未变)。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-5": {
       "id": "1-2-5",
@@ -601,7 +623,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 15:23:41",
+    "updated": "2026-10-16 15:45:50",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
