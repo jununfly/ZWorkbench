@@ -543,7 +543,9 @@
       "status": "completed",
       "mode": "explore",
       "parent": "1-2-2",
-      "children": [],
+      "children": [
+        "1-2-2-1-1"
+      ],
       "decisions": [
         {
           "q": "D6 这三项深化各自的数据源可行性？",
@@ -559,11 +561,30 @@
       "notes": "从 1-2-2 的 deferred follow-up 单列而来（见 D4/D5）。覆盖 C09 连板适配器当前未接的三项真实能力：①连板天数>1（需历史 K 线或专用连板板，当前仅首板 Days=1、MaxBoard=1）；②题材领涨股（每个板块/题材的 Leading 个股）；③精确情绪阶段（当前用涨停数启发式占位，需真实数据推导冰点/回暖/发酵/高潮/退潮）。本环境 push2.eastmoney.com 的 kline 端点稳定返回空，是 ① 的主要风险点，需先验证可用数据源（历史 K 线 / 专用连板榜 / 其他方式）。",
       "layer": "plan",
       "rounds": 1
+    },
+    "1-2-2-1-1": {
+      "id": "1-2-2-1-1",
+      "uid": "01a1436e1fba-c3a4e43f2e",
+      "label": "C09 连板深化 follow-up：连板/涨停龙头 + 题材广度可调",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2-2-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "题材领涨股 Leading 排序键选哪个（C09 遗留 follow-up）？",
+          "answer": "选 A 连板天数最高优先：板块成分股(pz=emConstituentPz=20)按涨停股池 codeToDays 连板天数降序选最高者，并列时涨停/涨幅高者在前（diff 已按 f3 降序）；板块内无连板/涨停股(poolDays 无命中)回落涨幅 Top1。股池映射零新增请求（复用 emLimitUpPool 已拉的股池）。②题材广度可配：emThemes 的 pz 与 emLeadingTopN 抽成包级 var，由 ZW_LIMITUP_THEME_TOPN(默认10)/ZW_LIMITUP_LEADING_TOPN(默认8) 覆盖，零回归。",
+          "note": ""
+        }
+      ],
+      "notes": "范围（源自 1-2-2-1 遗留；kline 历史连板已废弃，排除）：\n\n① 题材领涨股 Leading 现状=板块成分股涨幅 Top1。改为「连板/涨停」龙头：把涨停股池(getTopicZTPool 的 zttj.days 连板天数 + 是否涨停)按 6 位股票代码映射到各概念板块成分股(clist fs=b:BKxxxx)，取板块内连板天数最高者；并列时涨停优先；板块内无连板/涨停时回落涨幅 Top1。股池代码与成分股代码均为 6 位纯数字（已验证一致）。\n\n② 题材广度 pz=10 固定 → 可调：新增 config/env(如 ZW_LIMITUP_THEME_TOPN) 控制取 TopN 题材与每板块补龙头的请求数，默认仍 10，零回归。\n\n③ 连板天数分组(Tiers/MaxBoard)与精确情绪(classifyStage)保持 1-2-2-1 已实现，不回退。",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 14:15:31",
+    "updated": "2026-10-16 14:55:16",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
