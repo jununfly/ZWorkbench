@@ -4,9 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
+
+	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
 //go:embed snapshot.json
@@ -32,14 +33,26 @@ func (LocalSnapshotSource) Fetch(_ context.Context) (*MarketOverview, error) {
 	return &ov, nil
 }
 
-// RemoteStubSource 占位远程源：当前未接真实行情 API，固定失败 → 触发回退（C36 演示）。
-// 后续切片把这里换成东方财富/开盘啦等真实适配，成功即不再回退。
-type RemoteStubSource struct{}
+// RemoteSource 远程行情源（C36 首选源）：走 datasource 统一契约（roadmap 1-2-1）。
+// 未配置时 Fetch 返回 datasource.ErrUnconfigured（语义=未配置，不是故障），
+// 回退链据此静默回退到本地快照，不报警。
+type RemoteSource struct{ remote datasource.Remote }
 
-func (RemoteStubSource) Name() string { return "remote-eastmoney" }
+// NewRemoteSource 用统一配置构造远程行情源（路径即该领域的远程端点）。
+func NewRemoteSource(cfg datasource.Config) RemoteSource {
+	return RemoteSource{remote: datasource.Remote{
+		Name: "remote-eastmoney",
+		Path: "/market/overview",
+		Cfg:  cfg,
+	}}
+}
 
-func (RemoteStubSource) Fetch(_ context.Context) (*MarketOverview, error) {
-	return nil, errors.New("remote source not wired yet (stub)")
+func (s RemoteSource) Name() string { return s.remote.Name }
+
+func (s RemoteSource) Fetch(ctx context.Context) (*MarketOverview, error) {
+	// 1-2-2：统一契约 + 东方财富公开接口适配器。未启用时 FetchEastmoney 内部返回
+	// ErrUnconfigured（语义=未配置），回退链据此静默回退本地快照。
+	return FetchEastmoney(ctx, s.remote.Cfg)
 }
 
 // FallbackChain 按序尝试源，返回首个成功；非首选源命中即标记 fallback（C36 回退语义）。
@@ -68,6 +81,7 @@ func (c *FallbackChain) Fetch(ctx context.Context) (*MarketOverview, error) {
 }
 
 // NewDefaultChain 默认「远程优先、本地回退」（C36）。
-func NewDefaultChain() *FallbackChain {
-	return NewFallbackChain(RemoteStubSource{}, LocalSnapshotSource{})
+// cfg 由调用方显式注入（1-2-1 D3）：不在包内隐式读环境变量，便于测试与 fail-closed。
+func NewDefaultChain(cfg datasource.Config) *FallbackChain {
+	return NewFallbackChain(NewRemoteSource(cfg), LocalSnapshotSource{})
 }
