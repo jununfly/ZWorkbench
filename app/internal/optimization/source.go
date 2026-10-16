@@ -25,11 +25,22 @@ type LocalSnapshotSource struct{}
 func (LocalSnapshotSource) Name() string { return "local-snapshot" }
 
 func (LocalSnapshotSource) Fetch(_ context.Context) (*OptimizationPlan, error) {
+	b, err := parseSeedPlan()
+	if err != nil {
+		return nil, err
+	}
+	b.Source = "local-snapshot"
+	return b, nil
+}
+
+// parseSeedPlan 解析内嵌种子快照（离线兜底 + 导入源取建议部分的基准）。
+// 种子快照同时服务两处：①LocalSnapshotSource 整包兜底；②ImportedFileSource 取
+// 优化建议（评分/改善/条件），并以真实持仓覆盖各 target 的当前仓位。
+func parseSeedPlan() (*OptimizationPlan, error) {
 	var b OptimizationPlan
 	if err := json.Unmarshal(seedJSON, &b); err != nil {
 		return nil, fmt.Errorf("parse seed snapshot: %w", err)
 	}
-	b.Source = "local-snapshot"
 	return &b, nil
 }
 
@@ -80,8 +91,14 @@ func (c *FallbackChain) Fetch(ctx context.Context) (*OptimizationPlan, error) {
 	return nil, fmt.Errorf("all optimization sources failed: %v", lastErr)
 }
 
-// NewDefaultChain 默认「远程优先、本地回退」（C36）。
-// cfg 由调用方显式注入（1-2-1 D3）：不在包内隐式读环境变量，便于测试与 fail-closed。
-func NewDefaultChain(cfg datasource.Config) *FallbackChain {
-	return NewFallbackChain(NewRemoteSource(cfg), LocalSnapshotSource{})
+// NewDefaultChain 默认「导入文件优先、远程次之、本地回退」（C36 + 1-2-4 D12）。
+// cfg 由调用方显式注入（1-2-1 D3）；importedPath 是真实持仓导入文件路径，
+// 空串表示未导入（ImportedFileSource 返回 ErrUnconfigured，静默落到下一源）。
+// 不在包内隐式读环境变量，便于测试与 fail-closed。
+func NewDefaultChain(cfg datasource.Config, importedPath string) *FallbackChain {
+	return NewFallbackChain(
+		NewImportedFileSource(importedPath),
+		NewRemoteSource(cfg),
+		LocalSnapshotSource{},
+	)
 }

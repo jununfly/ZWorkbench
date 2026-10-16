@@ -15,11 +15,14 @@ import (
 // 类型别名：配置形态由 datasource 包定义，config 只负责持久化与 env 覆盖。
 type DataSourceConfig = datasource.Config
 
-// DataFiles 是「本地可导入数据集」的文件路径段（roadmap 1-2-3 D9）。
+// DataFiles 是「本地可导入数据集」的文件路径段（roadmap 1-2-3 D9 / 1-2-4 D13）。
 // 与 DataSource（远程源）分开：一个是网络端点，一个是本地文件，失败语义不同。
 type DataFiles struct {
 	// MasteryPath 是游资心法库导入文件路径；空串表示未导入（回退内嵌快照）。
 	MasteryPath string `json:"mastery_path"`
+	// PortfolioPath 是持仓导入文件路径（真实持仓输入，1-2-4 D11/D12）；
+	// 空串表示未导入（inspection/optimization 回退内嵌快照）。
+	PortfolioPath string `json:"portfolio_path"`
 }
 
 // Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置、
@@ -124,6 +127,9 @@ func (c *Config) DataFiles() DataFiles {
 // MasteryPath 返回游资心法导入文件路径（便捷读取）。
 func (c *Config) MasteryPath() string { return strings.TrimSpace(c.DataFiles().MasteryPath) }
 
+// PortfolioPath 返回持仓导入文件路径（便捷读取，1-2-4 D13）。
+func (c *Config) PortfolioPath() string { return strings.TrimSpace(c.DataFiles().PortfolioPath) }
+
 // SetDataFiles 原子写入本地导入数据集路径（并发安全）。
 func (c *Config) SetDataFiles(d DataFiles) {
 	c.mu.Lock()
@@ -166,11 +172,14 @@ func (c *Config) load() {
 	c.SetDataFiles(loadDataFilesFromEnv(f.DataFiles))
 }
 
-// loadDataFilesFromEnv 用 ZW_MASTERY_PATH 覆盖给定的导入路径：
+// loadDataFilesFromEnv 用 ZW_MASTERY_PATH / ZW_PORTFOLIO_PATH 覆盖给定的导入路径：
 // env 优先于 config.json，与数据源配置的覆盖顺序保持一致。
 func loadDataFilesFromEnv(base DataFiles) DataFiles {
 	if v := strings.TrimSpace(os.Getenv("ZW_MASTERY_PATH")); v != "" {
 		base.MasteryPath = v
+	}
+	if v := strings.TrimSpace(os.Getenv("ZW_PORTFOLIO_PATH")); v != "" {
+		base.PortfolioPath = v
 	}
 	return base
 }

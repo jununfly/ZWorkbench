@@ -99,9 +99,9 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 		writeJSON(w, body)
 	}))
 
-	// 镜像 ES 持仓AI巡检（C11）—— C36 多源适配/回退
+	// 镜像 ES 持仓AI巡检（C11）—— C36 多源适配/回退；真实持仓文件优先（1-2-4 D11）
 	mux.HandleFunc("/api/portfolio/inspection", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := inspection.NewDefaultChain(cfg.DataSource())
+		chain := inspection.NewDefaultChain(cfg.DataSource(), cfg.PortfolioPath())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -110,9 +110,9 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 		writeJSON(w, body)
 	}))
 
-	// 镜像 ES AI持仓优化（C12）—— C36 多源适配/回退
+	// 镜像 ES AI持仓优化（C12）—— C36 多源适配/回退；真实持仓文件优先（1-2-4 D12）
 	mux.HandleFunc("/api/portfolio/optimization", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := optimization.NewDefaultChain(cfg.DataSource())
+		chain := optimization.NewDefaultChain(cfg.DataSource(), cfg.PortfolioPath())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
