@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 18:43:03
+> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 20:34:42
 
 [~][X+] 1. ZW Go/Electron 工作台 1→100 收尾
 ├── [x][X+] 1-1. 工程守卫与回归门禁
@@ -20,12 +20,12 @@
 │   ├── [x][X+] 1-3-1. OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖）
 │   ├── [x][X+] 1-3-2. key 存储与掩码回写安全复核（router.go:217）
 │   └── [x][X+] 1-3-3. Settings 页连通性自检与错误直显
-├── [~][X+] 1-4. 证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）
+├── [x][X+] 1-4. 证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）
 │   ├── [x][X+] 1-4-1. reconcile / uncertain 恢复路径
 │   ├── [x][X+] 1-4-2. backup / restore
 │   ├── [x][X+] 1-4-3. exit ledger（Python 侧 provider_exit_ledger；Go 侧未见）
 │   ├── [x][X+] 1-4-4. identity chain 可查询（run → attempt → effect → approval）
-│   └── [ ][X+] 1-4-5. safe-stop（C28）
+│   └── [x][X+] 1-4-5. safe-stop（C28）
 ├── [ ][X+] 1-5. 分发与安装
 │   ├── [ ][X+] 1-5-1. Developer ID + 公证真跑（NOTARIZE 门控已在，只差证书）
 │   ├── [ ][X+] 1-5-2. Windows 打包（win + CGO_ENABLED=0 交叉编译）
@@ -39,7 +39,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-4-5. safe-stop（C28） [ ]
 - 1-5. 分发与安装 [ ]
 - 1-5-1. Developer ID + 公证真跑（NOTARIZE 门控已在，只差证书） [ ]
+- 1-5-2. Windows 打包（win + CGO_ENABLED=0 交叉编译） [ ]
 <!-- ROADMAP_SECTION_END -->

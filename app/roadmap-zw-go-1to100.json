@@ -110,7 +110,7 @@
       "id": "1-4",
       "uid": "01a1403fd406-b9dcea3b62",
       "label": "证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -580,13 +580,35 @@
       "id": "1-4-5",
       "uid": "01a14040562d-716612ccd8",
       "label": "safe-stop（C28）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "1-4-5 的 safe-stop 到底缺什么？范围怎么定？",
+          "answer": "Product execution（Go app/ 可改）。盘点：Go 已有 SafeStopRun / FailRun 转义 / claim_effect 的 failStop / ReconcileEffect(unknown→safe_stopped) / safe_stopped 事件流——**状态本身不缺**，缺的是 Python composition.py 里 safe-stop 的**触发与收口两个 owner 动作**：safe_stop_on_identity_violation(:1045) 与 reconcile_identity(:1065)。范围 = ①移植这两个动作；②顺带补 detect 的覆盖面缺口（1-4-3 加了 provider_exit_ledger 表却没进子表扫描、effect_attempts→effects 孤儿未扫、runs.metadata 的 parent_run_id/child_run_id 断链未扫）——**扫不全，safe-stop 的触发判定就漏半张图**。不新增表；safe_stopped 终态永不复活。",
+          "note": ""
+        },
+        {
+          "q": "SafeStopOnIdentityViolation 的触发语义边界？",
+          "answer": "忠实对齐 Python：**检测本身不中断健康 run**——无违例时不改状态、SafeStopped=false、返回当前 status（Detection alone is never a reason to interrupt a healthy run）。有违例 → 转 safe_stopped（已是 safe_stopped 则不重复转移，但仍记事件）+ 追加 run.identity.violation 事件（payload 带完整 findings）。未知 run = ErrRunNotFound（fail-closed，不静默返空）。返回值带 Violations / SafeStopped / Status 三元组，让调用方一眼分清「没查到」与「查了没问题」。",
+          "note": ""
+        },
+        {
+          "q": "ReconcileIdentity 的收口语义与 evidence 怎么处理？",
+          "answer": "对齐 Python：safe_stopped 是终态，**收口成功也不复活**（outcome=resolved 只记事件、不改状态）；仍有违例 → outcome=unknown 且保持 safe_stopped（若当前非 safe_stopped 则先转过去）。evidence 参数**接但不落盘**（同 Python 理由：自由文本需脱敏、owner 拒原始凭证字段；本切片无 redaction 管道）。决策持久化到 run.identity.reconciled 事件（payload 含 outcome + violation_count，有违例时附 violations）。未知 run = ErrRunNotFound。",
+          "note": ""
+        },
+        {
+          "q": "这两个 safe-stop 动作要不要对外暴露（API / UI）？",
+          "answer": "暴露，但只暴露**安全方向**的动作：POST /api/evidence/runs/{id}/safe-stop-on-violation 与 POST /api/evidence/runs/{id}/reconcile-identity（与既有的 runs/{id}/transition 同类，都是人触发的 owner 动作）。effect 写路径（ClaimEffect/Approve）仍不开放——那是执行副作用，需要审批界面。UI 在编码证据 tab 顶部加两个按钮 + 违例清单（kind/detail 明细，不止计数），让「为什么被 safe-stop」可复核。语义拒绝（未知 run / 终态矩阵拒绝）仍返 400 不返 500。",
+          "note": ""
+        }
+      ],
+      "notes": "落地：新增 internal/evidence/safe_stop.go（SafeStopOnIdentityViolation + ReconcileIdentity，对齐 composition.py:1045/1065）+ 补齐 detect 覆盖面三处缺口（provider_exit_ledger 进子表扫描 / effect_attempts→effects 孤儿 / runs.metadata 的 parent_run_id+child_run_id 断链）+ API POST /api/evidence/runs/{id}/safe-stop-on-violation 与 /reconcile-identity + 编码证据 tab 两个按钮与违例明细清单。语义：检测本身不中断健康 run（无违例=不动状态 safe_stopped=false）；有违例→safe_stopped + run.identity.violation 事件带完整 findings；收口 outcome=resolved 不改状态、outcome=unknown 保持终态，**永不复活**；evidence 接但不落盘；未知 run=ErrRunNotFound(404)。验证：evidence 包 7 个新用例 + api 包 TestEvidenceSafeStopOnViolation 全绿；check-go.sh ALL PASS；check-web.sh ALL PASS；真机冒烟（:18099）clean→safe_stopped=false/created、dirty→safe_stopped=true+broken_parent_run_id、reconcile→outcome=unknown、未知 run 404。effect 写路径（ClaimEffect/Approve）仍未开放。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-1": {
       "id": "1-5-1",
@@ -739,7 +761,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 18:43:03",
+    "updated": "2026-10-16 20:34:42",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
