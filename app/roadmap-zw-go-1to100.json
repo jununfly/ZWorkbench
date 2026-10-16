@@ -305,13 +305,30 @@
       "id": "1-2-3",
       "uid": "01a140402443-910cfcd36f",
       "label": "复盘/心法（review/mastery）接真实源或本地可导入数据集",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "D8 review(C10) 真实源选型与「主观字段」边界怎么定？",
+          "answer": "真实源=东方财富研报列表接口 reportapi.eastmoney.com/report/list（免费免 token，2026-10-16 实测 hits=60、字段齐全：title/stockName/stockCode/orgSName/publishDate/emRatingName/indvInduName/researcher）。必须带 beginTime/endTime（缺则 400），用 UTC+8 日期 + 近 N 天回看（默认 3 天，ZW_REVIEW_LOOKBACK_DAYS 覆盖）。盘面事实另取 ulist（涨跌家数 f104-f107 + 5 大指数 f2/f3），与 C07 同源但独立实现，不跨包依赖。字段边界（诚实标注，不编造）：Authors=真实研报条目（机构简称 + 评级·个股·标题 + 发布日期）；Consensus/Divergence=可复核的统计口径（研报篇数/机构数/行业数/评级分布/Top 行业）；Facts=真实盘面读数；NextVerify=外部不提供主观判断，保留本地种子文本并加「[本地种子·非实时]」前缀，UI 可见不欺骗。不采用 ratingChange 推断上调/下调——样本只见 2(首次)/3(维持)，语义未证实，避免编造。",
+          "note": ""
+        },
+        {
+          "q": "D9 mastery(C19) 为什么走「本地可导入数据集」而不是真源？失败语义怎么定？",
+          "answer": "游资心法（人物/派别/心法/解读）是民间经验知识，无任何公开结构化 API——不存在可接的『真实源』，硬编造一个等于编数据。故本节点落地『本地可导入数据集』：新增 ImportedFileSource，从可配置路径读 JSON（MasteryLibrary 形态，至少含非空 figures）覆盖内嵌快照；路径来自 config.json 新 data_files.mastery_path 段 + ZW_MASTERY_PATH env 覆盖，router 显式注入（沿用 1-2-1 D3，不在包内隐式读 env）。默认空=未导入→ErrUnconfigured→静默回退内嵌快照，零回归。失败语义（对齐 1-2-5 三分类）：路径空=未配置（静默回退）；路径非空但读不到/JSON 坏/figures 空=源失败，返回带 path 与原因的明确错误，fail-closed 不静默。链序：导入源 → 远程源 → 内嵌快照（NewDefaultChain(cfg, importedPath) 加参）。已知缺口：导入源失败时 FallbackChain 会回退内嵌快照并置 Fallback=true，具体原因目前不进 UI——由 1-2-5 做 fallback 原因透传，本节点不抢。",
+          "note": ""
+        },
+        {
+          "q": "D10 1-2-3 真实调用与端到端验证证据（2026-10-16）？",
+          "answer": "review(真实调用, ZW_LIVE_EM=1 与起服务 curl 双验)：source=remote-eastmoney, fallback=false, authors=8；盘面=上证3716.28(+0.24%)/深成-0.12%/创业板-0.39%，涨1398跌902，涨停57跌停5；consensus=近3日研报共32篇(统计样本20篇)/7家机构/15行业/买入11·增持4·无评级5/Top行业半导体(3)；divergence=2类评级无单一主导；next_verify=[本地种子·非实时]前缀。mastery：①导入文件→source=imported-file, fallback=false, figures=3(章盟主/佛山无影脚/量化打板组，非内嵌4条)证明导入链路真的生效；②未配置→local-snapshot fallback=true(零回归)；③导入文件损坏→回退内嵌快照 fallback=true，错误原因不外显(已记录缺口，1-2-5 做 fallback 原因透传)。门禁：go vet ./... 无告警，go test ./... 17 包全绿。产物：新增 review/eastmoney.go(+_test)、mastery/import.go(+_test)；review RemoteSource.Fetch 改调 FetchEastmoney；mastery NewDefaultChain 签名加 importedPath(导入→远程→内嵌)；config 新增 data_files.mastery_path 段 + ZW_MASTERY_PATH env + MasteryPath()/SetDataFiles()，persistFile 三段共写；router mastery 注入路径。零新增依赖(ADR 0015 不变)，前端零改动(字段未变)。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-4": {
       "id": "1-2-4",
@@ -584,7 +601,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 14:55:16",
+    "updated": "2026-10-16 15:23:41",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [

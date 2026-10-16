@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 14:55:16
+> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 15:23:41
 
 [~][X+] 1. ZW Go/Electron 工作台 1→100 收尾
 ├── [x][X+] 1-1. 工程守卫与回归门禁
@@ -13,7 +13,7 @@
 ├── [~][X+] 1-2. 真实数据源接入（C36 远程侧现为 RemoteStubSource）
 │   ├── [x][X+] 1-2-1. 统一 RemoteSource 契约与配置开关（7 个包各自 stub 固定失败）
 │   ├── [x][X+] 1-2-2. 行情/研究/连板（market/research/limitup）接真实 A 股数据源
-│   ├── [ ][X+] 1-2-3. 复盘/心法（review/mastery）接真实源或本地可导入数据集
+│   ├── [x][X+] 1-2-3. 复盘/心法（review/mastery）接真实源或本地可导入数据集
 │   ├── [ ][X+] 1-2-4. 持仓巡检/优化（inspection/optimization）接真实持仓输入
 │   └── [ ][X+] 1-2-5. fallback 语义收敛：区分未配置 / 源失败 / 陈旧快照，不当作成功
 ├── [ ][X+] 1-3. LLM Provider 真实化
@@ -45,7 +45,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-2-3. 复盘/心法（review/mastery）接真实源或本地可导入数据集 [ ]
 - 1-2-4. 持仓巡检/优化（inspection/optimization）接真实持仓输入 [ ]
 - 1-2-5. fallback 语义收敛：区分未配置 / 源失败 / 陈旧快照，不当作成功 [ ]
+- 1-3. LLM Provider 真实化 [ ]
 <!-- ROADMAP_SECTION_END -->
