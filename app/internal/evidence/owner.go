@@ -368,10 +368,17 @@ func (o *Owner) RecordDeclaredExposure(runID string, sideEffects any, exposure a
 	return &DeclaredExposure{RunID: runID, DeclaredSideEffects: sideEffects, Exposure: exposure, DeclaredAt: ts}, nil
 }
 
-// DetectIdentityViolations 扫描引用完整性（孤儿 run_id / 孤儿 approval_id）。
+// DetectIdentityViolations 扫描身份图里所有无法解析的引用（fail-closed）。
+// 覆盖四类链接（1-4-5 补齐，对齐 composition.py detect_identity_violations）：
+//  1. 子表的 run_id（effects / approvals / declared_exposure / events /
+//     provider_exit_ledger——1-4-3 加了这张表却漏进扫描，本节点补上）；
+//  2. effects.approval_id；
+//  3. effect_attempts.effect_id（孤儿尝试无 run 可归属，仅全 owner 审计时报，
+//     RunID 记 "unknown"）；
+//  4. runs.metadata 的 parent_run_id / child_run_id（断链）。
+//
 // runID 非空时仅扫描该 run 的入/出边；空则为全 owner 完整性审计。
-// 忠实复刻 composition.py detect_identity_violations 的 fail-closed 语义
-// （只报告无法解析的引用，绝不臆造目标）。
+// 忠实复刻 composition.py 的 fail-closed 语义（只报告无法解析的引用，绝不臆造目标）。
 func (o *Owner) DetectIdentityViolations(runID string) ([]Violation, error) {
 	var v []Violation
 	err := o.transact(func(tx *sql.Tx) error {
@@ -513,7 +520,8 @@ func (o *Owner) detectViolationsTx(tx *sql.Tx, scopeRunID string) ([]Violation, 
 	}
 	rr.Close()
 
-	childTables := []string{"effects", "approvals", "declared_exposure", "events"}
+	// provider_exit_ledger（1-4-3 引入）也是 run 的子表，漏掉它等于身份图少半张。
+	childTables := []string{"effects", "approvals", "declared_exposure", "events", "provider_exit_ledger"}
 	for _, t := range childTables {
 		cr, err := tx.Query(fmt.Sprintf(`SELECT run_id FROM %s`, t))
 		if err != nil {
@@ -572,6 +580,55 @@ func (o *Owner) detectViolationsTx(tx *sql.Tx, scopeRunID string) ([]Violation, 
 		})
 	}
 	ar.Close()
+
+	// effect_attempts → effects：孤儿尝试没有 run 可归属（它的 run 只能经
+	// effect 反查），所以只在全 owner 审计里报，RunID 显式记 "unknown"。
+	if scopeRunID == "" {
+		erows, err := tx.Query(`SELECT effect_id, run_id FROM effects`)
+		if err != nil {
+			return nil, fmt.Errorf("扫描 effects 失败：%w", err)
+		}
+		effectRun := map[string]string{}
+		for erows.Next() {
+			var eid, rid string
+			if err := erows.Scan(&eid, &rid); err != nil {
+				erows.Close()
+				return nil, err
+			}
+			effectRun[eid] = rid
+		}
+		erows.Close()
+		atrows, err := tx.Query(`SELECT DISTINCT effect_id FROM effect_attempts ORDER BY effect_id`)
+		if err != nil {
+			return nil, fmt.Errorf("扫描 effect_attempts 失败：%w", err)
+		}
+		for atrows.Next() {
+			var eid string
+			if err := atrows.Scan(&eid); err != nil {
+				atrows.Close()
+				return nil, err
+			}
+			if _, ok := effectRun[eid]; ok {
+				continue
+			}
+			violations = append(violations, Violation{
+				Kind:     "orphan_effect_attempt_effect",
+				RunID:    "unknown",
+				RefTable: "effect_attempts",
+				RefID:    eid,
+				Detail:   fmt.Sprintf("effect_attempts.effect_id 引用了不存在的 effect %s", eid),
+			})
+		}
+		atrows.Close()
+	}
+
+	// runs.metadata 的 parent/child 链接（AGENTS.md 要求 parent/child run 可查询）。
+	metaV, err := detectMetadataLinkViolationsTx(tx, scopeRunID, validRuns)
+	if err != nil {
+		return nil, fmt.Errorf("扫描 metadata 链接失败：%w", err)
+	}
+	violations = append(violations, metaV...)
+
 	return violations, nil
 }
 
