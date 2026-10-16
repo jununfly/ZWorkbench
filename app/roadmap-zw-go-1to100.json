@@ -34,7 +34,7 @@
       "id": "1-1",
       "uid": "01a1403fd1f4-4a50f4e218",
       "label": "工程守卫与回归门禁",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -52,7 +52,7 @@
       "id": "1-2",
       "uid": "01a1403fd2a7-15fe7317e6",
       "label": "真实数据源接入（C36 远程侧现为 RemoteStubSource）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -62,9 +62,26 @@
         "1-2-4",
         "1-2-5"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "D1 统一契约落点：7 个包各自的 RemoteStubSource 怎么统一？",
+          "answer": "新建 internal/datasource 包（纯 stdlib，符合 ADR 0015 零 cgo 依赖）。它承载：远程源配置、启用开关、超时、失败分类（unconfigured/source_failed/stale_snapshot）、HTTP GET+JSON 解码。7 个业务包只保留「源名 + 路径 + 领域结构解码」，不再各自重复实现 stub。业务包 Source/FallbackChain 接口保留（领域类型不同，泛型化收益不抵复杂度）。",
+          "note": ""
+        },
+        {
+          "q": "D2 配置开关形态与默认值：远程源默认开还是关？",
+          "answer": "默认关（enabled=false）。config.json 增加 data_source 段（base_url/token/enabled/timeout_sec），env ZW_DATASOURCE_ENABLED / _BASE_URL / _TOKEN / _TIMEOUT_SEC 覆盖，复用 LLM 配置的读写范式。默认关时远程侧返回 ErrUnconfigured（语义=未配置），而非 ErrSourceFailed——与 1-2-5「区分未配置/源失败/陈旧快照」同一套分类，且保证现有 C36 fallback 行为零回归。",
+          "note": ""
+        },
+        {
+          "q": "D3 依赖注入方式：远程源配置怎么传到 7 个包？",
+          "answer": "显式注入，不在业务包内隐式读环境变量：NewDefaultChain(cfg datasource.Config) 显式收参，router 从 cfg.DataSource() 取一次后传给 7 个 handler。对齐既有约定（依赖从 main 打开后注入 + 依赖缺失 fail-closed）。副作用：7 个包的 NewDefaultChain 签名变更 + source_test.go 同步更新。",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3": {
       "id": "1-3",
@@ -249,25 +266,40 @@
       "id": "1-2-1",
       "uid": "01a1404022c8-6780b3238b",
       "label": "统一 RemoteSource 契约与配置开关（7 个包各自 stub 固定失败）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
       "decisions": [],
       "notes": "7 个包（market/research/limitup/review/inspection/optimization/mastery）各自 RemoteStubSource 固定返回 \"remote source not wired yet (stub)\" → 永远触发 C36 fallback。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-2": {
       "id": "1-2-2",
       "uid": "01a14040237d-8da325ad45",
       "label": "行情/研究/连板（market/research/limitup）接真实 A 股数据源",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
-      "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "children": [
+        "1-2-2-1"
+      ],
+      "decisions": [
+        {
+          "q": "D4 真实数据源用哪个 provider？",
+          "answer": "东方财富公开接口（zj 拍板，2026-10-16）：免费免 token，行情/连板/题材/复盘均可覆盖；非官方接口，自用可接受，合规化另立 follow-up。C07 行情已接 push2.eastmoney.com（ulist/clist）并真实调用验证通过（indices=5/涨2057跌273/榜各10/板块8）。研究/连板/复盘各自适配器后续切片，provider 不变则只改各包适配器。",
+          "note": ""
+        },
+        {
+          "q": "D5 C08 研究 / C09 连板适配器各自的数据边界怎么划（哪些真接、哪些留 follow-up）？",
+          "answer": "C08 研究：外部接口不提供研究者的主观注解（用途/周期/核心判断/支持/反对），所以适配器=本地种子(含注解) + 东方财富实时报价富化(price/change_pct via ulist secids)；注解保留本地，价格取实时。C09 连板：真实可得=全市场涨停/跌停家数(breadth f106/f107)、涨停首板个股(全A按涨幅排序+分板阈值过滤, 实时报价)、概念板块强度(m:90+t:3, 题材雷达 Name+Strength+LimitUpCount代理)。留 follow-up(本环境 kline 端点稳定返回空, 无法数连板天数)=连板天数>1(需历史K线或专用连板板)、题材领涨股、精确情绪阶段(先用涨停数启发式占位)。涨停判定按板分: 主板10%(chg>=9.8)/创业板30xxx·科创板688>=19.8。均复用 datasource 统一契约 + 默认关零回归。",
+          "note": ""
+        }
+      ],
+      "notes": "C07/C08/C09 三域适配器已落地并真实调用验证通过。C09 三项深化（连板天数/题材领涨股/精确情绪）已从 deferred 单列到子节点 1-2-2-1，本节点保持 completed。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-2-3": {
       "id": "1-2-3",
@@ -489,18 +521,49 @@
       "id": "1-1-5",
       "uid": "01a1407cd14c-7d9abee695",
       "label": "补齐 12 个无测试包的单测（cmd/server + agent/config/data/domain/inspection/limitup/market/mastery/optimization/research/review）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-1",
       "children": [],
-      "decisions": [],
-      "notes": "由 1-1-3 门禁的 WARN 暴露：go test ./... 有 12 个包 [no test files]。门禁只 WARN 不 FAIL——覆盖率缺口是独立工作，不混进门禁伪造绿。建议优先级：data（Store 契约）/ config（LLM key 掩码）/ domain（tab 注册表）/ agent（provider 未配置引导）→ 其余 6 个 ES 镜像 domain 包（多为 go:embed 快照 + FallbackChain，可先补契约测试）。",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "cmd/server 仅 main()、无测试 seam，怎么补单测？",
+          "answer": "抽 buildHandler(cfg) 接缝（返回 handler + sqliteStore + evidence.Owner），main() 仅负责绑端口与信号；package main 白盒测无 token→401 / 带 token→200",
+          "note": "不启动真实端口即可锁住 main 的接线契约；重构保持行为等价（信号/关闭逻辑不变）"
+        }
+      ],
+      "notes": "交付 12 个无测试包的单测（cmd/server + agent/config/data/domain + 7 个 ES 镜像 source 包 inspection/limitup/market/mastery/optimization/research/review）。为 cmd/server 抽 buildHandler 接缝（package main 白盒：无 token→401、带 token→200，锁住 main 接线契约）。agent 用 httptest 桩覆盖 FromConfig 分支 + openAICompatibleClient.Chat 的 URL/Model 兜底/HTTP 错误/空 choices/provider error；7 个 source 包同源模式各测 LocalSnapshotSource 反序列化(隐式锁 snapshot.json schema)+RemoteStubSource 固定失败+NewDefaultChain 回退 Fallback=true+全失败链；config 测 Addr/Load 默认/token 64hex/SaveLLM 往返；data 测 MemStore+SqliteStore(:memory:) 共享 Store 契约(upsert 不新增行)；domain 锁 10 tab 唯一性+分组。check-go.sh 全量 ALL PASS，WARN 列表（无测试包）已清空。未 commit。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-2-2-1": {
+      "id": "1-2-2-1",
+      "uid": "01a1434e2134-8975db9141",
+      "label": "C09 连板深化：连板天数 / 题材领涨股 / 精确情绪",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-2-2",
+      "children": [],
+      "decisions": [
+        {
+          "q": "D6 这三项深化各自的数据源可行性？",
+          "answer": "①连板天数>1：本环境 kline 端点(push2 stock/kline)稳定返回空，需先验证替代源——候选 a) push2 历史 K 线加 ut token 重试（之前空可能因缺 ut 或限频）；b) 专用连板榜接口（如 datacenter-web.eastmoney.com 的连板高度统计）；c) 本地维护连板天数（首板入库，次日比对是否继续涨停递增）。优先 b/c，避免依赖不稳定的 kline。②题材领涨股：概念板块 clist 返回的是板块，领涨股需对每个板块再查其成分股按涨幅取 Top1-3（emQuote 已有 f12/f14/f3，复用）。③精确情绪阶段：基于真实读数（涨停家数/跌停家数/连板高度/首板占比/昨日涨停今表现）做阈值分类，替代当前纯涨停数启发式；分级：冰点(<20涨停)/回暖(20-40且连板>=2)/发酵(40-80)/高潮(>80或连板>=5)/退潮(涨停锐减或跌停>涨停)。",
+          "note": ""
+        },
+        {
+          "q": "D7 三项深化各自的数据源与落地方案（实跑验证后）？",
+          "answer": "①连板天数>1：采用 push2ex.eastmoney.com/getTopicZTPool 涨停股池专用接口（2026-10-16 实跑通过，rc=0 返回 lbc/zttj.days 连板天数、hybk 行业、p 价格*1000、zdp 涨跌幅）。直接按 days 分组生成 Tiers 降序，MaxBoard=max(days)，彻底替代原 clist 涨幅榜过滤首板法，不再依赖不稳定的 kline。②题材领涨股：复用现有 clist(m:90+t:3) 取 Top 概念板块，对每个板块再发 clist(fs=b:BKxxxx) 取成分股涨幅 Top1 作 Leading（2026-10-16 实跑 b:BK0480 通过）。为控制请求数，只给 Top8 题材补 Leading。③精确情绪阶段：弃用纯涨停数启发式，改用 classifyStage(涨停,跌停,最高板)：冰点(<20)/退潮(跌停>涨停)/高潮(>=80或最高板>=5)/发酵(>=40)/回暖(20-40且最高板>=2)/启动(其余)。host 约束：股池在 push2ex、其余在 push2，实现给股池调用单独指定 host，不动 datasource 统一契约。日期参数用 UTC+8 计算避免 tzdata 依赖。",
+          "note": ""
+        }
+      ],
+      "notes": "从 1-2-2 的 deferred follow-up 单列而来（见 D4/D5）。覆盖 C09 连板适配器当前未接的三项真实能力：①连板天数>1（需历史 K 线或专用连板板，当前仅首板 Days=1、MaxBoard=1）；②题材领涨股（每个板块/题材的 Leading 个股）；③精确情绪阶段（当前用涨停数启发式占位，需真实数据推导冰点/回暖/发酵/高潮/退潮）。本环境 push2.eastmoney.com 的 kline 端点稳定返回空，是 ① 的主要风险点，需先验证可用数据源（历史 K 线 / 专用连板榜 / 其他方式）。",
+      "layer": "plan",
+      "rounds": 1
     }
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 10:59:00",
+    "updated": "2026-10-16 14:15:31",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
