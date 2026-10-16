@@ -57,7 +57,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 行情总览（C07）—— C36 多源适配/回退（远程优先，失败回退本地快照）
 	mux.HandleFunc("/api/stock/overview", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := market.NewDefaultChain()
+		chain := market.NewDefaultChain(cfg.DataSource())
 		ov, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -68,7 +68,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 超短连板/题材/情绪（C09）—— C36 多源适配/回退（同 C07 范式）
 	mux.HandleFunc("/api/stock/limitup", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := limitup.NewDefaultChain()
+		chain := limitup.NewDefaultChain(cfg.DataSource())
 		board, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -79,7 +79,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 个股分级研究（C08）—— C36 多源适配/回退
 	mux.HandleFunc("/api/stock/research", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := research.NewDefaultChain()
+		chain := research.NewDefaultChain(cfg.DataSource())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -90,7 +90,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 大V自动复盘（C10）—— C36 多源适配/回退
 	mux.HandleFunc("/api/stock/review", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := review.NewDefaultChain()
+		chain := review.NewDefaultChain(cfg.DataSource())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -101,7 +101,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 持仓AI巡检（C11）—— C36 多源适配/回退
 	mux.HandleFunc("/api/portfolio/inspection", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := inspection.NewDefaultChain()
+		chain := inspection.NewDefaultChain(cfg.DataSource())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -112,7 +112,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES AI持仓优化（C12）—— C36 多源适配/回退
 	mux.HandleFunc("/api/portfolio/optimization", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := optimization.NewDefaultChain()
+		chain := optimization.NewDefaultChain(cfg.DataSource())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -123,7 +123,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 游资心法与AI Copilot（C19）—— C36 多源适配/回退
 	mux.HandleFunc("/api/mastery", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := mastery.NewDefaultChain()
+		chain := mastery.NewDefaultChain(cfg.DataSource())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
@@ -188,16 +188,26 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 	}))
 
 	// 「设置 / LLM」页后端：读取/写入 provider 配置（持久化到 config.json）。
+	// 1-2-1：返回体同时暴露 data_source 开关状态（enabled/base_url/token_set/timeout_sec），
+	// 便于前端显示「现在哪个远端在生效」，区分未配置/源失败/陈旧快照。
 	mux.HandleFunc("/api/config", auth(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			llm := cfg.LLM()
+			ds := cfg.DataSource()
 			writeJSON(w, map[string]any{
 				"llm": map[string]any{
 					"base_url":    llm.BaseURL,
 					"model":       llm.Model,
 					"enabled":     llm.Enabled,
 					"api_key_set": llm.APIKey != "",
+				},
+				"data_source": map[string]any{
+					"enabled":      ds.Enabled,
+					"base_url":     ds.BaseURL,
+					"token_set":    ds.Token != "",
+					"timeout_sec":  ds.TimeoutSec,
+					"usable":       ds.Usable(),
 				},
 			})
 		case http.MethodPut, http.MethodPost:
@@ -208,6 +218,12 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 					Model   string `json:"model"`
 					Enabled bool   `json:"enabled"`
 				} `json:"llm"`
+				DataSource struct {
+					BaseURL    string `json:"base_url"`
+					Token      string `json:"token"`
+					Enabled    bool   `json:"enabled"`
+					TimeoutSec int    `json:"timeout_sec"`
+				} `json:"data_source"`
 			}
 			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 				http.Error(w, "bad request", http.StatusBadRequest)
@@ -224,11 +240,33 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 				Model:   in.Model,
 				Enabled: in.Enabled,
 			})
-			if err := cfg.SaveLLM(); err != nil {
+			dsIn := body.DataSource
+			// token 留空时保留原值（避免清空已存 token）。
+			tok := dsIn.Token
+			if tok == "" || tok == "********" {
+				tok = cfg.DataSource().Token
+			}
+			cfg.SetDataSource(config.DataSourceConfig{
+				BaseURL:    dsIn.BaseURL,
+				Token:      tok,
+				Enabled:    dsIn.Enabled,
+				TimeoutSec: dsIn.TimeoutSec,
+			})
+			if err := cfg.SaveDataSource(); err != nil {
 				http.Error(w, "save failed: "+err.Error(), http.StatusInternalServerError)
 				return
 			}
-			writeJSON(w, map[string]any{"ok": true, "api_key_set": cfg.LLM().APIKey != ""})
+			writeJSON(w, map[string]any{
+				"ok":          true,
+				"api_key_set": cfg.LLM().APIKey != "",
+				"data_source": map[string]any{
+					"enabled":     cfg.DataSource().Enabled,
+					"base_url":    cfg.DataSource().BaseURL,
+					"token_set":   cfg.DataSource().Token != "",
+					"timeout_sec": cfg.DataSource().TimeoutSec,
+					"usable":      cfg.DataSource().Usable(),
+				},
+			})
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
