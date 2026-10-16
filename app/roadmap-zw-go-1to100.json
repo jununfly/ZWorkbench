@@ -517,13 +517,30 @@
       "id": "1-4-3",
       "uid": "01a1404054c1-06d19cc0ac",
       "label": "exit ledger（Python 侧 provider_exit_ledger；Go 侧未见）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Go B2-narrow 是否补齐 provider_exit_ledger？",
+          "answer": "补：Product execution 路线，Go app/ 属产品代码可改；把 Python composition.py 的 provider_exit_ledger 表+5 方法(record/record_once/attach_receipt/get/for_run)移植为 Go。但不移植 fallback/attempt/retry-budget ledger（属 provider retry ledger，ADR 0016 明确不进 B2-narrow）",
+          "note": ""
+        },
+        {
+          "q": "fail-closed 核心不变式如何保持？",
+          "answer": "provider_remote_zero_residue 永远=unknown/delegated；attach_receipt 若 receipt 声称非 unknown/delegated 即拒(本地/owner 证据不能升级成 Provider 清场证明)；凭证守卫拒绝含 secret/token/password/credential/api_key 字段且带真值、或值呈 ak-/ark-/hex64 形状——owner 库绝不摄入原始凭证",
+          "note": ""
+        },
+        {
+          "q": "本地状态指纹与 id 如何生成？",
+          "answer": "local_state_fingerprint 仅接受 'unknown' 或 64-hex；ledger_id 用 newID()(UUID 形状)；statuses/surface_observations 全部默认 unknown，unknown_fields=statuses 排序键；canonical JSON 由 json.Marshal 自动排序 map key 与 Python sort_keys 等价",
+          "note": ""
+        }
+      ],
       "notes": "Python composition.py 有 record_provider_exit_ledger / get_provider_exit_ledger（1-6-6）；Go internal/evidence 未见对应表或 API。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-4": {
       "id": "1-4-4",
@@ -700,7 +717,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 18:07:49",
+    "updated": "2026-10-16 18:21:50",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
