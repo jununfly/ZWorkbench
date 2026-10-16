@@ -87,7 +87,7 @@
       "id": "1-3",
       "uid": "01a1403fd350-b650e45ec7",
       "label": "LLM Provider 真实化",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -439,11 +439,17 @@
       "id": "1-3-3",
       "uid": "01a1404027c6-ba79c49ad0",
       "label": "Settings 页连通性自检与错误直显",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Settings 连通性自检如何落地 + 错误直显的根因与修复？",
+          "answer": "落地：新增专用轻量探针 /api/config/test，复用 FromConfig+Chat 做最小调用（15s 探针超时），返回结构化 {ok, latency_ms, model, error}；探针本身恒 200，负结果走 ok:false，前端据此渲染绿/红徽标。错误直显根因：api.ts 的 reqJSON/getJSON 在 !res.ok 时只 throw 'HTTP <status>'，把服务端响应体（真实诊断）整个吞掉；已修复为合并状态码+响应体。SettingsTab 测试按钮改用探针端点 + 彩色徽标（绿=正常+延迟，红=失败+真实错误）。设计选择：自检校验『已保存/已启用』的服务端配置（与旧 chat-ping 行为一致）；未保存表单值的预检出范围。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -658,7 +664,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 17:01:47",
+    "updated": "2026-10-16 17:21:40",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [

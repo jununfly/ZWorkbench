@@ -40,14 +40,18 @@ export function SettingsTab() {
   }
 
   async function test() {
-    setTestOut('调用中…');
+    setTestOut('检测中…');
     try {
-      const r = await reqJSON('POST', '/api/agent/chat', {
-        messages: [{ role: 'user', content: 'ping' }],
-      });
-      setTestOut('provider=' + r.model + '：\n' + r.content);
+      // 1-3-3：走轻量连通性探针 /api/config/test，结构化返回 {ok, latency_ms, model, error}。
+      const r = await reqJSON('POST', '/api/config/test');
+      if (r.ok) {
+        setTestOut('ok|' + r.model + '|' + r.latency_ms);
+      } else {
+        setTestOut('fail|' + (r.error || '未知错误'));
+      }
     } catch (e) {
-      setTestOut('调用失败：' + e);
+      // reqJSON 已把状态码 + 响应体合并为可读错误（错误直显）。
+      setTestOut('fail|' + e);
     }
   }
 
@@ -85,7 +89,29 @@ export function SettingsTab() {
       </div>
 
       {status && <p style={{ fontSize: 13 }}>{status}</p>}
-      {testOut && <pre style={{ background: '#f7f7f7', padding: 10, borderRadius: 6, whiteSpace: 'pre-wrap', fontSize: 13 }}>{testOut}</pre>}
+      {testOut && <TestResult out={testOut} />}
+    </div>
+  );
+}
+
+// TestResult 解析探针结果（ok|model|latency 或 fail|error），渲染绿/红徽标。
+// 1-3-3 错误直显：失败时直接展示服务端返回的真实诊断，不再吞掉响应体。
+function TestResult({ out }: { out: string }) {
+  if (out === '检测中…') {
+    return <p style={{ fontSize: 13, color: '#888' }}>检测中…</p>;
+  }
+  if (out.startsWith('ok|')) {
+    const [, model, latency] = out.split('|');
+    return (
+      <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: '#f6ffed', border: '1px solid #b7eb8f', color: GREEN, fontSize: 13 }}>
+        ✓ 连接正常（model={model}，延迟 {latency}ms）
+      </div>
+    );
+  }
+  const msg = out.startsWith('fail|') ? out.slice(5) : out;
+  return (
+    <div style={{ marginTop: 10, padding: '8px 12px', borderRadius: 6, background: '#fff1f0', border: '1px solid #ffa39e', color: RED, fontSize: 13, whiteSpace: 'pre-wrap' }}>
+      ✗ 连接失败：{String(msg)}
     </div>
   );
 }
