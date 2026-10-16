@@ -67,6 +67,25 @@ case "$(uname -s)" in
 esac
 echo "[build] target: ${GOOS_TARGET}/${GOARCH_TARGET} (${EB_PLATFORM} ${EB_ARCH})"
 
+# ---- 1a. 交叉编译覆盖（不改变 electron-builder 平台）---------------------------
+# ZW_GOOS/ZW_GOARCH 可强制 Go 构建目标；例：macOS 上产出 Windows 二进制：
+#   ZW_GOOS=windows ZW_GOARCH=amd64 scripts/build-desktop.sh
+# 跨平台时只产出 Go 二进制（跳过 electron-builder —— .app/.dmg/.exe 安装包必须在本机平台打包）。
+CROSS_BUILD=0
+if [[ -n "${ZW_GOOS:-}" && "${ZW_GOOS}" != "${GOOS_TARGET}" ]]; then
+  CROSS_BUILD=1
+  GOOS_TARGET="${ZW_GOOS}"
+  if [[ "${ZW_GOOS}" == "windows" ]]; then
+    GO_BIN_NAME=zworkbench-go.exe
+  else
+    GO_BIN_NAME=zworkbench-go
+  fi
+  if [[ -n "${ZW_GOARCH:-}" ]]; then
+    GOARCH_TARGET="${ZW_GOARCH}"
+  fi
+  echo "[build] 交叉编译模式：Go 目标 ${GOOS_TARGET}/${GOARCH_TARGET}（跳过 electron-builder）"
+fi
+
 # ---- 1b. 公证门控预检（默认关；NOTARIZE=1 打开）-----------------------------
 # 放在这里（而非打包前）是为了【快速失败】：缺证书/缺凭证时不做无谓的 go build + npm build。
 # 前置：① 付费 Apple Developer Program，钥匙串里有 "Developer ID Application: <名字> (<TEAMID>)"
@@ -179,6 +198,15 @@ fi
 echo "[build] go binary: bin/${GO_BIN_NAME} ($(du -h "bin/${GO_BIN_NAME}" | cut -f1))"
 # go 在受限环境清理中断时会在 bin/ 留下 0 字节的 umask 探针文件（*-go-tmp-umask）；
 # 不进包——由 package.json 的 extraResources filter 只放行二进制名来排除。
+
+# 交叉编译模式：只产出 Go 二进制，不跑前端/electron-builder（安装包须在本机平台打包）。
+if [[ "${CROSS_BUILD}" == "1" ]]; then
+  echo
+  echo "[build] ---- 交叉编译产物 ----"
+  echo "[build] artifact: bin/${GO_BIN_NAME} ($(du -h "bin/${GO_BIN_NAME}" | cut -f1))"
+  echo "[build] 完成（仅 Go 二进制；nsis/dmg 安装包请在目标平台用本脚本打包）。"
+  exit 0
+fi
 
 # ---- 3. 前端产物 ------------------------------------------------------------
 cd "${APP_DIR}/web"
