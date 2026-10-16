@@ -645,7 +645,7 @@
       "id": "1-5-2",
       "uid": "01a140405780-b2af037af1",
       "label": "Windows 打包（win + CGO_ENABLED=0 交叉编译）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -654,9 +654,14 @@
           "q": "Windows 打包本切片做到哪一步？",
           "answer": "Go windows 交叉编译已验证通过(CGO_ENABLED=0, 17MB PE32+ x86-64)；package.json win/nsis + extraResources zworkbench-go.exe 已就绪；build-desktop.sh 加 ZW_GOOS/ZW_GOARCH 交叉覆盖(跳过 electron-builder)。完整 nsis 打包须在本机 Windows 跑",
           "note": ""
+        },
+        {
+          "q": "本机 Windows nsis 打包怎么跑通？",
+          "answer": "在 Windows 本机一次性跑通：(1) winget 装 GoLang.Go 失败(0x80072ee2) + msiexec 1603，改用 .workbuddy/tmp 下手动下载 golang.google.cn go1.27.0.windows-amd64.zip 解压到 C:/Users/victo/.local/go-sdk/go 走 PATH 注入；(2) electron npm install 需 ELECTRON_MIRROR=npmmirror，否则 ETIMEDOUT 20.205.243.166:443（github release）；(3) electron-builder 需 ELECTRON_BUILDER_BINARIES_MIRROR=npmmirror 下 winCodeSign-2.6.0/nsis-3.0.4.1/nsis-resources-3.4.1.7z；winCodeSign 7za 在 Windows 解 darwin symlink 报错(无 Developer Mode 特权)，手动 7za x -snl- 解压到 Cache/winCodeSign/winCodeSign-2.6.0/ 跳过下载；(4) scripts/build-desktop.sh 需要 bin/ 目录存在(MARKER=bin/.build-marker)，先 mkdir -p bin。",
+          "note": "未签名 nsis，用户首次启动从 SmartScreen『更多 → 仍要运行』放行；win-unpacked 同时产出 276M 可双击运行"
         }
       ],
-      "notes": "README 明示「Windows 构建、自动更新仍不在本切片」。需 CGO_ENABLED=0 交叉编译 windows arm64/x64 + electron-builder win 配置。",
+      "notes": "产物: app/electron/dist/ZWorkbench Setup 0.0.1.exe (84M nsis, PE32+ MZ 头) + ZWorkbench Setup 0.0.1.exe.blockmap (89K) + win-unpacked/ (276M 可双击运行)。Go 1.27.0 (C:/Users/victo/.local/go-sdk/go) + ELECTRON_MIRROR=npmmirror + ELECTRON_BUILDER_BINARIES_MIRROR=npmmirror + 手动 7za x -snl- 布设 winCodeSign-2.6.0 cache。预存失败: go test 3 个 internal/{inspection,mastery,optimization} 失败(Windows 路径反斜杠断言)，与本切片无关，单独跟进。",
       "layer": "plan",
       "rounds": 1
     },
@@ -799,8 +804,8 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 21:10:58",
-    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
+    "updated": "2026-10-16 23:03:38",
+    "md_file": "C:\\workspace\\github\\jununfly\\ZWorkbench\\app\\ROADMAP.md"
   },
   "edges": [
     {
