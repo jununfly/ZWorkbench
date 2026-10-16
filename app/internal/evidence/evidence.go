@@ -84,6 +84,11 @@ var (
 	ErrBadArgument       = errors.New("bad argument")
 )
 
+// SchemaVersion 是 Go B2-narrow evidence 库的 schema 身份，独立于 Python
+// composition.py 的 SCHEMA_VERSION（=3）。备份 manifest 与 restore 都据此拒绝
+// 不兼容的备份；Open 建表后会写 PRAGMA user_version = SchemaVersion。
+const SchemaVersion = 1
+
 // schema 是 5 张核心表的建表语句（composition.py 核心 schema 移植）。
 const schema = `
 CREATE TABLE IF NOT EXISTS runs (
@@ -186,6 +191,11 @@ func Open(path string) (*Owner, error) {
 	if _, err := db.Exec(schema); err != nil {
 		_ = db.Close()
 		return nil, fmt.Errorf("建 evidence 核心表失败：%w", err)
+	}
+	// 写入 schema 身份，供备份完整性校验与跨备份版本拒绝使用。
+	if _, err := db.Exec(fmt.Sprintf("PRAGMA user_version = %d", SchemaVersion)); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("写 evidence user_version 失败：%w", err)
 	}
 	return New(db), nil
 }
