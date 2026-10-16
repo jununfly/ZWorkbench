@@ -20,6 +20,7 @@ type Tier struct {
 // Theme 题材（趋势题材雷达的一项）。
 type Theme struct {
 	Name         string  `json:"name"`
+	Code         string  `json:"code"`           // 板块代码（BKxxxx），用于查成分股龙头
 	LimitUpCount int     `json:"limit_up_count"` // 该题材内涨停家数
 	Strength     float64 `json:"strength"`       // 强度 0~100
 	Leading      string  `json:"leading"`        // 龙头 / 代表股
