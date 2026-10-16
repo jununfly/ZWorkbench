@@ -44,3 +44,11 @@ app/config.json
 # Frontend build output (Vite / electron-builder); reproducible via npm scripts.
 app/web/dist/
 app/electron/dist/
+
+# WorkBuddy local session / memory / build logs (user-machine-specific).
+.workbuddy/
+app/.workbuddy/
+
+# Build-time mtime marker used by scripts/build-desktop.sh and scripts/check-web.sh.
+app/web/.build-marker
+app/bin/.build-marker
