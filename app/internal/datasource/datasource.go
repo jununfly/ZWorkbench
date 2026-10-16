@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -202,4 +203,89 @@ func normalizePath(p string) string {
 		return "/" + p
 	}
 	return p
+}
+
+// StatusCarrier 让回退链在命中结果上写入语义状态（roadmap 1-2-5）。
+// 各业务包的响应结构（MarketOverview/StockResearch/...）都实现它，
+// 使 7 个包的回退语义收敛到同一套字段与同一套分类逻辑。
+type StatusCarrier interface {
+	// SetFallbackMeta 写入回退标记与语义状态。
+	//   - fallback=true 表示命中的不是首选源（数据可能陈旧，见 StatusStaleSnapshot）；
+	//   - status 取 Status 四值枚举；reason 仅在非 ok 时给出人类可读原因；
+	//   - asOf 为结果时间戳（RFC3339），空时由调用方补。
+	SetFallbackMeta(fallback bool, status Status, reason, asOf string)
+}
+
+// Source 是统一「多源回退」的契约（roadmap 1-2-5 收敛点）。
+// T 是领域响应指针类型（如 *MarketOverview），必须实现 StatusCarrier 以便回退链写入语义状态。
+// 7 个业务包的 RemoteSource/LocalSnapshotSource/ImportedFileSource 都结构性满足它。
+type Source[T StatusCarrier] interface {
+	Name() string
+	Fetch(ctx context.Context) (T, error)
+}
+
+// FallbackChain 按序尝试源，返回首个成功；非首选源命中即标注 fallback（C36 回退语义）。
+// 同时把回退的「为什么」写入响应的 Status/Reason，区分未配置 / 源失败 / 陈旧快照（1-2-5）。
+// 这是 7 包回退循环的唯一真相源：任何语义改动只在此一处，不再各包各写一遍。
+type FallbackChain[T StatusCarrier] struct{ sources []Source[T] }
+
+// NewFallbackChain 构造回退链（顺序即优先级）。
+func NewFallbackChain[T StatusCarrier](sources ...Source[T]) *FallbackChain[T] {
+	return &FallbackChain[T]{sources: sources}
+}
+
+// Fetch 尝试所有源，返回第一个成功结果；同时标注是否走了回退与回退的语义原因。
+func (c *FallbackChain[T]) Fetch(ctx context.Context) (T, error) {
+	var primaryErr error
+	var zero T
+	for i, s := range c.sources {
+		v, err := s.Fetch(ctx)
+		if err == nil && !isNil(v) {
+			asOf := time.Now().Format(time.RFC3339)
+			if i == 0 {
+				// 首选源命中：新鲜数据，无回退。
+				v.SetFallbackMeta(false, StatusOK, "", asOf)
+			} else {
+				// 非首选源命中：用【首选源】的错误分类回退原因，
+				// 避免把次要源的错误误归因到主状态。
+				st, reason := ClassifyFallback(primaryErr)
+				v.SetFallbackMeta(true, st, reason, asOf)
+			}
+			return v, nil
+		}
+		if i == 0 {
+			primaryErr = err
+		}
+	}
+	if primaryErr == nil {
+		primaryErr = fmt.Errorf("no sources configured")
+	}
+	return zero, fmt.Errorf("all %d sources failed: %v", len(c.sources), primaryErr)
+}
+
+// isNil 判断任意可空值是否为 nil（T 是类型参数，不能用 v != nil 直接比较）。
+// 仅对指针/接口/切片/映射/通道/函数做 IsNil，其他类型一律视为非空。
+func isNil(v any) bool {
+	if v == nil {
+		return true
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Ptr, reflect.Interface, reflect.Slice, reflect.Map, reflect.Chan, reflect.Func:
+		return rv.IsNil()
+	}
+	return false
+}
+
+// ClassifyFallback 把首选源的错误分类为回退状态与原因（1-2-5）。
+// nil 表示首选源命中（调用方不应传入）；ErrUnconfigured → 未配置（良性，不报警）；
+// 其余一律 → 源失败（已配置就该为失败负责，前端必须当错误处理，不得伪装成成功）。
+func ClassifyFallback(primaryErr error) (Status, string) {
+	if primaryErr == nil {
+		return StatusOK, ""
+	}
+	if errors.Is(primaryErr, ErrUnconfigured) {
+		return StatusUnconfigured, "实时数据源未配置，已回退本地快照"
+	}
+	return StatusSourceFailed, primaryErr.Error()
 }

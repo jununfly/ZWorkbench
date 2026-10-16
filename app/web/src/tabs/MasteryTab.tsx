@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface Figure { name: string; school: string; tenet: string; insight: string; }
-interface Library { as_of: string; source: string; fallback: boolean; figures: Figure[]; }
+interface Library { as_of: string; source: string; fallback: boolean; status?: string; reason?: string; figures: Figure[]; }
 
 const RED = '#cf1322';
 
@@ -23,9 +24,7 @@ export function MasteryTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>游资心法与 AI Copilot</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}{data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}{' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>

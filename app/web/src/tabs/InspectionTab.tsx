@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface Holding { code: string; name: string; weight: number; cost: number; price: number; pnl_pct: number; }
 interface Dimension { name: string; weight: number; score: number; basis: string; }
-interface Report { as_of: string; source: string; fallback: boolean; total_assets: number; cash: number; pnl: number; risk_level: string; score: number; dimensions: Dimension[]; holdings: Holding[]; }
+interface Report { as_of: string; source: string; fallback: boolean; status?: string; reason?: string; total_assets: number; cash: number; pnl: number; risk_level: string; score: number; dimensions: Dimension[]; holdings: Holding[]; }
 
 const RED = '#cf1322';
 const GREEN = '#3f8600';
@@ -28,9 +29,7 @@ export function InspectionTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>持仓AI巡检</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}{data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}{' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       <section style={{ marginTop: 16, display: 'flex', gap: 20, fontSize: 14, border: '1px solid #eee', borderRadius: 8, padding: 12 }}>

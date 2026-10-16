@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface Index { name: string; code: string; value: number; change_pct: number; }
 interface StockQuote { code: string; name: string; price: number; change_pct: number; }
@@ -7,6 +8,7 @@ interface Sector { name: string; change_pct: number; leading: string; }
 interface Breadth { up: number; down: number; flat: number; limit_up: number; limit_down: number; }
 interface Overview {
   as_of: string; source: string; fallback: boolean;
+  status?: string; reason?: string; // roadmap 1-2-5 语义状态
   indices: Index[]; breadth: Breadth;
   top_gainers: StockQuote[]; top_losers: StockQuote[]; sectors: Sector[];
 }
@@ -36,11 +38,7 @@ export function StockTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>行情总览</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}
-          {data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}
-          {' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       <section style={{ marginTop: 16 }}>

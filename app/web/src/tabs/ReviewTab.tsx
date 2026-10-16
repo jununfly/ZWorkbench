@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface AuthorView { name: string; view: string; date: string; }
-interface Review { as_of: string; source: string; fallback: boolean; consensus: string; divergence: string; facts: string; next_verify: string; authors: AuthorView[]; }
+interface Review { as_of: string; source: string; fallback: boolean; status?: string; reason?: string; consensus: string; divergence: string; facts: string; next_verify: string; authors: AuthorView[]; }
 
 const RED = '#cf1322';
 
@@ -30,9 +31,7 @@ export function ReviewTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>大V自动复盘</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}{data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}{' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       {block('今日观点共识', data.consensus)}

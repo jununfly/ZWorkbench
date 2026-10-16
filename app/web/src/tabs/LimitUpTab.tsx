@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface LimitUpStock { code: string; name: string; price: number; change_pct: number; reason: string; }
 interface Tier { days: number; stocks: LimitUpStock[]; }
@@ -7,6 +8,7 @@ interface Theme { name: string; limit_up_count: number; strength: number; leadin
 interface Sentiment { stage: string; max_board: number; limit_up: number; limit_down: number; }
 interface Board {
   as_of: string; source: string; fallback: boolean;
+  status?: string; reason?: string; // roadmap 1-2-5 语义状态
   tiers: Tier[]; themes: Theme[]; sentiment: Sentiment;
 }
 
@@ -37,11 +39,7 @@ export function LimitUpTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>超短连板 / 题材 / 情绪</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}
-          {data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}
-          {' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       {/* 情绪周期条 */}

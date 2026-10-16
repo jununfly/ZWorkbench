@@ -5,19 +5,12 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
 //go:embed snapshot.json
 var seedJSON []byte
-
-// Source 是 C36 多源适配/回退的抽象：每个源都尝试给出一份连板看板。
-type Source interface {
-	Name() string
-	Fetch(ctx context.Context) (*LimitUpBoard, error)
-}
 
 // LocalSnapshotSource 永远可用：返回内嵌的种子快照（离线/断网可用，对应 ES「缓存」精神）。
 type LocalSnapshotSource struct{}
@@ -55,29 +48,12 @@ func (s RemoteSource) Fetch(ctx context.Context) (*LimitUpBoard, error) {
 	return FetchEastmoney(ctx, s.remote.Cfg)
 }
 
-// FallbackChain 按序尝试源，返回首个成功；非首选源命中即标记 fallback（C36 回退语义）。
-type FallbackChain struct{ sources []Source }
+// FallbackChain 是「远程优先、本地回退」的多源链（roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
+type FallbackChain = datasource.FallbackChain[*LimitUpBoard]
 
 // NewFallbackChain 构造回退链（顺序即优先级）。
-func NewFallbackChain(sources ...Source) *FallbackChain {
-	return &FallbackChain{sources: sources}
-}
-
-// Fetch 尝试所有源，返回第一个成功结果；同时标注是否走了回退。
-func (c *FallbackChain) Fetch(ctx context.Context) (*LimitUpBoard, error) {
-	var lastErr error
-	for i, s := range c.sources {
-		b, err := s.Fetch(ctx)
-		if err == nil && b != nil {
-			b.Fallback = i > 0
-			if b.AsOf == "" {
-				b.AsOf = time.Now().Format(time.RFC3339)
-			}
-			return b, nil
-		}
-		lastErr = err
-	}
-	return nil, fmt.Errorf("all limitup sources failed: %v", lastErr)
+func NewFallbackChain(sources ...datasource.Source[*LimitUpBoard]) *FallbackChain {
+	return datasource.NewFallbackChain(sources...)
 }
 
 // NewDefaultChain 默认「远程优先、本地回退」（C36）。

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface ResearchStock { code: string; name: string; price: number; change_pct: number; purpose: string; cycle: string; core: string; support: string; against: string; }
-interface Research { as_of: string; source: string; fallback: boolean; stocks: ResearchStock[]; }
+interface Research { as_of: string; source: string; fallback: boolean; status?: string; reason?: string; stocks: ResearchStock[]; }
 
 const RED = '#cf1322';
 const GREEN = '#3f8600';
@@ -26,9 +27,7 @@ export function ResearchTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>个股分级研究</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}{data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}{' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
