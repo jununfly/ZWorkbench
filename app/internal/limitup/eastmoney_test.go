@@ -180,6 +180,56 @@ func TestFetchEastmoneyLive(t *testing.T) {
 	}
 	t.Logf("live limitup: limit_up=%d limit_dn=%d boards=%d themes=%d stage=%s max_board=%d",
 		b.Sentiment.LimitUp, b.Sentiment.LimitDn, boards, len(b.Themes), b.Sentiment.Stage, b.Sentiment.MaxBoard)
+	for i, th := range b.Themes {
+		t.Logf("  theme[%d] %s strength=%.1f leading=%q", i, th.Name, th.Strength, th.Leading)
+	}
+}
+
+// TestEmThemeLeadingByBoardDays 验证 1-2-2-1-1 选项 A：连板天数最高优先，胜过涨幅 Top1。
+func TestEmThemeLeadingByBoardDays(t *testing.T) {
+	// 股池 days 映射：300581 连板 5，301586 连板 2。
+	poolDays := map[string]int{"300581": 5, "301586": 2}
+	// 成分股按 f3 降序：301586(20.02) 是涨幅 Top1，但 300581(10.00 非涨幅第一) 连板更高 → 应选晨曦航空。
+	const boardJSON = `{"rc":0,"data":{"diff":[
+{"f3":20.02,"f12":"301586","f14":"佳力奇"},
+{"f3":10.00,"f12":"300581","f14":"晨曦航空"}]}}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		if strings.HasPrefix(q.Get("fs"), "b:") {
+			_, _ = w.Write([]byte(boardJSON))
+			return
+		}
+		t.Errorf("未预期的请求 path=%s fs=%s", r.URL.Path, q.Get("fs"))
+	}))
+	defer srv.Close()
+	cfg := datasource.Config{Enabled: true, BaseURL: srv.URL}
+	got, err := emThemeLeading(context.Background(), cfg, "BK0480", poolDays)
+	if err != nil {
+		t.Fatalf("emThemeLeading 失败：%v", err)
+	}
+	if got != "晨曦航空" {
+		t.Fatalf("龙头应为连板最高的 晨曦航空(days=5)，得到 %q", got)
+	}
+}
+
+// TestEmThemeLeadingFallbackTop1 验证回落：板块内无连板/涨停股时取涨幅 Top1。
+func TestEmThemeLeadingFallbackTop1(t *testing.T) {
+	poolDays := map[string]int{} // 板块内无任何股池成员
+	const boardJSON = `{"rc":0,"data":{"diff":[
+{"f3":9.50,"f12":"600111","f14":"北方稀土"},
+{"f3":8.00,"f12":"600222","f14":"其他股"}]}}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(boardJSON))
+	}))
+	defer srv.Close()
+	cfg := datasource.Config{Enabled: true, BaseURL: srv.URL}
+	got, err := emThemeLeading(context.Background(), cfg, "BK0480", poolDays)
+	if err != nil {
+		t.Fatalf("emThemeLeading 失败：%v", err)
+	}
+	if got != "北方稀土" {
+		t.Fatalf("无连板股时应回落涨幅 Top1=北方稀土，得到 %q", got)
+	}
 }
 
 // 防止 fmt 被误判未使用（测试辅助占位，保持与实现一致的错误包装风格）。

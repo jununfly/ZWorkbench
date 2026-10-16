@@ -3,7 +3,9 @@ package limitup
 import (
 	"context"
 	"net/url"
+	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -163,7 +165,7 @@ func FetchEastmoney(ctx context.Context, cfg datasource.Config) (*LimitUpBoard, 
 	}
 	b.Sentiment.LimitUp, b.Sentiment.LimitDn = up, dn
 
-	tiers, maxBoard, err := emLimitUpPool(ctx, cfg)
+	codeToDays, tiers, maxBoard, err := emLimitUpPool(ctx, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -174,8 +176,9 @@ func FetchEastmoney(ctx context.Context, cfg datasource.Config) (*LimitUpBoard, 
 		return nil, err
 	}
 	// 题材领涨股：仅给 Top N 概念板块补 Leading（控制请求数，roadmap 1-2-2-1 D7）。
+	// Leading 改用「连板天数最高优先」选龙头（1-2-2-1-1 选项 A），codeToDays 来自股池映射。
 	for i := 0; i < len(themes) && i < emLeadingTopN; i++ {
-		lead, lerr := emThemeLeading(ctx, cfg, themes[i].Code)
+		lead, lerr := emThemeLeading(ctx, cfg, themes[i].Code, codeToDays)
 		if lerr != nil {
 			// 单题材龙头查询失败不致命：留空，不阻断整板。
 			continue
@@ -211,7 +214,7 @@ func emLimitCounts(ctx context.Context, cfg datasource.Config) (int, int, error)
 // emLimitUpPool 用涨停股池专用接口取当日全部涨停个股及其连板天数，
 // 返回 (按 days 降序分组的梯队, 最高板高度, error)。这是 ①连板天数 的权威数据源，
 // 彻底替代原 clist 涨幅榜过滤首板法（roadmap 1-2-2-1 D7）。
-func emLimitUpPool(ctx context.Context, cfg datasource.Config) ([]Tier, int, error) {
+func emLimitUpPool(ctx context.Context, cfg datasource.Config) (map[string]int, []Tier, int, error) {
 	var resp emZTPoolResponse
 	q := url.Values{}
 	q.Set("ut", emUT)
@@ -221,10 +224,12 @@ func emLimitUpPool(ctx context.Context, cfg datasource.Config) ([]Tier, int, err
 	q.Set("sort", "fbt:asc")
 	q.Set("date", shanghaiDate(time.Now()))
 	if err := emGet(ctx, cfg, emPoolBaseURL, emPathZTPool, q, &resp); err != nil {
-		return nil, 0, err
+		return nil, nil, 0, err
 	}
 
 	byDays := make(map[int][]LimitUpStock)
+	// codeToDays 是股池 6 位代码→连板天数 的权威映射，供题材龙头按连板高度选股（1-2-2-1-1 选项 A）。
+	codeToDays := make(map[string]int, len(resp.Data.Pool))
 	maxBoard := 0
 	for _, it := range resp.Data.Pool {
 		days := it.Zttj.Days
@@ -239,6 +244,7 @@ func emLimitUpPool(ctx context.Context, cfg datasource.Config) ([]Tier, int, err
 			Reason:    it.Hybk, // 行业板块作为涨停原因/题材标签填充
 		}
 		byDays[days] = append(byDays[days], s)
+		codeToDays[it.C] = days
 		if days > maxBoard {
 			maxBoard = days
 		}
@@ -254,14 +260,14 @@ func emLimitUpPool(ctx context.Context, cfg datasource.Config) ([]Tier, int, err
 	for _, d := range daysList {
 		tiers = append(tiers, Tier{Days: d, Stocks: byDays[d]})
 	}
-	return tiers, maxBoard, nil
+	return codeToDays, tiers, maxBoard, nil
 }
 
 func emThemes(ctx context.Context, cfg datasource.Config) ([]Theme, error) {
 	var resp emListResponse
 	q := url.Values{}
 	q.Set("pn", "1")
-	q.Set("pz", "10")
+	q.Set("pz", strconv.Itoa(emThemeTopN)) // 题材广度可调（默认 10，ZW_LIMITUP_THEME_TOPN 覆盖）
 	q.Set("po", "1")
 	q.Set("np", "1")
 	q.Set("fltt", "2")
@@ -285,19 +291,35 @@ func emThemes(ctx context.Context, cfg datasource.Config) ([]Theme, error) {
 	return out, nil
 }
 
-// emLeadingTopN 只给热度最高的 N 个题材补龙头股，控制并发请求数。
-const emLeadingTopN = 8
+// emThemeTopN 取 TopN 概念板块（题材广度），默认 10，ZW_LIMITUP_THEME_TOPN 覆盖（1-2-2-1-1 ②）。
+var emThemeTopN = envInt("ZW_LIMITUP_THEME_TOPN", 10)
+// emLeadingTopN 只给热度最高的 N 个题材补连板/涨停龙头，默认 8，ZW_LIMITUP_LEADING_TOPN 覆盖（1-2-2-1-1 ②）。
+var emLeadingTopN = envInt("ZW_LIMITUP_LEADING_TOPN", 8)
+// emConstituentPz 取板块成分股的数量上限（供连板天数映射选龙头），内部实现细节（1-2-2-1-1 ①）。
+const emConstituentPz = 20
 
-// emThemeLeading 取某概念板块成分股涨幅 Top1 作为龙头（leading）。
+// envInt 读环境变量整数，非法/空则回退默认值。
+func envInt(key string, def int) int {
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return def
+}
+
+// emThemeLeading 取某概念板块的「连板/涨停龙头」（1-2-2-1-1 选项 A）。
+// 逻辑：取板块前 emConstituentPz 只成分股，按股池 codeToDays 映射的连板天数降序选最高者；
+// 板块内若无连板/涨停股（poolDays 无命中）则回落涨幅 Top1（diff 已按 f3 降序）。
 // fs=b:<板块代码> 在 push2 上可用（2026-10-16 实跑 b:BK0480 通过）。
-func emThemeLeading(ctx context.Context, cfg datasource.Config, boardCode string) (string, error) {
+func emThemeLeading(ctx context.Context, cfg datasource.Config, boardCode string, poolDays map[string]int) (string, error) {
 	if !strings.HasPrefix(boardCode, "BK") {
 		return "", nil // 非标准板块代码跳过，不当作错误
 	}
 	var resp emListResponse
 	q := url.Values{}
 	q.Set("pn", "1")
-	q.Set("pz", "1") // 只取涨幅第一
+	q.Set("pz", strconv.Itoa(emConstituentPz)) // 取前 N 只成分股供连板天数映射
 	q.Set("po", "1")
 	q.Set("np", "1")
 	q.Set("fltt", "2")
@@ -311,5 +333,14 @@ func emThemeLeading(ctx context.Context, cfg datasource.Config, boardCode string
 	if len(resp.Data.Diff) == 0 {
 		return "", nil
 	}
-	return resp.Data.Diff[0].F14, nil
+	// 选龙头：连板天数最高优先；并列时涨停/涨幅高者在前（diff 已按 f3 降序，先出现者 chg 更高）；
+	// 全程无 poolDays 命中则 best 保持 diff[0]（涨幅 Top1 回落）。
+	best := resp.Data.Diff[0]
+	bestDays := poolDays[best.F12]
+	for _, d := range resp.Data.Diff[1:] {
+		if poolDays[d.F12] > bestDays {
+			best, bestDays = d, poolDays[d.F12]
+		}
+	}
+	return best.F14, nil
 }
