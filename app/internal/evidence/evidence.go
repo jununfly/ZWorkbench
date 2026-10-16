@@ -7,8 +7,10 @@
 // B2-narrow 范围仅含核心证据语义表：runs / approvals / effects /
 // effect_attempts（effects 的逐次尝试日志，claim_effect 的 bounded-retry 路径
 // 必写，属 effects 子系统而非 harness ledger）/ declared_exposure / events。
-// provider/dsh/worker 的 retry ledger 与 caller-auth 不属于 app/ 工作台，
-// 按 ADR 0016 不移植。
+// provider/dsh/worker 的 retry ledger（fallback/attempt/retry-budget）与
+// caller-auth 不属于 app/ 工作台，按 ADR 0016 不移植；但 provider 侧
+// exit ledger（1-4-3）作为 durable-owner「退出已发生且残留 unknown/delegated」
+// 的判定证据，单独补入本包（不含上述 retry ledger 家族）。
 package evidence
 
 import (
@@ -161,6 +163,23 @@ CREATE TABLE IF NOT EXISTS events (
     created_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS events_by_run ON events(run_id, seq);
+CREATE TABLE IF NOT EXISTS provider_exit_ledger (
+    ledger_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL REFERENCES runs(run_id),
+    provider TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    account_scope TEXT NOT NULL,
+    exit_mode TEXT NOT NULL,
+    exit_status TEXT NOT NULL,
+    provider_remote_zero_residue TEXT NOT NULL,
+    surface_observations_json TEXT NOT NULL,
+    statuses_json TEXT NOT NULL,
+    unknown_fields_json TEXT NOT NULL,
+    local_state_fingerprint TEXT NOT NULL,
+    evidence_class TEXT NOT NULL DEFAULT 'local-inventory',
+    recorded_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS provider_exit_ledger_by_run ON provider_exit_ledger(run_id, recorded_at);
 `
 
 // Owner 是 CompositionOwner 的 Go 等价体：唯一持久拥有者，保证引用完整性。
