@@ -235,6 +235,12 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 			if in.APIKey == "" || in.APIKey == "********" {
 				in.APIKey = cfg.LLM().APIKey
 			}
+			// 1-3-2 fail-closed：启用却最终无 key，明确拒绝，避免
+			// FromConfig 静默退回 unconfigured 而前端却显示「已启用」。
+			if in.Enabled && in.APIKey == "" {
+				http.Error(w, "启用 LLM 需要提供 API Key（留空表示保留原值，但原值也为空）", http.StatusBadRequest)
+				return
+			}
 			cfg.SetLLM(config.LLMConfig{
 				BaseURL: in.BaseURL,
 				APIKey:  in.APIKey,
