@@ -110,7 +110,7 @@
       "id": "1-4",
       "uid": "01a1403fd406-b9dcea3b62",
       "label": "证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -122,7 +122,8 @@
       ],
       "decisions": [],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5": {
       "id": "1-5",
@@ -468,13 +469,20 @@
       "id": "1-4-1",
       "uid": "01a140405363-65e4fc11c8",
       "label": "reconcile / uncertain 恢复路径",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "1-4-1 的 uncertain 恢复路径如何落地？",
+          "answer": "镜像 Python composition.py：MarkEffectUncertain(claimed→uncertain, run→recovering, 幂等/fail-closed) + ReconcileEffect(uncertain/retryable → applied[completed]/not-applied[retryable]/unknown[safe-stopped])；复用既有 effects/effect_attempts 列，不新增表",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-2": {
       "id": "1-4-2",
@@ -675,7 +683,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 17:29:04",
+    "updated": "2026-10-16 17:46:16",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
