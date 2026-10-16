@@ -129,7 +129,7 @@
       "id": "1-5",
       "uid": "01a1403fd4c6-4ef236e31e",
       "label": "分发与安装",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -138,9 +138,16 @@
         "1-5-3",
         "1-5-4"
       ],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "分发与安装路线如何切分？",
+          "answer": "Product execution；4 子节点仅 1-5-2 本切片可执行，1-5-1 证书门控、1-5-3 明确出切片、1-5-4 已随 README 交付",
+          "note": ""
+        }
+      ],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-6": {
       "id": "1-6",
@@ -614,25 +621,44 @@
       "id": "1-5-1",
       "uid": "01a1404056d5-f81843e72c",
       "label": "Developer ID + 公证真跑（NOTARIZE 门控已在，只差证书）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Developer ID 公证是否现在做？",
+          "answer": "暂缓：需付费 Developer ID $99/年，自用非必须；NOTARIZE 门控已就绪，待 zj 决定是否购证",
+          "note": ""
+        },
+        {
+          "q": "1-5-1 维持现状如何落地？",
+          "answer": "维持现状：不购 Developer ID 证书（$99/年，自用非必须）、不跑公证；NOTARIZE 门控（build-desktop.sh 1b 节）保留待未来激活。节点以 in_progress(parked) 持续可见，待购证再推进",
+          "note": "本切片只改 roadmap 元数据，不动项目代码/证书/README"
+        }
+      ],
       "notes": "门控 NOTARIZE=1 + DEV_ID_APP 已在 app/scripts/build-desktop.sh；README 明示「公证本身尚未真跑过（缺 Developer ID 证书，/年）」。自用场景非必须。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-2": {
       "id": "1-5-2",
       "uid": "01a140405780-b2af037af1",
       "label": "Windows 打包（win + CGO_ENABLED=0 交叉编译）",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "Windows 打包本切片做到哪一步？",
+          "answer": "Go windows 交叉编译已验证通过(CGO_ENABLED=0, 17MB PE32+ x86-64)；package.json win/nsis + extraResources zworkbench-go.exe 已就绪；build-desktop.sh 加 ZW_GOOS/ZW_GOARCH 交叉覆盖(跳过 electron-builder)。完整 nsis 打包须在本机 Windows 跑",
+          "note": ""
+        }
+      ],
       "notes": "README 明示「Windows 构建、自动更新仍不在本切片」。需 CGO_ENABLED=0 交叉编译 windows arm64/x64 + electron-builder win 配置。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-5-3": {
       "id": "1-5-3",
@@ -642,7 +668,13 @@
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "自动更新是否本切片做？",
+          "answer": "否：README 已明示不在本切片、待定；本路线不实现",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -650,12 +682,18 @@
       "id": "1-5-4",
       "uid": "01a1404058e3-83ecdac6d2",
       "label": "Gatekeeper / XProtect 用户体验兜底（自用启动说明已入 README）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
-      "decisions": [],
-      "notes": "",
+      "decisions": [
+        {
+          "q": "Gatekeeper/XProtect 用户兜底？",
+          "answer": "已随 README 自用启动说明交付(macOS 右键打开 / Windows SmartScreen 仍要运行)；视为完成",
+          "note": ""
+        }
+      ],
+      "notes": "自用启动/Gatekeeper/XProtect 兜底说明已入 README；视为交付",
       "layer": "plan"
     },
     "1-6-1": {
@@ -761,7 +799,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 20:34:42",
+    "updated": "2026-10-16 21:10:58",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
