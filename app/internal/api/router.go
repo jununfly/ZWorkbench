@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/jununfly/ZWorkbench/app/internal/agent"
 	"github.com/jununfly/ZWorkbench/app/internal/config"
@@ -277,6 +279,42 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 		default:
 			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		}
+	}))
+
+	// 1-3-3 Settings 页连通性自检：轻量探针，复用真实客户端做最小调用，
+	// 返回结构化 {ok, latency_ms, model, error}。探针本身恒 200，负结果走 ok:false，
+	// 前端据此渲染绿/红徽标与真实错误（错误直显），不依赖全量对话。
+	mux.HandleFunc("/api/config/test", auth(func(w http.ResponseWriter, r *http.Request) {
+		llm := cfg.LLM()
+		if !llm.Enabled || llm.APIKey == "" {
+			writeJSON(w, map[string]any{
+				"ok":         false,
+				"error":      "LLM 未启用或未配置 API Key（请先在上方填写并保存）",
+				"latency_ms": 0,
+			})
+			return
+		}
+		p := agent.FromConfig(llm)
+		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+		defer cancel()
+		start := time.Now()
+		resp, err := p.Chat(ctx, agent.ChatRequest{
+			Messages: []agent.Msg{{Role: "user", Content: "ping"}},
+		})
+		latency := time.Since(start).Milliseconds()
+		if err != nil {
+			writeJSON(w, map[string]any{
+				"ok":         false,
+				"error":      err.Error(),
+				"latency_ms": latency,
+			})
+			return
+		}
+		writeJSON(w, map[string]any{
+			"ok":         true,
+			"model":      resp.Model,
+			"latency_ms": latency,
+		})
 	}))
 
 	// 本地证据（1-5-6-3）：run 生命周期 + safe-stop 事件流 + identity 完整性。

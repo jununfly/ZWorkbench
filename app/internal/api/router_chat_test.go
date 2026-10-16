@@ -130,3 +130,88 @@ func TestConfigEnableWithoutKeyRejected(t *testing.T) {
 		t.Fatalf("未启用无 key 应 200，得到 %d（%s）", rec.Code, rec.Body.String())
 	}
 }
+
+// TestConfigTestOK 1-3-3 探针：已配置 + 上游 200 → {ok:true, model, latency_ms}。
+func TestConfigTestOK(t *testing.T) {
+	srv := mockOpenAI(t, http.StatusOK, `{"model":"deepseek-chat","choices":[{"message":{"role":"assistant","content":"pong"}}]}`)
+	defer srv.Close()
+
+	cfg := &config.Config{Port: "18080", Token: testToken}
+	cfg.SetLLM(config.LLMConfig{Enabled: true, APIKey: "test-key", BaseURL: srv.URL, Model: "deepseek-chat"})
+	h := NewRouter(cfg, nil, nil, nil)
+
+	rec := doJSON(t, h, "POST", "/api/config/test?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("探针应恒 200，得到 %d（%s）", rec.Code, rec.Body.String())
+	}
+	var out struct {
+		OK         bool   `json:"ok"`
+		Model      string `json:"model"`
+		LatencyMS  int64  `json:"latency_ms"`
+		Error      string `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("decode: %v (%s)", err, rec.Body.String())
+	}
+	if !out.OK {
+		t.Fatalf("已配置应 ok:true，得到 %+v", out)
+	}
+	if out.Model != "deepseek-chat" {
+		t.Fatalf("Model 期望 deepseek-chat，得到 %q", out.Model)
+	}
+	if out.LatencyMS < 0 {
+		t.Fatalf("latency_ms 应 >=0，得到 %d", out.LatencyMS)
+	}
+}
+
+// TestConfigTestNotConfigured 1-3-3 探针：未启用/无 key → ok:false + 明确引导。
+func TestConfigTestNotConfigured(t *testing.T) {
+	cfg := &config.Config{Port: "18080", Token: testToken}
+	h := NewRouter(cfg, nil, nil, nil)
+
+	rec := doJSON(t, h, "POST", "/api/config/test?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("探针应恒 200，得到 %d", rec.Code)
+	}
+	var out struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("decode: %v (%s)", err, rec.Body.String())
+	}
+	if out.OK {
+		t.Fatalf("未配置应 ok:false，得到 %+v", out)
+	}
+	if !strings.Contains(out.Error, "未启用") {
+		t.Fatalf("错误应含 未启用，得到 %q", out.Error)
+	}
+}
+
+// TestConfigTestUpstreamFail 1-3-3 探针：上游 500 → ok:false + 真实错误（错误直显）。
+func TestConfigTestUpstreamFail(t *testing.T) {
+	srv := mockOpenAI(t, http.StatusInternalServerError, "boom")
+	defer srv.Close()
+
+	cfg := &config.Config{Port: "18080", Token: testToken}
+	cfg.SetLLM(config.LLMConfig{Enabled: true, APIKey: "test-key", BaseURL: srv.URL, Model: "m"})
+	h := NewRouter(cfg, nil, nil, nil)
+
+	rec := doJSON(t, h, "POST", "/api/config/test?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("探针应恒 200，得到 %d", rec.Code)
+	}
+	var out struct {
+		OK    bool   `json:"ok"`
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("decode: %v (%s)", err, rec.Body.String())
+	}
+	if out.OK {
+		t.Fatalf("上游失败应 ok:false，得到 %+v", out)
+	}
+	if !strings.Contains(out.Error, "HTTP 500") {
+		t.Fatalf("错误应含 HTTP 500（真实上游诊断），得到 %q", out.Error)
+	}
+}
