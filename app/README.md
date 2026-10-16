@@ -2,6 +2,7 @@
 
 > 提案方向 B（见 `docs/designs/zw-go-electron-architecture.md`）。**推翻 ADR 0013 前提，需 zj 显式接受。**
 > 当前为骨架：无业务逻辑，纯 stdlib Go 服务 + React 多 tab 壳 + Electron 宿主。
+> 📌 闭环后的未完成项（1→100 收尾）见 [`ROADMAP.md`](ROADMAP.md)（事实源 `roadmap-zw-go-1to100.json`，只经 `zj-roadmap-driven` CLI 读写）。
 
 ## 目录
 
@@ -14,6 +15,24 @@ app/
 ```
 
 ## 运行
+
+### 0) 门禁（改完就跑）
+
+```bash
+bash app/scripts/check-go.sh                 # go vet + go test ./...（限时 180s，无缓存）
+bash app/scripts/check-web.sh                 # npm ci + tsc --noEmit + vite build
+bash app/scripts/check-web.sh --skip-install  # 依赖已装好，只跑类型 + 构建
+bash app/scripts/check-package.sh             # unsigned 完整 dmg 回归（慢，几分钟）
+bash app/scripts/check-package.sh --dir       # 只出 .app（快），额外验资源布局
+```
+
+- `check-go.sh` 会在「已登记有测试的包变成零测试」时判失败，并把还没测试的包以 WARN 列出。
+- `check-web.sh` 会校验产物是本次构建的（mtime 新于运行标记），并守住 dist / node_modules 不入库。
+- `check-package.sh` 只守 **unsigned 路径**（带 `NOTARIZE`/`SIGN_ID`/`SIGN_CERT` 进来直接拒），四道检查：
+  ① unsigned 契约 ② `build-desktop.sh` 退出码 0 且产物在 ③ 产物 mtime 新于本次运行标记（挡掉上一次遗留的 dmg/.app 假阳性）
+  ④ 仅 `--dir` 验包内资源布局（Go 二进制可执行 + web/dist/index.html + 至少一个 JS chunk，挡 prod 白屏类缺陷）。
+  ⚠️ 本门禁依赖 electron-builder 完整跑通；在本 WorkBuddy 沙箱内 `node-safe-delete-shim` 与 `node-brokered-fs-shim`
+  会拦掉打包过程，**绿跑需在真机终端或干净 CI 执行**——门禁在沙箱内会正确失败-closed，不代表打包脚本回归。
 
 ### 1) Go 服务（纯 stdlib，离线可编译）
 
@@ -37,6 +56,10 @@ cd app/web
 npm install
 npm run dev          # http://localhost:5173，自动调 127.0.0.1:18080
 ```
+
+> dev 模式不经打包，`api.ts` 那类「只打包后才暴露」的缺陷在 dev 下看不见，所以发布前必须跑
+> `check-web.sh`（`npm ci` + `tsc --noEmit` + `vite build` + 产物新鲜度 + 入库守卫），任一步
+> 失败即退出码 1。
 
 ### 3) 桌面壳
 

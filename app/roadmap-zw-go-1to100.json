@@ -1,0 +1,545 @@
+{
+  "title": "ZW Go/Electron 工作台 1→100 收尾",
+  "description": "来源：docs/plans/zw-electron-es-tab-plan-2026-10-13.md §8.5/§9.3 + app/README 已知限制 + 代码事实。范围＝app/（Go + Electron + React）闭环后的未完成项；不含 Python 侧 src/zworkbench 遗留。",
+  "version": 1,
+  "nodes": {
+    "1": {
+      "id": "1",
+      "uid": "01a1403fab48-81d6d2e81a",
+      "label": "ZW Go/Electron 工作台 1→100 收尾",
+      "status": "in_progress",
+      "mode": "explore",
+      "parent": null,
+      "children": [
+        "1-1",
+        "1-2",
+        "1-3",
+        "1-4",
+        "1-5",
+        "1-6",
+        "1-7"
+      ],
+      "decisions": [
+        {
+          "q": "本路线图范围如何界定？",
+          "answer": "仅限 app/（Go + Electron + React）闭环后的未完成项；Python 侧 src/zworkbench 遗留（H1–H5、1-7-x、S3/S4 write/push seam）与 ZAgentic 其他项目均不在本图，如需另立图",
+          "note": "scope gate = Product execution（可改 app/ 产品代码）；证据源＝计划 §8.5/§9.3 + app/README 已知限制 + 代码事实"
+        }
+      ],
+      "notes": "",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1": {
+      "id": "1-1",
+      "uid": "01a1403fd1f4-4a50f4e218",
+      "label": "工程守卫与回归门禁",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-1-1",
+        "1-1-2",
+        "1-1-3",
+        "1-1-4",
+        "1-1-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2": {
+      "id": "1-2",
+      "uid": "01a1403fd2a7-15fe7317e6",
+      "label": "真实数据源接入（C36 远程侧现为 RemoteStubSource）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-2-1",
+        "1-2-2",
+        "1-2-3",
+        "1-2-4",
+        "1-2-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3": {
+      "id": "1-3",
+      "uid": "01a1403fd350-b650e45ec7",
+      "label": "LLM Provider 真实化",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-3-1",
+        "1-3-2",
+        "1-3-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4": {
+      "id": "1-4",
+      "uid": "01a1403fd406-b9dcea3b62",
+      "label": "证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-4-1",
+        "1-4-2",
+        "1-4-3",
+        "1-4-4",
+        "1-4-5"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5": {
+      "id": "1-5",
+      "uid": "01a1403fd4c6-4ef236e31e",
+      "label": "分发与安装",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-5-1",
+        "1-5-2",
+        "1-5-3",
+        "1-5-4"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6": {
+      "id": "1-6",
+      "uid": "01a1403fd577-db0bf5afdd",
+      "label": "文档治理收尾",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [
+        "1-6-1",
+        "1-6-2",
+        "1-6-3"
+      ],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-7": {
+      "id": "1-7",
+      "uid": "01a1403fd648-abbf75ee19",
+      "label": "产品定位复核（R4 风险：ES 内容是否稀释 ZW 编码证据核心）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1",
+      "children": [],
+      "decisions": [],
+      "notes": "计划 §5 风险表 R4：加 A 股研究扩展是否稀释 ZW 编码证据核心（C01/C03）。残余＝中，责任方 zj。属方向复核，不是实现任务。",
+      "layer": "plan"
+    },
+    "1-1-1": {
+      "id": "1-1-1",
+      "uid": "01a1403ffdb8-cca8c1cf26",
+      "label": "Go 侧零依赖守卫（go.mod 断言无 cgo 外部依赖 + CGO_ENABLED=0 可编译 + electron 仅 devDependency）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "Go 侧守卫放在哪、以什么形态落？",
+          "answer": "独立 Go 测试包 app/internal/buildguard，go test ./... 即可跑；不扩展 Python 的 tests/test_zero_dependency_guard.py",
+          "note": "两侧运行时不同，守卫必须在各自工具链里可执行；Python 守卫仍只守 pyproject 的 dependencies=[]"
+        },
+        {
+          "q": "白名单用什么口径？",
+          "answer": "fail-closed 白名单：go.mod 的每个 require 必须命中 pureGoAllowlist，且每条登记『为什么它是 cgo-free』",
+          "note": "未知模块一律 FAIL；新增依赖＝先改白名单写理由，不允许静默放行"
+        },
+        {
+          "q": "CGO_ENABLED=0 编译证明要不要默认跑？",
+          "answer": "opt-in：默认套件保持 hermetic + 快速，设 ZW_ZERODEP_BUILD=1 才跑 go build；CI / 发布前显式开启",
+          "note": "本机实测 PASS（0.89s）；默认关避免把 go build 变成守卫的 flaky 源"
+        }
+      ],
+      "notes": "交付 app/internal/buildguard/zero_dependency_test.go（package buildguard，纯 stdlib）。四条断言：①go.mod require ⊆ pureGoAllowlist（10 条，每条登记 cgo-free 理由）；②AST 扫描 app/ 全部 .go 无 import \"C\"（实测解析 30 个文件，用 go/parser 而非文本匹配，避免注释/字符串误报）；③electron/package.json 无 runtime dependencies 且 electron 在 devDependencies；④ZW_ZERODEP_BUILD=1 时跑 CGO_ENABLED=0 go build ./...。证据：go test ./internal/buildguard/ ok；ZW_ZERODEP_BUILD=1 -run TestCgoFreeBuild PASS(0.89s)；go test ./... 全绿（buildguard/api/evidence/webstatic 四包 ok，其余 no test files）。负向对照：/tmp 副本删掉 modernc.org/sqlite 白名单条目 → 守卫如期 FAIL（证明非空转）。未 commit。遗留：ADR 0015 未解决 bullet 仍写『Go 侧零 cgo 依赖需等价守卫』，现已兑现，需在 1-6-2 结论沉淀核对时标注。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1-2": {
+      "id": "1-1-2",
+      "uid": "01a1403ffe66-db0577334c",
+      "label": "前端生产构建门禁（npm ci + tsc --noEmit + vite build；dist 不入库）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "门禁以什么形态落？",
+          "answer": "独立 bash 脚本 app/scripts/check-web.sh；不是 Go 测试、也不是扩展 tests/ 下的 Python 测试",
+          "note": "前端工具链是 Node，门禁必须能在 Node 侧直接跑；与 1-1-1 的 Go 守卫各守各自的运行时"
+        },
+        {
+          "q": "安装用 npm ci 还是 npm install？",
+          "answer": "npm ci（严格按 package-lock.json）",
+          "note": "npm install 会漂移 lock，门禁要的是可复现；缺 lock 直接判失败"
+        },
+        {
+          "q": "dist 要不要先清空？",
+          "answer": "不强制清空：vite 已设 emptyOutDir:false（本机删除被 shim 拦），改用『产物 mtime 新于本次运行标记』判定本次产出",
+          "note": "避免把上一次遗留产物误认成本次产出；dist 是 gitignore 的构建产物目录"
+        }
+      ],
+      "notes": "交付 app/scripts/check-web.sh（bash，五步：预检 node/npm/package-lock → npm ci → tsc --noEmit → vite build + 产物 mtime 新于运行标记 → 构建产物入库守卫 git check-ignore）。支持 --skip-install。证据：全量实跑 ALL PASS（npm ci added 68 packages in 5s；tsc 无错；vite build 42 modules / dist/assets/index-0SRtGJWP.js 170.86 kB；五项入库守卫均被 .gitignore 覆盖）。负向对照：往 src/main.tsx 注入一条类型错误 → 门禁在 tsc 步 FAIL 且退出码 1（已还原，git status 确认干净、复跑 ALL PASS）。README 前端小节加了门禁用法。未 commit。遗留：门禁未接入任何 CI（本仓无 CI）；1-5-1/1-5-2 打包前应先跑它。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1-3": {
+      "id": "1-1-3",
+      "uid": "01a1403fff16-7125926299",
+      "label": "Go 测试门禁（go test ./... 限时全绿；现仅 evidence/api/webstatic 三包有测试）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [
+        {
+          "q": "门禁的两条硬约束是什么？",
+          "answer": "带时限（-timeout，默认 180s）+ 不靠缓存（-count=1）",
+          "note": "本仓在 Python 侧吃过全量套件挂死 9h42m 的亏（旧路线图 1-4）；超时必须判失败而不是无限期挂着"
+        },
+        {
+          "q": "『12 个包没测试』该 FAIL 还是 WARN？",
+          "answer": "WARN，并另开节点 1-1-5 跟踪",
+          "note": "把覆盖率缺口塞进门禁只会让门禁第一天就红、然后被人绕过；缺口是独立工作，必须显式登记而不是被门禁假装解决"
+        },
+        {
+          "q": "怎么防止测试被悄悄删掉？",
+          "answer": "测试存在性回归：登记有测试的包（buildguard/api/evidence/webstatic）不允许变成零测试文件",
+          "note": "删测试比写测试容易；静默退化正是门禁要挡的。新增有测试的包时把目录名加进 REGISTERED"
+        }
+      ],
+      "notes": "交付 app/scripts/check-go.sh（bash，五步：预检 go/go.mod → go vet ./... → go test ./... -count=1 -timeout T（默认 180s，支持 --timeout X / --timeout=X）→ 测试存在性回归（buildguard/api/evidence/webstatic 不允许变零测试）→ 覆盖率缺口 WARN 列出无测试包）。证据：全量实跑 ALL PASS 退出码 0（vet 无告警；4 包 ok：buildguard/api/evidence/webstatic；WARN 12 个包无测试）。负向对照三项均退出码 1：①--timeout 1ms → 时限生效 FAIL；②/tmp 副本注入故意失败测试 → go test 步 FAIL；③/tmp 副本删掉 internal/api/*_test.go → 存在性回归 FAIL。修复：首版只支持 --timeout=X，空格写法 --timeout 1ms 反被误报『需要一个值』，已改用 shift 遍历同时支持两种写法并复验。新增节点 1-1-5 跟踪 12 个无测试包（不混进门禁伪造绿）。README 待补门禁用法（属 1-6-3）。未 commit。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-1-4": {
+      "id": "1-1-4",
+      "uid": "01a1403fffc9-814c60e913",
+      "label": "打包脚本回归（unsigned 路径出 dmg + mtime 证据，不回归）",
+      "status": "completed",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "交付 app/scripts/check-package.sh（bash，四道检查：①unsigned 契约 NOTARIZE/SIGN_ID/SIGN_CERT 未设 ②build-desktop.sh 退出码0+产物在 ③产物 mtime 新于本次运行标记 ④仅--dir 验包内资源布局=Go二进制可执行+web/dist/index.html+≥1 JS chunk）。README「0)门禁」补了用法与沙箱限制提示。证据——负向对照全部退出码1：①带 SIGN_ID 进入→第1步契约拒（FAIL: SIGN_ID 已设置）；②陈旧 .app 遗留（mtime 2026-10-15 18:25:50）+ build-desktop.sh 的 npx ... || true 把 electron-builder 中断吞成0→门禁新鲜度检查抓到『不是本次构建产出』；③清掉陈旧 .app 后 electron-builder 仍被 node-brokered-fs-shim 拒读 Electron.app/Contents/Resources/default_app.asar（Invalid package）→无 .app 产出→门禁--dir 模式『未找到 ZWorkbench 产物（mode=dir）』拒绝。dangerouslyDisableSandbox=true 也未解除该 shim，确证为环境阻塞。判据：这不是门禁 bug、也不是 app 回归——原始 dmg 本就是 zj 真机终端打的（MEMORY 有载）；绿跑需真机/干净 CI。门禁在沙箱内 fail-closed 即正确行为。遗留：1-5-1/1-5-2 打包前应先跑它（在能跑通的环境）。",
+      "layer": "plan",
+      "rounds": 1
+    },
+    "1-2-1": {
+      "id": "1-2-1",
+      "uid": "01a1404022c8-6780b3238b",
+      "label": "统一 RemoteSource 契约与配置开关（7 个包各自 stub 固定失败）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "7 个包（market/research/limitup/review/inspection/optimization/mastery）各自 RemoteStubSource 固定返回 \"remote source not wired yet (stub)\" → 永远触发 C36 fallback。",
+      "layer": "plan"
+    },
+    "1-2-2": {
+      "id": "1-2-2",
+      "uid": "01a14040237d-8da325ad45",
+      "label": "行情/研究/连板（market/research/limitup）接真实 A 股数据源",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-3": {
+      "id": "1-2-3",
+      "uid": "01a140402443-910cfcd36f",
+      "label": "复盘/心法（review/mastery）接真实源或本地可导入数据集",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-4": {
+      "id": "1-2-4",
+      "uid": "01a1404024f5-b8de11eb42",
+      "label": "持仓巡检/优化（inspection/optimization）接真实持仓输入",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-2-5": {
+      "id": "1-2-5",
+      "uid": "01a1404025b0-919d86aafc",
+      "label": "fallback 语义收敛：区分未配置 / 源失败 / 陈旧快照，不当作成功",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-2",
+      "children": [],
+      "decisions": [],
+      "notes": "现状所有端点返回 fallback=true 被当作正常成功，无法区分「未配置」/「源失败」/「快照陈旧」，与 AGENTS.md「不要静默返回空」纪律冲突。",
+      "layer": "plan"
+    },
+    "1-3-1": {
+      "id": "1-3-1",
+      "uid": "01a140402665-b76f35db64",
+      "label": "OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "provider.go 已有 openAICompatibleClient（OpenAI/DeepSeek 兼容 /chat/completions），但 app/README 仍写「stub，待接真实端点」，且未真实联调过。",
+      "layer": "plan"
+    },
+    "1-3-2": {
+      "id": "1-3-2",
+      "uid": "01a140402713-d2bfee7a6f",
+      "label": "key 存储与掩码回写安全复核（router.go:217）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-3-3": {
+      "id": "1-3-3",
+      "uid": "01a1404027c6-ba79c49ad0",
+      "label": "Settings 页连通性自检与错误直显",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-3",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-1": {
+      "id": "1-4-1",
+      "uid": "01a140405363-65e4fc11c8",
+      "label": "reconcile / uncertain 恢复路径",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-2": {
+      "id": "1-4-2",
+      "uid": "01a140405414-f78ef8ab68",
+      "label": "backup / restore",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-3": {
+      "id": "1-4-3",
+      "uid": "01a1404054c1-06d19cc0ac",
+      "label": "exit ledger（Python 侧 provider_exit_ledger；Go 侧未见）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "Python composition.py 有 record_provider_exit_ledger / get_provider_exit_ledger（1-6-6）；Go internal/evidence 未见对应表或 API。",
+      "layer": "plan"
+    },
+    "1-4-4": {
+      "id": "1-4-4",
+      "uid": "01a140405571-35eb6fc2fc",
+      "label": "identity chain 可查询（run → attempt → effect → approval）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-4-5": {
+      "id": "1-4-5",
+      "uid": "01a14040562d-716612ccd8",
+      "label": "safe-stop（C28）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-4",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-1": {
+      "id": "1-5-1",
+      "uid": "01a1404056d5-f81843e72c",
+      "label": "Developer ID + 公证真跑（NOTARIZE 门控已在，只差证书）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "门控 NOTARIZE=1 + DEV_ID_APP 已在 app/scripts/build-desktop.sh；README 明示「公证本身尚未真跑过（缺 Developer ID 证书，/年）」。自用场景非必须。",
+      "layer": "plan"
+    },
+    "1-5-2": {
+      "id": "1-5-2",
+      "uid": "01a140405780-b2af037af1",
+      "label": "Windows 打包（win + CGO_ENABLED=0 交叉编译）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "README 明示「Windows 构建、自动更新仍不在本切片」。需 CGO_ENABLED=0 交叉编译 windows arm64/x64 + electron-builder win 配置。",
+      "layer": "plan"
+    },
+    "1-5-3": {
+      "id": "1-5-3",
+      "uid": "01a140405832-0030d87323",
+      "label": "自动更新（README 明示不在本切片，待定）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-5-4": {
+      "id": "1-5-4",
+      "uid": "01a1404058e3-83ecdac6d2",
+      "label": "Gatekeeper / XProtect 用户体验兜底（自用启动说明已入 README）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-5",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-1": {
+      "id": "1-6-1",
+      "uid": "01a140405993-2fb67320b6",
+      "label": "docs/plans 退役态处置（计划草稿 + 旧 roadmap 删 / 留，需 zj 拍板）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "计划 §9.3 第 4 项：docs/plans 按 2026-09-27 治理约定是退役态，结论沉淀后即删。计划草稿 zw-electron-es-tab-plan-2026-10-13.md + 旧 roadmap（json/md）删还是留作沿革，需 zj 显式拍板；未定前不动。",
+      "layer": "plan"
+    },
+    "1-6-2": {
+      "id": "1-6-2",
+      "uid": "01a140405a57-b7f2506735",
+      "label": "结论沉淀核对（ADR 0015/0016 + designs 三篇覆盖度）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "",
+      "layer": "plan"
+    },
+    "1-6-3": {
+      "id": "1-6-3",
+      "uid": "01a140405b0a-8ce7f7ad2d",
+      "label": "app/README 陈旧表述订正（LLM stub / Python sidecar / MemStore）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-6",
+      "children": [],
+      "decisions": [],
+      "notes": "README「设计要点」三处陈旧：LLM Provider «现 OpenAI/DeepSeek stub，待接真实端点»（已实现 client）、«Python 核心可作可选 sidecar»（B2 后已废）、«Phase 2 换纯 Go SQLite 驱动»（1-5-5 已完成）。",
+      "layer": "plan"
+    },
+    "1-1-5": {
+      "id": "1-1-5",
+      "uid": "01a1407cd14c-7d9abee695",
+      "label": "补齐 12 个无测试包的单测（cmd/server + agent/config/data/domain/inspection/limitup/market/mastery/optimization/research/review）",
+      "status": "pending",
+      "mode": "explore",
+      "parent": "1-1",
+      "children": [],
+      "decisions": [],
+      "notes": "由 1-1-3 门禁的 WARN 暴露：go test ./... 有 12 个包 [no test files]。门禁只 WARN 不 FAIL——覆盖率缺口是独立工作，不混进门禁伪造绿。建议优先级：data（Store 契约）/ config（LLM key 掩码）/ domain（tab 注册表）/ agent（provider 未配置引导）→ 其余 6 个 ES 镜像 domain 包（多为 go:embed 快照 + FallbackChain，可先补契约测试）。",
+      "layer": "plan"
+    }
+  },
+  "metadata": {
+    "created": "2026-10-15 23:47:56",
+    "updated": "2026-10-16 10:59:00",
+    "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
+  },
+  "edges": [
+    {
+      "id": "e1",
+      "from": "01a1404022c8-6780b3238b",
+      "to": "01a14040237d-8da325ad45",
+      "type": "blocks"
+    },
+    {
+      "id": "e2",
+      "from": "01a1404022c8-6780b3238b",
+      "to": "01a140402443-910cfcd36f",
+      "type": "blocks"
+    },
+    {
+      "id": "e3",
+      "from": "01a1404022c8-6780b3238b",
+      "to": "01a1404024f5-b8de11eb42",
+      "type": "blocks"
+    },
+    {
+      "id": "e4",
+      "from": "01a1404022c8-6780b3238b",
+      "to": "01a1404025b0-919d86aafc",
+      "type": "blocks"
+    },
+    {
+      "id": "e5",
+      "from": "01a140402665-b76f35db64",
+      "to": "01a1404027c6-ba79c49ad0",
+      "type": "blocks"
+    },
+    {
+      "id": "e6",
+      "from": "01a1403ffe66-db0577334c",
+      "to": "01a140405780-b2af037af1",
+      "type": "blocks"
+    }
+  ],
+  "edge_seq": 6
+}
