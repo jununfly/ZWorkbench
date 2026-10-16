@@ -2,6 +2,8 @@
 // 纯 stdlib，零外部依赖（符合 ADR 0015：Go 运行时零 cgo 依赖）。
 package market
 
+import "github.com/jununfly/ZWorkbench/app/internal/datasource"
+
 // Index 主要指数（上证/深证/创业板/沪深300/科创50 等）。
 type Index struct {
 	Name      string  `json:"name"`
@@ -40,9 +42,21 @@ type MarketOverview struct {
 	AsOf       string       `json:"as_of"`     // 快照时间（RFC3339）
 	Source     string       `json:"source"`    // 实际命中源名（C36 证据）
 	Fallback   bool         `json:"fallback"`  // 是否走回退（非首选源命中）
+	Status     datasource.Status `json:"status"`    // 语义状态：ok/unconfigured/source_failed（1-2-5）
+	Reason     string       `json:"reason,omitempty"` // 非 ok 时的可读原因（1-2-5）
 	Indices    []Index      `json:"indices"`
 	Breadth    Breadth      `json:"breadth"`
 	TopGainers []StockQuote `json:"top_gainers"`
 	TopLosers  []StockQuote `json:"top_losers"`
 	Sectors    []Sector     `json:"sectors"`
+}
+
+// SetFallbackMeta 实现 datasource.StatusCarrier（roadmap 1-2-5）。
+func (r *MarketOverview) SetFallbackMeta(fallback bool, status datasource.Status, reason, asOf string) {
+	r.Fallback = fallback
+	r.Status = status
+	r.Reason = reason
+	if r.AsOf == "" {
+		r.AsOf = asOf
+	}
 }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { getJSON } from '../api';
+import { SourceStatusBanner } from '../SourceStatusBanner';
 
 interface Target { code: string; name: string; action: string; from_weight: number; to_weight: number; reason: string; }
-interface Plan { as_of: string; source: string; fallback: boolean; original_score: number; optimized_score: number; improvement: number; targets: Target[]; conditions: string; }
+interface Plan { as_of: string; source: string; fallback: boolean; status?: string; reason?: string; original_score: number; optimized_score: number; improvement: number; targets: Target[]; conditions: string; }
 
 const RED = '#cf1322';
 const GREEN = '#3f8600';
@@ -30,9 +31,7 @@ export function OptimizationTab() {
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>AI持仓优化</h2>
-        <span style={{ fontSize: 12, color: '#888' }}>
-          来源 {data.source}{data.fallback && <span style={{ color: '#d46b08' }}>（回退）</span>}{' · '}{data.as_of}
-        </span>
+        <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
       <section style={{ marginTop: 16, display: 'flex', gap: 20, fontSize: 14, border: '1px solid #eee', borderRadius: 8, padding: 12 }}>

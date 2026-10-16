@@ -5,19 +5,12 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
 //go:embed snapshot.json
 var seedJSON []byte
-
-// Source 是 C36 多源适配/回退的抽象：每个源都尝试给出一份游资心法库。
-type Source interface {
-	Name() string
-	Fetch(ctx context.Context) (*MasteryLibrary, error)
-}
 
 // LocalSnapshotSource 永远可用：返回内嵌的种子快照（离线/断网可用）。
 type LocalSnapshotSource struct{}
@@ -54,30 +47,16 @@ func (s RemoteSource) Fetch(ctx context.Context) (*MasteryLibrary, error) {
 	if err := s.remote.FetchJSON(ctx, &b); err != nil {
 		return nil, err
 	}
+	b.Source = s.remote.Name
 	return &b, nil
 }
 
-// FallbackChain 按序尝试源，返回首个成功；非首选源命中即标记 fallback（C36 回退语义）。
-type FallbackChain struct{ sources []Source }
+// FallbackChain 是「导入文件 → 远程 → 内嵌快照」的多源链（roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
+type FallbackChain = datasource.FallbackChain[*MasteryLibrary]
 
-func NewFallbackChain(sources ...Source) *FallbackChain {
-	return &FallbackChain{sources: sources}
-}
-
-func (c *FallbackChain) Fetch(ctx context.Context) (*MasteryLibrary, error) {
-	var lastErr error
-	for i, s := range c.sources {
-		b, err := s.Fetch(ctx)
-		if err == nil && b != nil {
-			b.Fallback = i > 0
-			if b.AsOf == "" {
-				b.AsOf = time.Now().Format(time.RFC3339)
-			}
-			return b, nil
-		}
-		lastErr = err
-	}
-	return nil, fmt.Errorf("all mastery sources failed: %v", lastErr)
+// NewFallbackChain 构造回退链（顺序即优先级）。
+func NewFallbackChain(sources ...datasource.Source[*MasteryLibrary]) *FallbackChain {
+	return datasource.NewFallbackChain(sources...)
 }
 
 // NewDefaultChain 默认「导入文件 → 远程 → 内嵌快照」（C36 + roadmap 1-2-3 D9）。

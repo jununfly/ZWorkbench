@@ -2,6 +2,8 @@
 // 纯 stdlib，零外部依赖（符合 ADR 0015：Go 运行时零 cgo 依赖）。
 package limitup
 
+import "github.com/jununfly/ZWorkbench/app/internal/datasource"
+
 // LimitUpStock 连板个股。
 type LimitUpStock struct {
 	Code      string  `json:"code"`
@@ -37,10 +39,22 @@ type Sentiment struct {
 // LimitUpBoard 超短连板/题材/情绪聚合结构，对应 ES C09 的最小切片。
 // Source/Fallback 是 C36 多源适配的证据字段：标记数据实际来自哪个源、是否走回退。
 type LimitUpBoard struct {
-	AsOf     string    `json:"as_of"`     // 快照时间（RFC3339）
-	Source   string    `json:"source"`    // 实际命中源名（C36 证据）
-	Fallback bool      `json:"fallback"`  // 是否走回退（非首选源命中）
-	Tiers    []Tier    `json:"tiers"`     // 连板梯队（按 days 降序）
-	Themes   []Theme   `json:"themes"`    // 题材雷达
-	Sentiment Sentiment `json:"sentiment"`
+	AsOf     string           `json:"as_of"`     // 快照时间（RFC3339）
+	Source   string           `json:"source"`    // 实际命中源名（C36 证据）
+	Fallback bool             `json:"fallback"`  // 是否走回退（非首选源命中）
+	Status   datasource.Status `json:"status"`    // 语义状态：ok/unconfigured/source_failed（1-2-5）
+	Reason   string           `json:"reason,omitempty"` // 非 ok 时的可读原因（1-2-5）
+	Tiers    []Tier           `json:"tiers"`     // 连板梯队（按 days 降序）
+	Themes   []Theme          `json:"themes"`    // 题材雷达
+	Sentiment Sentiment       `json:"sentiment"`
+}
+
+// SetFallbackMeta 实现 datasource.StatusCarrier（roadmap 1-2-5）。
+func (r *LimitUpBoard) SetFallbackMeta(fallback bool, status datasource.Status, reason, asOf string) {
+	r.Fallback = fallback
+	r.Status = status
+	r.Reason = reason
+	if r.AsOf == "" {
+		r.AsOf = asOf
+	}
 }
