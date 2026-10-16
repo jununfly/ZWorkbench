@@ -32,6 +32,57 @@ const STATUS_COLOR: Record<string, string> = {
   safe_stopped: '#d4380d',
 };
 
+// ---- 身份链（1-4-4）：run → attempt → effect → approval ----
+interface ChainAttempt {
+  attempt_id: number;
+  effect_id: string;
+  attempt: number;
+  status: string;
+  started_at: string;
+  finished_at?: string;
+}
+interface ChainApproval {
+  approval_id: string;
+  operation_id: string;
+  action: string;
+  resource: string;
+  status: string;
+}
+interface ChainEffect {
+  effect_id: string;
+  operation_id: string;
+  effect_class: string;
+  action: string;
+  resource: string;
+  status: string;
+  attempt: number;
+  max_attempts: number;
+  physical_effect_count: number;
+  approval_id?: string;
+  approval_link: string; // linked | unlinked | dangling
+  approval?: ChainApproval;
+  attempts: ChainAttempt[];
+}
+interface IdentityChain {
+  run_id: string;
+  entry: { kind: string; id: string; detail?: string };
+  effects: ChainEffect[];
+  approvals: ChainApproval[];
+  counts: {
+    effects: number;
+    attempts: number;
+    approvals: number;
+    physical_effects: number;
+    dangling_links: number;
+  };
+}
+
+const LINK_COLOR: Record<string, string> = {
+  linked: '#389e0d',
+  unlinked: '#595959',
+  dangling: RED,
+};
+
 const ACTIONS = ['start', 'complete', 'fail', 'safe_stop', 'recover'];
 
 const badge = (status: string) => (
@@ -52,6 +103,8 @@ export function CodingEvidenceTab() {
   const [runs, setRuns] = useState<EvRun[]>([]);
   const [stream, setStream] = useState<EvEvent[]>([]);
   const [detail, setDetail] = useState<EvRun | null>(null);
+  const [chain, setChain] = useState<IdentityChain | null>(null);
+  const [chainErr, setChainErr] = useState<string>('');
   const [violations, setViolations] = useState<number>(0);
   const [selected, setSelected] = useState<string>('');
   const [err, setErr] = useState<string>('');
@@ -82,6 +135,17 @@ export function CodingEvidenceTab() {
     } catch (e) {
       setErr(String(e));
       setDetail(null);
+    }
+    // 身份链独立取数：链查询失败不该把整个详情面板打黑（但必须显出来，不能静默空白）。
+    try {
+      const c = await getJSON(
+        `/api/evidence/identity-chain?run_id=${encodeURIComponent(id)}`
+      );
+      setChain(c);
+      setChainErr('');
+    } catch (e) {
+      setChain(null);
+      setChainErr(String(e));
     }
   }, []);
 
@@ -223,6 +287,109 @@ export function CodingEvidenceTab() {
           </div>
         </section>
       </div>
+
+      <section style={{ marginTop: 20 }}>
+        <h3 style={{ marginBottom: 6 }}>
+          身份链 <span style={{ fontSize: 12, color: '#888' }}>run → attempt → effect → approval</span>
+        </h3>
+        {!selected && <p style={{ color: '#888', fontSize: 13 }}>选中左侧 run 查看其身份链。</p>}
+        {chainErr && <pre style={{ color: RED, fontSize: 12 }}>{chainErr}</pre>}
+        {chain && (
+          <>
+            <div style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+              <code>{chain.run_id}</code> · entry={chain.entry.kind} · effects={chain.counts.effects}
+              {' · '}attempts={chain.counts.attempts} · approvals={chain.counts.approvals}
+              {' · '}physical={chain.counts.physical_effects}
+              {chain.counts.dangling_links > 0 && (
+                <span style={{ color: RED }}>
+                  {' '}
+                  · dangling={chain.counts.dangling_links}
+                </span>
+              )}
+            </div>
+
+            {chain.effects.length === 0 && (
+              <p style={{ color: '#888', fontSize: 13 }}>
+                该 run 尚无 effect（链上只有 run 本身）。
+              </p>
+            )}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {chain.effects.map((fx) => (
+                <div
+                  key={fx.effect_id}
+                  style={{
+                    border: '1px solid #f0f0f0',
+                    borderRadius: 6,
+                    padding: '8px 10px',
+                    fontSize: 12,
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <code>{fx.effect_id}</code>
+                    {badge(fx.status)}
+                    <span style={{ color: '#888' }}>
+                      {fx.effect_class} · {fx.action} {fx.resource}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: 11,
+                        padding: '2px 8px',
+                        borderRadius: 10,
+                        background: '#fafafa',
+                        color: LINK_COLOR[fx.approval_link] ?? '#595959',
+                      }}
+                    >
+                      approval: {fx.approval_link}
+                    </span>
+                  </div>
+
+                  <div style={{ marginTop: 6, color: '#555' }}>
+                    attempts {fx.attempt}/{fx.max_attempts} · physical={fx.physical_effect_count}
+                  </div>
+
+                  <div style={{ marginTop: 4, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {fx.attempts.map((a) => (
+                      <div key={a.attempt_id} style={{ fontFamily: 'ui-monospace, monospace' }}>
+                        #{a.attempt} <b>{a.status}</b>{' '}
+                        <span style={{ color: '#aaa' }}>
+                          {a.started_at}
+                          {a.finished_at ? ` → ${a.finished_at}` : ''}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {fx.approval && (
+                    <div style={{ marginTop: 4, color: '#555' }}>
+                      approval <code>{fx.approval.approval_id}</code> {badge(fx.approval.status)} op=
+                      {fx.approval.operation_id}
+                    </div>
+                  )}
+                  {fx.approval_link === 'dangling' && (
+                    <div style={{ marginTop: 4, color: RED }}>
+                      断链：approval_id={fx.approval_id} 在 owner 里不存在（不自动补洞）
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {chain.approvals.length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ fontSize: 12, color: '#888' }}>run 级审批（含未被 effect 认领的）</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                  {chain.approvals.map((a) => (
+                    <span key={a.approval_id} style={{ fontSize: 11 }}>
+                      <code>{a.approval_id.slice(0, 8)}</code> {badge(a.status)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </section>
 
       <section style={{ marginTop: 20 }}>
         <h3>全局 safe-stop 事件流（C28）</h3>

@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"sync/atomic"
@@ -17,6 +18,7 @@ import (
 // 范围（B2-narrow 接线版）：只读可视化 + 最小生命周期驱动。
 // 不含 approval / effect 的写操作——1-5-6-2 已实现 ClaimEffect/Approve 等能力，
 // 但对外暴露需要 human-in-the-loop 的审批界面，留作后续节点，不在本节点静默开放。
+// 1-4-4 新增 identity-chain / attempts 两个只读查询口（写路径仍不开放）。
 func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.HandlerFunc, ev *evidence.Owner) {
 	if ev == nil {
 		// 证据库不可用时显式 503，而不是让 tab 静默空白（空白会被误读成"没有证据"）。
@@ -133,6 +135,62 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 		}
 		writeJSON(w, v)
 	}))
+
+	// GET /api/evidence/identity-chain —— 身份链（run → attempt → effect → approval，1-4-4）。
+	// 入参四选一：?run_id= / ?effect_id= / ?approval_id= / ?operation_id=。
+	// 多选或都不选 = 400（歧义必须拒绝，不猜）；查不到 = 404（绝不返空链冒充"没数据"）。
+	mux.HandleFunc("GET /api/evidence/identity-chain", auth(func(w http.ResponseWriter, r *http.Request) {
+		q := r.URL.Query()
+		pairs := []struct{ kind, value string }{
+			{evidence.EntryRunID, q.Get("run_id")},
+			{evidence.EntryEffectID, q.Get("effect_id")},
+			{evidence.EntryApprovalID, q.Get("approval_id")},
+			{evidence.EntryOperationID, q.Get("operation_id")},
+		}
+		var kind, id string
+		hits := 0
+		for _, p := range pairs {
+			if p.value == "" {
+				continue
+			}
+			kind, id, hits = p.kind, p.value, hits+1
+		}
+		if hits != 1 {
+			http.Error(w, "需要且仅需要 run_id / effect_id / approval_id / operation_id 之一", http.StatusBadRequest)
+			return
+		}
+		chain, err := ev.ResolveIdentityChain(kind, id)
+		if err != nil {
+			// 未知 id / 歧义归属都是语义拒绝（fail-closed 是设计），不是服务故障 → 4xx。
+			status := http.StatusBadRequest
+			if isNotFound(err) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, err.Error(), status)
+			return
+		}
+		writeJSON(w, chain)
+	}))
+
+	// GET /api/evidence/effects/{id}/attempts —— 一次 effect 的全部物理尝试（身份链的 attempt 段）。
+	mux.HandleFunc("GET /api/evidence/effects/{id}/attempts", auth(func(w http.ResponseWriter, r *http.Request) {
+		attempts, err := ev.ListEffectAttempts(r.PathValue("id"))
+		if err != nil {
+			status := http.StatusBadRequest
+			if isNotFound(err) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, err.Error(), status)
+			return
+		}
+		writeJSON(w, attempts)
+	}))
+}
+
+// isNotFound 判定「查不到」语义：run 缺失是 ErrRunNotFound，其余实体是 ErrNotFound。
+// 二者都是 fail-closed 的语义拒绝（404），不是服务故障（500）。
+func isNotFound(err error) bool {
+	return errors.Is(err, evidence.ErrNotFound) || errors.Is(err, evidence.ErrRunNotFound)
 }
 
 var runIDFallback atomic.Uint64
