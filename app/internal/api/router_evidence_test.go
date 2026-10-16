@@ -172,6 +172,57 @@ func TestEvidenceViolations(t *testing.T) {
 	}
 }
 
+// TestEvidenceIdentityChain 校验身份链端点的入参歧义与未知 id 语义（1-4-4）。
+func TestEvidenceIdentityChain(t *testing.T) {
+	h, ev := newTestRouter(t)
+	if _, err := ev.CreateRun("chain-api-run", "coding", nil, nil); err != nil {
+		t.Fatalf("CreateRun: %v", err)
+	}
+
+	// 1) 都不给 → 400（歧义必须拒绝，不猜）
+	rec := doJSON(t, h, "GET", "/api/evidence/identity-chain?token="+testToken, nil)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("无入参应 400，得到 %d（%s）", rec.Code, rec.Body.String())
+	}
+	// 2) 多选 → 400
+	rec = doJSON(t, h, "GET", "/api/evidence/identity-chain?token="+testToken+"&run_id=chain-api-run&effect_id=x", nil)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("多选入参应 400，得到 %d", rec.Code)
+	}
+	// 3) 未知 id → 404（绝不返 200 空链冒充"没数据"）
+	rec = doJSON(t, h, "GET", "/api/evidence/identity-chain?token="+testToken+"&run_id=chain-no-such-run", nil)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("未知 run 应 404，得到 %d", rec.Code)
+	}
+	// 4) 正常解析：entry 说明起点，counts 结构齐全
+	rec = doJSON(t, h, "GET", "/api/evidence/identity-chain?token="+testToken+"&run_id=chain-api-run", nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("chain code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var got struct {
+		RunID string `json:"run_id"`
+		Entry struct {
+			Kind string `json:"kind"`
+			ID   string `json:"id"`
+		} `json:"entry"`
+		Counts struct {
+			Effects  int `json:"effects"`
+			Attempts int `json:"attempts"`
+		} `json:"counts"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode chain: %v (%s)", err, rec.Body.String())
+	}
+	if got.RunID != "chain-api-run" || got.Entry.Kind != evidence.EntryRunID {
+		t.Fatalf("chain 返回不对：%+v", got)
+	}
+	// 5) effect 不存在时 attempts 也应 404
+	rec = doJSON(t, h, "GET", "/api/evidence/effects/chain-no-such-effect/attempts?token="+testToken, nil)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("未知 effect 的 attempts 应 404，得到 %d", rec.Code)
+	}
+}
+
 // TestEvidenceUnavailable 校验证据库缺失时显式 503，而不是让前端静默空白。
 func TestEvidenceUnavailable(t *testing.T) {
 	cfg := &config.Config{Port: "18080", Token: testToken}

@@ -107,18 +107,18 @@ func TestAttachProviderExitReceipt_V2(t *testing.T) {
 		t.Fatalf("record: %v", err)
 	}
 	receipt := map[string]any{
-		"schema":                     "zworkbench-provider-exit-receipt/v2",
-		"provider":                   "p",
-		"endpoint":                   "https://x",
-		"account_scope":              "acct-1",
-		"exit_mode":                  "authorized-manual-exit",
-		"exit_status":                "clean/safe-stop",
+		"schema":                       "zworkbench-provider-exit-receipt/v2",
+		"provider":                     "p",
+		"endpoint":                     "https://x",
+		"account_scope":                "acct-1",
+		"exit_mode":                    "authorized-manual-exit",
+		"exit_status":                  "clean/safe-stop",
 		"provider_remote_zero_residue": "unknown/delegated",
-		"local_state_fingerprint":    "unknown",
-		"evidence_fingerprint":       "fp-1",
-		"surface_observations":       map[string]any{"task_or_run": "clean"},
-		"statuses":                   map[string]any{"coding_data": "clean"},
-		"unknown_fields":             []any{"billing"},
+		"local_state_fingerprint":      "unknown",
+		"evidence_fingerprint":         "fp-1",
+		"surface_observations":         map[string]any{"task_or_run": "clean"},
+		"statuses":                     map[string]any{"coding_data": "clean"},
+		"unknown_fields":               []any{"billing"},
 	}
 	rec, err := ow.AttachProviderExitReceipt("r1", receipt)
 	if err != nil {
@@ -175,29 +175,80 @@ func TestGetProviderExitLedger_NotFound(t *testing.T) {
 	}
 }
 
-func TestProviderExitLedgerForRun_Order(t *testing.T) {
+// TestProviderExitLedgerForRun_MixedClasses 校验同一 run 上的两类证据
+// （local-inventory 默认条目 + owner-backed 回执条目）都被 ForRun 取回。
+//
+// 这里**不**断言二者先后：nowUTC() 是 RFC3339 秒级精度，同一秒内落的两条记录
+// recorded_at 完全相同，ORDER BY recorded_at, ledger_id 会退化成随机 UUID 的
+// 字典序——那是「确定性但无语义」的兜底排序，不是业务先后。原
+// TestProviderExitLedgerForRun_Order 正是在这条退化路径上断言顺序，约 50% 概率
+// 抖红（1-4-4 跑 check-go.sh 时发现，与本次改动无关）。时间序契约改由下一条
+// 用明确不同的 recorded_at 覆盖。
+func TestProviderExitLedgerForRun_MixedClasses(t *testing.T) {
 	ow := newExitLedgerOwner(t)
-	if _, err := ow.CreateRun("r1", "task", nil, nil); err != nil {
+	runID := "el-mixed-run"
+	if _, err := ow.CreateRun(runID, "task", nil, nil); err != nil {
 		t.Fatalf("CreateRun: %v", err)
 	}
-	if _, err := ow.RecordProviderExitLedger("r1", map[string]string{"provider": "p"}); err != nil {
+	if _, err := ow.RecordProviderExitLedger(runID, map[string]string{"provider": "p"}); err != nil {
 		t.Fatalf("record: %v", err)
 	}
 	receipt := map[string]any{
 		"schema":                       "zworkbench-provider-exit-receipt/v2",
 		"provider_remote_zero_residue": "unknown/delegated",
 	}
-	if _, err := ow.AttachProviderExitReceipt("r1", receipt); err != nil {
+	if _, err := ow.AttachProviderExitReceipt(runID, receipt); err != nil {
 		t.Fatalf("attach: %v", err)
 	}
-	all, err := ow.ProviderExitLedgerForRun("r1")
+	all, err := ow.ProviderExitLedgerForRun(runID)
 	if err != nil {
 		t.Fatalf("ForRun: %v", err)
 	}
 	if len(all) != 2 {
 		t.Fatalf("应有 2 条(local-inventory + owner-backed), 实际 %d", len(all))
 	}
-	if all[0].EvidenceClass != "local-inventory" || all[1].EvidenceClass != "owner-backed" {
-		t.Fatalf("顺序不对: %q, %q", all[0].EvidenceClass, all[1].EvidenceClass)
+	classes := map[string]bool{}
+	for _, rec := range all {
+		if rec.RunID != runID {
+			t.Fatalf("ForRun 返回了别的 run: %s", rec.RunID)
+		}
+		classes[rec.EvidenceClass] = true
+	}
+	if !classes["local-inventory"] || !classes["owner-backed"] {
+		t.Fatalf("两类证据缺一: %+v", classes)
+	}
+}
+
+// TestProviderExitLedgerForRun_Chronological 用两条 recorded_at 明确不同的记录
+// 验证 ForRun 的时间序契约（这是 ORDER BY 唯一有业务语义的一层）。
+func TestProviderExitLedgerForRun_Chronological(t *testing.T) {
+	ow := newExitLedgerOwner(t)
+	runID := "el-chrono-run"
+	if _, err := ow.CreateRun(runID, "task", nil, nil); err != nil {
+		t.Fatalf("CreateRun: %v", err)
+	}
+	for i, ts := range []string{"2026-01-02T00:00:00Z", "2026-01-01T00:00:00Z"} {
+		if _, err := ow.DB().Exec(
+			`INSERT INTO provider_exit_ledger(
+				ledger_id, run_id, provider, endpoint, account_scope,
+				exit_mode, exit_status, provider_remote_zero_residue,
+				surface_observations_json, statuses_json, unknown_fields_json,
+				local_state_fingerprint, evidence_class, recorded_at
+			 ) VALUES (?, ?, 'p', 'https://x', 'unknown', 'inventory-only',
+				'unknown/safe-stop', 'unknown/delegated', '{}', '{}', '[]', 'unknown',
+				'local-inventory', ?)`,
+			"el-chrono-"+string(rune('a'+i)), runID, ts); err != nil {
+			t.Fatalf("插入 ledger %d: %v", i, err)
+		}
+	}
+	all, err := ow.ProviderExitLedgerForRun(runID)
+	if err != nil {
+		t.Fatalf("ForRun: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("应有 2 条, 实际 %d", len(all))
+	}
+	if all[0].LedgerID != "el-chrono-b" || all[1].LedgerID != "el-chrono-a" {
+		t.Fatalf("未按 recorded_at 升序: %q, %q", all[0].LedgerID, all[1].LedgerID)
 	}
 }
