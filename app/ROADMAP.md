@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 17:46:16
+> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 18:07:49
 
 [~][X+] 1. ZW Go/Electron 工作台 1→100 收尾
 ├── [x][X+] 1-1. 工程守卫与回归门禁
@@ -22,7 +22,7 @@
 │   └── [x][X+] 1-3-3. Settings 页连通性自检与错误直显
 ├── [~][X+] 1-4. 证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）
 │   ├── [x][X+] 1-4-1. reconcile / uncertain 恢复路径
-│   ├── [ ][X+] 1-4-2. backup / restore
+│   ├── [x][X+] 1-4-2. backup / restore
 │   ├── [ ][X+] 1-4-3. exit ledger（Python 侧 provider_exit_ledger；Go 侧未见）
 │   ├── [ ][X+] 1-4-4. identity chain 可查询（run → attempt → effect → approval）
 │   └── [ ][X+] 1-4-5. safe-stop（C28）
@@ -39,7 +39,7 @@
 
 ### 下一步可开工（ready 前 3）
 
-- 1-4-2. backup / restore [ ]
 - 1-4-3. exit ledger（Python 侧 provider_exit_ledger；Go 侧未见） [ ]
 - 1-4-4. identity chain 可查询（run → attempt → effect → approval） [ ]
+- 1-4-5. safe-stop（C28） [ ]
 <!-- ROADMAP_SECTION_END -->
