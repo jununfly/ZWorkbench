@@ -52,7 +52,7 @@
       "id": "1-2",
       "uid": "01a1403fd2a7-15fe7317e6",
       "label": "真实数据源接入（C36 远程侧现为 RemoteStubSource）",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -368,13 +368,35 @@
       "id": "1-2-5",
       "uid": "01a1404025b0-919d86aafc",
       "label": "fallback 语义收敛：区分未配置 / 源失败 / 陈旧快照，不当作成功",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-2",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "D15 收敛方案：7 包重复回退循环怎么收口？",
+          "answer": "把 7 包各自重复的 FallbackChain 回退循环收敛到 datasource 的泛型实现 FallbackChain[T StatusCarrier]（roadmap 1-2-5 语义收敛的唯一真相源），彻底消除 7 处同义循环漂移风险。新增 datasource.StatusCarrier 接口（SetFallbackMeta）与共享 helper ClassifyFallback（ErrUnconfigured→unconfigured，其余→source_failed）。7 个响应结构统一加 Status datasource.Status + Reason string 字段。每个包的 Source 接口/NewFallbackChain/NewDefaultChain 改为委托 datasource 泛型，签名对外不变（测试零改动）。失败分类统一走 datasource.Classify，不再各包各写一遍。",
+          "note": ""
+        },
+        {
+          "q": "D16 三态语义如何定义，才能『不当作成功』？",
+          "answer": "语义不变量（对齐 datasource.Status 注释）：未配置 ≠ 源失败 ≠ 陈旧快照，三者都不许被当成成功。具体：①ok=首选源命中、数据新鲜；②unconfigured=首选源未配置（ErrUnconfigured）→静默回退本地快照，良性、不报警，前端灰信息『未接入实时源，展示本地快照』；③source_failed=首选源已配置但请求失败（超时/非2xx/解码失败）→回退但同时必须当错误处理、前端红色告警『实时源连接失败：<reason>，已回退本地快照』，绝不当作成功；④『陈旧快照』由 fallback:true + source:\"local-snapshot\" 表达（回退即意味着数据是内嵌种子，可能陈旧）。节点标题的『区分三态』= {status:unconfigured, status:source_failed, fallback:true}。primaryErr 取链中【首个(首选)源】的错误做分类，避免把次要源错误误归因到主状态。",
+          "note": ""
+        },
+        {
+          "q": "D17 前端与 API 接线：怎么让『不当作成功』真正落地到用户视角？",
+          "answer": "router 7 个 handler 零改动——writeJSON 自动把新 Status/Reason 字段带出，API 契约即收敛点。前端新增共享 React 组件 SourceStatusBanner，7 个 tab（Market/LimitUp/Research/Review/Inspection/Optimization/Mastery）统一接入：status==source_failed→红色告警条（含 reason，不当作成功）；unconfigured→灰信息条；ok→绿色『实时』。零新增静态依赖（纯 TSX + 已有样式）。本节点后端为硬交付、前端 banner 为 UX 闭环，二者一起才算『不当作成功』真正落地。",
+          "note": ""
+        },
+        {
+          "q": "D18 验证证据：三态语义收敛是否真的闭环？",
+          "answer": "闭环。后端：go build ./... 零错误、go vet ./... 干净、datasource 包 4 单测全绿（TestFallbackStatusOK/Unconfigured/SourceFailed/AllFail，覆盖三态区分与 primaryErr 分类）；前端：tsc --noEmit 零错误、vite build 成功（43 modules），SourceStatusBanner 已接 7 个 tab。端到端双态复现：① 数据源未配置 → /api/stock/overview、/api/mastery 返回 status=unconfigured、reason=实时数据源未配置，已回退本地快照；② 数据源指向不可达地址 → /api/stock/overview、/api/stock/review 返回 status=source_failed、reason=remote-eastmoney request failed: … connection refused，明确非成功。三态（ok/unconfigured/source_failed）+ fallback 陈旧快照 全部可区分，再无『fallback=true 即成功』的误判。",
+          "note": ""
+        }
+      ],
       "notes": "现状所有端点返回 fallback=true 被当作正常成功，无法区分「未配置」/「源失败」/「快照陈旧」，与 AGENTS.md「不要静默返回空」纪律冲突。",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-3-1": {
       "id": "1-3-1",
@@ -623,7 +645,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 15:45:50",
+    "updated": "2026-10-16 16:41:52",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
