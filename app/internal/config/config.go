@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
@@ -14,8 +15,15 @@ import (
 // 类型别名：配置形态由 datasource 包定义，config 只负责持久化与 env 覆盖。
 type DataSourceConfig = datasource.Config
 
-// Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置，
-// 以及统一远程数据源开关。
+// DataFiles 是「本地可导入数据集」的文件路径段（roadmap 1-2-3 D9）。
+// 与 DataSource（远程源）分开：一个是网络端点，一个是本地文件，失败语义不同。
+type DataFiles struct {
+	// MasteryPath 是游资心法库导入文件路径；空串表示未导入（回退内嵌快照）。
+	MasteryPath string `json:"mastery_path"`
+}
+
+// Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置、
+// 统一远程数据源开关，以及本地导入数据集路径。
 type Config struct {
 	Port  string
 	Token string
@@ -26,16 +34,18 @@ type Config struct {
 	EvidenceDB string
 	// WebDir 是前端 dist 目录（1-1-3）。空串表示交给 webstatic 自行按候选路径解析。
 	WebDir string
-	llm LLMConfig
-	ds  DataSourceConfig
-	mu  sync.RWMutex
+	llm    LLMConfig
+	ds     DataSourceConfig
+	df     DataFiles
+	mu     sync.RWMutex
 }
 
-// persistFile 是 config.json 的完整形态。两个段落共用一次保存，
+// persistFile 是 config.json 的完整形态。三个段落共用一次保存，
 // 避免「存 LLM 把数据源配置抹掉」这类静默丢配置。
 type persistFile struct {
 	LLM        LLMConfig        `json:"llm"`
 	DataSource DataSourceConfig `json:"data_source"`
+	DataFiles  DataFiles        `json:"data_files"`
 }
 
 // LLMConfig 是「设置 / LLM」页可编辑的 provider 配置，持久化到 config.json。
@@ -103,6 +113,24 @@ func (c *Config) SetDataSource(d DataSourceConfig) {
 	c.ds = d
 }
 
+// DataFiles 返回当前本地导入数据集路径快照（并发安全）。
+// 顺序：空 → config.json 的 data_files 段 → ZW_MASTERY_PATH env 覆盖。
+func (c *Config) DataFiles() DataFiles {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.df
+}
+
+// MasteryPath 返回游资心法导入文件路径（便捷读取）。
+func (c *Config) MasteryPath() string { return strings.TrimSpace(c.DataFiles().MasteryPath) }
+
+// SetDataFiles 原子写入本地导入数据集路径（并发安全）。
+func (c *Config) SetDataFiles(d DataFiles) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.df = d
+}
+
 // llmPath 返回 config.json 路径（env ZW_CONFIG 覆盖，默认 cwd ./config.json）。
 func (c *Config) llmPath() string {
 	p := os.Getenv("ZW_CONFIG")
@@ -116,14 +144,17 @@ func (c *Config) llmPath() string {
 // 文件缺失/损坏时静默忽略（视为未配置，沿用默认值）。
 // env 覆盖只在最后生效一次，保证「env > 文件 > 默认」。
 func (c *Config) load() {
+	// 三个段落一起读，任一环节缺失都只影响该段（不影响其它段落的默认值）。
 	data, err := os.ReadFile(c.llmPath())
 	if err != nil {
 		c.SetDataSource(datasource.LoadFromEnv(c.DataSource()))
+		c.SetDataFiles(loadDataFilesFromEnv(c.DataFiles()))
 		return
 	}
 	var f persistFile
 	if err := json.Unmarshal(data, &f); err != nil {
 		c.SetDataSource(datasource.LoadFromEnv(c.DataSource()))
+		c.SetDataFiles(loadDataFilesFromEnv(c.DataFiles()))
 		return
 	}
 	c.SetLLM(f.LLM)
@@ -132,6 +163,16 @@ func (c *Config) load() {
 		ds.TimeoutSec = datasource.DefaultConfig().TimeoutSec
 	}
 	c.SetDataSource(datasource.LoadFromEnv(ds))
+	c.SetDataFiles(loadDataFilesFromEnv(f.DataFiles))
+}
+
+// loadDataFilesFromEnv 用 ZW_MASTERY_PATH 覆盖给定的导入路径：
+// env 优先于 config.json，与数据源配置的覆盖顺序保持一致。
+func loadDataFilesFromEnv(base DataFiles) DataFiles {
+	if v := strings.TrimSpace(os.Getenv("ZW_MASTERY_PATH")); v != "" {
+		base.MasteryPath = v
+	}
+	return base
 }
 
 // LoadLLM 从 config.json 读取 LLM 配置（兼容入口，内部读取完整文件）。
@@ -140,10 +181,10 @@ func (c *Config) LoadLLM() { c.load() }
 // LoadDataSource 从 config.json 读取数据源配置（env 覆盖仍生效）。
 func (c *Config) LoadDataSource() { c.load() }
 
-// save 把两段配置一起写回 config.json（权限 0600）。
+// save 把三段配置一起写回 config.json（权限 0600）。
 // 必须整体写：分开写会让「保存 LLM」把数据源开关抹掉，属于静默丢配置。
 func (c *Config) save() error {
-	f := persistFile{LLM: c.LLM(), DataSource: c.DataSource()}
+	f := persistFile{LLM: c.LLM(), DataSource: c.DataSource(), DataFiles: c.DataFiles()}
 	data, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return err

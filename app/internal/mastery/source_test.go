@@ -35,7 +35,7 @@ func TestRemoteSourceDisabledIsUnconfigured(t *testing.T) {
 }
 
 func TestNewDefaultChainFallback(t *testing.T) {
-	b, err := NewDefaultChain(datasource.DefaultConfig()).Fetch(context.Background())
+	b, err := NewDefaultChain(datasource.DefaultConfig(), "").Fetch(context.Background())
 	if err != nil {
 		t.Fatalf("Fetch 失败：%v", err)
 	}
@@ -44,6 +44,24 @@ func TestNewDefaultChainFallback(t *testing.T) {
 	}
 	if b.Source != "local-snapshot" {
 		t.Fatalf("Fallback 源应为 local-snapshot，得到 %q", b.Source)
+	}
+}
+
+// TestNewDefaultChainImportedWins 导入文件优先于内嵌快照，且不算回退（roadmap 1-2-3 D9 链序）。
+func TestNewDefaultChainImportedWins(t *testing.T) {
+	p := writeImport(t, sampleImportJSON)
+	lib, err := NewDefaultChain(datasource.DefaultConfig(), p).Fetch(context.Background())
+	if err != nil {
+		t.Fatalf("Fetch 失败：%v", err)
+	}
+	if lib.Source != "imported-file" {
+		t.Fatalf("有导入文件时应命中 imported-file，得到 %q", lib.Source)
+	}
+	if lib.Fallback {
+		t.Fatalf("命中首选源时 Fallback 应为 false")
+	}
+	if len(lib.Figures) != 2 {
+		t.Fatalf("应使用导入文件的 2 条，得到 %d", len(lib.Figures))
 	}
 }
 

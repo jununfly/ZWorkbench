@@ -80,8 +80,12 @@ func (c *FallbackChain) Fetch(ctx context.Context) (*MasteryLibrary, error) {
 	return nil, fmt.Errorf("all mastery sources failed: %v", lastErr)
 }
 
-// NewDefaultChain 默认「远程优先、本地回退」（C36）。
-// cfg 由调用方显式注入（1-2-1 D3）：不在包内隐式读环境变量，便于测试与 fail-closed。
-func NewDefaultChain(cfg datasource.Config) *FallbackChain {
-	return NewFallbackChain(NewRemoteSource(cfg), LocalSnapshotSource{})
+// NewDefaultChain 默认「导入文件 → 远程 → 内嵌快照」（C36 + roadmap 1-2-3 D9）。
+// cfg 与 importedPath 都由调用方显式注入（1-2-1 D3）：不在包内隐式读环境变量，
+// 便于测试与 fail-closed。
+//
+// 导入文件排在最前：游资心法没有公开接口（见 import.go 说明），zj 自己的
+// 导入数据集才是这个 tab 的可信来源；内嵌快照只做离线兜底。
+func NewDefaultChain(cfg datasource.Config, importedPath string) *FallbackChain {
+	return NewFallbackChain(NewImportedFileSource(importedPath), NewRemoteSource(cfg), LocalSnapshotSource{})
 }
