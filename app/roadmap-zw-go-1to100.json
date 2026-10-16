@@ -546,13 +546,35 @@
       "id": "1-4-4",
       "uid": "01a140405571-35eb6fc2fc",
       "label": "identity chain 可查询（run → attempt → effect → approval）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-4",
       "children": [],
-      "decisions": [],
-      "notes": "",
-      "layer": "plan"
+      "decisions": [
+        {
+          "q": "1-4-4 identity chain 的落地形态与范围？",
+          "answer": "Product execution（Go app/ 属产品代码）：新增 internal/evidence/identity_chain.go，只做**只读查询**，复用既有 runs/effects/effect_attempts/approvals 四表，不新增表不新增列。产出 GetIdentityChain(runID) + ResolveIdentityChain(kind,id) + ListEffectAttempts(effectID)（attempt 此前无任何查询口，是链上唯一缺口）。对外 GET /api/evidence/identity-chain，并在编码证据 tab 加链面板。写路径（ClaimEffect/Approve）不开放。",
+          "note": ""
+        },
+        {
+          "q": "入口解析（entry point）如何设计，歧义怎么处理？",
+          "answer": "显式 kind 枚举：run_id / effect_id / approval_id / operation_id，必填其一（多给或都不给 = ErrBadArgument）。不做无 kind 的自动探测——同一 id 形状跨表碰撞时无法判意。operation_id 同时命中 effect 与 approval 时：同 run = 解析成功（entry.kind=operation_id）；跨 run = fail-closed 拒绝（ErrAmbiguousIdentity），绝不猜。attempt 不作为入口：attempt 序数只在 effect 内唯一（effect_attempts.attempt），无全局 attempt_id 语义，经 effect_id 入口 + ListEffectAttempts 覆盖。",
+          "note": ""
+        },
+        {
+          "q": "断链与未知 id 的语义如何保持 fail-closed？",
+          "answer": "未知 id 一律 ErrNotFound（API 404），绝不返回空链——空链会被误读成「无数据」。effect→approval 三态显式标注：linked（approval 存在）/ unlinked（approval_id 为 NULL，属 read-only、idempotent 等免审批类）/ dangling（approval_id 有值但该 approval 不存在，与 DetectIdentityViolations 的 orphan_effect_approval 同源，链上标注不替审计、不静默补洞）。run 级 approvals 全量返回（含从未被 effect 认领的 pending/denied），避免「审批发生但链上看不见」。token_hash 永不入链（Approval 结构体本身也不带）。",
+          "note": ""
+        },
+        {
+          "q": "跑 check-go.sh 时发现既有 flaky：TestProviderExitLedgerForRun_Order 约 50% 抖红，怎么办？",
+          "answer": "现场修（不另开节点、不静默接受）：根因 = nowUTC() 是 RFC3339 秒级精度，同一秒内落的两条 ledger recorded_at 相同，ORDER BY recorded_at, ledger_id 退化为随机 UUID 字典序（确定性但无语义），而用例在这条退化路径上断言 local-inventory 先于 owner-backed → 约 50% 失败。与 1-4-4 改动无关（单独 -run 该用例 8 次即复现 4 红）。修法：拆成 ForRun_MixedClasses（只断言两类证据都在、不判先后）+ ForRun_Chronological（直插两条 recorded_at 明确不同的记录验时间序）。**不改产品排序**——用测试迁就实现是对因果的倒置。复跑 10 次全绿。",
+          "note": ""
+        }
+      ],
+      "notes": "落地：internal/evidence/identity_chain.go（GetIdentityChain / ResolveIdentityChain(kind,id) / ListEffectAttempts，只读、不新增表列）+ API GET /api/evidence/identity-chain 与 GET /api/evidence/effects/{id}/attempts + 编码证据 tab 身份链面板。入口四选一 run_id/effect_id/approval_id/operation_id（多选或都不选 400，未知 id 404，跨 run operation 歧义 ErrAmbiguousIdentity）；effect→approval 三态 linked/unlinked/dangling。验证：evidence 包 6 个新用例 + api 包 TestEvidenceIdentityChain 全绿；check-go.sh ALL PASS；check-web.sh(tsc+vite build) ALL PASS；真机冒烟（:18099 + /tmp sqlite）建 run→取链 200、无入参 400、未知 id 404。附带修复既有 flaky TestProviderExitLedgerForRun_Order（见决策 4，复跑 10 次全绿）。写路径（ClaimEffect/Approve）仍未对外开放。",
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4-5": {
       "id": "1-4-5",
@@ -717,7 +739,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 18:21:50",
+    "updated": "2026-10-16 18:43:03",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
