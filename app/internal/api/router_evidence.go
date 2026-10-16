@@ -18,7 +18,10 @@ import (
 // 范围（B2-narrow 接线版）：只读可视化 + 最小生命周期驱动。
 // 不含 approval / effect 的写操作——1-5-6-2 已实现 ClaimEffect/Approve 等能力，
 // 但对外暴露需要 human-in-the-loop 的审批界面，留作后续节点，不在本节点静默开放。
-// 1-4-4 新增 identity-chain / attempts 两个只读查询口（写路径仍不开放）。
+// 1-4-4 新增 identity-chain / attempts 两个只读查询口；1-4-5 新增
+// safe-stop-on-violation / reconcile-identity 两个**安全方向**的 owner 动作
+// （只把 run 往终态推，不放行副作用执行）。effect 写路径（ClaimEffect/Approve）
+// 始终不开放。
 func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.HandlerFunc, ev *evidence.Owner) {
 	if ev == nil {
 		// 证据库不可用时显式 503，而不是让 tab 静默空白（空白会被误读成"没有证据"）。
@@ -111,6 +114,40 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 			return
 		}
 		writeJSON(w, run)
+	}))
+
+	// POST /api/evidence/runs/{id}/safe-stop-on-violation —— 扫身份图，有未解析引用就 safe-stop（1-4-5）。
+	// 无违例 = 不改状态（检测本身不中断健康 run）；未知 run = 404。
+	mux.HandleFunc("POST /api/evidence/runs/{id}/safe-stop-on-violation", auth(func(w http.ResponseWriter, r *http.Request) {
+		out, err := ev.SafeStopOnIdentityViolation(r.PathValue("id"))
+		if err != nil {
+			status := http.StatusBadRequest
+			if isNotFound(err) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, err.Error(), status)
+			return
+		}
+		writeJSON(w, out)
+	}))
+
+	// POST /api/evidence/runs/{id}/reconcile-identity —— 记录身份收口决策并复查（1-4-5）。
+	// outcome=resolved 时不改状态（safe_stopped 是终态，收口成功也不复活）。
+	mux.HandleFunc("POST /api/evidence/runs/{id}/reconcile-identity", auth(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Evidence any `json:"evidence"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body) // 无 body 也允许（evidence 本就不落盘）
+		out, err := ev.ReconcileIdentity(r.PathValue("id"), body.Evidence)
+		if err != nil {
+			status := http.StatusBadRequest
+			if isNotFound(err) {
+				status = http.StatusNotFound
+			}
+			http.Error(w, err.Error(), status)
+			return
+		}
+		writeJSON(w, out)
 	}))
 
 	// GET /api/evidence/events —— 事件流：?run_id= &type= &limit=

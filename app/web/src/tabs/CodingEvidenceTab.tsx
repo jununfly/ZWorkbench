@@ -83,6 +83,14 @@ const LINK_COLOR: Record<string, string> = {
   dangling: RED,
 };
 
+interface EvViolation {
+  kind: string;
+  run_id: string;
+  ref_table: string;
+  ref_id: string;
+  detail: string;
+}
+
 const ACTIONS = ['start', 'complete', 'fail', 'safe_stop', 'recover'];
 
 const badge = (status: string) => (
@@ -105,7 +113,7 @@ export function CodingEvidenceTab() {
   const [detail, setDetail] = useState<EvRun | null>(null);
   const [chain, setChain] = useState<IdentityChain | null>(null);
   const [chainErr, setChainErr] = useState<string>('');
-  const [violations, setViolations] = useState<number>(0);
+  const [violations, setViolations] = useState<EvViolation[]>([]);
   const [selected, setSelected] = useState<string>('');
   const [err, setErr] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);
@@ -119,7 +127,7 @@ export function CodingEvidenceTab() {
       ]);
       setRuns(r ?? []);
       setStream(s ?? []);
-      setViolations(Array.isArray(v) ? v.length : 0);
+      setViolations(Array.isArray(v) ? v : []);
       setErr('');
     } catch (e) {
       setErr(String(e));
@@ -183,6 +191,18 @@ export function CodingEvidenceTab() {
       })
     );
 
+  // 1-4-5：扫身份图，有未解析引用才 safe-stop（健康 run 不动）。
+  const safeStopOnViolation = () =>
+    act(() =>
+      reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/safe-stop-on-violation`, {})
+    );
+
+  // 1-4-5：身份收口决策（safe_stopped 是终态，收口成功也不复活）。
+  const reconcileIdentity = () =>
+    act(() =>
+      reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/reconcile-identity`, {})
+    );
+
   if (err && runs.length === 0 && !detail) {
     return <pre style={{ color: RED }}>{err}</pre>;
   }
@@ -199,11 +219,11 @@ export function CodingEvidenceTab() {
             fontSize: 11,
             padding: '2px 8px',
             borderRadius: 10,
-            background: violations > 0 ? RED : '#f0f0f0',
-            color: violations > 0 ? '#fff' : '#888',
+            background: violations.length > 0 ? RED : '#f0f0f0',
+            color: violations.length > 0 ? '#fff' : '#888',
           }}
         >
-          identity violations: {violations}
+          identity violations: {violations.length}
         </span>
         <button onClick={() => void load()} disabled={busy}>
           刷新
@@ -259,6 +279,20 @@ export function CodingEvidenceTab() {
                   {a}
                 </button>
               ))}
+              <button
+                onClick={() => void safeStopOnViolation()}
+                disabled={busy || !selected}
+                title="扫身份图：有未解析引用才 safe-stop，健康 run 不动"
+              >
+                safe-stop on violation
+              </button>
+              <button
+                onClick={() => void reconcileIdentity()}
+                disabled={busy || !selected}
+                title="记录身份收口决策；safe_stopped 是终态，收口成功也不复活"
+              >
+                reconcile identity
+              </button>
             </div>
           )}
           {!detail && <p style={{ color: '#888', fontSize: 13 }}>选中左侧 run 查看其事件流。</p>}
@@ -388,6 +422,37 @@ export function CodingEvidenceTab() {
               </div>
             )}
           </>
+        )}
+      </section>
+
+      <section style={{ marginTop: 20 }}>
+        <h3 style={{ marginBottom: 6 }}>
+          身份违例{' '}
+          <span style={{ fontSize: 12, color: '#888' }}>owner 全量审计 · {violations.length} 条</span>
+        </h3>
+        {violations.length === 0 ? (
+          <p style={{ color: '#888', fontSize: 13 }}>身份图无未解析引用。</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {violations.map((v, i) => (
+              <div
+                key={`${v.kind}-${v.ref_id}-${i}`}
+                style={{
+                  borderLeft: '3px solid ' + RED,
+                  paddingLeft: 8,
+                  fontSize: 12,
+                  fontFamily: 'ui-monospace, monospace',
+                }}
+              >
+                <b>{v.kind}</b>{' '}
+                <span style={{ color: '#aaa' }}>
+                  {v.ref_table} · {v.ref_id}
+                  {v.run_id && v.run_id !== v.ref_id ? ` · run=${v.run_id}` : ''}
+                </span>
+                <div style={{ color: '#555' }}>{v.detail}</div>
+              </div>
+            ))}
+          </div>
         )}
       </section>
 

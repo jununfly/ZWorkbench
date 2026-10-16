@@ -223,6 +223,87 @@ func TestEvidenceIdentityChain(t *testing.T) {
 	}
 }
 
+// TestEvidenceSafeStopOnViolation 校验 safe-stop 触发端点的两种结局（1-4-5）：
+// 健康 run 不动 / 有违例必停，且未知 run 404。
+func TestEvidenceSafeStopOnViolation(t *testing.T) {
+	h, _ := newTestRouter(t)
+
+	// 1) 健康 run：检测本身不中断
+	doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
+		"run_id": "ss-api-clean", "task_type": "t",
+	})
+	rec := doJSON(t, h, "POST", "/api/evidence/runs/ss-api-clean/safe-stop-on-violation?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("clean code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var clean struct {
+		SafeStopped bool   `json:"safe_stopped"`
+		Status      string `json:"status"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &clean); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if clean.SafeStopped || clean.Status != "created" {
+		t.Fatalf("健康 run 不应被停: %+v", clean)
+	}
+
+	// 2) metadata 断链：必停
+	doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
+		"run_id":    "ss-api-dirty",
+		"task_type": "t",
+		"metadata":  map[string]any{"parent_run_id": "ss-api-ghost-parent"},
+	})
+	rec = doJSON(t, h, "POST", "/api/evidence/runs/ss-api-dirty/safe-stop-on-violation?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("dirty code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var dirty struct {
+		SafeStopped bool   `json:"safe_stopped"`
+		Status      string `json:"status"`
+		Violations  []struct {
+			Kind string `json:"kind"`
+		} `json:"violations"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &dirty); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if !dirty.SafeStopped || dirty.Status != "safe_stopped" {
+		t.Fatalf("有违例应 safe-stop: %+v", dirty)
+	}
+	if len(dirty.Violations) != 1 || dirty.Violations[0].Kind != "broken_parent_run_id" {
+		t.Fatalf("violations 不符: %+v", dirty.Violations)
+	}
+
+	// 3) 未知 run → 404
+	rec = doJSON(t, h, "POST", "/api/evidence/runs/ss-api-nope/safe-stop-on-violation?token="+testToken, nil)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("未知 run 应 404，得到 %d", rec.Code)
+	}
+
+	// 4) reconcile-identity：终态不复活（outcome=resolved 但状态仍是 safe_stopped）
+	if _, err := json.Marshal(map[string]any{}); err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	rec = doJSON(t, h, "POST", "/api/evidence/runs/ss-api-clean/reconcile-identity?token="+testToken, map[string]any{"evidence": "n/a"})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("reconcile code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var recOut struct {
+		Outcome string `json:"outcome"`
+		Status  string `json:"status"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &recOut); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if recOut.Outcome != "resolved" || recOut.Status != "created" {
+		t.Fatalf("干净 run 收口应为 resolved/created: %+v", recOut)
+	}
+	rec = doJSON(t, h, "POST", "/api/evidence/runs/ss-api-nope/reconcile-identity?token="+testToken, nil)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("未知 run reconcile 应 404，得到 %d", rec.Code)
+	}
+}
+
 // TestEvidenceUnavailable 校验证据库缺失时显式 503，而不是让前端静默空白。
 func TestEvidenceUnavailable(t *testing.T) {
 	cfg := &config.Config{Port: "18080", Token: testToken}
