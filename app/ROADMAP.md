@@ -1,7 +1,7 @@
 <!-- ROADMAP_SECTION_START -->
 ## ZJ Roadmap
 
-> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 16:41:52
+> 数据文件: `roadmap-zw-go-1to100.json` | 最后更新: 2026-10-16 17:01:47
 
 [~][X+] 1. ZW Go/Electron 工作台 1→100 收尾
 ├── [x][X+] 1-1. 工程守卫与回归门禁
@@ -16,10 +16,10 @@
 │   ├── [x][X+] 1-2-3. 复盘/心法（review/mastery）接真实源或本地可导入数据集
 │   ├── [x][X+] 1-2-4. 持仓巡检/优化（inspection/optimization）接真实持仓输入
 │   └── [x][X+] 1-2-5. fallback 语义收敛：区分未配置 / 源失败 / 陈旧快照，不当作成功
-├── [ ][X+] 1-3. LLM Provider 真实化
-│   ├── [ ][X+] 1-3-1. OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖）
-│   ├── [ ][X+] 1-3-2. key 存储与掩码回写安全复核（router.go:217）
-│   └── [!][X+] 1-3-3. Settings 页连通性自检与错误直显
+├── [~][X+] 1-3. LLM Provider 真实化
+│   ├── [x][X+] 1-3-1. OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖）
+│   ├── [x][X+] 1-3-2. key 存储与掩码回写安全复核（router.go:217）
+│   └── [ ][X+] 1-3-3. Settings 页连通性自检与错误直显
 ├── [ ][X+] 1-4. 证据核心 B2 补齐（对齐 Python CompositionOwner 能力面）
 │   ├── [ ][X+] 1-4-1. reconcile / uncertain 恢复路径
 │   ├── [ ][X+] 1-4-2. backup / restore
@@ -36,16 +36,10 @@
 │   ├── [ ][X+] 1-6-2. 结论沉淀核对（ADR 0015/0016 + designs 三篇覆盖度）
 │   └── [ ][X+] 1-6-3. app/README 陈旧表述订正（LLM stub / Python sidecar / MemStore）
 └── [ ][X+] 1-7. 产品定位复核（R4 风险：ES 内容是否稀释 ZW 编码证据核心）
-<details><summary>阻塞链：1 个节点被阻塞</summary>
-
-- 1-3-3. Settings 页连通性自检与错误直显 ← e5: 1-3-1. OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖） [ ]
-
-</details>
-
 
 ### 下一步可开工（ready 前 3）
 
-- 1-3. LLM Provider 真实化 [ ]
-- 1-3-1. OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖） [ ]
-- 1-3-2. key 存储与掩码回写安全复核（router.go:217） [ ]
+- 1-3-3. Settings 页连通性自检与错误直显 [ ]
+- 1-4. 证据核心 B2 补齐（对齐 Python CompositionOwner 能力面） [ ]
+- 1-4-1. reconcile / uncertain 恢复路径 [ ]
 <!-- ROADMAP_SECTION_END -->

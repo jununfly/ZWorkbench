@@ -87,7 +87,7 @@
       "id": "1-3",
       "uid": "01a1403fd350-b650e45ec7",
       "label": "LLM Provider 真实化",
-      "status": "pending",
+      "status": "in_progress",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -97,7 +97,8 @@
       ],
       "decisions": [],
       "notes": "",
-      "layer": "plan"
+      "layer": "plan",
+      "rounds": 1
     },
     "1-4": {
       "id": "1-4",
@@ -402,11 +403,17 @@
       "id": "1-3-1",
       "uid": "01a140402665-b76f35db64",
       "label": "OpenAI/DeepSeek 真实端点联调（chat + 复盘/优化依赖）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "LLM 真实化的范围如何界定？review/optimization 是否要走 LLM？",
+          "answer": "provider.go 已是真实 OpenAI/DeepSeek 兼容客户端（net/http，零依赖），/api/agent/chat 已接线、hermetic 测试覆盖 6 项、端到端联调测试已加；README 过时 stub 表述已订正。但全仓唯一 .Chat( 调用在 router.go:143，/api/stock/review 与 /api/portfolio/optimization 走的是 datasource 链而非 LLM——与节点 label「复盘/优化依赖」不符。当前结论：LLM = 独立对话 copilot，复盘/优化为数据源驱动。若要把复盘/优化改为 LLM 增强，属新增切片，需单独立项。",
+          "note": ""
+        }
+      ],
       "notes": "provider.go 已有 openAICompatibleClient（OpenAI/DeepSeek 兼容 /chat/completions），但 app/README 仍写「stub，待接真实端点」，且未真实联调过。",
       "layer": "plan"
     },
@@ -414,11 +421,17 @@
       "id": "1-3-2",
       "uid": "01a140402713-d2bfee7a6f",
       "label": "key 存储与掩码回写安全复核（router.go:217）",
-      "status": "pending",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-3",
       "children": [],
-      "decisions": [],
+      "decisions": [
+        {
+          "q": "key 存储与掩码回写的结论与剩余风险？",
+          "answer": "安全复核：GET /api/config 只回 api_key_set(bool) 不回显明文；PUT 对空/掩码/******** 保留原值（掩码回写正确）；错误串不含 key；config.json 0600 明文落盘为已知风险（1-5-4 D2）。新增 fail-closed：enabled 但最终无 key → 400，避免静默回退 unconfigured 却显示「已启用」（已加测试）。建议 follow-up：引入 ZW_LLM_API_KEY 等 env 覆盖以减少明文落盘，待 zj 拍板。",
+          "note": ""
+        }
+      ],
       "notes": "",
       "layer": "plan"
     },
@@ -645,7 +658,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-16 16:41:52",
+    "updated": "2026-10-16 17:01:47",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
