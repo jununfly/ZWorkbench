@@ -50,11 +50,10 @@ func NewRemoteSource(cfg datasource.Config) RemoteSource {
 func (s RemoteSource) Name() string { return s.remote.Name }
 
 func (s RemoteSource) Fetch(ctx context.Context) (*ReviewDigest, error) {
-	var b ReviewDigest
-	if err := s.remote.FetchJSON(ctx, &b); err != nil {
-		return nil, err
-	}
-	return &b, nil
+	// 1-2-3：研报列表(reportapi) + 盘面读数(push2) 组装复盘；主观字段保留本地种子并标注。
+	// 未启用时 FetchEastmoney 内部返回 ErrUnconfigured（语义=未配置），
+	// 回退链据此静默回退本地快照。
+	return FetchEastmoney(ctx, s.remote.Cfg)
 }
 
 // FallbackChain 按序尝试源，返回首个成功；非首选源命中即标记 fallback（C36 回退语义）。

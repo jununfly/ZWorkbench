@@ -83,6 +83,65 @@ func TestDataSourceDefaultsOffAndRoundTrip(t *testing.T) {
 	}
 }
 
+// TestDataFilesRoundTrip 导入路径段（roadmap 1-2-3 D9）必须能持久化并读回，
+// 且不能被 LLM / 数据源段落的保存抹掉。
+func TestDataFilesRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("ZW_CONFIG", dir+"/config.json")
+	c := &Config{}
+	if p := c.MasteryPath(); p != "" {
+		t.Fatalf("默认导入路径应为空（未导入），得到 %q", p)
+	}
+	c.SetDataFiles(DataFiles{MasteryPath: dir + "/mastery.json"})
+	if err := c.SaveDataSource(); err != nil {
+		t.Fatalf("SaveDataSource 失败：%v", err)
+	}
+	var c2 Config
+	c2.LoadDataSource()
+	if got := c2.MasteryPath(); got != dir+"/mastery.json" {
+		t.Fatalf("导入路径往返不一致，得到 %q", got)
+	}
+}
+
+// TestMasteryPathEnvOverride ZW_MASTERY_PATH 覆盖 config.json（与数据源同覆盖顺序）。
+func TestMasteryPathEnvOverride(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("ZW_CONFIG", dir+"/config.json")
+	c := &Config{}
+	c.SetDataFiles(DataFiles{MasteryPath: dir + "/from-file.json"})
+	if err := c.SaveDataSource(); err != nil {
+		t.Fatalf("SaveDataSource 失败：%v", err)
+	}
+	t.Setenv("ZW_MASTERY_PATH", dir+"/from-env.json")
+	var c2 Config
+	c2.LoadDataSource()
+	if got := c2.MasteryPath(); got != dir+"/from-env.json" {
+		t.Fatalf("ZW_MASTERY_PATH 应覆盖 config.json，得到 %q", got)
+	}
+}
+
+// TestSaveLLMDoesNotWipeDataFiles 三段共写：存 LLM 不能把导入路径抹掉。
+func TestSaveLLMDoesNotWipeDataFiles(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("ZW_CONFIG", dir+"/config.json")
+	c := &Config{}
+	c.SetDataFiles(DataFiles{MasteryPath: dir + "/mastery.json"})
+	if err := c.SaveDataSource(); err != nil {
+		t.Fatalf("SaveDataSource 失败：%v", err)
+	}
+	c2 := &Config{}
+	c2.LoadDataSource()
+	c2.SetLLM(LLMConfig{Enabled: true, Model: "deepseek"})
+	if err := c2.SaveLLM(); err != nil {
+		t.Fatalf("SaveLLM 失败：%v", err)
+	}
+	var c3 Config
+	c3.LoadDataSource()
+	if got := c3.MasteryPath(); got != dir+"/mastery.json" {
+		t.Fatalf("保存 LLM 把导入路径抹掉了，得到 %q", got)
+	}
+}
+
 func TestSaveDataSourceDoesNotWipeLLM(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("ZW_CONFIG", dir+"/config.json")

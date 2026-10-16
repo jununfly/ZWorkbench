@@ -123,7 +123,8 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 镜像 ES 游资心法与AI Copilot（C19）—— C36 多源适配/回退
 	mux.HandleFunc("/api/mastery", auth(func(w http.ResponseWriter, r *http.Request) {
-		chain := mastery.NewDefaultChain(cfg.DataSource())
+		// 导入文件（本地可导入数据集）优先，见 roadmap 1-2-3 D9。
+		chain := mastery.NewDefaultChain(cfg.DataSource(), cfg.MasteryPath())
 		body, err := chain.Fetch(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadGateway)
