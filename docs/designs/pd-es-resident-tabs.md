@@ -7,7 +7,7 @@ decided-at: 2026-10-15
 references:
   - docs/designs/zw-go-electron-architecture.md   # 技术接线（进程模型/包结构/spawn），本文件不重复
   - docs/zj-adr/0015-go-full-pivot-supersedes-0013.md  # 运行时边界重新划界
-  # 历史计划草稿 docs/plans/zw-electron-es-tab-plan-2026-10-13.md 与 roadmap-zw-electron-es-tab.json 已于 1-6-1 退役删除；C01–C41 对照底稿 comparison-easy-stock-vs-zworkbench-2026-10-13.md 移至仓库根目录保留。结论沉淀至本文件 + zw-go-electron-architecture.md + ADR 0015/0016。
+  - docs/references/zw-vs-es-capability-matrix.md  # C01–C41 能力对照 canonical 来源（原 docs/plans 底稿经 1-6-1 退役、根目录临时稿经治理沉淀为长期 reference）
 ---
 
 # ES 常驻 Tab 产品内容设计
@@ -102,7 +102,7 @@ references:
 | `zw-go-electron-architecture.md` | 技术架构（进程模型、包结构、spawn、token、构建） | 本文件引用其 §3，不重复 HOW |
 | `ADR 0015` | 运行时边界重新划界（supersede 0013） | 偏离边界的权威来源 |
 | `zw-electron-es-tab-plan-2026-10-13.md`（已退役） | 历史草稿（决策沿革） | 已于 1-6-1 退役删除；结论已迁移至本文件 + zw-go-electron-architecture.md + ADR 0015/0016 |
-| `comparison-easy-stock-vs-zworkbench-2026-10-13.md`（已移至根目录） | C01–C41 能力对照 | 对照底稿已移至仓库根目录保留；C 码语义以本文件 §4 表格为准 |
+| `docs/references/zw-vs-es-capability-matrix.md` | C01–C41 能力对照（canonical） | C01–C41 对照的长期 reference 来源；C 码语义以本文件 §4 表格为准 |
 
 ## 10. 状态与后续
 

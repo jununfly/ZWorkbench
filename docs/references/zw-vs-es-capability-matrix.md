@@ -1,10 +1,16 @@
-# ZWorkbench vs easy-stock 全面对比（带引用序号）
+---
+doc-kind: reference
+authority: supporting
+---
+
+# ZWorkbench vs easy-stock 能力对照矩阵（C01–C41）
 
 > 缩写：ZW = ZWorkbench（本仓库本地项目）；ES = easy-stock（github.com/jundizhou/easy-stock）。
 > 表格格式：`| # | 对比点 | ZW（有/无） | ES（有/无） | 主要差异 |`，对话引用用 `C01`…`C41`。
 > 证据来源：ZW 取自仓库 `README.md` / `AGENTS.md` / `pyproject.toml` 及架构 ADR；ES 取自其 GitHub README 与「AI 原生架构」说明。
 > **核心前提**：两者定位完全不同 —— ZW 是「AI 编码任务的 durable 证据 / 编排工作台」，ES 是「A 股 AI 智能投研桌面工作台」。以下异同点均基于此底色。
-> ⚠️ 治理提示：本文件原属「退役态」`docs/plans/`（已按 1-6-1 清退，目录已删），现留于仓库根目录作为 C01–C41 能力对照底稿；其结论已沉淀至 `docs/designs/pd-es-resident-tabs.md` §4 + ADR 0015/0016，本文件待后续治理决定（移入 `docs/designs` 或退役）。
+
+本文件为 C01–C41 能力对照的**长期 reference（canonical 来源）**。其战略结论（ZW 与 ES 正交定位、Go 全 pivot + B2 提前）已沉淀于 `docs/designs/pd-es-resident-tabs.md` §4 与 `docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`、`docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md`，本文件不再复述结论、只保留能力对照事实。
 
 ## 一、定位与产品域
 
