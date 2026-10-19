@@ -19,11 +19,13 @@ references:
 
 ## 0. 摘要
 
-把 easy-stock（ES）的 A 股投研**产品内容**作为 ZWorkbench 工作台的**常驻 tab** 之一，以加速 ZW 客户端 0→1 可用性；内容以**镜像 ES 的 Go/React 脚手架**方式落地（零翻译），随 `1-5` 切片全部交付。ZW 的差异化（可复核编码证据 C26/C28）保留为独立 `coding-evidence` tab，不被 ES 内容稀释。
+把 easy-stock（ES）的 A 股投研**产品内容**作为 ZWorkbench 工作台的**常驻 tab** 之一，以加速 ZW 客户端 0→1 可用性；内容以**镜像 ES 的 Go/React 脚手架**方式落地（零翻译），随 `1-5` 切片全部交付。ZW 的可复核编码证据（C26/C28）保留为独立 `coding-evidence` tab。
+
+> 定位订正（2026-10-19，zj 拍板）：ZW = **个人综合工作台**——编码证据与 ES 投研、LLM 对话等是并列能力面，多域并列是预期形态，不存在「稀释」问题。本文件原「证据核心不被稀释」表述基于旧定位（ZW=AI 编码工作台），已失效。
 
 ## 1. 背景与动机
 
-- **正交定位（C01/C03）**：ZW = AI 编码任务的 durable 证据/编排；ES = A 股 AI 投研桌面工作台。本设计只把 ES 的**产品内容**作为 ZW 工作台的常驻 tab，**不合并两项目核心逻辑**。
+- **正交定位（C01/C03）**：ZW = 个人综合工作台（2026-10-19 订正；编码证据、A 股投研、LLM 对话等能力面并列常驻 tab，旧口径「AI 编码任务的 durable 证据/编排」为历史表述）；ES = A 股 AI 投研桌面工作台。本设计只把 ES 的**产品内容**作为 ZW 工作台的常驻 tab，**不合并两项目核心逻辑**。
 - **加速 0→1（动机①）**：原型阶段想快速 go through 桌面可用性；ES 已是成熟的 Go+Electron+React 投研工作台，镜像其脚手架比自研快得多。
 - **对接 LLM Provider（动机②）**：现成本地 Agent 服务范式（OpenAI/DeepSeek Responses API），对应 ZW 的 Provider 层。
 - **吸纳作起点再改形（动机③）**：stock 只是 ZW 多 tab 之一；先拿到 ES 产品能力，再逐步改写吸收。
@@ -84,11 +86,11 @@ references:
 - `coding-evidence` tab 走 **B2**（ADR 0016）：C26/C28 已用 Go 重写进 `internal/data` + `internal/evidence`，零 Python 进程；`src/zworkbench`（Python 实现）仅保留为 git 历史 / 参考，不再被 `app/` 接线。
 - 研究类 tab 的结论可追溯、可复核，回放/审计口径统一进 owner。
 
-## 7. 产品定位护栏（C01/C03）
+## 7. 产品定位（2026-10-19 订正，原「定位护栏」）
 
-- ES 内容 tab 明确为「**工作台常驻 tab**」，不是 ZW 核心逻辑。
-- ZW 的核心差异化（可复核编码证据 C26/C28）由 `coding-evidence` 承载，不被 ES 投研内容稀释。
-- 加 A 股扩展不模糊 ZW 边界：证据核心仍是第一公民。
+- **现行定位（zj 拍板）**：ZW = **个人综合工作台**。编码证据（C26/C28，`coding-evidence` tab）与 ES 投研内容（各常驻 tab）是**并列能力面**，不存在「谁稀释谁」。
+- 原护栏三条（ES=常驻 tab / 证据核心第一公民 / 不被稀释）基于旧定位「ZW=AI 编码工作台」，随定位订正失效；历史原文见本文件 git 历史与路线图 1-7 决策记录。
+- 边界仍然成立的是**工程隔离**事实：各能力域包级隔离（`internal/datasource` 与 `internal/evidence` 零耦合），能力并列不等于逻辑耦合。
 
 ## 8. 许可证（PolyForm NC）
 
