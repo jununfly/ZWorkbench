@@ -7,9 +7,7 @@ decided-at: 2026-10-15
 references:
   - docs/designs/zw-go-electron-architecture.md   # 技术接线（进程模型/包结构/spawn），本文件不重复
   - docs/zj-adr/0015-go-full-pivot-supersedes-0013.md  # 运行时边界重新划界
-  - docs/plans/zw-electron-es-tab-plan-2026-10-13.md    # 历史草稿（决策沿革，勿作新工作依据）
-  - docs/plans/comparison-easy-stock-vs-zworkbench-2026-10-13.md  # C01–C41 能力对照
-  - docs/plans/roadmap-zw-electron-es-tab.json     # 节点 1-3（Q1–Q4 决议）、1-5（落地切片）
+  # 历史计划草稿 docs/plans/zw-electron-es-tab-plan-2026-10-13.md 与 roadmap-zw-electron-es-tab.json 已于 1-6-1 退役删除；C01–C41 对照底稿 comparison-easy-stock-vs-zworkbench-2026-10-13.md 移至仓库根目录保留。结论沉淀至本文件 + zw-go-electron-architecture.md + ADR 0015/0016。
 ---
 
 # ES 常驻 Tab 产品内容设计
@@ -67,11 +65,11 @@ references:
 | C10 | 持仓管理/组合巡检（多持仓方案、AI 巡检、四维评分：逻辑35/结构25/风险25/策略15） | `portfolio-inspection` | 持仓巡检 | 1-5-7-4 | ✅ completed |
 | C11 | AI 持仓优化/配仓（候选筛选、投资比较、程序配仓、原/目标同次复评） | `portfolio-optimization` | AI持仓优化 | 1-5-7-5 | ✅ completed |
 | C19 | 知识库/游资心法（游资心法库、人物资料、Hermes 深度研读） | `trading-mastery` | 游资心法 | 1-5-7-6 | ✅ completed |
-| C26 | 编码证据核心（CompositionOwner 单一 owner、safe-stop C28） | `coding-evidence` | 编码证据 | 1-5-6（B1 sidecar 接 Python 核心） | ✅ completed |
+| C26 | 编码证据核心（CompositionOwner 单一 owner、safe-stop C28） | `coding-evidence` | 编码证据 | 1-5-6（B2：Go 重写 C26/C28，零 Python 进程，见 ADR 0016） | ✅ completed |
 | — | LLM Provider 配置 / 设置 | `settings` | 设置 / LLM | 本工作台 | ✅ 内建 |
 | — | 通用对话（Agent 入口） | `chat` | 对话 | 本工作台 | ✅ 内建 |
 
-> 七个 ES 投研 tab（C07/C08/C09/C12/C10/C11/C19）对应路线图 `1-5-7` 的 6 个切片（C09/C08/C12/C10/C11/C19 各一微切片；C07 在 `1-5-3`）。`coding-evidence` 走 B1 sidecar 接 Python 核心，保留 ZW 差异化。
+> 七个 ES 投研 tab（C07/C08/C09/C12/C10/C11/C19）对应路线图 `1-5-7` 的 6 个切片（C09/C08/C12/C10/C11/C19 各一微切片；C07 在 `1-5-3`）。`coding-evidence` 走 B2（ADR 0016）：C26/C28 用 Go 重写进 `internal/data` + `internal/evidence`，零 Python 进程，保留 ZW 差异化。
 
 ## 5. 内容接入范式
 
@@ -83,7 +81,7 @@ references:
 ## 6. 证据所有权（C26）
 
 - ES 研究结论**接入 CompositionOwner 单一 durable owner**（C26），与编码任务证据并存、不冲突（C27）。
-- `coding-evidence` tab 走 **B1 sidecar**：Go 经 loopback 调 Python 核心的证据 API（C26/C28）；删掉不影响主工作台热路径。
+- `coding-evidence` tab 走 **B2**（ADR 0016）：C26/C28 已用 Go 重写进 `internal/data` + `internal/evidence`，零 Python 进程；`src/zworkbench`（Python 实现）仅保留为 git 历史 / 参考，不再被 `app/` 接线。
 - 研究类 tab 的结论可追溯、可复核，回放/审计口径统一进 owner。
 
 ## 7. 产品定位护栏（C01/C03）
@@ -103,8 +101,8 @@ references:
 |---|---|---|
 | `zw-go-electron-architecture.md` | 技术架构（进程模型、包结构、spawn、token、构建） | 本文件引用其 §3，不重复 HOW |
 | `ADR 0015` | 运行时边界重新划界（supersede 0013） | 偏离边界的权威来源 |
-| `zw-electron-es-tab-plan-2026-10-13.md` | 历史草稿（决策沿革） | 结论已迁移至本文件 + 技术架构文档 + ADR 0015；勿作新工作依据 |
-| `comparison-easy-stock-vs-zworkbench-2026-10-13.md` | C01–C41 能力对照 | C 码语义来源 |
+| `zw-electron-es-tab-plan-2026-10-13.md`（已退役） | 历史草稿（决策沿革） | 已于 1-6-1 退役删除；结论已迁移至本文件 + zw-go-electron-architecture.md + ADR 0015/0016 |
+| `comparison-easy-stock-vs-zworkbench-2026-10-13.md`（已移至根目录） | C01–C41 能力对照 | 对照底稿已移至仓库根目录保留；C 码语义以本文件 §4 表格为准 |
 
 ## 10. 状态与后续
 
