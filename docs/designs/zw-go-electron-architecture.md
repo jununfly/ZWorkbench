@@ -1,7 +1,7 @@
 # ZWorkbench → Go + Electron + React 工作台架构（提案）
 
 > 状态：**已接受（2026-10-14 zj 选 B：Go 全 pivot）** ｜ 原提案待评审态已关闭
-> 作者：zjj ｜ 参照：`docs/zj-adr/0013-desktop-shell-node-dependency-deviation.md`、`docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`、`docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md`（计划草稿与旧路线图 `docs/plans/` 已于 1-6-1 退役删除；C01–C41 对照底稿 comparison-easy-stock-vs-zworkbench-2026-10-13.md 移至仓库根目录）。
+> 作者：zjj ｜ 参照：`docs/zj-adr/0013-desktop-shell-node-dependency-deviation.md`、`docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`、`docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md`（计划草稿与旧路线图 `docs/plans/` 已于 1-6-1 退役删除；C01–C41 对照已沉淀为 `docs/references/zw-vs-es-capability-matrix.md`）。
 > ✅ **zj 2026-10-14 已接受本提案（B 方向）**：推翻 ADR 0013 前提，由 **ADR 0015** `supersedes` 0013 并重新界定偏离边界。`desktop/` + Python ui-host 壳转入 **retired**（保留 git 历史，停止新开发）。路线图节点 `1-5` 承载落地切片。
 
 > 🔴 **B2 已提前（2026-10-14，ADR 0016）**：coding-evidence（C26/C28）已用 Go 重写进 `app/`，B1 sidecar 路线撤销，零 Python 进程；下文 §3.1/§4 的 sidecar 表述已据此订正。
