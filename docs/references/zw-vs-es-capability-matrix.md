@@ -8,7 +8,7 @@ authority: supporting
 > 缩写：ZW = ZWorkbench（本仓库本地项目）；ES = easy-stock（github.com/jundizhou/easy-stock）。
 > 表格格式：`| # | 对比点 | ZW（有/无） | ES（有/无） | 主要差异 |`，对话引用用 `C01`…`C41`。
 > 证据来源：ZW 取自仓库 `README.md` / `AGENTS.md` / `pyproject.toml` 及架构 ADR；ES 取自其 GitHub README 与「AI 原生架构」说明。
-> **核心前提**：两者定位完全不同 —— ZW 是「AI 编码任务的 durable 证据 / 编排工作台」，ES 是「A 股 AI 智能投研桌面工作台」。以下异同点均基于此底色。
+> **核心前提**（2026-10-19 定位订正后）：ZW 是「个人综合工作台」——AI 编码证据、A 股投研、LLM 对话 agent 等能力面并列常驻 tab；ES 是「A 股 AI 智能投研桌面工作台」。旧口径「ZW=AI 编码任务的 durable 证据/编排工作台」为 C01 对照时的历史底色，见 C01 行注。
 
 本文件为 C01–C41 能力对照的**长期 reference（canonical 来源）**。其战略结论（ZW 与 ES 正交定位、Go 全 pivot + B2 提前）已沉淀于 `docs/designs/pd-es-resident-tabs.md` §4 与 `docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`、`docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md`，本文件不再复述结论、只保留能力对照事实。
 
@@ -16,7 +16,7 @@ authority: supporting
 
 | # | 对比点 | ZW（有/无） | ES（有/无） | 主要差异 |
 |---|---|---|---|---|
-| C01 | 产品定位 | 有 | 有 | ZW=面向个人开发者的本地优先 AI 编码工作台（durable 证据/编排）；ES=A 股行情分析+AI 智能投研桌面工作台 |
+| C01 | 产品定位 | 有 | 有 | ZW=个人综合工作台（本地优先；编码证据/投研/对话等能力面并列常驻 tab，2026-10-19 订正；旧口径「AI 编码工作台」为对照时历史底色）；ES=A 股行情分析+AI 智能投研桌面工作台 |
 | C02 | 目标用户 | 有 | 有 | ZW=个人资深开发者/小团队；ES=A 股个人投资者/研究员 |
 | C03 | 面向业务领域 | 无（通用） | 有（A 股） | ZW 不绑定任何金融/垂直市场，处理代码仓库；ES 专注 A 股语境（题材/连板/情绪） |
 | C04 | 桌面安装包 | 无 | 有 | ZW 仅 CLI + 本地 loopback Web UI，无安装包；ES 提供 Electron 桌面安装包（GitHub Releases，macOS/Windows） |
