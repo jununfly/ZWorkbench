@@ -1,8 +1,10 @@
 # ZWorkbench → Go + Electron + React 工作台架构（提案）
 
 > 状态：**已接受（2026-10-14 zj 选 B：Go 全 pivot）** ｜ 原提案待评审态已关闭
-> 作者：zjj ｜ 参照：`docs/plans/comparison-easy-stock-vs-zworkbench-2026-10-13.md`（`C01`…`C41`）、`docs/plans/zw-electron-es-tab-plan-2026-10-13.md`、`docs/zj-adr/0013-desktop-shell-node-dependency-deviation.md`、`docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`
+> 作者：zjj ｜ 参照：`docs/zj-adr/0013-desktop-shell-node-dependency-deviation.md`、`docs/zj-adr/0015-go-full-pivot-supersedes-0013.md`、`docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md`（计划草稿与旧路线图 `docs/plans/` 已于 1-6-1 退役删除；C01–C41 对照底稿 comparison-easy-stock-vs-zworkbench-2026-10-13.md 移至仓库根目录）。
 > ✅ **zj 2026-10-14 已接受本提案（B 方向）**：推翻 ADR 0013 前提，由 **ADR 0015** `supersedes` 0013 并重新界定偏离边界。`desktop/` + Python ui-host 壳转入 **retired**（保留 git 历史，停止新开发）。路线图节点 `1-5` 承载落地切片。
+
+> 🔴 **B2 已提前（2026-10-14，ADR 0016）**：coding-evidence（C26/C28）已用 Go 重写进 `app/`，B1 sidecar 路线撤销，零 Python 进程；下文 §3.1/§4 的 sidecar 表述已据此订正。
 
 > 🔴 **已提交事实（2026-10-14 补，影响决策）**：`desktop/` Electron 薄壳（Phase 1，ADR 0013）**已经建好并 commit+push**——`1-1-1`/`1-1-2`/`1-4`（含菜单/托盘/单实例锁/自检/截图验证）已完成，`1-1-3` electron-builder 打包 in_progress。它现在 spawn 的是 **Python `ui-host`（server-rendered HTML）**，并有一整套围绕 Python ui-host 的自检/截图 harness。
 > 推论：**"变成桌面应用、加速 0→1" 这个目标已被已提交工作达成**，不是待办。语言切换只影响 **Phase 2（吸收 ES 内容）**，不影响桌面壳本身。因此本提案若被接受，代价是**废掉已提交的 `desktop/` + Python ui-host harness**（不是从零），请据此重新权衡（见 §1.5）。
@@ -86,12 +88,12 @@ C（Rust+Tauri）始终因违背"加速 0→1"被排除。请 zj 在 §1.5 三�
 │  ├─ data       Store 接口 + SQLite 实现（证据快照）       │
 │  └─ config     端口/token/db 路径 从 env 读取             │
 └───────────────┬──────────────────────────────────────────┘
-                │ 可选本地 sidecar（同机 loopback）
+                │ 证据核心在 Go 内（B2，零 Python 进程）
 ┌───────────────▼──────────────────────────────────────────┐
-│ Python 证据核心 sidecar（src/zworkbench，既有）           │
+│ Go 证据核心（internal/data + internal/evidence，B2）      │
 │  - CompositionOwner 单一 durable owner（C26）            │
 │  - safe-stop 安全模型（C28）                             │
-│  - 仅 coding-evidence / 可复核任务调用，不进主 UI 热路径  │
+│  - 零 Python 进程；src/zworkbench 仅留 git 历史/参考     │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -99,7 +101,7 @@ C（Rust+Tauri）始终因违背"加速 0→1"被排除。请 zj 在 §1.5 三�
 
 - **主进程**：Electron 启动 → spawn `app` Go 二进制（或 dev 模式连 `go run`）→ 拿到 `PORT` + 一次性 `TOKEN` → 开窗口。
 - **Go 服务**：绑定 `127.0.0.1`，所有 API 需 `?token=` 或 `Authorization: Bearer`；WebSocket 推行情/AI 事件。
-- **Python sidecar（可选）**：Go 通过本地 HTTP 调 Python 的 `ui-host`/证据 API，用于 coding-evidence 类任务；删掉不影响主工作台。
+- **证据核心（B2）**：CompositionOwner（C26）/ safe-stop（C28）已用 Go 重写进 `internal/data` + `internal/evidence`，零 Python 进程；`src/zworkbench`（Python 实现）仅留 git 历史 / 参考，不被 `app/` 接线（见 ADR 0016）。
 
 ### 3.2 Go 包结构（骨架已实现）
 
@@ -127,18 +129,18 @@ app/
 | `stock-overview` | 行情总览 | 镜像 ES C07 |
 | `stock-research` | 个股分级研究 | 镜像 ES C08 |
 | `stock-limitup` | 超短连板 | 镜像 ES C09 |
-| `coding-evidence` | 编码证据（sidecar） | 接 Python 核心 C26 |
+| `coding-evidence` | 编码证据（B2，Go 内） | Go 重写 C26/C28（internal/evidence），零 Python 进程 |
 | `settings` | 设置 / LLM Provider | 本工作台 |
 
 新增 tab = 在注册表加一项 + 前端加组件 + Go 加对应 domain stub，符合你"微进度、小切片"的节奏。
 
 ### 3.4 LLM Provider 层
 
-`agent/provider.go` 定义统一 `Provider` 接口（Chat / Embed / 模型列表），先放 OpenAI / DeepSeek 两个 stub（返回占位响应），后续接真实 Responses API。多 provider 可切换，对应你动机②。
+`agent/provider.go` 定义统一 `Provider` 接口（Chat / Embed / 模型列表），已是真实 OpenAI / DeepSeek 兼容 `/chat/completions` 客户端（`net/http`，零外部依赖，见 1-3-1）；未配置时返回明确引导而非静默 stub。多 provider 可切换，对应你动机②。
 
 ### 3.5 本地证据底座（SQLite）
 
-`data` 层先用 `MemStore` 让骨架可离线编译运行；Phase 2 换 `SqliteStore`（纯 Go 驱动如 `modernc.org/sqlite`，无 cgo）。表设计沿用 ES 的"版本化快照 + 来源/时间"思路，并预留接入 CompositionOwner 单一 owner 的字段（见 3.1 sidecar 或后续移植）。
+`data` 层实现 `Store` 接口，零配置默认 `MemStore`（离线可跑），显式 `ZW_DB` 路径时落纯 Go `SqliteStore`（`modernc.org/sqlite`，无 cgo，见 1-5-5）；CompositionOwner 单一 owner 字段已落 `internal/evidence`（B2，见 ADR 0016 / §3.1）。
 
 ### 3.6 本地鉴权 Token
 
@@ -146,10 +148,9 @@ Electron 启动 Go 时生成一次性 `TOKEN`（随机 32 字节 hex），通过
 
 ## 4. 与现有 Python 核心的关系（两条落地路线）
 
-- **路线 B1（sidecar，推荐起步）**：Python 核心保持不动，Go 通过 loopback 调其证据 API。最快、零重写，但双运行时。
-- **路线 B2（移植）**：把 CompositionOwner / safe-stop 概念用 Go 重写进 `data` + `api` 层，单运行时统一。工作量更大，但长期更干净；可在 1→100 阶段按需做。
+- **路线 B2（已落地，见 ADR 0016）**：CompositionOwner / safe-stop 已用 Go 重写进 `internal/data` + `internal/evidence`，单运行时统一（零 Python 进程）。B1 sidecar 路线已被 ADR 0016 撤销。
 
-> 无论 B1/B2，ZW 的差异化（可复核编码证据 C26/C28）都保留，只是承载位置不同。
+> ZW 的差异化（可复核编码证据 C26/C28）保留为 Go 内的 `internal/evidence`，承载位置从 Python 迁移到 Go（B2）。
 
 ## 5. 迁移与风险
 
@@ -181,5 +182,5 @@ cd app/electron && npm install && npm start
 2. 先让骨架 `go run` + 前端 tab 壳跑通（零业务逻辑）。
 3. 第一个真 tab：镜像 ES「行情总览 C07」最小切片，验证多源适配/回退（C36）。
 4. 接真实 LLM Provider（动机②）。
-5. coding-evidence tab 走 B1 sidecar，验证与 Python 核心互通。
+5. coding-evidence tab 走 B2（Go 重写 C26/C28，零 Python 进程，见 ADR 0016）。
 6. 逐步补齐其余 tab（C08/C09/C10/C11/C12/C19），每 tab 一微切片。

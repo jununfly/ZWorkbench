@@ -258,5 +258,5 @@ Windows 构建、自动更新仍不在本切片。
 - **多 tab 工作台**：`internal/domain/tabs.go` 是 tab 注册表，stock 只是其中之一。
 - **本地鉴权**：Electron 启动生成一次性 token，经 URL query 注入前端，Go 中间件校验。
 - **LLM Provider 层**：`internal/agent` 统一接口，已是**真实** OpenAI / DeepSeek 兼容 `/chat/completions` 客户端（`net/http`，零外部依赖，见 1-3-1）。未配置时返回明确引导而非静默 stub；「设置 / LLM」页可填 BaseURL / API Key / Model 并启用，配置即时生效（每次请求读取最新 `cfg.LLM()`）。
-- **证据底座**：`internal/data` 先用 MemStore，Phase 2 换纯 Go SQLite 驱动。
-- **Python 核心**：既有 `src/zworkbench`（CompositionOwner 证据层）可作可选 sidecar，详见架构文档 §4。
+- **证据底座**：`internal/data` 实现 `Store` 接口；零配置默认 `MemStore`（离线可跑），显式 `ZW_DB` 路径时落纯 Go `SqliteStore`（`modernc.org/sqlite`，无 cgo，见 `1-5-5`）；evidence owner 同步（见 `1-4` / `1-5-6-3`）。
+- **Python 核心**：既有 `src/zworkbench`（C26/C28 的 Python 实现）按 ADR 0016 保留为 git 历史 / 参考物，**不再被 `app/` 以任何方式接线**（无 sidecar、无 loopback、无 import）；证据核心已用 Go 重写进 `internal/data` + `internal/evidence`，零 Python 进程。

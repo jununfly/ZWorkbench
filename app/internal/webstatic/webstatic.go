@@ -1,6 +1,6 @@
 // Package webstatic 托管前端构建产物（app/web/dist）。
 //
-// 1-1-3 决策（见路线图 docs/plans/roadmap-zw-electron-es-tab.json 节点 1-1-3）：
+// 1-1-3 决策（见活跃路线图 app/roadmap-zw-go-1to100.json 节点 1-1-3）：
 // Go 服务在打包后必须自己托管前端，否则 Electron 窗口加载 http://127.0.0.1:<port>/
 // 只会拿到 404（实测：打包前 GET / -> 404 page not found）。
 //

@@ -15,8 +15,8 @@ type Snapshot struct {
 	CompositionOwner string `json:"composition_owner"`
 }
 
-// Store 是本地证据底座接口。骨架先用 MemStore（离线可跑），
-// Phase 2 换 SqliteStore（纯 Go 驱动如 modernc.org/sqlite，无 cgo）。
+// Store 是本地证据底座接口。零配置默认 MemStore（离线可跑），
+// 显式 ZW_DB 路径时落 SqliteStore（纯 Go 驱动 modernc.org/sqlite，无 cgo，见 1-5-5）。
 type Store interface {
 	Save(s Snapshot) error
 	Get(id string) (Snapshot, bool)
