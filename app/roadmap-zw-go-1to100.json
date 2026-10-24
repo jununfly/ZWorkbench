@@ -1,6 +1,6 @@
 {
   "title": "ZW Go/Electron 工作台 1→100 收尾",
-  "description": "来源：docs/plans/zw-electron-es-tab-plan-2026-10-13.md §8.5/§9.3 + app/README 已知限制 + 代码事实。范围＝app/（Go + Electron + React）闭环后的未完成项；不含 Python 侧 src/zworkbench 遗留。",
+  "description": "来源：原 plan 草稿 docs/plans/zw-electron-es-tab-plan-2026-10-13.md（已于节点 1-6-1 随 docs/plans 退役删除；其结论已沉淀进 docs/designs/* 与 docs/zj-adr/*，C01–C41 能力对照 canonical 见 docs/references/zw-vs-es-capability-matrix.md） + app/README 已知限制 + 代码事实。范围＝app/（Go + Electron + React）闭环后的未完成项；不含 Python 侧 src/zworkbench 遗留。",
   "version": 1,
   "nodes": {
     "1": {

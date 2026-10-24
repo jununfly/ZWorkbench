@@ -23,7 +23,7 @@ authority: temporary
   - `draft`：Human + 主力 AI 第一遍（上下文 + 第一遍 scope 草案 + 待讨论问题）。
   - `agent-view`：另一 Agent 读后写入观点。
   - `conclusion`：据讨论过程生成结论（通常指向 PRD/ADR 条款）。
-  - `delete`：结论沉淀为权威页（docs/prds、docs/zj-adr）后，删除本临时文档。
+  - `delete`：结论沉淀为权威页（docs/zj-adr、docs/designs、docs/references）后，删除本临时文档。`docs/prds/` 已于 1-6-1 退役删除，不再作为沉淀目标。
 - 临时文档**不是长期 wiki**；不在此放实施过程、评测结论或路线图状态，只放：待讨论问题 + 上下文 + Agent 观点 + 结论草稿。
 - 沿用 `docs/plans/` 退役纪律：结论沉淀后本目录对应文件必须删除，不长期留存。
 - 文档内所有未实现 / 无 owner-backed 证据的能力标 `target` / `unknown`，不把评测脚手架当产品能力。
