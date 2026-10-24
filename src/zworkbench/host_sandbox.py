@@ -1,6 +1,7 @@
-"""Host sandbox boundary attestation for the coding Worker path (node 1-8-1).
+"""Host sandbox boundary attestation for the coding Worker path (ADR 0010 Amendment).
 
-The roadmap node 1-8-1 asks for a host sandbox as a real pre-condition for
+ADR 0010 (Amendment on the coding Worker host sandbox pre-condition; formerly
+roadmap 1-8-1) records that a host sandbox is a real pre-condition for
 Workspace writes performed by the coding Worker.  ADR 0008 (#2) requires that a
 missing enforcer refuse to start rather than degrade to a bare run.  ADR 0010
 established that OS-level wrapping (seatbelt / unshare) is not viable on the

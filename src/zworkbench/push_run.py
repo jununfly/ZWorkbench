@@ -3,7 +3,7 @@
 The :class:`PushRunOrchestrator` connects the durable
 :class:`~zworkbench.composition.CompositionOwner` to the stateless
 :class:`~zworkbench.push_seam.PushSeam`.  It is the "orchestrator 接 push seam"
-seam for roadmap 1-10-5: a known local commit is pushed to a named remote behind
+seam (ADR 0009 write boundary; formerly roadmap 1-10-5): a known local commit is pushed to a named remote behind
 the S4 gate.
 
 The orchestrator opens the owner, ensures an *independent* push run exists

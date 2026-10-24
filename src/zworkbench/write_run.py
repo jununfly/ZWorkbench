@@ -2,7 +2,7 @@
 
 The :class:`WriteRunOrchestrator` is the owner-backed driver that connects the
 durable :class:`CompositionOwner` to the stateless :class:`WriteSeam`.  It is
-the "orchestrator 接 write seam" seam for roadmap 1-7-6: a Codex-generated
+the "orchestrator 接 write seam" seam (ADR 0009 write boundary; formerly roadmap 1-7-6): a Codex-generated
 unified diff is applied to an isolated worktree and committed locally.  Push is
 never performed here — it is the separate S4 gate and stays off by default.
 

@@ -264,9 +264,9 @@ class CodexAppServerAdapter:
         # flag (its -c is key=value only); it reads $CODEX_HOME/config.toml. So we
         # must place the provider config there. Without this, a custom
         # model_provider is unknown to Codex and the turn fails closed
-        # (CodexProtocolError -> safe_stopped). See roadmap node 1-9-1.
+        # (CodexProtocolError -> safe_stopped). See ADR 0008 (host enforcement fail-closed).
         self.provider_config_path = Path(provider_config_path).expanduser().resolve() if provider_config_path else None
-        # ADR 0008 host enforcement (roadmap 1-9-2 / 1-9-3 direction b): when set,
+        # ADR 0008 host enforcement; active read-path boundary per ADR 0010: when set,
         # ZWorkbench's intent is to be the single sandbox authority. In practice
         # (1-9-3 direction b) this means command() prepends the
         # --dangerously-bypass-approvals-and-sandbox flag and ZWorkbench does NOT
@@ -304,7 +304,7 @@ class CodexAppServerAdapter:
         # Stage the real Provider's config into CODEX_HOME so Codex can discover
         # [model_providers.<name>]. Codex reads $CODEX_HOME/config.toml; it has no
         # --config <file> flag. Keeps CODEX_HOME case-local (state isolation) while
-        # still giving Codex the provider config + inline token. See node 1-9-1.
+        # still giving Codex the provider config + inline token. See ADR 0008 (host enforcement fail-closed).
         if self.provider_config_path is not None:
             self._stage_provider_config()
         environment = self._build_environment()
@@ -369,7 +369,7 @@ class CodexAppServerAdapter:
 
         command = [str(self.executable)]
         if self.host_enforcement:
-            # Roadmap node 1-9-2 / 1-9-3 direction (b): make ZWorkbench the single
+            # ADR 0010 (active read-path boundary, formerly roadmap 1-9-2/1-9-3 direction b): make ZWorkbench the single
             # sandbox authority in intent. This global flag tells Codex it is
             # externally sandboxed so it should not re-seatbelt its own shell
             # children via ``sandbox-exec`` (which fails with EPERM when the Codex
@@ -395,7 +395,7 @@ class CodexAppServerAdapter:
 
         When ``host_enforcement`` is set, :meth:`command` already prepends the
         ``--dangerously-bypass-approvals-and-sandbox`` flag. ZWorkbench does NOT
-        wrap Codex in a macOS seatbelt (roadmap 1-9-3 direction b): macOS forbids
+        wrap Codex in a macOS seatbelt (ADR 0010, formerly roadmap 1-9-3 direction b): macOS forbids
         nested ``sandbox_apply``, so wrapping Codex — which then runs its own
         internal ``sandbox-exec`` around shell tools — always fails with EPERM and
         blocks workspace reads. Instead Codex applies its own sandbox internally
@@ -403,7 +403,7 @@ class CodexAppServerAdapter:
         the boundary. This diverges from ADR 0008's "ZWorkbench is the single
         sandbox authority" wrap model, but is the documented, accepted decision;
         the residual risk (no in-process refuse-to-start if no enforcer applies)
-        is tracked in ADR 0008 / roadmap 1-9-3.
+        is tracked in ADR 0008 / ADR 0010.
         """
 
         command = self.command()

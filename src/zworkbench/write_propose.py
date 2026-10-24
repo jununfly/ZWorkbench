@@ -1,6 +1,6 @@
 """Single-session write entry helpers (`write propose`).
 
-Motivation (roadmap 1-10-6 §9.2): the measured product path spent one extra
+Motivation (ADR 0009 write boundary; formerly roadmap 1-10-6 §9.2): the measured product path spent one extra
 full LLM session (`zworkbench run` read-only analysis) BEFORE the writing
 session.  This module merges the two phases into ONE ``codex exec`` session
 that writes directly in a disposable worktree; the resulting unified diff is
