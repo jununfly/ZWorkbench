@@ -129,7 +129,7 @@ def _parser() -> argparse.ArgumentParser:
             "make ZWorkbench the single sandbox authority (ADR 0008 intent): "
             "launch Codex with --dangerously-bypass-approvals-and-sandbox so it "
             "does not re-seatbelt its own shell children. ZWorkbench does NOT "
-            "wrap Codex in a macOS seatbelt (roadmap 1-9-3 direction b: nested "
+            "wrap Codex in a macOS seatbelt (ADR 0010, formerly roadmap 1-9-3 direction b: nested "
             "sandbox_apply fails with EPERM). Read-only enforcement then relies "
             "on Codex's own sandbox or the external host seatbelt."
         ),
@@ -142,7 +142,7 @@ def _parser() -> argparse.ArgumentParser:
             "explicitly consent to a real Provider egress/billing path. Required "
             "when --provider-profile is set: the controlled gate that keeps the "
             "loopback/fake baseline from silently reaching a real Provider "
-            "(roadmap node 1-1-4). Without it, a real profile is denied."
+            "(ADR 0008 host enforcement; active read-path boundary per ADR 0010). Without it, a real profile is denied."
         ),
     )
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
@@ -460,7 +460,7 @@ def _parser() -> argparse.ArgumentParser:
         help=(
             "explicitly consent to a real Provider egress/billing path. Required "
             "when --provider-profile is set; keeps the loopback/fake baseline "
-            "from silently reaching a real Provider (roadmap node 1-1-4). Without "
+            "from silently reaching a real Provider (ADR 0008 host enforcement; ADR 0010 active read-path boundary). Without "
             "it, a real profile is denied."
         ),
     )
@@ -496,7 +496,7 @@ def _parser() -> argparse.ArgumentParser:
     ui_build.set_defaults(handler=_ui_build_command)
 
     # ------------------------------------------------------------------
-    # doctor — the read-only first-run self-check (roadmap 1-9-2).  It
+    # doctor — the read-only first-run self-check.  It
     # probes codex executability, the case directory conventions and
     # loopback provider reachability WITHOUT writing anything: no state/
     # events/codex-home creation, no owner DB, no run.  Non-loopback
@@ -624,7 +624,7 @@ def _denied_payload(
 
 
 def _run_config(args: argparse.Namespace, database: Optional[Path] = None) -> LocalReadOnlyRunConfig:
-    # Zero-config first-run defaults (roadmap 1-9-1): omit --case-root/--workspace/
+    # Zero-config first-run defaults: omit --case-root/--workspace/
     # --codex and they are derived instead of rejected. case-root falls back to the
     # current directory, workspace to case-root, and codex to a PATH probe.
     case_root = _resolve(args.case_root) if args.case_root is not None else Path.cwd()
@@ -715,7 +715,7 @@ def _owner_projection(database: Path, run_id: str) -> Dict[str, Any]:
 
 
 def _classify_run_error(exc: BaseException) -> Tuple[str, str]:
-    """Classify a run-time exception for operator-facing UX (roadmap 1-9-4).
+    """Classify a run-time exception for operator-facing UX.
 
     Returns ``(category, retry_hint)``. The category is purely informational:
     the run status stays ``failed`` (fail-closed), this only shapes the message
@@ -1562,7 +1562,7 @@ def _ui_command(args: argparse.Namespace) -> int:
 def _doctor_command(args: argparse.Namespace) -> int:
     """Read-only first-run self-check; exit 0 when ready, 1 when not.
 
-    Zero-config defaults mirror `run` (roadmap 1-9-1): case-root falls back
+    Zero-config defaults mirror `run`: case-root falls back
     to the current directory and workspace to case-root, but doctor only
     *reports* the derived paths — it never creates them.
     """

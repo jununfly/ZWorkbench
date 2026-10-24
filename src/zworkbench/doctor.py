@@ -1,4 +1,4 @@
-"""Read-only self-check doctor for first-run readiness (roadmap 1-9-2).
+"""Read-only self-check doctor for first-run readiness.
 
 The doctor answers one question — *can a zero-config ``zworkbench run``
 start on this machine right now?* — by probing three things and never
