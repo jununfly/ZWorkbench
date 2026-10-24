@@ -59,7 +59,7 @@ LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
 #: The single sanctioned source for Provider profiles. The product loads
 #: Provider configuration ONLY from this file; it must never silently fall back
 #: to ~/.codex/config.toml (which can carry the operator's real bearer token and
-#: an unintended model). Roadmap node 1-10-6 incident: a run that read the
+#: an unintended model). ADR 0009 write boundary (formerly roadmap 1-10-6 incident): a run that read the
 #: operator's real Codex config burned endpoint quota on an unauthorized model.
 PROVIDER_CONFIG_PATH = Path("/Users/bilibili/Documents/zw-providers.toml")
 _SECRET_VALUE = re.compile(
