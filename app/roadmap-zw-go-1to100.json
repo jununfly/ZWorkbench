@@ -7,7 +7,7 @@
       "id": "1",
       "uid": "01a1403fab48-81d6d2e81a",
       "label": "ZW Go/Electron 工作台 1→100 收尾",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": null,
       "children": [
@@ -130,7 +130,7 @@
       "id": "1-5",
       "uid": "01a1403fd4c6-4ef236e31e",
       "label": "分发与安装",
-      "status": "in_progress",
+      "status": "completed",
       "mode": "explore",
       "parent": "1",
       "children": [
@@ -146,7 +146,7 @@
           "note": ""
         }
       ],
-      "notes": "",
+      "notes": "分发与安装：1-5-2 Windows 打包 已完成、1-5-4 Gatekeeper 兜底 已完成；1-5-1（Developer ID+公证）、1-5-3（自动更新）经 2026-10-24 zj 拍板自用永久不购证 → won't-do 闭环。收尾图 1-1~1-8 全清零。",
       "layer": "plan",
       "rounds": 1
     },
@@ -634,8 +634,8 @@
     "1-5-1": {
       "id": "1-5-1",
       "uid": "01a1404056d5-f81843e72c",
-      "label": "Developer ID + 公证真跑（NOTARIZE 门控已在，只差证书）",
-      "status": "in_progress",
+      "label": "Developer ID + 公证——won't-do（自用永久不购证）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -649,9 +649,14 @@
           "q": "1-5-1 维持现状如何落地？",
           "answer": "维持现状：不购 Developer ID 证书（$99/年，自用非必须）、不跑公证；NOTARIZE 门控（build-desktop.sh 1b 节）保留待未来激活。节点以 in_progress(parked) 持续可见，待购证再推进",
           "note": "本切片只改 roadmap 元数据，不动项目代码/证书/README"
+        },
+        {
+          "q": "Developer ID + 公证是否永久不购证？",
+          "answer": "是：自用永久不购 Developer ID 证书（99 美元/年，自用非必须、不值得），故 1-5-1 改标 won't-do。NOTARIZE 门控（build-desktop.sh）保留不激活，未来若转分发再评估。",
+          "note": ""
         }
       ],
-      "notes": "门控 NOTARIZE=1 + DEV_ID_APP 已在 app/scripts/build-desktop.sh；README 明示「公证本身尚未真跑过（缺 Developer ID 证书，/年）」。自用场景非必须。",
+      "notes": "2026-10-24 zj 拍板：自用永久不购 Developer ID（99 美元/年），NOTARIZE 门控保留不激活。节点以 won't-do 闭环，非实现。",
       "layer": "plan",
       "rounds": 1
     },
@@ -682,8 +687,8 @@
     "1-5-3": {
       "id": "1-5-3",
       "uid": "01a140405832-0030d87323",
-      "label": "自动更新（依赖 1-5-1，同步暂停）",
-      "status": "in_progress",
+      "label": "自动更新——won't-do（硬依赖 1-5-1，同步不实现）",
+      "status": "completed",
       "mode": "explore",
       "parent": "1-5",
       "children": [],
@@ -702,9 +707,14 @@
           "q": "1-5-3 是否现在推进？（2026-10-19 稍后）",
           "answer": "否（暂时不处理）：硬依赖 1-5-1（Developer ID+公证），而 1-5-1 暂不动，故 1-5-3 同步暂停；第 2 条『批准实现』暂缓执行，待 1-5-1 解卡后再议",
           "note": "与 1-5-1 同取 in_progress(parked)：节点持续可见但不推进。composer Plan 作为规划资产保留。"
+        },
+        {
+          "q": "自动更新是否随 1-5-1 一并放弃？",
+          "answer": "是：1-5-3 硬依赖 1-5-1（Developer ID+公证），1-5-1 won't-do 则 1-5-3 一并 won't-do，不实现产品代码。composer Plan（skills-outputs/zj-composer/PLAN-1-5-3-auto-update.md）保留作规划资产。",
+          "note": ""
         }
       ],
-      "notes": "composer Plan 落 skills-outputs/zj-composer/PLAN-1-5-3-auto-update.md；provenance 快照 catalog-v1-b5a646fe81af7c3936965d13ac885e6e11c1dbb64f74e0d2d949457fc7f70890。Plan 经 validate_plan.py 校验仅余工具 bug（template_registry_invalid，validate_plan.py 硬编码 user-level 缺失路径，同类 #177 未修，issue #180）。当前状态：parked，等 1-5-1。",
+      "notes": "2026-10-24 随 1-5-1 won't-do 一并放弃；composer Plan 保留作规划资产，不落产品代码。",
       "layer": "plan"
     },
     "1-5-4": {
@@ -869,7 +879,7 @@
   },
   "metadata": {
     "created": "2026-10-15 23:47:56",
-    "updated": "2026-10-19 15:31:47",
+    "updated": "2026-10-24 16:59:04",
     "md_file": "/Users/bilibili/Documents/workspace/github/jununfly/ZWorkbench/app/ROADMAP.md"
   },
   "edges": [
