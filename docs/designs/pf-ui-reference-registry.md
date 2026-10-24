@@ -2,11 +2,13 @@
 doc-kind: design
 authority: supporting
 axis: product-feature
-status: implemented
-implementation-status: accepted
+status: retired
+implementation-status: retired
 source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.ui-reference-registry-feature
+retired-by: adr.ui-reference.retirement
+retired: 2026-10-24 (ADR 0018)
 ---
 
 # 产品功能：界面引用注册表功能本体
@@ -33,7 +35,9 @@ authority-id: design.ui-reference-registry-feature
 
 ## Status
 
-IMPLEMENTED（accepted 2026-09-13）；模块见 `src/zworkbench/ui_*.py`，验证入口见 Repository README。
+RETIRED — 2026-10-24 经 [ADR 0018](../zj-adr/0018-retire-r1-ui-reference-system.md) 项目级退役（zj，grilling Q5/Q6/Q8=B1）。原 IMPLEMENTED（accepted 2026-09-13）作为历史事实保留；实现层移除见 ADR 0018 层二。
+
+> 历史：IMPLEMENTED（accepted 2026-09-13）；模块见 `src/zworkbench/ui_*.py`，验证入口见 Repository README。
 
 ## Source map
 

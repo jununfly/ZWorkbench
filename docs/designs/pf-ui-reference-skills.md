@@ -2,11 +2,13 @@
 doc-kind: design
 authority: supporting
 axis: product-feature
-status: implemented
-implementation-status: implemented
+status: retired
+implementation-status: retired
 source-retired: prd-r2-ui-reference-skills (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r2-ui-reference-skills
 authority-id: design.ui-reference-skills
+retired-by: adr.ui-reference.retirement
+retired: 2026-10-24 (ADR 0018)
 ---
 
 # 产品功能：通用 UI 引用评审双 Skill
@@ -35,7 +37,9 @@ UI 引用评审能力如何从 ZWorkbench 产品抽取为可服务更多项目�
 
 ## Status
 
-IMPLEMENTED — 双 skill + `ui-reference-profile/v1` 校验器 + 严格运行时 evidence checker + 双 validator conformance corpus + 不依赖 ZWorkbench 的 `catalog-html` portability runtime 已落地；`ZWorkbench-specific profile` 联调标 `deferred/unknown`（不阻塞本阶段完成）。
+RETIRED — 2026-10-24 经 [ADR 0018](../../zj-adr/0018-retire-r1-ui-reference-system.md) 项目级退役（zj，grilling Q5/Q6/Q8=B1）。两个 skill 包（`skills/ui-reference-protocol`、`skills/ui-reference-runtime`）已从仓库删除，conformance 测试与 eval 资产一并移除；原 IMPLEMENTED 结论作为历史事实保留。
+
+> 历史：IMPLEMENTED — 双 skill + `ui-reference-profile/v1` 校验器 + 严格运行时 evidence checker + 双 validator conformance corpus + 不依赖 ZWorkbench 的 `catalog-html` portability runtime 已落地；`ZWorkbench-specific profile` 联调标 `deferred/unknown`（不阻塞本阶段完成）。
 
 ## Source map
 

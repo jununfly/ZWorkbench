@@ -2,11 +2,13 @@
 doc-kind: design
 authority: supporting
 axis: product-design
-status: implemented
-implementation-status: accepted
+status: retired
+implementation-status: retired
 source-retired: prd-r1-ui-reference-registry (retired 2026-10-13; content precipitated into this design entity)
 source-id: prd-r1-ui-reference-registry
 authority-id: design.ui-reference-system
+retired-by: adr.ui-reference.retirement
+retired: 2026-10-24 (ADR 0018)
 ---
 
 # 产品设计：界面引用注册表与本地评审标注系统
@@ -45,7 +47,9 @@ Human 与 AI 在评审工作台时，如何在不维护易漂移的 docs 元素�
 
 ## Status
 
-IMPLEMENTED — 2026-09-13 Human 在真实宿主验收通过（A–F 六项人工验收全过，四项缺陷已修复带回归）。实现证据见 `src/zworkbench/ui_*.py`、`tests/test_ui_*.py`；ADR 0003/0005/0006 落地宿主边界与构建身份。
+RETIRED — 2026-10-24 经 [ADR 0018](../../zj-adr/0018-retire-r1-ui-reference-system.md) 项目级退役（zj，grilling Q5/Q6/Q8=B1）。原 IMPLEMENTED 验收（2026-09-13，A–F 六项人工验收全过）作为历史事实保留，但本实体不再声称当前有效；实现层移除见 ADR 0018 层二。
+
+> 历史：IMPLEMENTED — 2026-09-13 Human 在真实宿主验收通过（A–F 六项人工验收全过，四项缺陷已修复带回归）。实现证据见 `src/zworkbench/ui_*.py`、`tests/test_ui_*.py`；ADR 0003/0005/0006 落地宿主边界与构建身份。
 
 ## Source map
 
