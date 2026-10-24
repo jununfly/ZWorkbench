@@ -11,7 +11,7 @@ authority: supporting
 
 ## 产品设计 product-design（`pd-`）
 
-- [界面引用注册表与本地评审标注系统](pd-ui-reference-system.md) — R1 评审标注协议、manifest/token/深链接/生命周期/所有权边界
+- [界面引用注册表与本地评审标注系统](pd-ui-reference-system.md) — R1 评审标注协议、manifest/token/深链接/生命周期/所有权边界（**已退役，见 ADR 0018**）
 - [可交互完整工作台 Web-UI](pd-interactive-workbench.md) — IA 方向、交互深度、宿主边界、D1–D4 决策
 - [首跑与 onboarding](pd-first-run-onboarding.md) — 零配置首跑、只读 doctor 自检、价值演示缝合
 - [ES 常驻 Tab 产品内容设计](pd-es-resident-tabs.md) — ES 内容作常驻 tab（C07–C19 镜像 Go）；Q1–Q4 决议、C32 偏离登记、证据所有权 C26、产品定位（2026-10-19 订正：ZW=个人综合工作台）
@@ -30,9 +30,9 @@ authority: supporting
 
 ## 产品功能 product-feature（`pf-`）
 
-- [界面引用注册表功能本体](pf-ui-reference-registry.md) — ref/manifest/token/生命周期/评审模式 UI 功能面
+- [界面引用注册表功能本体](pf-ui-reference-registry.md) — ref/manifest/token/生命周期/评审模式 UI 功能面（**已退役，见 ADR 0018**）
 - [完整工作台功能目录 F1–F19](pf-workbench-features.md) — 原子功能清单与交付状态
-- [通用 UI 引用评审双 Skill](pf-ui-reference-skills.md) — protocol + runtime 双 skill 能力面
+- [通用 UI 引用评审双 Skill](pf-ui-reference-skills.md) — protocol + runtime 双 skill 能力面（**已退役，见 ADR 0018**）
 
 ## 既有实现规格
 

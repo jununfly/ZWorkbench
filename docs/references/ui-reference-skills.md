@@ -5,6 +5,8 @@ authority: supporting
 
 # UI Reference skills binding
 
+> ⚠️ RETIRED 2026-10-24 ([ADR 0018](../zj-adr/0018-retire-r1-ui-reference-system.md)): the `ui-reference-protocol` and `ui-reference-runtime` packages under `skills/` and their conformance assets have been removed from the repository. The links below are historical and now dead. The product contract and extraction decision docs are also retired.
+
 ZWorkbench keeps the product contract in [R1 design](../designs/pd-ui-reference-system.md)
 and the extraction decision in [R2 design](../designs/pf-ui-reference-skills.md). The
 reusable packages are separate from both product documents:

@@ -22,7 +22,7 @@ Human 与 Coding Agent 如何协作定位/评审界面元素，同时不把页�
 - **零远端副作用**：评审模式默认关闭、显式启用；开启/悬停/选择/复制/链接定位/关闭全程零远端请求、零遥测；annotation 不改变 Owner state 与执行流。
 - **脱敏边界**：token、URL、overlay、日志、浏览器持久存储与 clipboard 中，prompt / 运行标题 / 完整 Run ID / 原始事件 / Owner snapshot / 凭证 / cookie / approval bearer token / 输入框内容 / 本地绝对路径泄露阈值 = 0（用合成 canary 验证，真实凭证永不作测试输入）。
 - **所有权**：UI 反馈模块只拥有界面引用元数据及短暂展示状态，不持有 Run/attempt/event/effect/approval/replay 状态；沿用 Workbench Control Plane façade 读取展示数据。
-- **可复用抽取（R2）**：保留 R1 PRD 作为产品事实源，新增双 skill——`ui-reference-protocol`（设计/ratify 协议 profile）+ `ui-reference-runtime`（真实浏览器验收），二者以显式 **UI Reference Protocol Profile** 交接；skill 不成为新 UI 运行时 / 第二 owner。
+- **可复用抽取（R2，已退役）**：保留 R1 PRD 作为产品事实源，新增双 skill——`ui-reference-protocol`（设计/ratify 协议 profile）+ `ui-reference-runtime`（真实浏览器验收），二者以显式 **UI Reference Protocol Profile** 交接；skill 不成为新 UI 运行时 / 第二 owner。**2026-10-24 经 [ADR 0018](../zj-adr/0018-retire-r1-ui-reference-system.md) 退役：两个 skill 包与 conformance 资产已从仓库删除。**
 
 ## 关键设计约束
 
