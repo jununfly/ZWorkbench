@@ -409,7 +409,7 @@ class CodexAppServerAdapter:
         command = self.command()
         if not self.host_enforcement:
             return command
-        # Roadmap 1-9-3 (direction b): do NOT wrap Codex in a macOS seatbelt.
+        # ADR 0010 / ADR 0008 (formerly roadmap 1-9-3 direction b): do NOT wrap Codex in a macOS seatbelt.
         # macOS forbids nested ``sandbox_apply``; wrapping Codex (which then runs
         # its own internal ``sandbox-exec`` around shell tools) always fails with
         # EPERM and blocks workspace reads. Codex applies its own sandbox

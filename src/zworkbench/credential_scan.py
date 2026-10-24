@@ -1,8 +1,8 @@
 """Value-level credential-shape scanning for real-architecture seams.
 
-Roadmap 1-8-2 / 1-8-3: protocol/structural surfaces REJECT credential-shaped
-values (fail-closed); free-text content surfaces REDACT them on the way into
-durable sinks.  Field-NAME rejection (``api_key`` / ``token`` / ...) stays in
+Protocol/structural surfaces REJECT credential-shaped values (fail-closed);
+free-text content surfaces REDACT them on the way into durable sinks.
+(formerly roadmap 1-8-2 / 1-8-3)  Field-NAME rejection (``api_key`` / ``token`` / ...) stays in
 ``worker_contract._reject_secrets`` and
 ``composition._reject_provider_secret_fields``; this module classifies only
 the value shape.
