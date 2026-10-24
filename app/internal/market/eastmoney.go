@@ -9,7 +9,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// 东方财富公开接口路径（roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
+// 东方财富公开接口路径（ADR 0017; formerly roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
 // 非官方接口，自用可接受；若需合规化，后续只改本文件即可，业务包的 Source 契约不动。
 const (
 	emPathIndices = "/api/qt/ulist.np/get" // 指数 / 涨跌家数

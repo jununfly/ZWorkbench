@@ -1,4 +1,4 @@
-// safe_stop.go 是 roadmap 1-4-5 的落地：C28 safe-stop 的**触发**与**收口**
+// safe_stop.go 是 ADR 0016 (formerly roadmap 1-4-5) 的落地：C28 safe-stop 的**触发**与**收口**
 // 两个 owner 动作（composition.py:1045 safe_stop_on_identity_violation 与
 // :1065 reconcile_identity 的 Go 移植）。
 //

@@ -267,7 +267,7 @@ func (o *Owner) ListRuns() ([]*Run, error) {
 	return out, nil
 }
 
-// ListEvents 列出事件，供「事件流」视图消费（roadmap 1-5-6-3）。
+// ListEvents 列出事件，供「事件流」视图消费（ADR 0016; formerly roadmap 1-5-6-3）。
 // runID 为空 = 跨 run 查询；typeFilter 为空 = 不过滤类型（传 "safe_stopped" 即安全停止事件流）。
 // limit <= 0 时取 defaultEventLimit。按 seq 升序（发生顺序）返回。
 func (o *Owner) ListEvents(runID, typeFilter string, limit int) ([]Event, error) {

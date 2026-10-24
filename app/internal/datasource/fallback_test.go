@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// fakeResp 是测试用的 StatusCarrier 实现（roadmap 1-2-5 回退语义单测）。
+// fakeResp 是测试用的 StatusCarrier 实现（ADR 0017; formerly roadmap 1-2-5 回退语义单测）。
 type fakeResp struct {
 	Fallback bool
 	Status   Status

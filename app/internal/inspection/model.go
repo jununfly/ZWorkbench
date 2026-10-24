@@ -39,7 +39,7 @@ type InspectionReport struct {
 	Holdings    []Holding        `json:"holdings"`
 }
 
-// SetFallbackMeta 实现 datasource.StatusCarrier（roadmap 1-2-5）。
+// SetFallbackMeta 实现 datasource.StatusCarrier（ADR 0017; formerly roadmap 1-2-5）。
 func (r *InspectionReport) SetFallbackMeta(fallback bool, status datasource.Status, reason, asOf string) {
 	r.Fallback = fallback
 	r.Status = status

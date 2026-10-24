@@ -19,7 +19,7 @@ const seedAssessMark = " [本地种子·非实时]"
 // realHoldingMark 标记「该 target 的当前仓位已用真实持仓覆盖」（与种子建议区分）。
 const realHoldingMark = " [基于真实持仓]"
 
-// ImportedFileSource 从本地 portfolio JSON 导入真实持仓输入（roadmap 1-2-4 D12）。
+// ImportedFileSource 从本地 portfolio JSON 导入真实持仓输入（ADR 0017; formerly roadmap 1-2-4 D12）。
 //
 // 与 inspection 共用同一 portfolio 文件（config 单点注入）。优化方案本身是建议，
 // 真实输入只用于把各 target 的「当前仓位 from_weight」对齐到用户的真实持仓——

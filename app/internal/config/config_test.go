@@ -83,7 +83,7 @@ func TestDataSourceDefaultsOffAndRoundTrip(t *testing.T) {
 	}
 }
 
-// TestDataFilesRoundTrip 导入路径段（roadmap 1-2-3 D9）必须能持久化并读回，
+// TestDataFilesRoundTrip 导入路径段（ADR 0017; formerly roadmap 1-2-3 D9）必须能持久化并读回，
 // 且不能被 LLM / 数据源段落的保存抹掉。
 func TestDataFilesRoundTrip(t *testing.T) {
 	dir := t.TempDir()

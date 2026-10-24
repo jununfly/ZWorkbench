@@ -1,5 +1,5 @@
 // Package evidence 是 ZWorkbench 的「CompositionOwner（C26）」Go 等价实现，
-// 属 roadmap 1-5-6-1（B2-narrow：只移植差异化证据语义，零 Python 进程依赖）。
+// 属 ADR 0016 (formerly roadmap 1-5-6-1)（B2-narrow：只移植差异化证据语义，零 Python 进程依赖）。
 //
 // 它把 Python src/zworkbench/composition.py 里的「durable-owner 7 状态机 +
 // 引用完整性（identity-violation）检测 + C28 一次性审批 token + fail-closed

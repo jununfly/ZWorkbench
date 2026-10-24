@@ -1,5 +1,5 @@
 // Package buildguard holds the mechanical guards for ADR 0015's dependency
-// boundary (roadmap 1-1-1).
+// boundary (formerly roadmap 1-1-1).
 //
 // ADR 0015 keeps the deviation from C32 bounded: the Go runtime stays free of
 // cgo and of third-party native dependencies, Node/Electron lives in

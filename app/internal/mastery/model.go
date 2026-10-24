@@ -23,7 +23,7 @@ type MasteryLibrary struct {
 	Figures  []Figure         `json:"figures"`
 }
 
-// SetFallbackMeta 实现 datasource.StatusCarrier（roadmap 1-2-5）。
+// SetFallbackMeta 实现 datasource.StatusCarrier（ADR 0017; formerly roadmap 1-2-5）。
 func (r *MasteryLibrary) SetFallbackMeta(fallback bool, status datasource.Status, reason, asOf string) {
 	r.Fallback = fallback
 	r.Status = status

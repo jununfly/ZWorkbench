@@ -47,7 +47,7 @@ func TestNewDefaultChainFallback(t *testing.T) {
 	}
 }
 
-// TestNewDefaultChainImportedWins 导入文件优先于内嵌快照，且不算回退（roadmap 1-2-3 D9 链序）。
+// TestNewDefaultChainImportedWins 导入文件优先于内嵌快照，且不算回退（ADR 0017; formerly roadmap 1-2-3 D9 链序）。
 func TestNewDefaultChainImportedWins(t *testing.T) {
 	p := writeImport(t, sampleImportJSON)
 	lib, err := NewDefaultChain(datasource.DefaultConfig(), p).Fetch(context.Background())

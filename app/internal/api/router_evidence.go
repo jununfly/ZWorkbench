@@ -12,7 +12,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/evidence"
 )
 
-// registerEvidence 挂载本地证据 API（roadmap 1-5-6-3）：
+// registerEvidence 挂载本地证据 API（ADR 0016; formerly roadmap 1-5-6-3）：
 // run 生命周期 + safe-stop 事件流 + identity 完整性。
 //
 // 范围（B2-narrow 接线版）：只读可视化 + 最小生命周期驱动。
