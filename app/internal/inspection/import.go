@@ -16,7 +16,7 @@ import (
 // 评分伪装成实时结论。
 const seedAssessMark = " [本地种子·非实时]"
 
-// ImportedFileSource 从本地 portfolio JSON 导入真实持仓输入（roadmap 1-2-4 D11）。
+// ImportedFileSource 从本地 portfolio JSON 导入真实持仓输入（ADR 0017; formerly roadmap 1-2-4 D11）。
 //
 // 为什么不是「真实源」：持仓是私有数据，没有任何公开结构化接口提供它；硬接一个
 // 源等于编数据。所以本包的可信事实来源就是 zj 自己的持仓导出文件（JSON），内嵌

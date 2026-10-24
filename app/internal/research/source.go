@@ -26,7 +26,7 @@ func (LocalSnapshotSource) Fetch(_ context.Context) (*StockResearch, error) {
 	return &b, nil
 }
 
-// RemoteSource 远程个股研究源（C36 首选源）：走 datasource 统一契约（roadmap 1-2-1）。
+// RemoteSource 远程个股研究源（C36 首选源）：走 datasource 统一契约（ADR 0017; formerly roadmap 1-2-1）。
 // 未配置时 Fetch 返回 datasource.ErrUnconfigured（语义=未配置，不是故障），
 // 回退链据此静默回退到本地快照，不报警。
 type RemoteSource struct{ remote datasource.Remote }
@@ -48,7 +48,7 @@ func (s RemoteSource) Fetch(ctx context.Context) (*StockResearch, error) {
 	return FetchEastmoney(ctx, s.remote.Cfg)
 }
 
-// FallbackChain 是「远程优先、本地回退」的多源链（roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
+// FallbackChain 是「远程优先、本地回退」的多源链（ADR 0017; formerly roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
 type FallbackChain = datasource.FallbackChain[*StockResearch]
 
 // NewFallbackChain 构造回退链（顺序即优先级）。

@@ -11,7 +11,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// ImportedFileSource 从本地 JSON 文件导入游资心法库（roadmap 1-2-3 D9）。
+// ImportedFileSource 从本地 JSON 文件导入游资心法库（ADR 0017; formerly roadmap 1-2-3 D9）。
 //
 // 为什么不是「真实源」：游资心法（人物 / 派别 / 心法 / 解读）是民间经验知识，
 // 没有任何公开结构化接口提供它。硬接一个源等于编数据，所以本包的可信来源

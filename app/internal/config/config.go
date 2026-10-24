@@ -11,11 +11,11 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// DataSourceConfig 是「设置 / 数据源」页可编辑的远程源配置（roadmap 1-2-1）。
+// DataSourceConfig 是「设置 / 数据源」页可编辑的远程源配置（ADR 0017; formerly roadmap 1-2-1）。
 // 类型别名：配置形态由 datasource 包定义，config 只负责持久化与 env 覆盖。
 type DataSourceConfig = datasource.Config
 
-// DataFiles 是「本地可导入数据集」的文件路径段（roadmap 1-2-3 D9 / 1-2-4 D13）。
+// DataFiles 是「本地可导入数据集」的文件路径段（ADR 0017; formerly roadmap 1-2-3 D9 / 1-2-4 D13）。
 // 与 DataSource（远程源）分开：一个是网络端点，一个是本地文件，失败语义不同。
 type DataFiles struct {
 	// MasteryPath 是游资心法库导入文件路径；空串表示未导入（回退内嵌快照）。
@@ -32,7 +32,7 @@ type Config struct {
 	Token string
 	DB    string
 	// EvidenceDB 是证据库（runs/events/effects…）路径；空串 = 内存库（重启即空）。
-	// 见 roadmap 1-5-6-3 决策：默认不落盘，避免以 cwd 为基准污染工作目录；
+	// 见 ADR 0016 (formerly roadmap 1-5-6-3) 决策：默认不落盘，避免以 cwd 为基准污染工作目录；
 	// 持久化默认路径需单独立项（data dir 决策），C26 的 durability 要求列为 follow-up。
 	EvidenceDB string
 	// WebDir 是前端 dist 目录（1-1-3）。空串表示交给 webstatic 自行按候选路径解析。

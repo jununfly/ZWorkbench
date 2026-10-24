@@ -26,7 +26,7 @@ func (LocalSnapshotSource) Fetch(_ context.Context) (*MasteryLibrary, error) {
 	return &b, nil
 }
 
-// RemoteSource 远程心法库源（C36 首选源）：走 datasource 统一契约（roadmap 1-2-1）。
+// RemoteSource 远程心法库源（C36 首选源）：走 datasource 统一契约（ADR 0017; formerly roadmap 1-2-1）。
 // 未配置时 Fetch 返回 datasource.ErrUnconfigured（语义=未配置，不是故障），
 // 回退链据此静默回退到本地快照，不报警。
 type RemoteSource struct{ remote datasource.Remote }
@@ -51,7 +51,7 @@ func (s RemoteSource) Fetch(ctx context.Context) (*MasteryLibrary, error) {
 	return &b, nil
 }
 
-// FallbackChain 是「导入文件 → 远程 → 内嵌快照」的多源链（roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
+// FallbackChain 是「导入文件 → 远程 → 内嵌快照」的多源链（ADR 0017; formerly roadmap 1-2-5：语义收敛到 datasource 泛型实现）。
 type FallbackChain = datasource.FallbackChain[*MasteryLibrary]
 
 // NewFallbackChain 构造回退链（顺序即优先级）。
@@ -59,7 +59,7 @@ func NewFallbackChain(sources ...datasource.Source[*MasteryLibrary]) *FallbackCh
 	return datasource.NewFallbackChain(sources...)
 }
 
-// NewDefaultChain 默认「导入文件 → 远程 → 内嵌快照」（C36 + roadmap 1-2-3 D9）。
+// NewDefaultChain 默认「导入文件 → 远程 → 内嵌快照」（C36 + ADR 0017; formerly roadmap 1-2-3 D9）。
 // cfg 与 importedPath 都由调用方显式注入（1-2-1 D3）：不在包内隐式读环境变量，
 // 便于测试与 fail-closed。
 //

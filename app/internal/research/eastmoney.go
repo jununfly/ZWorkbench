@@ -11,7 +11,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// 东方财富公开接口路径（roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
+// 东方财富公开接口路径（ADR 0017; formerly roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
 const (
 	emPathResearchUL = "/api/qt/ulist.np/get" // 个股实时报价
 )
@@ -69,7 +69,7 @@ func emGet(ctx context.Context, cfg datasource.Config, path string, q url.Values
 	return r.FetchJSON(ctx, dst)
 }
 
-// FetchEastmoney 用东方财富实时报价「富化」本地研究清单（C08 最小切片，roadmap 1-2-2）：
+// FetchEastmoney 用东方财富实时报价「富化」本地研究清单（C08 最小切片，ADR 0017; formerly roadmap 1-2-2）：
 // 价格/涨跌幅取实时，用途/周期/核心判断/支持/反对等文字注解仍来自本地种子
 // （研究者的主观判断，外部接口不提供）。未启用时返回 ErrUnconfigured（语义=未配置），
 // 回退链据此静默回退到纯本地快照，不报警。

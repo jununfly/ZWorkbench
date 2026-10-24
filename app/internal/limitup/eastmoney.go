@@ -12,13 +12,13 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// 东方财富公开接口路径（roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
+// 东方财富公开接口路径（ADR 0017; formerly roadmap 1-2-2，zj 拍板：免费免 token 行情源）。
 const (
 	emPathLimitUL = "/api/qt/ulist.np/get" // 涨跌停家数
 	emPathLimitCL = "/api/qt/clist/get"     // 涨停个股 / 概念板块 / 板块成分股
 	emPathZTPool  = "/getTopicZTPool"       // 涨停股池（连板天数专用，仅在 push2ex 上可用）
 	// emHostPool 是涨停股池独立后端：push2 主机不服务该路径，push2ex 也不服务
-	// clist/ulist，故股池必须单独指定 host（roadmap 1-2-2-1 D7）。
+	// clist/ulist，故股池必须单独指定 host（ADR 0017; formerly roadmap 1-2-2-1 D7）。
 	emHostPool = "https://push2ex.eastmoney.com"
 	// emUT 是东方财富网页端公开 ut 参数（非私密凭证，前端硬编码常量）。
 	emUT = "7eea3edcaed734bea9cbfc24409ed989"
@@ -124,7 +124,7 @@ func clampStrength(chg float64) float64 {
 	return s
 }
 
-// classifyStage 基于真实读数的精确情绪阶段（roadmap 1-2-2-1 D7，取代纯涨停数启发式）。
+// classifyStage 基于真实读数的精确情绪阶段（ADR 0017; formerly roadmap 1-2-2-1 D7，取代纯涨停数启发式）。
 // 冰点(<20涨停) / 退潮(跌停>涨停) / 高潮(>=80或最高板>=5) / 发酵(40-80) / 回暖(20-40且最高板>=2) / 启动(其余)。
 func classifyStage(limitUp, limitDn, maxBoard int) string {
 	switch {
@@ -149,7 +149,7 @@ func shanghaiDate(now time.Time) string {
 	return t.Format("20060102")
 }
 
-// FetchEastmoney 组装真实连板/题材/情绪看板（C09 深化，roadmap 1-2-2-1）。
+// FetchEastmoney 组装真实连板/题材/情绪看板（C09 深化，ADR 0017; formerly roadmap 1-2-2-1）。
 // 真实可得：全市场涨停/跌停家数(breadth)、连板梯队(含连板天数, 来自涨停股池)、
 // 概念板块强度 + 龙头股(题材雷达)、精确情绪阶段。
 // 未启用时返回 ErrUnconfigured（语义=未配置），回退链静默回退到本地种子快照。
@@ -175,7 +175,7 @@ func FetchEastmoney(ctx context.Context, cfg datasource.Config) (*LimitUpBoard, 
 	if err != nil {
 		return nil, err
 	}
-	// 题材领涨股：仅给 Top N 概念板块补 Leading（控制请求数，roadmap 1-2-2-1 D7）。
+	// 题材领涨股：仅给 Top N 概念板块补 Leading（控制请求数，ADR 0017; formerly roadmap 1-2-2-1 D7）。
 	// Leading 改用「连板天数最高优先」选龙头（1-2-2-1-1 选项 A），codeToDays 来自股池映射。
 	for i := 0; i < len(themes) && i < emLeadingTopN; i++ {
 		lead, lerr := emThemeLeading(ctx, cfg, themes[i].Code, codeToDays)
@@ -213,7 +213,7 @@ func emLimitCounts(ctx context.Context, cfg datasource.Config) (int, int, error)
 
 // emLimitUpPool 用涨停股池专用接口取当日全部涨停个股及其连板天数，
 // 返回 (按 days 降序分组的梯队, 最高板高度, error)。这是 ①连板天数 的权威数据源，
-// 彻底替代原 clist 涨幅榜过滤首板法（roadmap 1-2-2-1 D7）。
+// 彻底替代原 clist 涨幅榜过滤首板法（ADR 0017; formerly roadmap 1-2-2-1 D7）。
 func emLimitUpPool(ctx context.Context, cfg datasource.Config) (map[string]int, []Tier, int, error) {
 	var resp emZTPoolResponse
 	q := url.Values{}

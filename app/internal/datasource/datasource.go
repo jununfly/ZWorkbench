@@ -1,5 +1,5 @@
 // Package datasource 统一 7 个业务包（market/research/limitup/review/inspection/
-// optimization/mastery）远程数据源的契约与配置开关（roadmap 1-2-1）。
+// optimization/mastery）远程数据源的契约与配置开关（ADR 0017; formerly roadmap 1-2-1）。
 //
 // 在此之前，7 个包各自持有一个 RemoteStubSource，固定返回同一句
 // "remote source not wired yet (stub)"，既没有统一的开关，也没有统一的失败语义，
@@ -33,7 +33,7 @@ const defaultTimeoutSec = 5
 // maxResponseBytes 限制单响应体积，避免异常上游把进程内存打满。
 const maxResponseBytes = 4 << 20
 
-// Status 是远程源结果分类（roadmap 1-2-5 的语义收敛基础）。
+// Status 是远程源结果分类（ADR 0017; formerly roadmap 1-2-5 的语义收敛基础）。
 // 关键不变量：未配置 ≠ 源失败 ≠ 陈旧快照，三者都不可以被当作成功，
 // 也不可以被一律当作同一种失败报警。
 type Status string
@@ -205,7 +205,7 @@ func normalizePath(p string) string {
 	return p
 }
 
-// StatusCarrier 让回退链在命中结果上写入语义状态（roadmap 1-2-5）。
+// StatusCarrier 让回退链在命中结果上写入语义状态（ADR 0017; formerly roadmap 1-2-5）。
 // 各业务包的响应结构（MarketOverview/StockResearch/...）都实现它，
 // 使 7 个包的回退语义收敛到同一套字段与同一套分类逻辑。
 type StatusCarrier interface {
@@ -216,7 +216,7 @@ type StatusCarrier interface {
 	SetFallbackMeta(fallback bool, status Status, reason, asOf string)
 }
 
-// Source 是统一「多源回退」的契约（roadmap 1-2-5 收敛点）。
+// Source 是统一「多源回退」的契约（ADR 0017; formerly roadmap 1-2-5 收敛点）。
 // T 是领域响应指针类型（如 *MarketOverview），必须实现 StatusCarrier 以便回退链写入语义状态。
 // 7 个业务包的 RemoteSource/LocalSnapshotSource/ImportedFileSource 都结构性满足它。
 type Source[T StatusCarrier] interface {

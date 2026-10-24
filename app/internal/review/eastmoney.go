@@ -14,14 +14,14 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
 
-// 东方财富公开接口路径（roadmap 1-2-3 D8）。
+// 东方财富公开接口路径（ADR 0017; formerly roadmap 1-2-3 D8）。
 // 与 C07/C08/C09 不同，复盘的真实源不是行情推送，而是研报列表：
 //   - 研报列表在 reportapi 后端，push2 不服务该路径，故需独立 host；
 //   - 盘面读数（指数 / 涨跌家数）仍在 push2，沿用 cfg.BaseURL。
 const (
 	emPathReport   = "/report/list"         // 机构研报列表（reportapi）
 	emPathReviewUL = "/api/qt/ulist.np/get" // 指数与涨跌家数（push2）
-	// emHostReport 是研报独立后端（roadmap 1-2-3 D8）。
+	// emHostReport 是研报独立后端（ADR 0017; formerly roadmap 1-2-3 D8）。
 	emHostReport = "https://reportapi.eastmoney.com"
 )
 
@@ -114,7 +114,7 @@ func emGet(ctx context.Context, cfg datasource.Config, baseURL, path string, q u
 	return r.FetchJSON(ctx, dst)
 }
 
-// FetchEastmoney 用东方财富研报列表 + 盘面读数组装一份复盘摘要（C10，roadmap 1-2-3）。
+// FetchEastmoney 用东方财富研报列表 + 盘面读数组装一份复盘摘要（C10，ADR 0017; formerly roadmap 1-2-3）。
 //
 // 字段边界（D8，诚实标注，不编造）：
 //   - Authors：真实研报条目（机构 + 评级·个股·标题 + 发布日期）；

@@ -1,5 +1,5 @@
 // exit_ledger.go 是 Python composition.py 的 provider_exit_ledger 子系统
-// （1-6-6 / roadmap 1-4-3）的 Go B2-narrow 移植。
+// ADR 0016 (formerly roadmap 1-6-6 / 1-4-3) 的 Go B2-narrow 移植。
 //
 // 核心不变式（fail-closed，逐字对齐 Python）：
 //   - provider_remote_zero_residue 永远 = "unknown/delegated"。本地/owner

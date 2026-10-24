@@ -1,4 +1,4 @@
-// identity_chain.go 是 roadmap 1-4-4 的落地：让 B2-narrow 证据核心的身份链
+// identity_chain.go 是 ADR 0016 (formerly roadmap 1-4-4) 的落地：让 B2-narrow 证据核心的身份链
 // （run → attempt → effect → approval）成为**可查询**对象。
 //
 // 设计不变式（与 composition.py 的 fail-closed 口径一致）：
