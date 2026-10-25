@@ -1,0 +1,30 @@
+name: web-build
+
+# ZWorkbench Web 构建 + a11y 门禁（G-V4）。
+# 触达 app/web 或本工作流的变更时，运行 check-web.sh：npm ci → tsc --noEmit → eslint(零 error) → vite build。
+on:
+  push:
+    paths:
+      - 'app/web/**'
+      - '.github/workflows/web-build.yml'
+  pull_request:
+    paths:
+      - 'app/web/**'
+      - '.github/workflows/web-build.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app/web
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/web/package-lock.json
+      - name: Build & a11y gate
+        run: ./check-web.sh
