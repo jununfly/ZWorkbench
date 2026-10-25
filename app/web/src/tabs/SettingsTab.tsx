@@ -63,11 +63,12 @@ export function SettingsTab() {
         {keySet && <span style={{ color: GREEN }}> 当前已存有 API Key。</span>}
       </p>
 
-      <label style={labelStyle}>Base URL</label>
-      <input style={inputStyle} value={baseURL} onChange={(e) => setBaseURL(e.target.value)} placeholder="https://api.deepseek.com/v1" />
+      <label style={labelStyle} htmlFor="cfg-base-url">Base URL</label>
+      <input id="cfg-base-url" style={inputStyle} value={baseURL} onChange={(e) => setBaseURL(e.target.value)} placeholder="https://api.deepseek.com/v1" />
 
-      <label style={labelStyle}>API Key</label>
+      <label style={labelStyle} htmlFor="cfg-api-key">API Key</label>
       <input
+        id="cfg-api-key"
         style={inputStyle}
         type="password"
         value={apiKey}
@@ -75,8 +76,8 @@ export function SettingsTab() {
         placeholder={keySet ? '已设置，留空则保持不变' : 'sk-...'}
       />
 
-      <label style={labelStyle}>Model</label>
-      <input style={inputStyle} value={model} onChange={(e) => setModel(e.target.value)} placeholder="deepseek-chat" />
+      <label style={labelStyle} htmlFor="cfg-model">Model</label>
+      <input id="cfg-model" style={inputStyle} value={model} onChange={(e) => setModel(e.target.value)} placeholder="deepseek-chat" />
 
       <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 8 }}>
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />

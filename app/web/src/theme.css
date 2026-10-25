@@ -1,0 +1,127 @@
+/* ZWorkbench Web 设计系统 — card-e Material Design 3（seed #6750A4）
+ * 仅取 token 与字体思路，不引入 @material/web 运行时（零额外依赖）。
+ * 来源：app/web/ui-spec/UI-DESIGN.md（revision 8d564ece）。
+ */
+:root {
+  --zw-primary: #6750A4;
+  --zw-on-primary: #ffffff;
+  --zw-primary-container: #EADDFF;
+  --zw-on-primary-container: #21005D;
+  --zw-secondary-container: #E8DEF8;
+  --zw-surface: #FFFBFE;
+  --zw-on-surface: #1D1B20;
+  --zw-surface-variant: #E7E0EC;
+  --zw-on-surface-variant: #49454F;
+  --zw-outline: #79747E;
+  --zw-surface-2: #F5EFF7;
+
+  /* 语义色：A股 涨=红 跌=绿（内容层规则，与主题主色无关） */
+  --zw-up: #cf1322;
+  --zw-down: #389e0d;
+  --zw-down-text: #1b7d2e; /* 跌绿作正文时达标对比度 5.225 */
+
+  /* 圆角 */
+  --zw-r-sm: 8px;
+  --zw-r-md: 12px;
+  --zw-r-lg: 16px;
+  --zw-r-pill: 999px;
+
+  /* 间距 */
+  --zw-s1: 4px;
+  --zw-s2: 8px;
+  --zw-s3: 12px;
+  --zw-s4: 16px;
+  --zw-s6: 24px;
+  --zw-s8: 32px;
+
+  /* 字体 */
+  --zw-font: "Roboto", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+  --zw-mono: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* 动效 */
+  --zw-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--zw-font);
+  color: var(--zw-on-surface);
+  background: var(--zw-surface);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 通用卡片 */
+.zw-card {
+  background: var(--zw-surface);
+  border: 0.5px solid var(--zw-surface-variant);
+  border-radius: var(--zw-r-lg);
+  padding: var(--zw-s6);
+  margin-bottom: var(--zw-s4);
+}
+.zw-card h3 { margin: 0 0 var(--zw-s3); font-size: 16px; font-weight: 500; }
+
+.zw-muted { color: var(--zw-on-surface-variant); }
+
+/* 主按钮 */
+.zw-btn {
+  font-family: var(--zw-font);
+  font-size: 14px;
+  font-weight: 500;
+  padding: var(--zw-s3) var(--zw-s6);
+  border: none;
+  border-radius: var(--zw-r-pill);
+  cursor: pointer;
+  transition: background 0.2s var(--zw-ease);
+}
+.zw-btn-filled { background: var(--zw-primary); color: var(--zw-on-primary); }
+.zw-btn-filled:hover { background: #5b4593; }
+.zw-btn-tonal { background: var(--zw-primary-container); color: var(--zw-on-primary-container); }
+.zw-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 输入框 */
+.zw-input {
+  font-family: var(--zw-font);
+  font-size: 14px;
+  padding: var(--zw-s3);
+  border: 0.5px solid var(--zw-outline);
+  border-radius: var(--zw-r-sm);
+  background: var(--zw-surface);
+  color: var(--zw-on-surface);
+  width: 100%;
+}
+
+/* 涨跌语义 */
+.zw-up { color: var(--zw-up); font-weight: 500; }
+.zw-down { color: var(--zw-down-text); font-weight: 500; }
+
+/* 侧栏导航 */
+.zw-navitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--zw-r-pill);
+  color: var(--zw-on-surface-variant);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s var(--zw-ease), color 0.2s var(--zw-ease);
+}
+.zw-navitem:hover { background: var(--zw-surface-2); }
+.zw-navitem.active { background: var(--zw-primary-container); color: var(--zw-primary); font-weight: 500; }
+.zw-navitem .zw-caret { margin-left: auto; font-size: 12px; transition: transform 0.2s var(--zw-ease); }
+.zw-subitem { font-size: 13px; padding: 8px 12px; }
+
+/* 右键上下文菜单项 */
+.zw-ctx-item {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--zw-on-surface);
+  transition: background 0.15s var(--zw-ease);
+}
+.zw-ctx-item:hover { background: var(--zw-surface-2); }
+.zw-ctx-item.danger:hover { background: rgba(207, 19, 34, 0.12); color: var(--zw-up); }

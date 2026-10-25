@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZWorkbench Preview — M3 / card-e</title>
+<style>
+  :root{
+    --primary:#6750A4; --on-primary:#ffffff; --primary-container:#D0BCFF; --on-primary-container:#21005D;
+    --surface:#FFFBFE; --on-surface:#1D1B20; --surface-variant:#E7E0EC; --on-surface-variant:#49454F;
+    --outline:#79747E; --surface-2:#F5EFF7;
+    --up:#cf1322; --down:#389e0d; --down-text:#1b7d2e;
+    --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s6:24px; --s8:32px;
+    --font:"Roboto","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+    --mono:"Roboto Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --ease:cubic-bezier(0.2,0,0,1);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--font);color:var(--on-surface);background:var(--surface);font-size:14px;line-height:1.5}
+  .shell{display:flex;height:100vh;overflow:hidden}
+
+  /* Sidebar */
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:0.5px solid var(--surface-variant);
+    display:flex;flex-direction:column;padding:var(--s4) var(--s3);gap:2px;overflow-y:auto}
+  .brand{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s3);font-weight:500;font-size:16px;color:var(--on-surface);margin-bottom:var(--s4)}
+  .brand .logo{width:28px;height:28px;border-radius:var(--r-sm);background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center}
+  .nav-item{display:flex;align-items:center;gap:var(--s3);padding:var(--s3);border-radius:var(--r-pill);
+    color:var(--on-surface-variant);cursor:pointer;user-select:none;transition:background .2s var(--ease),color .2s var(--ease)}
+  .nav-item:hover{background:var(--surface-2)}
+  .nav-item.active{background:#EADDFF;color:var(--primary);font-weight:500}
+  .nav-item .ico{width:22px;height:22px;flex:0 0 22px;display:flex;align-items:center;justify-content:center}
+  .nav-item .ico svg{width:20px;height:20px;fill:currentColor}
+  .nav-item .caret{margin-left:auto;transition:transform .2s var(--ease)}
+  .nav-item.open .caret{transform:rotate(90deg)}
+  .sub{display:none;flex-direction:column;gap:2px;padding-left:var(--s8);margin-top:2px}
+  .sub.show{display:flex}
+  .sub .nav-item{font-size:13px;padding:var(--s2) var(--s3)}
+
+  /* Content */
+  .content{flex:1;overflow-y:auto;padding:var(--s8);background:var(--surface)}
+  .screen{display:none}
+  .screen.active{display:block;animation:fade .25s var(--ease)}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .page-title{font-size:22px;font-weight:500;margin-bottom:var(--s2)}
+  .page-sub{color:var(--on-surface-variant);margin-bottom:var(--s6)}
+  .card{background:var(--surface);border:0.5px solid var(--surface-variant);border-radius:var(--r-lg);padding:var(--s6);margin-bottom:var(--s4)}
+  .card h3{font-size:16px;font-weight:500;margin-bottom:var(--s3)}
+  .muted{color:var(--on-surface-variant)}
+
+  /* Tabs */
+  .tabs{display:flex;gap:var(--s1);border-bottom:0.5px solid var(--surface-variant);margin-bottom:var(--s6)}
+  .tab{padding:var(--s3) var(--s4);cursor:pointer;color:var(--on-surface-variant);border-bottom:2px solid transparent;transition:.2s var(--ease)}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:500}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block}
+
+  /* DataTable */
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:var(--s3) var(--s4);border-bottom:0.5px solid var(--surface-variant)}
+  thead th{color:var(--on-surface-variant);font-weight:500;font-size:12px}
+  tbody tr:hover{background:var(--surface-2)}
+  .compact td,.compact th{padding:var(--s2) var(--s3);font-size:13px}
+  .up{color:var(--up);font-weight:500}
+  .down{color:var(--down-text);font-weight:500}
+
+  /* Badge / StatusChip */
+  .badge{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);font-size:12px;font-weight:500}
+  .badge.up{background:rgba(207,19,34,.12);color:var(--up)}
+  .badge.down{background:rgba(56,158,13,.14);color:var(--down-text)}
+  .chip{display:inline-block;padding:2px 10px;border-radius:var(--r-pill);font-size:12px;font-weight:500;background:var(--surface-2);color:var(--on-surface-variant);border:0.5px solid var(--surface-variant)}
+  .chip.running{background:rgba(103,80,164,.14);color:var(--primary)}
+  .chip.completed{background:rgba(56,158,13,.14);color:var(--down-text)}
+  .chip.safe_stopped{background:rgba(207,19,34,.12);color:var(--up)}
+  .chip.waiting{background:rgba(121,116,126,.16);color:var(--on-surface-variant)}
+
+  /* Chat */
+  .chat{display:flex;flex-direction:column;height:60vh}
+  .chat-log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:var(--s3);padding:var(--s3) 0}
+  .msg{max-width:70%;padding:var(--s3) var(--s4);border-radius:var(--r-lg);font-size:14px}
+  .msg.me{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:var(--r-sm)}
+  .msg.bot{align-self:flex-start;background:var(--surface-2);color:var(--on-surface);border-bottom-left-radius:var(--r-sm)}
+  .composer{display:flex;gap:var(--s3);margin-top:var(--s3)}
+  input,select,textarea{font-family:var(--font);font-size:14px;padding:var(--s3);border:0.5px solid var(--outline);border-radius:var(--r-sm);background:var(--surface);color:var(--on-surface);flex:1}
+  button{font-family:var(--font);font-size:14px;font-weight:500;padding:var(--s3) var(--s6);border:none;border-radius:var(--r-pill);cursor:pointer;transition:.2s var(--ease)}
+  .btn-filled{background:var(--primary);color:#fff}
+  .btn-filled:hover{background:#5b4593}
+  .btn-tonal{background:var(--primary-container);color:var(--on-primary-container)}
+  .btn-text{background:transparent;color:var(--primary)}
+
+  /* Conversation history (workbench chat) */
+  .chat-wrap{display:flex;gap:var(--s4);height:64vh}
+  .conv-list{width:220px;flex:0 0 220px;background:var(--surface);border:0.5px solid var(--surface-variant);border-radius:var(--r-lg);padding:var(--s3);overflow-y:auto}
+  .conv-head{font-size:13px;color:var(--on-surface-variant);font-weight:500;padding:var(--s2) var(--s3);margin-bottom:var(--s2)}
+  .conv-item{padding:var(--s3);border-radius:var(--r-pill);cursor:pointer;color:var(--on-surface-variant);font-size:14px;transition:background .2s var(--ease),color .2s var(--ease);user-select:none}
+  .conv-item:hover{background:var(--surface-2)}
+  .conv-item.active{background:#EADDFF;color:var(--primary);font-weight:500}
+  .conv-list .add{margin-top:var(--s2);text-align:center;color:var(--primary);font-size:13px;cursor:pointer;padding:var(--s2)}
+  .chat-main{flex:1;min-width:0}
+  .chat-card{height:100%;display:flex;flex-direction:column;margin-bottom:0}
+  .chat-card .chat{flex:1;min-height:0;height:auto}
+
+  /* context menu */
+  .ctx-menu{position:fixed;display:none;background:var(--surface);border:0.5px solid var(--surface-variant);border-radius:var(--r-md);box-shadow:0 6px 20px rgba(0,0,0,.14);padding:var(--s1);z-index:60;min-width:128px}
+  .ctx-item{padding:var(--s2) var(--s4);border-radius:var(--r-sm);cursor:pointer;font-size:14px;color:var(--on-surface);transition:background .15s var(--ease)}
+  .ctx-item:hover{background:var(--surface-2)}
+  .ctx-item[data-act="delete"]:hover{background:rgba(207,19,34,.12);color:var(--up)}
+
+  /* Evidence */
+  .evi-list{display:flex;flex-direction:column;gap:var(--s2);margin-bottom:var(--s6)}
+  .evi-row{display:flex;align-items:center;gap:var(--s3);padding:var(--s3);border:0.5px solid var(--surface-variant);border-radius:var(--r-md);cursor:pointer}
+  .evi-row.sel{background:var(--surface-2);border-color:var(--primary)}
+  .evi-row .id{font-family:var(--mono);font-size:13px}
+  .evi-row .spacer{margin-left:auto}
+  .event{font-family:var(--mono);font-size:13px;padding:var(--s2) 0;border-bottom:0.5px dashed var(--surface-variant);color:var(--on-surface-variant)}
+  .event .t{color:var(--outline)}
+  .section-anchor{scroll-margin-top:var(--s8)}
+
+  /* Placeholder */
+  .ph{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--s3);height:50vh;color:var(--on-surface-variant)}
+  .ph .ring{width:64px;height:64px;border-radius:50%;border:3px dashed var(--surface-variant)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><span class="logo">Z</span> ZWorkbench</div>
+    <div class="nav-item" data-screen="home"><span class="ico">{{ICON_HOME}}</span> 首页</div>
+    <div class="nav-item" data-screen="workbench"><span class="ico">{{ICON_DASH}}</span> 工作台</div>
+    <div class="nav-item" id="nav-theme"><span class="ico">{{ICON_THEME}}</span> 主题 <span class="caret">{{ICON_CARET}}</span></div>
+    <div class="sub" id="sub-theme">
+      <div class="nav-item" data-screen="astock"><span class="ico">{{ICON_STOCK}}</span> A股投研</div>
+    </div>
+    <div class="nav-item" data-screen="projects"><span class="ico">{{ICON_FOLDER}}</span> 项目</div>
+    <div class="nav-item" data-screen="stats"><span class="ico">{{ICON_CHART}}</span> 统计</div>
+    <div class="nav-item" data-screen="logs"><span class="ico">{{ICON_LIST}}</span> 日志</div>
+    <div class="nav-item" data-screen="settings"><span class="ico">{{ICON_SET}}</span> 设置</div>
+  </aside>
+
+  <main class="content">
+    <!-- Home -->
+    <section class="screen" id="screen-home">
+      <div class="page-title">首页</div>
+      <div class="page-sub">个人综合工作台总入口（本轮占位）</div>
+      <div class="ph"><div class="ring"></div><div class="muted">首页 dashboard 待实现</div></div>
+    </section>
+
+    <!-- Workbench -->
+    <section class="screen" id="screen-workbench">
+      <div class="page-title">工作台</div>
+      <div class="page-sub">非交易自治能力：对话 + 编码证据</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="chat">对话</div>
+        <div class="tab" data-tab="evidence">编码证据</div>
+      </div>
+      <div class="tab-panel active" id="tab-chat">
+        <div class="chat-wrap">
+          <aside class="conv-list">
+            <div class="conv-head">对话历史</div>
+            <div class="conv-item active" data-conv="c1">ZW 重构讨论</div>
+            <div class="conv-item" data-conv="c2">A股复盘问答</div>
+            <div class="conv-item" data-conv="c3">编码证据疑问</div>
+            <div class="conv-item" data-conv="c4">主题色方案</div>
+            <div class="conv-item" data-conv="c5">部署问题排查</div>
+            <div class="add" onclick="alert('新建对话（预览）')">+ 新建对话</div>
+          </aside>
+          <div class="chat-main">
+            <div class="card chat-card">
+              <div class="chat">
+                <div class="chat-log" id="chatLog">
+                  <div class="msg bot">你好，我是 ZW 的 LLM 助手（预览环境，示例回复）。</div>
+                </div>
+                <div class="composer">
+                  <input id="chatInput" placeholder="输入消息…">
+                  <button class="btn-filled" onclick="sendMsg()">发送</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="ctx-menu" id="ctxMenu">
+          <div class="ctx-item" data-act="share">分享</div>
+          <div class="ctx-item" data-act="archive">归档</div>
+          <div class="ctx-item" data-act="delete">删除</div>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-evidence">
+        <div class="card">
+          <h3>CompositionOwner 运行（C26 证据核心）</h3>
+          <div class="evi-list" id="eviList"></div>
+          <h3>事件流 / 身份链</h3>
+          <div id="eviEvents" class="muted">选择上方一个 run 查看事件流。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- A股投研 -->
+    <section class="screen" id="screen-astock">
+      <div class="page-title">A股投研</div>
+      <div class="page-sub">长页面：集中承载全部交易类功能（示例数据）</div>
+
+      <div class="card section-anchor" id="sec-market">
+        <h3>行情总览</h3>
+        <table class="compact">
+          <thead><tr><th>名称</th><th>最新价</th><th>涨跌幅</th><th>成交额</th></tr></thead>
+          <tbody id="marketBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card section-anchor" id="sec-grade">
+        <h3>个股分级研究</h3>
+        <p class="muted">个股深度分级研究分区（示例占位）。</p>
+      </div>
+      <div class="card section-anchor" id="sec-board">
+        <h3>超短连板</h3>
+        <p class="muted">连板情绪跟踪分区（示例占位）。</p>
+      </div>
+      <div class="card section-anchor" id="sec-recap">
+        <h3>大V复盘</h3>
+        <p class="muted">复盘观点聚合分区（示例占位）。</p>
+      </div>
+      <div class="card section-anchor" id="sec-inspect">
+        <h3>持仓巡检</h3>
+        <p class="muted">持仓健康巡检分区（示例占位）。</p>
+      </div>
+      <div class="card section-anchor" id="sec-optimize">
+        <h3>AI持仓优化</h3>
+        <p class="muted">AI 调仓建议分区（示例占位）。</p>
+      </div>
+      <div class="card section-anchor" id="sec-mastery">
+        <h3>游资心法</h3>
+        <p class="muted">游资手法学习分区（示例占位）。</p>
+      </div>
+    </section>
+
+    <!-- Settings -->
+    <section class="screen" id="screen-settings">
+      <div class="page-title">设置</div>
+      <div class="page-sub">通用设置 + LLM 配置</div>
+      <div class="tabs">
+        <div class="tab active" data-tab="general">通用</div>
+        <div class="tab" data-tab="llm">LLM 配置</div>
+      </div>
+      <div class="tab-panel active" id="tab-general">
+        <div class="card">
+          <h3>通用</h3>
+          <p class="muted">主题：浅色（M3 深主题为派生可选，preview 暂仅浅色）。</p>
+          <button class="btn-tonal">保存通用设置</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="tab-llm">
+        <div class="card">
+          <h3>LLM 配置</h3>
+          <label class="muted">模型</label>
+          <input value="gpt-4o-mini" style="margin:8px 0 16px">
+          <label class="muted">Endpoint</label>
+          <input value="http://localhost:18080/api/llm" style="margin:8px 0 16px">
+          <label class="muted">温度</label>
+          <input value="0.7" style="margin:8px 0 16px">
+          <div><button class="btn-filled">保存 LLM 配置</button></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Placeholders -->
+    <section class="screen" id="screen-projects"><div class="page-title">项目</div><div class="ph"><div class="ring"></div><div class="muted">项目页待实现</div></div></section>
+    <section class="screen" id="screen-stats"><div class="page-title">统计</div><div class="ph"><div class="ring"></div><div class="muted">统计页待实现</div></div></section>
+    <section class="screen" id="screen-logs"><div class="page-title">日志</div><div class="ph"><div class="ring"></div><div class="muted">日志页待实现</div></div></section>
+  </main>
+</div>
+
+<script>
+/* ---- inline SVG icons (Material Symbols derived, Apache-2.0, no runtime) ---- */
+const ICONS = {
+  home:'<svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>',
+  dash:'<svg viewBox="0 0 24 24"><path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/></svg>',
+  theme:'<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 100 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.39-.61-.39-.99 0-.83.67-1.5 1.5-1.5H16a5 5 0 005-5c0-4.42-4.03-8-9-8z"/></svg>',
+  stock:'<svg viewBox="0 0 24 24"><path d="M3.5 18.5l6-6 4 4 7.5-7.5v5h2v-9h-9v2h5.5l-5.5 5.5-4-4-7 7z"/></svg>',
+  folder:'<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8z"/></svg>',
+  chart:'<svg viewBox="0 0 24 24"><path d="M5 9.2h3V19H5zM10.6 5h3v14h-3zm5.6 8H19v6h-2.8z"/></svg>',
+  list:'<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>',
+  set:'<svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.64.06-1s-.02-.69-.06-1l2.04-1.58a.5.5 0 00.12-.64l-1.94-3.36a.5.5 0 00-.61-.22l-2.4.96a7.3 7.3 0 00-1.74-1l-.36-2.54a.5.5 0 00-.5-.42h-3.88a.5.5 0 00-.5.42l-.36 2.54c-.62.25-1.2.59-1.74 1l-2.4-.96a.5.5 0 00-.61.22L2.3 8.12a.5.5 0 00.12.64l2.04 1.58c-.04.31-.06.64-.06 1s.02.69.06 1l-2.04 1.58a.5.5 0 00-.12.64l1.94 3.36c.14.24.43.34.69.22l2.4-.96c.54.41 1.12.75 1.74 1l.36 2.54c.05.24.25.42.5.42h3.88c.25 0 .45-.18.5-.42l.36-2.54c.62-.25 1.2-.59 1.74-1l2.4.96c.26.12.55.02.69-.22l1.94-3.36a.5.5 0 00-.12-.64zM12 15.5A3.5 3.5 0 1112 8.5a3.5 3.5 0 010 7z"/></svg>',
+  caret:'<svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6z"/></svg>'
+};
+document.querySelectorAll('.ico').forEach(el=>{
+  const k=[...el.textContent].join('').trim();
+});
+/* replace icon placeholders */
+document.body.innerHTML = document.body.innerHTML
+  .replace(/\{\{ICON_HOME\}\}/g, ICONS.home)
+  .replace(/\{\{ICON_DASH\}\}/g, ICONS.dash)
+  .replace(/\{\{ICON_THEME\}\}/g, ICONS.theme)
+  .replace(/\{\{ICON_STOCK\}\}/g, ICONS.stock)
+  .replace(/\{\{ICON_FOLDER\}\}/g, ICONS.folder)
+  .replace(/\{\{ICON_CHART\}\}/g, ICONS.chart)
+  .replace(/\{\{ICON_LIST\}\}/g, ICONS.list)
+  .replace(/\{\{ICON_SET\}\}/g, ICONS.set)
+  .replace(/\{\{ICON_CARET\}\}/g, ICONS.caret);
+
+/* ---- nav ---- */
+const navItems = document.querySelectorAll('.nav-item[data-screen]');
+navItems.forEach(n=>{
+  n.addEventListener('click',()=>{
+    const sc=n.getAttribute('data-screen');
+    showScreen(sc);
+  });
+});
+document.getElementById('nav-theme').addEventListener('click',()=>{
+  const sub=document.getElementById('sub-theme');
+  const t=document.getElementById('nav-theme');
+  sub.classList.toggle('show'); t.classList.toggle('open');
+});
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  navItems.forEach(n=>n.classList.toggle('active', n.getAttribute('data-screen')===id));
+}
+showScreen('home');
+
+/* ---- workbench tabs ---- */
+document.querySelectorAll('#screen-workbench .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const name=t.getAttribute('data-tab');
+    document.querySelectorAll('#screen-workbench .tab').forEach(x=>x.classList.toggle('active',x===t));
+    document.getElementById('tab-chat').classList.toggle('active',name==='chat');
+    document.getElementById('tab-evidence').classList.toggle('active',name==='evidence');
+  });
+});
+function sendMsg(){
+  const inp=document.getElementById('chatInput'); const v=inp.value.trim(); if(!v) return;
+  const log=document.getElementById('chatLog');
+  if(!conversations[activeConv]) conversations[activeConv]=[];
+  conversations[activeConv].push(['me',v]);
+  const d=document.createElement('div'); d.className='msg me'; d.textContent=v; log.appendChild(d);
+  inp.value=''; log.scrollTop=log.scrollHeight;
+  setTimeout(()=>{
+    const reply='（预览）已收到：'+v;
+    conversations[activeConv].push(['bot',reply]);
+    const b=document.createElement('div'); b.className='msg bot'; b.textContent=reply; log.appendChild(b);
+    log.scrollTop=log.scrollHeight;
+  },300);
+}
+
+/* ---- conversation history + right-click context menu ---- */
+const ctxMenu=document.getElementById('ctxMenu');
+let ctxTarget=null;
+const conversations={
+  c1:[['bot','你好，我是 ZW 的 LLM 助手（预览环境，示例回复）。'],['me','把工作台-对话重做成双栏'],['bot','已按你的布局更新：左栏为对话历史，切换会话即切换右侧内容。']],
+  c2:[['bot','关于 A股复盘，你想看哪个方向？']],
+  c3:[['bot','编码证据是 CompositionOwner 证据核心，记录 run→attempt→effect→approval 身份链。']],
+  c4:[['me','主题色选哪个方向卡？'],['bot','你选了 card-e Material Design 3（动态紫 #6750A4）。']],
+  c5:[['bot','部署问题请描述现象与日志路径。']]
+};
+let activeConv='c1';
+function renderConversation(id){
+  activeConv=id;
+  const log=document.getElementById('chatLog');
+  log.innerHTML='';
+  (conversations[id]||[]).forEach(m=>{
+    const d=document.createElement('div'); d.className='msg '+m[0]; d.textContent=m[1]; log.appendChild(d);
+  });
+  log.scrollTop=log.scrollHeight;
+}
+document.querySelectorAll('.conv-item').forEach(item=>{
+  item.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    ctxTarget=item;
+    ctxMenu.style.display='block';
+    const w=ctxMenu.offsetWidth, h=ctxMenu.offsetHeight;
+    let x=e.clientX, y=e.clientY;
+    if(x+w>window.innerWidth) x=window.innerWidth-w-8;
+    if(y+h>window.innerHeight) y=window.innerHeight-h-8;
+    ctxMenu.style.left=x+'px'; ctxMenu.style.top=y+'px';
+  });
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.conv-item').forEach(x=>x.classList.remove('active'));
+    item.classList.add('active');
+    renderConversation(item.getAttribute('data-conv'));
+  });
+});
+renderConversation('c1');
+document.addEventListener('click',()=>{ ctxMenu.style.display='none'; });
+ctxMenu.querySelectorAll('.ctx-item').forEach(m=>{
+  m.addEventListener('click',e=>{
+    e.stopPropagation();
+    const act=m.getAttribute('data-act');
+    if(ctxTarget){
+      const name=ctxTarget.textContent.trim();
+      if(act==='delete'){ ctxTarget.remove(); }
+      else if(act==='archive'){ ctxTarget.style.opacity='.5'; alert('已归档：'+name); }
+      else { alert('已生成分享链接（预览）：'+name); }
+    }
+    ctxMenu.style.display='none';
+  });
+});
+
+/* ---- settings tabs ---- */
+document.querySelectorAll('#screen-settings .tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    const name=t.getAttribute('data-tab');
+    document.querySelectorAll('#screen-settings .tab').forEach(x=>x.classList.toggle('active',x===t));
+    document.getElementById('tab-general').classList.toggle('active',name==='general');
+    document.getElementById('tab-llm').classList.toggle('active',name==='llm');
+  });
+});
+
+/* ---- A股投研 sample data ---- */
+const market=[
+  ['贵州茅台','1685.00', 1.24,'62.1亿'],['宁德时代','221.50',-0.86,'38.4亿'],
+  ['比亚迪','256.30', 2.10,'51.7亿'],['招商银行','38.20',-1.35,'22.9亿'],
+  ['中际旭创','142.80', 3.45,'44.2亿'],['工业富联','25.60',-0.50,'18.3亿']
+];
+const mb=document.getElementById('marketBody');
+market.forEach(r=>{
+  const up=r[2]>=0; const cls=up?'up':'down';
+  mb.insertAdjacentHTML('beforeend',`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="${cls}">${up?'+':''}${r[2]}%</td><td>${r[3]}</td></tr>`);
+});
+
+/* ---- coding-evidence sample ---- */
+const runs=[
+  {id:'run-7f3a',status:'running',chip:'running'},
+  {id:'run-2b91',status:'completed',chip:'completed'},
+  {id:'run-9c04',status:'safe_stopped',chip:'safe_stopped'},
+  {id:'run-1d77',status:'waiting_approval',chip:'waiting'},
+  {id:'run-5e20',status:'failed',chip:'safe_stopped'}
+];
+const events={
+  'run-7f3a':[['10:02:11','run created'],['10:02:12','attempt #1 start'],['10:02:40','effect: write main.go (physical_effect_count=1)'],['10:03:01','waiting approval']],
+  'run-2b91':[['09:50:01','run created'],['09:50:02','attempt #1 start'],['09:51:30','effect: deploy ok'],['09:51:31','completed']],
+  'run-9c04':[['08:40:00','run created'],['08:40:05','identity violation detected'],['08:40:06','safe_stop_on_violation -> safe_stopped (terminal)']],
+  'run-1d77':[['11:10:00','run created'],['11:10:01','effect requires human approval'],['11:10:02','waiting_approval (C28 token issued)']],
+  'run-5e20':[['07:30:00','run created'],['07:30:40','effect failed'],['07:30:41','failed (non-terminal retry available)']]
+};
+const eviList=document.getElementById('eviList');
+runs.forEach(r=>{
+  eviList.insertAdjacentHTML('beforeend',`<div class="evi-row" data-run="${r.id}"><span class="id">${r.id}</span><span class="spacer"></span><span class="chip ${r.chip}">${r.status}</span></div>`);
+});
+eviList.querySelectorAll('.evi-row').forEach(row=>{
+  row.addEventListener('click',()=>{
+    eviList.querySelectorAll('.evi-row').forEach(x=>x.classList.remove('sel'));
+    row.classList.add('sel');
+    const id=row.getAttribute('data-run');
+    const box=document.getElementById('eviEvents');
+    box.className=''; box.innerHTML=events[id].map(e=>`<div class="event"><span class="t">${e[0]}</span> — ${e[1]}</div>`).join('');
+  });
+});
+</script>
+</body>
+</html>

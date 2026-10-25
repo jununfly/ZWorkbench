@@ -45,6 +45,7 @@ export function ChatTab() {
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
         <textarea
+          aria-label="对话输入框"
           style={{ flex: 1, minHeight: 44, padding: 8, borderRadius: 6, border: '1px solid #ddd', fontFamily: 'inherit', resize: 'vertical' }}
           value={input}
           placeholder="输入消息，Enter 发送（Shift+Enter 换行）"

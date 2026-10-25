@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './App';
+import './theme.css';
 
 // 渲染期错误边界：任何子组件 render 抛错都不再导致「整屏白」，而是显示可读错误。
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { err?: Error }> {

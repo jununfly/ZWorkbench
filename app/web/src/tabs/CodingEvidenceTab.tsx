@@ -247,7 +247,10 @@ export function CodingEvidenceTab() {
             {runs.map((r) => (
               <div
                 key={r.run_id}
+                role="button"
+                tabIndex={0}
                 onClick={() => void selectRun(r.run_id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); void selectRun(r.run_id); } }}
                 style={{
                   border: '1px solid ' + (selected === r.run_id ? '#2f54eb' : '#f0f0f0'),
                   borderRadius: 6,
