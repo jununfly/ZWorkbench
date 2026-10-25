@@ -97,6 +97,42 @@ body {
 .zw-up { color: var(--zw-up); font-weight: 500; }
 .zw-down { color: var(--zw-down-text); font-weight: 500; }
 
+/* A股投研 分区大卡片（可折叠） */
+.zw-section-card {
+  background: var(--zw-surface);
+  border: 1px solid var(--zw-surface-variant);
+  border-radius: var(--zw-r-lg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  margin-bottom: var(--zw-s6);
+  overflow: hidden;
+}
+.zw-section-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  font-family: var(--zw-font);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--zw-on-surface);
+  background: var(--zw-primary-container);
+  border: none;
+  padding: var(--zw-s4) var(--zw-s6);
+  cursor: pointer;
+  transition: background 0.2s var(--zw-ease);
+}
+.zw-section-head:hover { background: var(--zw-secondary-container); }
+.zw-section-head:focus-visible { outline: 2px solid var(--zw-primary); outline-offset: -2px; }
+.zw-section-title { flex: 1; }
+.zw-section-caret {
+  font-size: 14px;
+  color: var(--zw-on-surface-variant);
+  transition: transform 0.2s var(--zw-ease);
+}
+.zw-section-caret.open { transform: rotate(180deg); }
+.zw-section-body { padding: var(--zw-s6); }
+
 /* 侧栏导航 */
 .zw-navitem {
   display: flex;

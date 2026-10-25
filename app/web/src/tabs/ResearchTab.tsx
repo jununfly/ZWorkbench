@@ -25,8 +25,7 @@ export function ResearchTab() {
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <h2 style={{ margin: 0 }}>个股分级研究</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
         <SourceStatusBanner source={data.source} fallback={data.fallback} status={data.status} reason={data.reason} asOf={data.as_of} />
       </div>
 
