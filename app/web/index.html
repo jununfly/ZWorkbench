@@ -7,6 +7,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- dev 仅：把前端 API 指向 Go 服务（经 vite /api 代理）并注入固定 dev token，避免跨域与 401。prod 由 Electron origin 兜底，不受影响。 -->
+    <script type="module">
+      if (import.meta.env.DEV) {
+        window.__ZW__ = { getToken: () => 'dev-token' };
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
