@@ -7,8 +7,9 @@ environment_fingerprint:
   python: 3.13.12 (managed)
   runtime: static HTML preview (no Storybook adapter available in this workspace)
   browser_a11y_automation: eslint-plugin-jsx-a11y (static, CI-gated; runtime axe pending)
-status: PASS_PENDING_COMMIT     # G-V4 自动化 a11y 门禁已 PASS；commit 待 zj 触发，fingerprint 未冻结
-commit: PENDING                 # 按项目约定 commit+push 需 zj 显式触发；当前为未提交工作树
+status: PASS                    # G-V4 自动化 a11y 门禁已 PASS；commit 已触发并推送到 origin/main
+commit: 103c81e (feat) + 95417ca (chore)   # zj 于 2026-10-25 显式触发 commit+push，已上 origin/main
+baseline_commit: 9a0f1dd        # 两提交前的 main HEAD（fingerprint 冻结基准）
 
 ## artifact provenance（链路指纹，commit 前以 sha256:16 记录）
 - UI-BRIEF.md        sha256:16 = 718fee2c5552f3c6
@@ -71,5 +72,5 @@ commit: PENDING                 # 按项目约定 commit+push 需 zj 显式触�
 ## aggregate
 - 人工核验 cell: C1,C2,C3,C4,G-V1,G-V2,G-V3 = PASS
 - 自动化门禁 cell: G-V4 = PASS（eslint-plugin-jsx-a11y，CI 强制，0 error）
-- 整体 status = PASS_PENDING_COMMIT（所有 cell PASS；commit 待 zj 触发，fingerprint 未冻结）
+- 整体 status = PASS（所有 cell PASS；commit 已触发：103c81e + 95417ca，已推送 origin/main，fingerprint 以 baseline_commit=9a0f1dd 冻结）
 - baseline 不等于通过：本 receipt 仅证明当前工作树与 canonical 一致 + 自动化 a11y 门禁通过；运行期全通过仍需后端联调与 axe/对比度运行期核验。
