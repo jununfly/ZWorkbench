@@ -105,7 +105,28 @@ const (
 	// MaxExecutionTimeout 是档位 timeout_sec 的硬上限：再长会让 HTTP 侧与
 	// 证据回看都失去意义，也容易掩盖挂死。
 	MaxExecutionTimeout = 3600 * time.Second
+	// DefaultContainerWorkdir 是容器内工作目录的默认值。
+	// 宿主工作目录会 1:1 挂载到这里——刻意不做「挂 A 跑 B」的映射，
+	// 否则「你以为在测的目录」和「实际跑的目录」会悄悄分叉。
+	DefaultContainerWorkdir = "/workspace"
 )
+
+// 支持的环境名。remote 尚未实现（需要远端端点与身份校验，见 ADR 0020 后续切片），
+// 在这里显式列出而不是默默放行，避免配置写得出、跑起来才发现不支持。
+const (
+	EnvLocal     = "local"
+	EnvContainer = "container"
+)
+
+// containerNetworkAllowed 是 --network 的白名单。
+//
+// 默认 none：容器默认无网络出口，需要下载依赖的档位必须显式声明 bridge。
+// **host 被刻意排除**——它让容器直接共享宿主网络栈，会实质性削弱隔离，
+// 与「档位是受限执行」的定位冲突；要联网就写 bridge，让边界保持可读。
+var containerNetworkAllowed = map[string]struct{}{
+	"none":   {},
+	"bridge": {},
+}
 
 // shellMetaChars 是命令里一律禁止出现的字符。
 //
@@ -132,6 +153,132 @@ type ExecutionProfile struct {
 	TimeoutSec int `json:"timeout_sec"`
 	// Workdir 是相对被管理仓库 Path 的工作目录；空 = 仓库根，绝对路径 = 原样。
 	Workdir string `json:"workdir"`
+	// Container 是容器执行参数；非空表示该档位在容器里执行。
+	// 与 Environments 必须一致声明：声明 container 环境却没给容器段
+	// （不知道跑哪个镜像）与给了容器段却没声明 container 环境
+	// （配置读起来和跑起来不一致）都当场拒绝。
+	Container *ContainerConfig `json:"container,omitempty"`
+}
+
+// ContainerConfig 是容器执行参数（environment = "container"）。
+type ContainerConfig struct {
+	// Image 是镜像引用（如 alpine:3.20 或带 digest 的固定引用），必填。
+	Image string `json:"image"`
+	// Workdir 是**容器内**工作目录（绝对路径）；空 = DefaultContainerWorkdir。
+	// 宿主工作目录会挂载到此处。
+	Workdir string `json:"workdir,omitempty"`
+	// Network 是 --network 取值：none（默认）或 bridge。
+	Network string `json:"network,omitempty"`
+	// User 是 --user 取值（如 1000:1000）；空 = 镜像默认用户。
+	// 不默认指定：容器默认 root 会把 root 属主文件写进宿主挂载目录，
+	// 但多数语言镜像（golang / node）默认以 root 安装依赖，强行改 uid 会直接跑不起来。
+	// 所以这里保持显式，让读配置的人自己决定要不要映射。
+	User string `json:"user,omitempty"`
+	// Env 是容器内的环境变量（"K=V"）。
+	Env []string `json:"env,omitempty"`
+	// Name 是容器名；空 = 由编排层按 effect 生成。
+	// 显式给出便于运维用 docker ps 定位，但绝不能重名（重名会让 docker run 直接失败）。
+	Name string `json:"name,omitempty"`
+}
+
+// Validate 校验容器段自洽性。
+func (c *ContainerConfig) Validate(profileName string) error {
+	if err := validateNoShellTrap(profileName, "image", strings.TrimSpace(c.Image), true); err != nil {
+		return err
+	}
+	wd := strings.TrimSpace(c.Workdir)
+	if wd != "" {
+		if !strings.HasPrefix(wd, "/") {
+			return fmt.Errorf("execution profile %q: container.workdir 必须是容器内绝对路径（以 / 开头），实际 %q", profileName, wd)
+		}
+		if strings.Contains(wd, "..") {
+			return fmt.Errorf("execution profile %q: container.workdir 不能包含 ..（实际 %q）", profileName, wd)
+		}
+		if strings.ContainsAny(wd, " \t\n\r") {
+			return fmt.Errorf("execution profile %q: container.workdir 不能包含空白（实际 %q）", profileName, wd)
+		}
+		if strings.ContainsAny(wd, shellMetaChars) {
+			return fmt.Errorf("execution profile %q: container.workdir 不能包含 shell 元字符（实际 %q）", profileName, wd)
+		}
+	}
+	if net := strings.TrimSpace(c.Network); net != "" {
+		if _, ok := containerNetworkAllowed[net]; !ok {
+			return fmt.Errorf("execution profile %q: container.network %q 不被允许（只支持 none / bridge；host 会共享宿主网络栈，刻意不支持）", profileName, net)
+		}
+	}
+	if user := strings.TrimSpace(c.User); user != "" {
+		if strings.ContainsAny(user, " \t\n\r") || strings.ContainsAny(user, shellMetaChars) {
+			return fmt.Errorf("execution profile %q: container.user 不能包含空白或 shell 元字符（实际 %q）", profileName, user)
+		}
+	}
+	if name := strings.TrimSpace(c.Name); name != "" {
+		if !validContainerName(name) {
+			return fmt.Errorf("execution profile %q: container.name %q 非法（只允许字母数字与 _ . -，且不能以符号开头）", profileName, name)
+		}
+	}
+	for i, e := range c.Env {
+		if strings.ContainsAny(e, "\n\r") {
+			return fmt.Errorf("execution profile %q: container.env[%d] 不能包含换行", profileName, i)
+		}
+		if !strings.Contains(e, "=") {
+			return fmt.Errorf("execution profile %q: container.env[%d] 必须是 K=V 形式（实际 %q）", profileName, i, e)
+		}
+	}
+	return nil
+}
+
+// EffectiveWorkdir 返回容器内工作目录（未声明用默认值）。
+func (c *ContainerConfig) EffectiveWorkdir() string {
+	if wd := strings.TrimSpace(c.Workdir); wd != "" {
+		return wd
+	}
+	return DefaultContainerWorkdir
+}
+
+// EffectiveNetwork 返回 --network 取值（未声明用 none，fail-closed）。
+func (c *ContainerConfig) EffectiveNetwork() string {
+	if n := strings.TrimSpace(c.Network); n != "" {
+		return n
+	}
+	return "none"
+}
+
+// validateNoShellTrap 校验一个「会直接进 argv 的字符串」。
+// 名称/镜像/路径这类值一旦含空白或 shell 元字符，配置读起来像 shell 而实际
+// 不经 shell，属于最容易误判的歧义，统一在配置层拒绝。
+func validateNoShellTrap(profileName, field, value string, required bool) error {
+	if value == "" {
+		if required {
+			return fmt.Errorf("execution profile %q: container.%s 不能为空", profileName, field)
+		}
+		return nil
+	}
+	if strings.HasPrefix(value, "-") {
+		return fmt.Errorf("execution profile %q: container.%s 不能以 - 开头（会被当成命令行选项），实际 %q", profileName, field, value)
+	}
+	if strings.ContainsAny(value, " \t\n\r") {
+		return fmt.Errorf("execution profile %q: container.%s 不能包含空白（实际 %q）", profileName, field, value)
+	}
+	if strings.ContainsAny(value, shellMetaChars) {
+		return fmt.Errorf("execution profile %q: container.%s 不能包含 shell 元字符（实际 %q）", profileName, field, value)
+	}
+	return nil
+}
+
+// validContainerName 判定是否符合 docker 的容器名约束。
+func validContainerName(name string) bool {
+	for i, r := range name {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		case r == '_' || r == '.' || r == '-':
+			if i == 0 {
+				return false
+			}
+		default:
+			return false
+		}
+	}
+	return name != ""
 }
 
 // Validate 校验档位自洽性。fail-closed：任何「看起来能跑但跑不起来」的配置
@@ -162,13 +309,32 @@ func (p ExecutionProfile) Validate() error {
 	if time.Duration(p.TimeoutSec)*time.Second > MaxExecutionTimeout {
 		return fmt.Errorf("execution profile %q: timeout_sec 不能超过 %v", name, MaxExecutionTimeout)
 	}
+	declaresContainer := false
 	for _, env := range p.Environments {
 		e := strings.TrimSpace(env)
-		if e == "" {
+		switch {
+		case e == "":
 			continue
+		case e == EnvLocal:
+		case e == EnvContainer:
+			declaresContainer = true
+		case e == "remote" || strings.HasPrefix(e, "remote:"):
+			return fmt.Errorf("execution profile %q: environment %q 未实现（remote 执行器见 ADR 0020 后续切片）", name, e)
+		default:
+			return fmt.Errorf("execution profile %q: environment %q 不被支持（支持 %s / %s）", name, e, EnvLocal, EnvContainer)
 		}
-		if e != "local" {
-			return fmt.Errorf("execution profile %q: environment %q 未实现（ADR 0020 首刀只支持 local；container/remote 见后续切片）", name, e)
+	}
+	// 环境声明与容器段必须成对出现，两个方向都拒绝：
+	// 声明了 container 却没镜像 → 不知道跑什么；给了容器参数却没声明环境 →
+	// 配置读起来和跑起来不一致（最容易被误读的那种歧义）。
+	switch {
+	case declaresContainer && p.Container == nil:
+		return fmt.Errorf("execution profile %q: 声明了 %s 环境但缺少 container 段（无法确定镜像）", name, EnvContainer)
+	case !declaresContainer && p.Container != nil:
+		return fmt.Errorf("execution profile %q: 给了 container 段却未在 environments 声明 %q（配置读起来与跑起来会不一致）", name, EnvContainer)
+	case declaresContainer:
+		if err := p.Container.Validate(name); err != nil {
+			return err
 		}
 	}
 	return nil

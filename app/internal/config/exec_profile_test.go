@@ -30,13 +30,35 @@ func TestExecutionProfileValidate(t *testing.T) {
 		{"命令含管道", func(p *ExecutionProfile) { p.Command = "go|cat" }, "command"},
 		{"参数含换行", func(p *ExecutionProfile) { p.Args = []string{"a\nb"} }, "args"},
 		{"超时为负", func(p *ExecutionProfile) { p.TimeoutSec = -1 }, "timeout_sec"},
-		{"环境非 local", func(p *ExecutionProfile) { p.Environments = []string{"container"} }, "environment"},
+		{"环境 remote 未实现", func(p *ExecutionProfile) { p.Environments = []string{"remote:host:1"} }, "environment"},
+		{"未知环境", func(p *ExecutionProfile) { p.Environments = []string{"kubernetes"} }, "environment"},
+		// container 已支持，但声明它就必须给出容器段 —— 否则运行时才发现「不知道跑哪个镜像」。
+		{"声明 container 但缺 container 段", func(p *ExecutionProfile) {
+			p.Environments = []string{"container"}
+		}, "container"},
+		// 反过来：给了容器参数却不声明 container 环境，等于配置读起来和跑起来不一致。
+		{"有 container 段但未声明 container 环境", func(p *ExecutionProfile) {
+			p.Container = validContainer()
+		}, "container"},
+		{"镜像为空", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = " " }, "image"},
+		{"镜像以连字符开头", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = "-v" }, "image"},
+		{"镜像含空白", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = "alpine 3.20" }, "image"},
+		{"镜像含 shell 元字符", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = "alpine;rm" }, "image"},
+		{"容器工作目录非绝对", func(p *ExecutionProfile) { withContainer(p); p.Container.Workdir = "app" }, "workdir"},
+		{"容器工作目录含上级引用", func(p *ExecutionProfile) { withContainer(p); p.Container.Workdir = "/a/../.." }, "workdir"},
+		{"网络为 host", func(p *ExecutionProfile) { withContainer(p); p.Container.Network = "host" }, "network"},
+		{"网络未知", func(p *ExecutionProfile) { withContainer(p); p.Container.Network = "overlay" }, "network"},
+		{"容器名非法", func(p *ExecutionProfile) { withContainer(p); p.Container.Name = "bad name" }, "name"},
+		{"运行用户含空白", func(p *ExecutionProfile) { withContainer(p); p.Container.User = "0 0" }, "user"},
+		{"环境变量缺等号", func(p *ExecutionProfile) { withContainer(p); p.Container.Env = []string{"NOEQUALS"} }, "env"},
+		{"环境变量含换行", func(p *ExecutionProfile) { withContainer(p); p.Container.Env = []string{"A=1\nB=2"} }, "env"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			p := base
 			p.Args = append([]string(nil), base.Args...)
 			p.Environments = nil
+			p.Container = nil
 			tc.mut(&p)
 			err := p.Validate()
 			if err == nil {
@@ -46,6 +68,50 @@ func TestExecutionProfileValidate(t *testing.T) {
 				t.Fatalf("错误应含 %q，实际 %q", tc.want, err.Error())
 			}
 		})
+	}
+}
+
+// validContainer 是合法容器段的基准值；各用例只改一个字段以定位校验点。
+func validContainer() *ContainerConfig {
+	return &ContainerConfig{Image: "alpine:3.20"}
+}
+
+// withContainer 同时声明 container 环境与容器段，让「只改一个字段」的用例
+// 不会先被「缺 container 段」这条更前置的校验挡住。
+func withContainer(p *ExecutionProfile) {
+	p.Environments = []string{"container"}
+	p.Container = validContainer()
+}
+
+func TestExecutionProfileContainerValid(t *testing.T) {
+	p := ExecutionProfile{
+		Name:    "go-test-container",
+		Command: "go",
+		Args:    []string{"test", "./..."},
+		Container: &ContainerConfig{
+			Image:   "golang:1.22-alpine",
+			Workdir: "/workspace",
+			Network: "none",
+			User:    "1000:1000",
+			Env:     []string{"CGO_ENABLED=0"},
+			Name:    "zw-exec-1",
+		},
+	}
+	p.Environments = []string{"local", "container"}
+	if err := p.Validate(); err != nil {
+		t.Fatalf("合法容器档位不应报错：%v", err)
+	}
+	if !p.AllowsEnvironment("container") || !p.AllowsEnvironment("local") {
+		t.Fatal("同时声明 local 与 container 时应两者都允许")
+	}
+	if got := p.Container.EffectiveWorkdir(); got != "/workspace" {
+		t.Fatalf("容器工作目录应原样使用，实际 %q", got)
+	}
+	if got := (&ContainerConfig{}).EffectiveWorkdir(); got != DefaultContainerWorkdir {
+		t.Fatalf("未声明容器工作目录应回退 %q，实际 %q", DefaultContainerWorkdir, got)
+	}
+	if got := (&ContainerConfig{Network: " "}).EffectiveNetwork(); got != "none" {
+		t.Fatalf("未声明网络应回退 none，实际 %q", got)
 	}
 }
 
