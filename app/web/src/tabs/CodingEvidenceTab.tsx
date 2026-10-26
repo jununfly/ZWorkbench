@@ -280,6 +280,11 @@ export function CodingEvidenceTab() {
     if (!context) void fetchContext();
   };
 
+  // 空态织入（ADR 0019 Follow-up ③）：挂载即拉取上下文，使零 run 时空态也能展示当前语境。
+  useEffect(() => {
+    if (!context) void fetchContext();
+  }, [context, fetchContext]);
+
   const onRepoChange = (name: string) => {
     setSelRepo(name);
     const r = (context?.repos ?? []).find((x) => x.name === name);
@@ -306,6 +311,16 @@ export function CodingEvidenceTab() {
   // 只读提示：不可用**不阻断**提交——授权由后端白名单强制，可达性只影响提示文案。
   const activeRepo = (context?.repos ?? []).find((r) => r.name === selRepo);
   const activeEnvStatus = (activeRepo?.environment_status ?? []).find((s) => s.name === selEnv);
+
+  // —— 空态织入（Follow-up ③）：从默认仓库推导「当前上下文」，用于零 run 时的空态展示 ——
+  const emptyDefaultRepo =
+    context && context.repos.length > 0 ? context.default_repo || context.repos[0].name : '';
+  const emptyRepoInfo = (context?.repos ?? []).find((r) => r.name === emptyDefaultRepo);
+  const emptyBranch = emptyRepoInfo?.current_branch || '';
+  const emptyEnv = emptyRepoInfo?.environments?.length
+    ? emptyRepoInfo.environments[0]
+    : context?.default_environment || 'local';
+  const emptyEnvStatus = (emptyRepoInfo?.environment_status ?? []).find((s) => s.name === emptyEnv);
 
   if (err && runs.length === 0 && !detail) {
     return <pre style={{ color: RED }}>{err}</pre>;
@@ -396,9 +411,30 @@ export function CodingEvidenceTab() {
         <section style={{ width: 320, flexShrink: 0 }}>
           <h3 style={{ marginTop: 0 }}>Runs</h3>
           {runs.length === 0 && (
-            <p style={{ color: '#888', fontSize: 13 }}>
-              暂无 run（默认内存库，重启即空）。点「新建 run」造一条看生命周期。
-            </p>
+            <div style={{ color: '#888', fontSize: 13, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span>暂无 run（默认内存库，重启即空）。</span>
+              {context ? (
+                emptyDefaultRepo ? (
+                  <span style={{ color: '#666' }}>
+                    当前上下文：{emptyDefaultRepo} · {emptyBranch || 'unknown'} · {emptyEnv}
+                    {emptyEnvStatus ? (
+                      emptyEnvStatus.available ? (
+                        <span style={{ color: '#389e0d' }}> · 环境可用</span>
+                      ) : (
+                        <span style={{ color: '#d46b08' }}>
+                          {' · '}环境当前不可用：{emptyEnvStatus.reason}（仍可记账）
+                        </span>
+                      )
+                    ) : null}
+                  </span>
+                ) : (
+                  <span style={{ color: '#666' }}>当前上下文：（无被管理仓库，默认环境 {emptyEnv}）</span>
+                )
+              ) : (
+                <span>加载上下文…</span>
+              )}
+              <span>点「新建 run」造一条看生命周期。</span>
+            </div>
           )}
           {runs.length > 0 && (
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
