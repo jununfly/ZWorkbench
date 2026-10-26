@@ -150,6 +150,10 @@ interface ExecProfile {
   image?: string;
   container_workdir?: string;
   container_network?: string;
+  // 远程档位才有：审批前必须能看见执行边界（连哪台机器）。
+  remote_host?: string;
+  remote_port?: number;
+  remote_user?: string;
 }
 interface EvApproval {
   approval_id: string;
@@ -176,6 +180,9 @@ interface ExecResult {
   // 必须显示——「残留有没有清掉」是执行后第一件要看的事。
   container_name?: string;
   container_cleanup?: string;
+  // 远程执行才有：连的是哪台机器（host:port）。必须显示——「副作用落在哪台
+  // 远端」是执行后第一件要看的事，且本机无法验证其残留，不声称已清场。
+  remote_endpoint?: string;
 }
 interface ExecConfirm {
   claim?: { status: string; reason: string; attempt: number };
@@ -716,6 +723,15 @@ export function CodingEvidenceTab() {
                       {activeProfile.container_network ? ` · 网络 ${activeProfile.container_network}` : ''}
                     </>
                   )}
+                  {activeProfile.remote_host && (
+                    <>
+                      {' '}· 远端 {activeProfile.remote_user ? `${activeProfile.remote_user}@` : ''}
+                      {activeProfile.remote_host}
+                      {activeProfile.remote_port && activeProfile.remote_port !== 22
+                        ? `:${activeProfile.remote_port}`
+                        : ''}
+                    </>
+                  )}
                   {activeProfileEnv && !activeProfileEnv.available && (
                     <span style={{ color: '#d46b08' }}>
                       {' '}
@@ -813,6 +829,19 @@ export function CodingEvidenceTab() {
                           {execOut.result.container_cleanup}
                           {execOut.result.container_cleanup.startsWith('failed') &&
                             '（残留需手动 docker rm -f）'}
+                        </div>
+                      )}
+                      {execOut.result?.remote_endpoint && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            marginTop: 2,
+                            color: '#666',
+                            fontFamily: 'ui-monospace, monospace',
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          远端 {execOut.result.remote_endpoint} · 本机无法验证其残留，清场结论记为 unknown
                         </div>
                       )}
                       {execOut.result?.stdout && (
