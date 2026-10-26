@@ -241,8 +241,74 @@ func (o *Owner) BeginRecovery(runID, reason string) (*Run, error) {
 	return out, err
 }
 
-// ---- 读取与投影 ----
+// WaitForApproval 把运行显式推进到 waiting_approval（ADR 0020 审批门）。
+//
+// 与 ClaimEffect 里「approval 缺失时自动降级 waiting_approval」的区别：那是
+// 认领失败后的**副作用**，这是发起「请求执行」时的**显式动作**——UI 必须在
+// 请求执行的那一刻就看到「此 run 在等我批」，而不是点了确认才被告知。
+//
+// 幂等：已是 waiting_approval 直接返回当前快照，不当作非法转移。
+func (o *Owner) WaitForApproval(runID, reason string) (*Run, error) {
+	if err := requireText(reason, "reason"); err != nil {
+		return nil, err
+	}
+	var out *Run
+	err := o.transact(func(tx *sql.Tx) error {
+		r, err := o.runRow(tx, runID)
+		if err != nil {
+			return err
+		}
+		if r.Status == StatusWaitingApproval {
+			out, err = o.getRunTx(tx, runID)
+			return err
+		}
+		if err := o.setRunStatus(tx, runID, r.Status, StatusWaitingApproval, "run.waiting_approval", map[string]any{"reason": reason}); err != nil {
+			return err
+		}
+		out, err = o.getRunTx(tx, runID)
+		return err
+	})
+	return out, err
+}
 
+// ListApprovals 列出审批记录（runID 为空 = 全部），按创建时间倒序。
+// 只投影对外字段，**不含 token_hash**——哈希留在库里，绝不出库。
+func (o *Owner) ListApprovals(runID string, limit int) ([]Approval, error) {
+	if limit <= 0 || limit > 500 {
+		limit = 100
+	}
+	q := `SELECT approval_id, run_id, operation_id, action, resource, idempotency_key, reason, status, created_at, COALESCE(decision_reason, '')
+	      FROM approvals`
+	args := []any{}
+	if strings.TrimSpace(runID) != "" {
+		q += ` WHERE run_id = ?`
+		args = append(args, strings.TrimSpace(runID))
+	}
+	q += ` ORDER BY created_at DESC, approval_id DESC LIMIT ?`
+	args = append(args, limit)
+
+	rows, err := o.db.Query(q, args...)
+	if err != nil {
+		return nil, fmt.Errorf("列出 approvals 失败：%w", err)
+	}
+	defer rows.Close()
+
+	out := make([]Approval, 0, 8)
+	for rows.Next() {
+		var a Approval
+		if err := rows.Scan(&a.ApprovalID, &a.RunID, &a.OperationID, &a.Action, &a.Resource,
+			&a.IdempotencyKey, &a.Reason, &a.Status, &a.CreatedAt, &a.DecisionReason); err != nil {
+			return nil, fmt.Errorf("扫描 approval 失败：%w", err)
+		}
+		out = append(out, a)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("读取 approvals 失败：%w", err)
+	}
+	return out, nil
+}
+
+// ---- 读取与投影 ----
 // GetRun 读取一个运行及其事件/效果/曝光投影。
 func (o *Owner) GetRun(runID string) (*Run, error) {
 	if err := requireText(runID, "run_id"); err != nil {
