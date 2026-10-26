@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/jununfly/ZWorkbench/app/internal/agent"
@@ -18,6 +19,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/optimization"
 	"github.com/jununfly/ZWorkbench/app/internal/research"
 	"github.com/jununfly/ZWorkbench/app/internal/review"
+	"github.com/jununfly/ZWorkbench/app/internal/vcs"
 	"github.com/jununfly/ZWorkbench/app/internal/webstatic"
 )
 
@@ -314,6 +316,46 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 			"ok":         true,
 			"model":      resp.Model,
 			"latency_ms": latency,
+		})
+	}))
+
+	// 编码证据上下文（ADR 0019）：被管理仓库列表 + 每仓当前分支，供前端 chips 预填。
+	// git 探测失败一律 unknown，本端点恒 200，绝不 500。
+	mux.HandleFunc("GET /api/context", auth(func(w http.ResponseWriter, _ *http.Request) {
+		repos := cfg.ManagedRepos().Repos
+		// 无显式配置时，把「当前工作目录所在 git 仓库」自动登记为默认被管理仓库
+		// （如 ZWorkbench 自身），让开箱即有语境；非 git 仓库则留空。
+		if len(repos) == 0 {
+			if p, ok := vcs.Toplevel("."); ok {
+				repos = []config.RepoSpec{{
+					Name:         filepath.Base(p),
+					Path:         p,
+					Environments: []string{"local"},
+				}}
+			}
+		}
+		out := make([]map[string]any, 0, len(repos))
+		defaultRepo := ""
+		for i, r := range repos {
+			branch := vcs.CurrentBranch(r.Path)
+			envs := r.Environments
+			if len(envs) == 0 {
+				envs = []string{"local"}
+			}
+			out = append(out, map[string]any{
+				"name":         r.Name,
+				"path":         r.Path,
+				"environments": envs,
+				"current_branch": branch,
+			})
+			if i == 0 {
+				defaultRepo = r.Name
+			}
+		}
+		writeJSON(w, map[string]any{
+			"repos":               out,
+			"default_repo":        defaultRepo,
+			"default_environment": "local",
 		})
 	}))
 

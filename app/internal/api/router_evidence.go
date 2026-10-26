@@ -44,10 +44,13 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 	// POST /api/evidence/runs —— 建 run（run_id 可省略，服务端生成）
 	mux.HandleFunc("POST /api/evidence/runs", auth(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
-			RunID    string         `json:"run_id"`
-			TaskType string         `json:"task_type"`
-			Input    any            `json:"input"`
-			Metadata map[string]any `json:"metadata"`
+			RunID       string         `json:"run_id"`
+			TaskType    string         `json:"task_type"`
+			Input       any            `json:"input"`
+			Metadata    map[string]any `json:"metadata"`
+			Repo        string         `json:"repo"`
+			Branch      string         `json:"branch"`
+			Environment string         `json:"environment"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			http.Error(w, "bad request", http.StatusBadRequest)
@@ -59,7 +62,7 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 		if body.RunID == "" {
 			body.RunID = newRunID()
 		}
-		run, err := ev.CreateRun(body.RunID, body.TaskType, body.Input, body.Metadata)
+		run, err := ev.CreateRunWithContext(body.RunID, body.TaskType, body.Input, body.Metadata, body.Repo, body.Branch, body.Environment)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return

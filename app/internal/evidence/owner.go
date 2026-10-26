@@ -14,7 +14,15 @@ const defaultEventLimit = 500
 // ---- 状态机核心方法（C26 CompositionOwner） ----
 
 // CreateRun 创建持久运行身份（不启动执行），状态落 'created'。
+// 向后兼容：repo/branch/environment 取空串（显示层按 unknown 处理）。
+// ADR 0019 的上下文维度请改用 CreateRunWithContext。
 func (o *Owner) CreateRun(runID, taskType string, input any, metadata map[string]any) (*Run, error) {
+	return o.CreateRunWithContext(runID, taskType, input, metadata, "", "", "")
+}
+
+// CreateRunWithContext 同 CreateRun，但携带 ADR 0019 的 run 上下文维度
+// （repo / branch / environment）。三参空串等价于未知语境。
+func (o *Owner) CreateRunWithContext(runID, taskType string, input any, metadata map[string]any, repo, branch, environment string) (*Run, error) {
 	if err := requireText(runID, "run_id"); err != nil {
 		return nil, err
 	}
@@ -34,9 +42,9 @@ func (o *Owner) CreateRun(runID, taskType string, input any, metadata map[string
 	}
 	ts := nowUTC()
 	if _, err := o.db.Exec(
-		`INSERT INTO runs(run_id, task_type, input_json, metadata_json, status, created_at, updated_at)
-		 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		runID, taskType, ij, mj, StatusCreated, ts, ts); err != nil {
+		`INSERT INTO runs(run_id, task_type, input_json, metadata_json, status, repo, branch, environment, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		runID, taskType, ij, mj, StatusCreated, repo, branch, environment, ts, ts); err != nil {
 		if isUniqueViolation(err) {
 			return nil, fmt.Errorf("%w: run 已存在 %s", ErrRunExists, runID)
 		}
@@ -251,7 +259,7 @@ func (o *Owner) GetRun(runID string) (*Run, error) {
 
 // ListRuns 按创建时间倒序列出全部运行（不含事件/效果投影，便于列表渲染）。
 func (o *Owner) ListRuns() ([]*Run, error) {
-	rows, err := o.db.Query(`SELECT run_id, task_type, input_json, metadata_json, status, created_at, updated_at FROM runs ORDER BY created_at DESC, run_id DESC`)
+	rows, err := o.db.Query(`SELECT run_id, task_type, input_json, metadata_json, status, repo, branch, environment, created_at, updated_at FROM runs ORDER BY created_at DESC, run_id DESC`)
 	if err != nil {
 		return nil, fmt.Errorf("列举 run 失败：%w", err)
 	}
@@ -259,7 +267,7 @@ func (o *Owner) ListRuns() ([]*Run, error) {
 	out := make([]*Run, 0)
 	for rows.Next() {
 		var r runRow
-		if err := rows.Scan(&r.RunID, &r.TaskType, &r.InputJSON, &r.MetadataJSON, &r.Status, &r.CreatedAt, &r.UpdatedAt); err != nil {
+		if err := rows.Scan(&r.RunID, &r.TaskType, &r.InputJSON, &r.MetadataJSON, &r.Status, &r.Repo, &r.Branch, &r.Environment, &r.CreatedAt, &r.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("扫描 run 失败：%w", err)
 		}
 		out = append(out, rowToRun(r))
@@ -392,9 +400,9 @@ func (o *Owner) DetectIdentityViolations(runID string) ([]Violation, error) {
 // ---- 内部辅助 ----
 
 func (o *Owner) runRow(tx *sql.Tx, runID string) (runRow, error) {
-	row := tx.QueryRow(`SELECT run_id, task_type, input_json, metadata_json, status, created_at, updated_at FROM runs WHERE run_id=?`, runID)
+	row := tx.QueryRow(`SELECT run_id, task_type, input_json, metadata_json, status, repo, branch, environment, created_at, updated_at FROM runs WHERE run_id=?`, runID)
 	var r runRow
-	if err := row.Scan(&r.RunID, &r.TaskType, &r.InputJSON, &r.MetadataJSON, &r.Status, &r.CreatedAt, &r.UpdatedAt); err != nil {
+	if err := row.Scan(&r.RunID, &r.TaskType, &r.InputJSON, &r.MetadataJSON, &r.Status, &r.Repo, &r.Branch, &r.Environment, &r.CreatedAt, &r.UpdatedAt); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return r, fmt.Errorf("%w: run %s", ErrRunNotFound, runID)
 		}
@@ -634,11 +642,14 @@ func (o *Owner) detectViolationsTx(tx *sql.Tx, scopeRunID string) ([]Violation, 
 
 func rowToRun(r runRow) *Run {
 	run := &Run{
-		RunID:     r.RunID,
-		TaskType:  r.TaskType,
-		Status:    r.Status,
-		CreatedAt: r.CreatedAt,
-		UpdatedAt: r.UpdatedAt,
+		RunID:       r.RunID,
+		TaskType:    r.TaskType,
+		Status:      r.Status,
+		Repo:        r.Repo,
+		Branch:      r.Branch,
+		Environment: r.Environment,
+		CreatedAt:   r.CreatedAt,
+		UpdatedAt:   r.UpdatedAt,
 	}
 	_ = json.Unmarshal([]byte(r.InputJSON), &run.Input)
 	if err := json.Unmarshal([]byte(r.MetadataJSON), &run.Metadata); err != nil || run.Metadata == nil {

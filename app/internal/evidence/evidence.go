@@ -89,9 +89,12 @@ var (
 // SchemaVersion 是 Go B2-narrow evidence 库的 schema 身份，独立于 Python
 // composition.py 的 SCHEMA_VERSION（=3）。备份 manifest 与 restore 都据此拒绝
 // 不兼容的备份；Open 建表后会写 PRAGMA user_version = SchemaVersion。
-const SchemaVersion = 1
+//
+// 2 → 1：runs 加 repo / branch / environment 三列（ADR 0019，编码证据上下文维度）。
+const SchemaVersion = 2
 
 // schema 是 5 张核心表的建表语句（composition.py 核心 schema 移植）。
+// repo/branch/environment 为 ADR 0019 新增的 run 上下文维度（空串=unknown）。
 const schema = `
 CREATE TABLE IF NOT EXISTS runs (
     run_id TEXT PRIMARY KEY,
@@ -99,6 +102,9 @@ CREATE TABLE IF NOT EXISTS runs (
     input_json TEXT NOT NULL,
     metadata_json TEXT NOT NULL,
     status TEXT NOT NULL,
+    repo TEXT NOT NULL DEFAULT '',
+    branch TEXT NOT NULL DEFAULT '',
+    environment TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -212,11 +218,56 @@ func Open(path string) (*Owner, error) {
 		return nil, fmt.Errorf("建 evidence 核心表失败：%w", err)
 	}
 	// 写入 schema 身份，供备份完整性校验与跨备份版本拒绝使用。
-	if _, err := db.Exec(fmt.Sprintf("PRAGMA user_version = %d", SchemaVersion)); err != nil {
+	if err := migrate(db); err != nil {
 		_ = db.Close()
-		return nil, fmt.Errorf("写 evidence user_version 失败：%w", err)
+		return nil, err
 	}
 	return New(db), nil
+}
+
+// migrate 把已存在的旧版本库升级到 SchemaVersion（ADR 0019：v1→v2 加三列）。
+// 空库经 schema 建表已是 v2，此时三列已存在，本函数按列存在性幂等跳过，避免
+// 「duplicate column」。既有 v1 库则补加缺失列。任何步骤失败都显式返回，
+// 不让坏库静默冒充当版本。
+func migrate(db *sql.DB) error {
+	var ver int
+	if err := db.QueryRow("PRAGMA user_version").Scan(&ver); err != nil {
+		return fmt.Errorf("读 evidence user_version 失败：%w", err)
+	}
+	if ver < 2 {
+		// 查现有列，仅补加缺失的上下文维度列（幂等）。
+		cols := map[string]bool{}
+		rows, err := db.Query("PRAGMA table_info(runs)")
+		if err != nil {
+			return fmt.Errorf("读 runs 列信息失败：%w", err)
+		}
+		for rows.Next() {
+			var cid int
+			var name, ctype string
+			var notnull, pk int
+			var dflt sql.NullString
+			if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+				rows.Close()
+				return fmt.Errorf("扫描 runs 列信息失败：%w", err)
+			}
+			cols[name] = true
+		}
+		rows.Close()
+
+		addCols := []string{"repo", "branch", "environment"}
+		for _, c := range addCols {
+			if cols[c] {
+				continue
+			}
+			if _, err := db.Exec(fmt.Sprintf("ALTER TABLE runs ADD COLUMN %s TEXT NOT NULL DEFAULT ''", c)); err != nil {
+				return fmt.Errorf("迁移 evidence 到 v2 失败(加列 %s)：%w", c, err)
+			}
+		}
+	}
+	if _, err := db.Exec(fmt.Sprintf("PRAGMA user_version = %d", SchemaVersion)); err != nil {
+		return fmt.Errorf("写 evidence user_version 失败：%w", err)
+	}
+	return nil
 }
 
 // DB 暴露底层连接，便于上层（1-5-6-3）在同一物理库上挂路由。
@@ -233,6 +284,9 @@ type runRow struct {
 	InputJSON     string
 	MetadataJSON  string
 	Status        RunStatus
+	Repo          string
+	Branch        string
+	Environment   string
 	CreatedAt     string
 	UpdatedAt     string
 }
@@ -287,17 +341,21 @@ func (o *Owner) transact(fn func(tx *sql.Tx) error) error {
 }
 
 // Run 是运行记录（含可选的事件/效果/曝光投影，便于前端可视化）。
+// Repo/Branch/Environment 是 ADR 0019 的 run 上下文维度（空串=unknown）。
 type Run struct {
-	RunID     string         `json:"run_id"`
-	TaskType  string         `json:"task_type"`
-	Input     any            `json:"input,omitempty"`
-	Metadata  map[string]any `json:"metadata,omitempty"`
-	Status    RunStatus      `json:"status"`
-	CreatedAt string         `json:"created_at"`
-	UpdatedAt string         `json:"updated_at"`
-	Events    []Event        `json:"events,omitempty"`
-	Effects   []Effect       `json:"effects,omitempty"`
-	Exposure  *DeclaredExposure `json:"exposure,omitempty"`
+	RunID       string         `json:"run_id"`
+	TaskType    string         `json:"task_type"`
+	Input       any            `json:"input,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	Status      RunStatus      `json:"status"`
+	Repo        string         `json:"repo,omitempty"`
+	Branch      string         `json:"branch,omitempty"`
+	Environment string         `json:"environment,omitempty"`
+	CreatedAt   string         `json:"created_at"`
+	UpdatedAt   string         `json:"updated_at"`
+	Events      []Event        `json:"events,omitempty"`
+	Effects     []Effect       `json:"effects,omitempty"`
+	Exposure    *DeclaredExposure `json:"exposure,omitempty"`
 }
 
 // Event 是结构化证据事件（adapter 消息即证据，owner 赋规范行）。

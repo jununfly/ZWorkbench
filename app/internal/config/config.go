@@ -25,6 +25,22 @@ type DataFiles struct {
 	PortfolioPath string `json:"portfolio_path"`
 }
 
+// RepoSpec 是被管理仓库（ADR 0019; 编码证据上下文维度）。
+// 一个 ZW 实例可登记多个被管理仓库，新建证据 run 时选择其一作为语境。
+type RepoSpec struct {
+	// Name 是仓库在 UI/API 中的展示名（如 "ZWorkbench"），全局唯一。
+	Name string `json:"name"`
+	// Path 是仓库本地路径；空串表示未知（current_branch 回退 unknown）。
+	Path string `json:"path"`
+	// Environments 是该仓库可选的执行环境枚举；至少含 "local"。
+	Environments []string `json:"environments"`
+}
+
+// ManagedRepos 是被管理仓库列表的持久化形态（ADR 0019）。
+type ManagedRepos struct {
+	Repos []RepoSpec `json:"repos"`
+}
+
 // Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置、
 // 统一远程数据源开关，以及本地导入数据集路径。
 type Config struct {
@@ -40,15 +56,17 @@ type Config struct {
 	llm    LLMConfig
 	ds     DataSourceConfig
 	df     DataFiles
+	mr     ManagedRepos
 	mu     sync.RWMutex
 }
 
 // persistFile 是 config.json 的完整形态。三个段落共用一次保存，
 // 避免「存 LLM 把数据源配置抹掉」这类静默丢配置。
 type persistFile struct {
-	LLM        LLMConfig        `json:"llm"`
-	DataSource DataSourceConfig `json:"data_source"`
-	DataFiles  DataFiles        `json:"data_files"`
+	LLM           LLMConfig        `json:"llm"`
+	DataSource    DataSourceConfig `json:"data_source"`
+	DataFiles     DataFiles        `json:"data_files"`
+	ManagedRepos  ManagedRepos     `json:"managed_repos"`
 }
 
 // LLMConfig 是「设置 / LLM」页可编辑的 provider 配置，持久化到 config.json。
@@ -85,6 +103,20 @@ func Load() *Config {
 	}
 	c.load()
 	return c
+}
+
+// ManagedRepos 返回被管理仓库列表快照（并发安全，ADR 0019）。
+func (c *Config) ManagedRepos() ManagedRepos {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.mr
+}
+
+// SetManagedRepos 原子写入被管理仓库列表（并发安全，ADR 0019）。
+func (c *Config) SetManagedRepos(m ManagedRepos) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.mr = m
 }
 
 // LLM 返回当前 LLM 配置快照（并发安全）。
@@ -155,6 +187,8 @@ func (c *Config) load() {
 	if err != nil {
 		c.SetDataSource(datasource.LoadFromEnv(c.DataSource()))
 		c.SetDataFiles(loadDataFilesFromEnv(c.DataFiles()))
+		// 即使无 config.json，env 覆盖仍应生效（与数据源/导入路径一致）。
+		c.SetManagedRepos(loadManagedReposFromEnv(c.ManagedRepos()))
 		return
 	}
 	var f persistFile
@@ -170,6 +204,7 @@ func (c *Config) load() {
 	}
 	c.SetDataSource(datasource.LoadFromEnv(ds))
 	c.SetDataFiles(loadDataFilesFromEnv(f.DataFiles))
+	c.SetManagedRepos(loadManagedReposFromEnv(f.ManagedRepos))
 }
 
 // loadDataFilesFromEnv 用 ZW_MASTERY_PATH / ZW_PORTFOLIO_PATH 覆盖给定的导入路径：
@@ -184,6 +219,20 @@ func loadDataFilesFromEnv(base DataFiles) DataFiles {
 	return base
 }
 
+// loadManagedReposFromEnv 用 ZW_MANAGED_REPOS（JSON 数组）覆盖被管理仓库列表：
+// env 优先于 config.json（ADR 0019）。非法 JSON 静默忽略，沿用文件/默认值。
+func loadManagedReposFromEnv(base ManagedRepos) ManagedRepos {
+	v := strings.TrimSpace(os.Getenv("ZW_MANAGED_REPOS"))
+	if v == "" {
+		return base
+	}
+	var repos []RepoSpec
+	if err := json.Unmarshal([]byte(v), &repos); err != nil {
+		return base
+	}
+	return ManagedRepos{Repos: repos}
+}
+
 // LoadLLM 从 config.json 读取 LLM 配置（兼容入口，内部读取完整文件）。
 func (c *Config) LoadLLM() { c.load() }
 
@@ -193,7 +242,7 @@ func (c *Config) LoadDataSource() { c.load() }
 // save 把三段配置一起写回 config.json（权限 0600）。
 // 必须整体写：分开写会让「保存 LLM」把数据源开关抹掉，属于静默丢配置。
 func (c *Config) save() error {
-	f := persistFile{LLM: c.LLM(), DataSource: c.DataSource(), DataFiles: c.DataFiles()}
+	f := persistFile{LLM: c.LLM(), DataSource: c.DataSource(), DataFiles: c.DataFiles(), ManagedRepos: c.ManagedRepos()}
 	data, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return err
@@ -206,6 +255,9 @@ func (c *Config) SaveLLM() error { return c.save() }
 
 // SaveDataSource 将数据源配置写回 config.json（权限 0600）。
 func (c *Config) SaveDataSource() error { return c.save() }
+
+// SaveManagedRepos 将被管理仓库列表写回 config.json（权限 0600，ADR 0019）。
+func (c *Config) SaveManagedRepos() error { return c.save() }
 
 // Addr 绑定 loopback，避免暴露到外部网络。
 func (c *Config) Addr() string {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getJSON, reqJSON } from '../api';
+import { ChipSelect } from '../components/ChipSelect';
 
 interface EvEvent {
   seq: number;
@@ -16,10 +17,36 @@ interface EvRun {
   status: string;
   created_at: string;
   updated_at: string;
+  repo?: string;
+  branch?: string;
+  environment?: string;
   events?: EvEvent[];
 }
 
+// 编码证据上下文维度（ADR 0019）：被管理仓库列表 + 默认选择，来自 GET /api/context。
+interface CtxRepo {
+  name: string;
+  path: string;
+  environments: string[];
+  current_branch: string;
+}
+interface Ctx {
+  repos: CtxRepo[];
+  default_repo: string;
+  default_environment: string;
+}
+
 const RED = '#cf1322';
+
+// chips 样式（M3 主色 #6750A4），圆角胶囊，符合 Codex composer 上下文 chips 形态。
+const chipStyle: React.CSSProperties = {
+  border: '1px solid #6750A4',
+  color: '#6750A4',
+  borderRadius: 999,
+  padding: '4px 10px',
+  background: '#fff',
+  fontSize: 13,
+};
 
 // 生命周期 7 状态的语义配色：终态可辨、safe_stopped 最醒目（C28 是差异化核心）。
 const STATUS_COLOR: Record<string, string> = {
@@ -118,6 +145,14 @@ export function CodingEvidenceTab() {
   const [err, setErr] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);
 
+  // —— 新建 run 表单（ADR 0019 上下文 chips）——
+  const [context, setContext] = useState<Ctx | null>(null);
+  const [formOpen, setFormOpen] = useState<boolean>(false);
+  const [selRepo, setSelRepo] = useState<string>('');
+  const [selEnv, setSelEnv] = useState<string>('local');
+  const [branchText, setBranchText] = useState<string>('');
+  const [ctxErr, setCtxErr] = useState<string>('');
+
   const load = useCallback(async () => {
     try {
       const [r, s, v] = await Promise.all([
@@ -180,9 +215,6 @@ export function CodingEvidenceTab() {
     }
   };
 
-  const createRun = () =>
-    act(() => reqJSON('POST', '/api/evidence/runs', { task_type: 'manual-ui' }));
-
   const transition = (action: string) =>
     act(() =>
       reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/transition`, {
@@ -202,6 +234,55 @@ export function CodingEvidenceTab() {
     act(() =>
       reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/reconcile-identity`, {})
     );
+
+  // —— 新建 run 表单逻辑（ADR 0019）——
+  const fetchContext = useCallback(async () => {
+    try {
+      const c = (await getJSON('/api/context')) as Ctx;
+      setContext(c);
+      const def = c.repos.length > 0 ? c.default_repo || c.repos[0].name : '';
+      setSelRepo(def);
+      const r0 = c.repos.find((r) => r.name === def);
+      if (r0) {
+        setBranchText(r0.current_branch || '');
+        const envs = r0.environments.length > 0 ? r0.environments : ['local'];
+        setSelEnv(envs[0]);
+      } else {
+        setBranchText('');
+        setSelEnv(c.default_environment || 'local');
+      }
+      setCtxErr('');
+    } catch (e) {
+      setCtxErr(String(e));
+    }
+  }, []);
+
+  const openForm = () => {
+    setFormOpen(true);
+    if (!context) void fetchContext();
+  };
+
+  const onRepoChange = (name: string) => {
+    setSelRepo(name);
+    const r = (context?.repos ?? []).find((x) => x.name === name);
+    if (r) {
+      setBranchText(r.current_branch || '');
+      const envs = r.environments.length > 0 ? r.environments : ['local'];
+      setSelEnv(envs[0]);
+    }
+  };
+
+  const createRunWithContext = async () => {
+    await act(() =>
+      reqJSON('POST', '/api/evidence/runs', {
+        task_type: 'manual-ui',
+        repo: selRepo || undefined,
+        branch: branchText || undefined,
+        environment: selEnv || undefined,
+      })
+    );
+    setFormOpen(false);
+  };
 
   if (err && runs.length === 0 && !detail) {
     return <pre style={{ color: RED }}>{err}</pre>;
@@ -228,10 +309,58 @@ export function CodingEvidenceTab() {
         <button onClick={() => void load()} disabled={busy}>
           刷新
         </button>
-        <button onClick={() => void createRun()} disabled={busy}>
+        <button onClick={() => void openForm()} disabled={busy}>
           新建 run
         </button>
       </div>
+
+      {formOpen && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void createRunWithContext();
+          }}
+          style={{ border: '1px solid #eee', borderRadius: 8, padding: 12, marginTop: 12, background: '#fafafa' }}
+        >
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, color: '#666' }}>仓库</span>
+              <ChipSelect
+                label="仓库"
+                value={selRepo}
+                placeholder="（无被管理仓库）"
+                options={(context?.repos ?? []).map((r) => r.name)}
+                onChange={onRepoChange}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <label htmlFor="ctx-branch" style={{ fontSize: 11, color: '#666' }}>分支</label>
+              <input
+                id="ctx-branch"
+                aria-label="分支"
+                value={branchText}
+                onChange={(e) => setBranchText(e.target.value)}
+                placeholder="分支"
+                style={{ ...chipStyle, minWidth: 120 }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 11, color: '#666' }}>环境</span>
+              <ChipSelect
+                label="环境"
+                value={selEnv}
+                options={(context?.repos.find((r) => r.name === selRepo)?.environments) ?? ['local']}
+                onChange={setSelEnv}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="submit" disabled={busy}>确认新建</button>
+              <button type="button" onClick={() => setFormOpen(false)} disabled={busy}>取消</button>
+            </div>
+          </div>
+          {ctxErr && <pre style={{ color: RED, fontSize: 12, marginTop: 8 }}>{ctxErr}</pre>}
+        </form>
+      )}
 
       {err && <pre style={{ color: RED, marginTop: 8 }}>{err}</pre>}
 
@@ -266,6 +395,11 @@ export function CodingEvidenceTab() {
                 <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
                   {r.task_type} · {r.created_at}
                 </div>
+                {r.repo || r.branch || r.environment ? (
+                  <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>
+                    {[r.repo, r.branch, r.environment].filter(Boolean).join(' · ')}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -275,6 +409,11 @@ export function CodingEvidenceTab() {
           <h3 style={{ marginTop: 0 }}>
             事件流 {detail ? <code style={{ fontSize: 13 }}>{detail.run_id}</code> : '（未选中）'}
           </h3>
+          {detail && (detail.repo || detail.branch || detail.environment) && (
+            <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+              {[detail.repo, detail.branch, detail.environment].filter(Boolean).join(' · ')}
+            </div>
+          )}
           {detail && (
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
               {ACTIONS.map((a) => (
