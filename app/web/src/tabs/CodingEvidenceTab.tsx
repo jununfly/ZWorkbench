@@ -129,6 +129,63 @@ interface EvViolation {
 
 const ACTIONS = ['start', 'complete', 'fail', 'safe_stop', 'recover'];
 
+// ---- 真执行器（ADR 0020 首刀）：预置档位 + 审批门 ----
+// 前端**没有**「填命令」的入口：只能从后端配置的档位里选。这是安全边界，
+// 不是 UI 省略——HTTP 面本身也不接受 command/args。
+interface ExecEnvStatus {
+  name: string;
+  kind: string;
+  available: boolean;
+  reason: string;
+}
+interface ExecProfile {
+  name: string;
+  command: string;
+  args: string[];
+  environments: string[];
+  environment_status?: ExecEnvStatus[];
+  timeout_sec: number;
+  workdir: string;
+}
+interface EvApproval {
+  approval_id: string;
+  run_id: string;
+  operation_id: string;
+  action: string;
+  resource: string;
+  reason: string;
+  status: string;
+  created_at: string;
+  decision_reason?: string;
+}
+interface ExecResult {
+  exit_code: number;
+  stdout: string;
+  stderr: string;
+  stdout_bytes: number;
+  stderr_bytes: number;
+  truncated: boolean;
+  duration: number;
+  timed_out: boolean;
+  canceled: boolean;
+}
+interface ExecConfirm {
+  claim?: { status: string; reason: string; attempt: number };
+  result?: ExecResult;
+  run?: { status: string };
+  executed: boolean;
+  reason?: string;
+}
+
+// APPROVAL_COLOR 与 run 状态配色分开：审批的 approved/denied/consumed 是
+// token 生命周期，和 run 的 7 态不是一回事，混用配色会让「已批准」看起来像「已完成」。
+const APPROVAL_COLOR: Record<string, string> = {
+  pending: '#d46b08',
+  approved: '#2f54eb',
+  consumed: '#389e0d',
+  denied: RED,
+};
+
 const badge = (status: string) => (
   <span
     style={{
@@ -170,6 +227,14 @@ export function CodingEvidenceTab() {
   const [selEnv, setSelEnv] = useState<string>('local');
   const [branchText, setBranchText] = useState<string>('');
   const [ctxErr, setCtxErr] = useState<string>('');
+
+  // —— 执行面板状态（ADR 0020）——
+  const [profiles, setProfiles] = useState<ExecProfile[]>([]);
+  const [selProfile, setSelProfile] = useState<string>('');
+  const [approvals, setApprovals] = useState<EvApproval[]>([]);
+  const [token, setToken] = useState<{ approval_id: string; token: string } | null>(null);
+  const [execOut, setExecOut] = useState<ExecConfirm | null>(null);
+  const [execErr, setExecErr] = useState<string>('');
 
   const load = useCallback(async () => {
     try {
@@ -253,6 +318,67 @@ export function CodingEvidenceTab() {
       reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/reconcile-identity`, {})
     );
 
+  // —— 执行面板（ADR 0020）——
+  const loadExec = useCallback(async (runID: string) => {
+    try {
+      const [p, a] = await Promise.all([
+        getJSON('/api/execution/profiles'),
+        getJSON(`/api/evidence/approvals?run_id=${encodeURIComponent(runID)}`),
+      ]);
+      const list: ExecProfile[] = p?.profiles ?? [];
+      setProfiles(list);
+      // 只在档位仍存在时保留选择，避免配置改动后指向一个不存在的档位。
+      setSelProfile((cur) => (list.some((x) => x.name === cur) ? cur : list[0]?.name ?? ''));
+      setApprovals(Array.isArray(a) ? a : []);
+      setExecErr('');
+    } catch (e) {
+      setExecErr(String(e));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selected) void loadExec(selected);
+  }, [selected, runs, loadExec]);
+
+  const requestExec = () =>
+    act(async () => {
+      setExecOut(null);
+      setToken(null);
+      await reqJSON('POST', `/api/evidence/runs/${encodeURIComponent(selected)}/execute`, {
+        profile: selProfile,
+      });
+    });
+
+  const approveApproval = (id: string) =>
+    act(async () => {
+      // token 明文只有这一次响应里有，先落到组件状态供「确认并执行」用；
+      // 关掉面板就没了，不做任何持久化（不写 localStorage，免得 XSS 能捞）。
+      const t = await reqJSON('POST', `/api/evidence/approvals/${encodeURIComponent(id)}/approve`, {
+        ttl_seconds: 300,
+      });
+      setToken({ approval_id: id, token: t.token });
+    });
+
+  const denyApproval = (id: string) =>
+    act(async () => {
+      await reqJSON('POST', `/api/evidence/approvals/${encodeURIComponent(id)}/deny`, {
+        reason: 'ui-deny',
+      });
+      if (token?.approval_id === id) setToken(null);
+    });
+
+  const confirmExec = () =>
+    act(async () => {
+      if (!token) return;
+      const out = await reqJSON(
+        'POST',
+        `/api/evidence/runs/${encodeURIComponent(selected)}/execute/confirm`,
+        { approval_id: token.approval_id, token: token.token }
+      );
+      setExecOut(out);
+      setToken(null);
+    });
+
   // —— 新建 run 表单逻辑（ADR 0019）——
   const fetchContext = useCallback(async () => {
     try {
@@ -321,6 +447,12 @@ export function CodingEvidenceTab() {
     ? emptyRepoInfo.environments[0]
     : context?.default_environment || 'local';
   const emptyEnvStatus = (emptyRepoInfo?.environment_status ?? []).find((s) => s.name === emptyEnv);
+
+  // 当前所选执行档位 + 它在 run 环境下的可达性（只读提示，不参与授权决策）。
+  const activeProfile = profiles.find((p) => p.name === selProfile);
+  const runEnv = detail?.environment || 'local';
+  const activeProfileEnv = (activeProfile?.environment_status ?? []).find((s) => s.name === runEnv);
+  const liveApprovals = approvals.filter((a) => a.status === 'pending' || a.status === 'approved');
 
   if (err && runs.length === 0 && !detail) {
     return <pre style={{ color: RED }}>{err}</pre>;
@@ -526,6 +658,152 @@ export function CodingEvidenceTab() {
                 reconcile identity
               </button>
             </div>
+          )}
+          {detail && (
+            <section
+              style={{
+                border: '1px solid #d9d2f5',
+                background: '#fbfaff',
+                borderRadius: 8,
+                padding: 10,
+                marginBottom: 10,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                <b style={{ fontSize: 13 }}>执行</b>
+                <span style={{ fontSize: 11, color: '#888' }}>
+                  ADR 0020 · 预置档位 + 审批门 · 不经 shell
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                <ChipSelect
+                  label="执行档位"
+                  value={selProfile}
+                  placeholder="（后端未配置档位）"
+                  options={profiles.map((p) => p.name)}
+                  onChange={setSelProfile}
+                />
+                <button onClick={() => void requestExec()} disabled={busy || !selProfile || !selected}>
+                  请求执行
+                </button>
+              </div>
+
+              {activeProfile ? (
+                <div
+                  style={{
+                    fontSize: 11,
+                    color: '#666',
+                    marginTop: 6,
+                    fontFamily: 'ui-monospace, monospace',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  {activeProfile.command} {activeProfile.args.join(' ')} · {activeProfile.timeout_sec}s ·{' '}
+                  {activeProfile.environments.join('/')}
+                  {activeProfileEnv && !activeProfileEnv.available && (
+                    <span style={{ color: '#d46b08' }}>
+                      {' '}
+                      · 当前不可用：{activeProfileEnv.reason}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <div style={{ fontSize: 11, color: '#888', marginTop: 6 }}>
+                  没有可用档位。在 config.json 的 execution_profiles（或 ZW_EXEC_PROFILES）
+                  里声明「名字 + 固定命令 + 参数」后重试——执行面不接受任意 argv。
+                </div>
+              )}
+
+              {execErr && <pre style={{ color: RED, fontSize: 12, marginTop: 6 }}>{execErr}</pre>}
+
+              {liveApprovals.length > 0 && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {liveApprovals.map((a) => (
+                    <div
+                      key={a.approval_id}
+                      style={{
+                        display: 'flex',
+                        gap: 8,
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        fontSize: 12,
+                      }}
+                    >
+                      <code>{a.approval_id.slice(0, 8)}</code>
+                      <span
+                        style={{
+                          fontSize: 11,
+                          padding: '2px 8px',
+                          borderRadius: 10,
+                          color: '#fff',
+                          background: APPROVAL_COLOR[a.status] ?? '#595959',
+                        }}
+                      >
+                        {a.status}
+                      </span>
+                      <span style={{ color: '#666' }}>
+                        {a.action} {a.resource}
+                      </span>
+                      {a.status === 'pending' && (
+                        <>
+                          <button onClick={() => void approveApproval(a.approval_id)} disabled={busy}>
+                            批准
+                          </button>
+                          <button onClick={() => void denyApproval(a.approval_id)} disabled={busy}>
+                            拒绝
+                          </button>
+                        </>
+                      )}
+                      {a.status === 'approved' && token?.approval_id === a.approval_id && (
+                        <button onClick={() => void confirmExec()} disabled={busy}>
+                          确认并执行
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {token && (
+                <div style={{ fontSize: 11, color: '#666', marginTop: 6, wordBreak: 'break-all' }}>
+                  一次性 token：
+                  <code>{token.token}</code>（只在此处显示，批准后 5 分钟内有效）
+                </div>
+              )}
+
+              {execOut && (
+                <div style={{ marginTop: 8, fontSize: 12 }}>
+                  {execOut.executed ? (
+                    <>
+                      <div style={{ color: execOut.result?.exit_code === 0 ? '#389e0d' : RED }}>
+                        exit={execOut.result?.exit_code} · {execOut.result?.duration
+                          ? `${Math.round(execOut.result.duration / 1e6)}ms`
+                          : ''}
+                        {execOut.result?.timed_out && ' · 超时（run 已 safe_stopped）'}
+                        {execOut.result?.canceled && ' · 已取消（run 已 safe_stopped）'}
+                        {execOut.result?.truncated && ' · 输出已截断'}
+                      </div>
+                      {execOut.result?.stdout && (
+                        <pre style={{ background: '#fff', padding: 6, maxHeight: 180, overflow: 'auto' }}>
+                          {execOut.result.stdout}
+                        </pre>
+                      )}
+                      {execOut.result?.stderr && (
+                        <pre style={{ color: RED, background: '#fff', padding: 6, maxHeight: 120, overflow: 'auto' }}>
+                          {execOut.result.stderr}
+                        </pre>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ color: '#d46b08' }}>
+                      未执行：{execOut.reason || '审批未通过'}
+                      {execOut.claim ? `（claim=${execOut.claim.status}）` : ''}
+                    </div>
+                  )}
+                </div>
+              )}
+            </section>
           )}
           {!detail && <p style={{ color: '#888', fontSize: 13 }}>选中左侧 run 查看其事件流。</p>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
