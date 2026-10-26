@@ -30,7 +30,8 @@ func TestExecutionProfileValidate(t *testing.T) {
 		{"命令含管道", func(p *ExecutionProfile) { p.Command = "go|cat" }, "command"},
 		{"参数含换行", func(p *ExecutionProfile) { p.Args = []string{"a\nb"} }, "args"},
 		{"超时为负", func(p *ExecutionProfile) { p.TimeoutSec = -1 }, "timeout_sec"},
-		{"环境 remote 未实现", func(p *ExecutionProfile) { p.Environments = []string{"remote:host:1"} }, "environment"},
+		{"环境 remote 前缀形式非法", func(p *ExecutionProfile) { p.Environments = []string{"remote:host:1"} }, "remote"},
+		{"环境 remote 未声明 remote 段", func(p *ExecutionProfile) { p.Environments = []string{"remote"} }, "remote"},
 		{"未知环境", func(p *ExecutionProfile) { p.Environments = []string{"kubernetes"} }, "environment"},
 		// container 已支持，但声明它就必须给出容器段 —— 否则运行时才发现「不知道跑哪个镜像」。
 		{"声明 container 但缺 container 段", func(p *ExecutionProfile) {
@@ -40,6 +41,18 @@ func TestExecutionProfileValidate(t *testing.T) {
 		{"有 container 段但未声明 container 环境", func(p *ExecutionProfile) {
 			p.Container = validContainer()
 		}, "container"},
+		// remote 已支持，但声明它就必须给出 remote 段（host 必填）。
+		{"声明 remote 但缺 remote 段", func(p *ExecutionProfile) {
+			p.Environments = []string{"remote"}
+		}, "remote"},
+		// 给了 remote 段却不声明 remote 环境，同样配置读起来和跑起来不一致。
+		{"有 remote 段但未声明 remote 环境", func(p *ExecutionProfile) {
+			p.Remote = validRemote()
+		}, "remote"},
+		{"remote host 为空", func(p *ExecutionProfile) { withRemote(p); p.Remote.Host = " " }, "host"},
+		{"remote host 含 shell 元字符", func(p *ExecutionProfile) { withRemote(p); p.Remote.Host = "h;rm" }, "host"},
+		{"remote port 越界", func(p *ExecutionProfile) { withRemote(p); p.Remote.Port = 70000 }, "port"},
+		{"remote user 含 @", func(p *ExecutionProfile) { withRemote(p); p.Remote.User = "a@b" }, "user"},
 		{"镜像为空", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = " " }, "image"},
 		{"镜像以连字符开头", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = "-v" }, "image"},
 		{"镜像含空白", func(p *ExecutionProfile) { withContainer(p); p.Container.Image = "alpine 3.20" }, "image"},
@@ -83,6 +96,18 @@ func withContainer(p *ExecutionProfile) {
 	p.Container = validContainer()
 }
 
+// validRemote 是合法远程段的基准值；各用例只改一个字段以定位校验点。
+func validRemote() *RemoteConfig {
+	return &RemoteConfig{Host: "build.example.com", Port: 22}
+}
+
+// withRemote 同时声明 remote 环境与远程段，让「只改一个字段」的用例
+// 不会先被「缺 remote 段」这条更前置的校验挡住。
+func withRemote(p *ExecutionProfile) {
+	p.Environments = []string{"remote"}
+	p.Remote = validRemote()
+}
+
 func TestExecutionProfileContainerValid(t *testing.T) {
 	p := ExecutionProfile{
 		Name:    "go-test-container",
@@ -112,6 +137,31 @@ func TestExecutionProfileContainerValid(t *testing.T) {
 	}
 	if got := (&ContainerConfig{Network: " "}).EffectiveNetwork(); got != "none" {
 		t.Fatalf("未声明网络应回退 none，实际 %q", got)
+	}
+}
+
+func TestExecutionProfileRemoteValid(t *testing.T) {
+	p := ExecutionProfile{
+		Name:    "go-test-remote",
+		Command: "go",
+		Args:    []string{"test", "./..."},
+		Remote:  &RemoteConfig{Host: "build.example.com", Port: 2222, User: "ci", IdentityFile: "/keys/id_ed25519"},
+	}
+	p.Environments = []string{"local", "remote"}
+	if err := p.Validate(); err != nil {
+		t.Fatalf("合法远程档位不应报错：%v", err)
+	}
+	if !p.AllowsEnvironment("remote") || !p.AllowsEnvironment("local") {
+		t.Fatal("同时声明 local 与 remote 时应两者都允许")
+	}
+	if got := p.Remote.EffectivePort(); got != 2222 {
+		t.Fatalf("remote 端口应原样使用，实际 %d", got)
+	}
+	if got := (&RemoteConfig{}).EffectivePort(); got != 22 {
+		t.Fatalf("未声明端口应回退 22，实际 %d", got)
+	}
+	if got := (&RemoteConfig{Host: "h"}).Endpoint(); got != "h:22" {
+		t.Fatalf("Endpoint 应回退默认端口，实际 %q", got)
 	}
 }
 

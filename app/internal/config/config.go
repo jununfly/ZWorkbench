@@ -111,11 +111,11 @@ const (
 	DefaultContainerWorkdir = "/workspace"
 )
 
-// 支持的环境名。remote 尚未实现（需要远端端点与身份校验，见 ADR 0020 后续切片），
-// 在这里显式列出而不是默默放行，避免配置写得出、跑起来才发现不支持。
+// 支持的环境名。remote 由 ADR 0020 后续切片实现（SSH CLI 拉起进程，不经 SDK）。
 const (
 	EnvLocal     = "local"
 	EnvContainer = "container"
+	EnvRemote    = "remote"
 )
 
 // containerNetworkAllowed 是 --network 的白名单。
@@ -158,6 +158,12 @@ type ExecutionProfile struct {
 	// （不知道跑哪个镜像）与给了容器段却没声明 container 环境
 	// （配置读起来和跑起来不一致）都当场拒绝。
 	Container *ContainerConfig `json:"container,omitempty"`
+	// Remote 是远程执行参数；非空表示该档位在远端执行。
+	// 与 Environments 必须一致声明：声明 remote 环境却没给 remote 段
+	// （不知道连哪个主机）与给了 remote 段却没声明 remote 环境都当场拒绝。
+	// 端点不要拼进环境名（remote:host:port）—— 这里只接受 bare "remote"，
+	// host/port 一律在 remote 段声明，避免「环境名里藏主机」的双重真相源。
+	Remote *RemoteConfig `json:"remote,omitempty"`
 }
 
 // ContainerConfig 是容器执行参数（environment = "container"）。
@@ -179,6 +185,69 @@ type ContainerConfig struct {
 	// Name 是容器名；空 = 由编排层按 effect 生成。
 	// 显式给出便于运维用 docker ps 定位，但绝不能重名（重名会让 docker run 直接失败）。
 	Name string `json:"name,omitempty"`
+}
+
+// RemoteConfig 是远程执行参数（environment = "remote"，ADR 0020 remote 切片）。
+//
+// 连接走 ssh CLI（os/exec），**不引 SDK**，过零依赖守卫。身份校验只用密钥
+// （IdentityFile），绝不依赖交互式口令——执行器以 BatchMode=yes 起 ssh，
+// 缺密钥就立刻失败而不是卡在密码提示上（fail-closed）。
+//
+// 与 ContainerConfig 刻意分开：config 负责「配置能不能通过校验」，
+// 执行器负责「拿到手的参数能不能安全地变成 ssh argv」。执行器不 import config，
+// 重复的几个默认值方法很便宜。
+type RemoteConfig struct {
+	// Host 是远端主机（域名或 IP），必填。
+	Host string `json:"host"`
+	// Port 是 SSH 端口；0 = 默认 22。
+	Port int `json:"port,omitempty"`
+	// User 是登录用户；空 = ssh 默认（当前用户）。
+	User string `json:"user,omitempty"`
+	// IdentityFile 是本地私钥路径；空 = ssh 默认（~/.ssh/id_*）。
+	// 不默认指定：密钥属主与权限由用户自己管，配置只声明路径。
+	IdentityFile string `json:"identity_file,omitempty"`
+}
+
+// Validate 校验远程段自洽性。
+func (r *RemoteConfig) Validate(profileName string) error {
+	host := strings.TrimSpace(r.Host)
+	if host == "" {
+		return fmt.Errorf("execution profile %q: remote.host 不能为空（不知道连哪个主机）", profileName)
+	}
+	if strings.ContainsAny(host, " \t\n\r") {
+		return fmt.Errorf("execution profile %q: remote.host 不能包含空白（实际 %q）", profileName, host)
+	}
+	if strings.ContainsAny(host, shellMetaChars) {
+		return fmt.Errorf("execution profile %q: remote.host 不能包含 shell 元字符（实际 %q）", profileName, host)
+	}
+	if r.Port < 0 || r.Port > 65535 {
+		return fmt.Errorf("execution profile %q: remote.port 超出合法范围 [0, 65535]（0 表示默认 22，实际 %d）", profileName, r.Port)
+	}
+	if u := strings.TrimSpace(r.User); u != "" {
+		// @ 在 user@host 拼接里会被当成分隔符，必须拒绝；其余 shell 元字符同理。
+		if strings.ContainsAny(u, " \t\n\r@") || strings.ContainsAny(u, shellMetaChars) {
+			return fmt.Errorf("execution profile %q: remote.user 不能包含空白 / @ / shell 元字符（实际 %q）", profileName, u)
+		}
+	}
+	if id := strings.TrimSpace(r.IdentityFile); id != "" {
+		if strings.ContainsAny(id, " \t\n\r") || strings.ContainsAny(id, shellMetaChars) {
+			return fmt.Errorf("execution profile %q: remote.identity_file 不能包含空白 / shell 元字符（实际 %q）", profileName, id)
+		}
+	}
+	return nil
+}
+
+// EffectivePort 返回实际 SSH 端口（未声明用 22）。
+func (r *RemoteConfig) EffectivePort() int {
+	if r.Port <= 0 {
+		return 22
+	}
+	return r.Port
+}
+
+// Endpoint 返回 host:port 形式，供事件/台账记录「连的是哪台机器」。
+func (r *RemoteConfig) Endpoint() string {
+	return fmt.Sprintf("%s:%d", strings.TrimSpace(r.Host), r.EffectivePort())
 }
 
 // Validate 校验容器段自洽性。
@@ -310,6 +379,7 @@ func (p ExecutionProfile) Validate() error {
 		return fmt.Errorf("execution profile %q: timeout_sec 不能超过 %v", name, MaxExecutionTimeout)
 	}
 	declaresContainer := false
+	declaresRemote := false
 	for _, env := range p.Environments {
 		e := strings.TrimSpace(env)
 		switch {
@@ -318,15 +388,17 @@ func (p ExecutionProfile) Validate() error {
 		case e == EnvLocal:
 		case e == EnvContainer:
 			declaresContainer = true
-		case e == "remote" || strings.HasPrefix(e, "remote:"):
-			return fmt.Errorf("execution profile %q: environment %q 未实现（remote 执行器见 ADR 0020 后续切片）", name, e)
+		case e == EnvRemote:
+			declaresRemote = true
+		case strings.HasPrefix(e, "remote:"), strings.HasPrefix(e, "remote "):
+			return fmt.Errorf("execution profile %q: environment %q 请使用 bare %q 并在 remote 段声明 host/port（端点不要拼进环境名）", name, e, EnvRemote)
 		default:
-			return fmt.Errorf("execution profile %q: environment %q 不被支持（支持 %s / %s）", name, e, EnvLocal, EnvContainer)
+			return fmt.Errorf("execution profile %q: environment %q 不被支持（支持 %s / %s / %s）", name, e, EnvLocal, EnvContainer, EnvRemote)
 		}
 	}
 	// 环境声明与容器段必须成对出现，两个方向都拒绝：
 	// 声明了 container 却没镜像 → 不知道跑什么；给了容器参数却没声明环境 →
-	// 配置读起来和跑起来不一致（最容易被误读的那种歧义）。
+	// 配置读起来和跑起来不一致（最容易被误读的那种歧义）。remote 同理。
 	switch {
 	case declaresContainer && p.Container == nil:
 		return fmt.Errorf("execution profile %q: 声明了 %s 环境但缺少 container 段（无法确定镜像）", name, EnvContainer)
@@ -334,6 +406,14 @@ func (p ExecutionProfile) Validate() error {
 		return fmt.Errorf("execution profile %q: 给了 container 段却未在 environments 声明 %q（配置读起来与跑起来会不一致）", name, EnvContainer)
 	case declaresContainer:
 		if err := p.Container.Validate(name); err != nil {
+			return err
+		}
+	case declaresRemote && p.Remote == nil:
+		return fmt.Errorf("execution profile %q: 声明了 %s 环境但缺少 remote 段（不知道连哪个主机）", name, EnvRemote)
+	case !declaresRemote && p.Remote != nil:
+		return fmt.Errorf("execution profile %q: 给了 remote 段却未在 environments 声明 %q（配置读起来与跑起来会不一致）", name, EnvRemote)
+	case declaresRemote:
+		if err := p.Remote.Validate(name); err != nil {
 			return err
 		}
 	}
