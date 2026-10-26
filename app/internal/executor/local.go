@@ -50,6 +50,9 @@ type Spec struct {
 	// Container 非空表示在容器里执行（见 docker.go）；nil = 直接在宿主执行。
 	// 由编排层按 run 声明的 environment 决定，不来自 HTTP body。
 	Container *ContainerSpec
+	// Remote 非空表示在远端执行（见 remote.go）；nil = 本地/容器执行。
+	// 由编排层按 run 声明的 environment 决定，不来自 HTTP body。
+	Remote *RemoteSpec
 }
 
 // Result 是一次执行的结果快照。
@@ -72,6 +75,9 @@ type Result struct {
 	// 与「本来就没有容器」必须能区分，否则证据看不出到底是残留还是没建。
 	ContainerName    string `json:"container_name,omitempty"`
 	ContainerCleanup string `json:"container_cleanup,omitempty"`
+	// RemoteEndpoint 只在远程执行时非空，记录「连的是哪台机器」（host:port），
+	// 供证据事件/effect 展示——事后要能回答「这次副作用落在哪台远端」。
+	RemoteEndpoint string `json:"remote_endpoint,omitempty"`
 }
 
 // Executor 是执行环境的统一抽象（ADR 0020 前提 1）。
