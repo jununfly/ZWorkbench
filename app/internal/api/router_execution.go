@@ -64,6 +64,13 @@ func registerExecution(
 				item["container_workdir"] = p.Container.EffectiveWorkdir()
 				item["container_network"] = p.Container.EffectiveNetwork()
 			}
+			// 远程档位要把「连哪台机器」一并暴露：审批面板若只显示命令，
+			// 等于让人在看不见执行会落到哪台远端的情况下签字。
+			if p.Remote != nil {
+				item["remote_host"] = p.Remote.Host
+				item["remote_port"] = p.Remote.EffectivePort()
+				item["remote_user"] = p.Remote.User
+			}
 			out = append(out, item)
 		}
 		writeJSON(w, map[string]any{"profiles": out})

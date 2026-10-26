@@ -41,6 +41,7 @@ type fixture struct {
 	owner     *evidence.Owner
 	exec      *fakeExec
 	container *fakeExec
+	remote    *fakeExec
 	cfg       *config.Config
 	repo      string
 }
@@ -48,11 +49,12 @@ type fixture struct {
 // newFixture 建一个内存证据库 + 一个被管理仓库 + local / container 两类档位。
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
-	return newFixtureWithContainers(t, true)
+	return newFixtureWithContainers(t, true, false)
 }
 
 // newFixtureWithContainers 允许模拟「服务没接线容器执行器」的部署形态。
-func newFixtureWithContainers(t *testing.T, withContainer bool) *fixture {
+// withRemote 允许模拟「服务接线了远程执行器」的部署形态（remote 切片）。
+func newFixtureWithContainers(t *testing.T, withContainer, withRemote bool) *fixture {
 	t.Helper()
 	t.Setenv("ZW_CONFIG", filepath.Join(t.TempDir(), "config.json"))
 
@@ -65,7 +67,7 @@ func newFixtureWithContainers(t *testing.T, withContainer bool) *fixture {
 	repoDir := t.TempDir()
 	cfg := config.Load()
 	cfg.SetManagedRepos(config.ManagedRepos{Repos: []config.RepoSpec{
-		{Name: "ZW", Path: repoDir, Environments: []string{"local", "container"}},
+		{Name: "ZW", Path: repoDir, Environments: []string{"local", "container", "remote"}},
 	}})
 	cfg.SetExecutionProfiles(config.ExecutionProfiles{Profiles: []config.ExecutionProfile{
 		{Name: "echo-ok", Command: "echo", Args: []string{"hi"}, TimeoutSec: 30},
@@ -78,19 +80,33 @@ func newFixtureWithContainers(t *testing.T, withContainer bool) *fixture {
 			Environments: []string{"container"},
 			Container:    &config.ContainerConfig{Image: "alpine:3.20", Network: "none"},
 		},
+		{
+			Name:         "echo-in-remote",
+			Command:      "echo",
+			Args:         []string{"hi"},
+			TimeoutSec:   20,
+			Environments: []string{"remote"},
+			Remote:       &config.RemoteConfig{Host: "example.com", Port: 2222, User: "zw"},
+		},
 	}})
 
 	fx := &fakeExec{res: executor.Result{ExitCode: 0, Stdout: "ok"}}
 	ctr := &fakeExec{res: executor.Result{ExitCode: 0, Stdout: "from-container", ContainerName: "zw-exec-x", ContainerCleanup: executor.CleanupRemoved}}
+	rmt := &fakeExec{res: executor.Result{ExitCode: 0, Stdout: "from-remote", RemoteEndpoint: "example.com:2222"}}
 	var cexec executor.Executor
 	if withContainer {
 		cexec = ctr
 	}
+	var rexec executor.Executor
+	if withRemote {
+		rexec = rmt
+	}
 	return &fixture{
-		svc:       New(owner, fx, cexec, cfg),
+		svc:       New(owner, fx, cexec, rexec, cfg),
 		owner:     owner,
 		exec:      fx,
 		container: ctr,
+		remote:    rmt,
 		cfg:       cfg,
 		repo:      repoDir,
 	}
@@ -443,7 +459,7 @@ func TestRequestContainerProfilePreviewsImage(t *testing.T) {
 // 缺容器执行器时必须显式拒绝，并且**不留下永远执行不了的待批单**
 // （否则操作者会批一张注定失败的单，还白烧一个 token 的注意力）。
 func TestRequestContainerWithoutExecutorRejected(t *testing.T) {
-	fx := newFixtureWithContainers(t, false)
+	fx := newFixtureWithContainers(t, false, false)
 	fx.newRun(t, "r1", "container")
 
 	_, err := fx.svc.Request("r1", "echo-in-container")
@@ -460,6 +476,90 @@ func TestRequestContainerWithoutExecutorRejected(t *testing.T) {
 	run, _ := fx.owner.GetRun("r1")
 	if run.Status == evidence.StatusWaitingApproval {
 		t.Fatal("执行器缺位时不应把 run 推进 waiting_approval")
+	}
+}
+
+// 缺远程执行器时必须显式拒绝，并且**不留下永远执行不了的待批单**。
+func TestRequestRemoteWithoutExecutorRejected(t *testing.T) {
+	fx := newFixtureWithContainers(t, false, false)
+	fx.newRun(t, "r1", "remote")
+
+	_, err := fx.svc.Request("r1", "echo-in-remote")
+	if !errors.Is(err, ErrExecutorUnavailable) {
+		t.Fatalf("缺远程执行器应返回 ErrExecutorUnavailable，实际 %v", err)
+	}
+	list, err := fx.owner.ListApprovals("r1", 10)
+	if err != nil {
+		t.Fatalf("列审批：%v", err)
+	}
+	if len(list) != 0 {
+		t.Fatalf("执行器缺位时不应创建审批，实际 %d 张", len(list))
+	}
+	run, _ := fx.owner.GetRun("r1")
+	if run.Status == evidence.StatusWaitingApproval {
+		t.Fatal("执行器缺位时不应把 run 推进 waiting_approval")
+	}
+}
+
+// 环境维度必须真的改变执行规格：remote 档位要落到远程执行器，
+// 且**不能**落到 local / container 执行器（那等于环境是装饰）。
+func TestConfirmRoutesToRemoteExecutor(t *testing.T) {
+	fx := newFixtureWithContainers(t, false, true)
+	fx.newRun(t, "r1", "remote")
+	req, err := fx.svc.Request("r1", "echo-in-remote")
+	if err != nil {
+		t.Fatalf("请求执行：%v", err)
+	}
+	if req.RemoteHost != "example.com" {
+		t.Fatalf("批准前应能看到远端主机，实际 %q", req.RemoteHost)
+	}
+	if req.RemotePort != 2222 {
+		t.Fatalf("批准前应能看到远端端口，实际 %d", req.RemotePort)
+	}
+	tok, err := fx.owner.Approve(req.Approval.ApprovalID, 300)
+	if err != nil {
+		t.Fatalf("批准：%v", err)
+	}
+
+	out, err := fx.svc.Confirm(context.Background(), "r1", req.Approval.ApprovalID, tok.Token)
+	if err != nil {
+		t.Fatalf("确认执行：%v", err)
+	}
+	if !out.Executed {
+		t.Fatalf("已批准应执行，claim=%#v", out.Claim)
+	}
+	if fx.exec.calls != 0 {
+		t.Fatalf("remote 档位绝不能落到 local 执行器，实际调用 %d 次", fx.exec.calls)
+	}
+	if fx.remote.calls != 1 {
+		t.Fatalf("remote 档位必须落到远程执行器，实际调用 %d 次", fx.remote.calls)
+	}
+	// 远程执行器拿到的 spec 必须带 Remote 段（host/port/user）。
+	if fx.remote.gotSpec.Remote == nil {
+		t.Fatal("远程执行规格必须带 Remote 段")
+	}
+	if fx.remote.gotSpec.Remote.Host != "example.com" || fx.remote.gotSpec.Remote.Port != 2222 {
+		t.Fatalf("Remote 段不符：%+v", fx.remote.gotSpec.Remote)
+	}
+	// effect 摘要必须记 remote_endpoint。
+	ledger, err := fx.owner.ProviderExitLedgerForRun("r1")
+	if err != nil {
+		t.Fatalf("取 exit ledger：%v", err)
+	}
+	foundRemote := false
+	for _, e := range ledger {
+		if e.EvidenceClass == "remote-provider" {
+			foundRemote = true
+			if e.Provider != "ssh" || e.Endpoint != "example.com:2222" {
+				t.Fatalf("remote-provider 台账不符：%+v", e)
+			}
+			if e.ProviderRemoteZeroResidue != "unknown" {
+				t.Fatalf("远程清场结论必须保持 unknown，实际 %q", e.ProviderRemoteZeroResidue)
+			}
+		}
+	}
+	if !foundRemote {
+		t.Fatal("真远程执行后必须记一条 remote-provider 退出台账（前提 4 诚实化）")
 	}
 }
 

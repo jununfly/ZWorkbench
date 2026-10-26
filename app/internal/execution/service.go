@@ -61,18 +61,19 @@ type Service struct {
 	owner     *evidence.Owner
 	local     executor.Executor
 	container executor.Executor
+	remote    executor.Executor
 	cfg       *config.Config
 }
 
 // New 注入依赖。owner / local / cfg 任一为 nil 时返回 nil —— 由调用方（路由层）
 // 显式 503，而不是让一个半死掉的执行器静默接单。
-// container 可以为 nil：此时 container 档位在执行前被显式拒绝，不会静默降级成
+// container / remote 可以为 nil：该环境在执行前被显式拒绝，不会静默降级成
 // 在宿主跑（那会让「环境」这个维度变成装饰）。
-func New(owner *evidence.Owner, local, container executor.Executor, cfg *config.Config) *Service {
+func New(owner *evidence.Owner, local, container, remote executor.Executor, cfg *config.Config) *Service {
 	if owner == nil || local == nil || cfg == nil {
 		return nil
 	}
-	return &Service{owner: owner, local: local, container: container, cfg: cfg}
+	return &Service{owner: owner, local: local, container: container, remote: remote, cfg: cfg}
 }
 
 // RequestResult 是「请求执行」的结果：审批单 + 解析后的执行规格。
@@ -92,6 +93,10 @@ type RequestResult struct {
 	Image            string `json:"image,omitempty"`
 	ContainerWorkdir string `json:"container_workdir,omitempty"`
 	ContainerNetwork string `json:"container_network,omitempty"`
+	// 远程档位才有的字段：批准前必须能看见「连哪台机器」。
+	RemoteHost string `json:"remote_host,omitempty"`
+	RemotePort int    `json:"remote_port,omitempty"`
+	RemoteUser string `json:"remote_user,omitempty"`
 	// 环境此刻的可达性（只读探测，**仅作提示**）。
 	//
 	// 沿用 ADR 0019 的分工：可达性不阻断记账，也不阻断请求执行——
@@ -175,6 +180,11 @@ func (s *Service) Request(runID, profileName string) (*RequestResult, error) {
 		out.ContainerWorkdir = profile.Container.EffectiveWorkdir()
 		out.ContainerNetwork = profile.Container.EffectiveNetwork()
 	}
+	if profile.Remote != nil {
+		out.RemoteHost = profile.Remote.Host
+		out.RemotePort = profile.Remote.EffectivePort()
+		out.RemoteUser = profile.Remote.User
+	}
 	return out, nil
 }
 
@@ -257,6 +267,18 @@ func (s *Service) Confirm(ctx context.Context, runID, approvalID, token string) 
 
 	res, runErr := ex.Run(ctx, spec)
 	s.recordExecutionOutput(runID, claim.EffectID, res)
+
+	// 前提 4 诚实化：真远程执行后，把「确实经过外部 provider（ssh）」的事实记进
+	// exit_ledger，但清场结论保持 unknown（本机无法验证远端残留）。loopback /
+	// container 不记这条——它们没有远程 provider 残留。这条是补充证据，失败不中止
+	// 主流程（与 recordExecutionOutput 同口径），但必须留痕。
+	if envprobe.Kind(env) == envprobe.KindRemote {
+		if _, lerr := s.owner.RecordRemoteProviderExitLedgerOnce(runID, res.RemoteEndpoint, ""); lerr != nil {
+			s.recordEvent(runID, "provider.exit.ledger.failed", map[string]any{
+				"error": lerr.Error(),
+			})
+		}
+	}
 
 	// effect 先收口再改 run 终态：effect 是「副作用实际发生过」的记录，
 	// 它比 run 的结论更基础。反过来会让 run 已 completed 但 effect 悬空。
@@ -347,10 +369,13 @@ func (s *Service) recordExecutionOutput(runID, effectID string, res executor.Res
 	}
 	// 容器清场结论进事件流而不只进 effect 摘要：「残留有没有清掉」是执行后
 	// 第一时间要看的东西，不该藏在 effect 里。local 执行不写这两个空字段，
-	// 免得事件里出现一堆读不出含义的 ""。
+	// 免得事件里出现一堆读不出含义的 ""。远程端点同理。
 	if res.ContainerName != "" {
 		finished["container_name"] = res.ContainerName
 		finished["container_cleanup"] = res.ContainerCleanup
+	}
+	if res.RemoteEndpoint != "" {
+		finished["remote_endpoint"] = res.RemoteEndpoint
 	}
 	s.recordEvent(runID, EventExecutionFinished, finished)
 }
@@ -377,20 +402,28 @@ func (s *Service) executorFor(kind string) (executor.Executor, error) {
 			return nil, fmt.Errorf("%w: container（服务未接线容器执行器）", ErrExecutorUnavailable)
 		}
 		return s.container, nil
+	case envprobe.KindRemote:
+		if s.remote == nil {
+			return nil, fmt.Errorf("%w: remote（服务未接线远程执行器）", ErrExecutorUnavailable)
+		}
+		return s.remote, nil
 	default:
-		return nil, fmt.Errorf("%w: 环境种类 %q 尚无执行器（remote 见 ADR 0020 后续切片）",
-			ErrExecutorUnavailable, kind)
+		return nil, fmt.Errorf("%w: 环境种类 %q 尚无执行器", ErrExecutorUnavailable, kind)
 	}
 }
 
 // requiredExposures 是本次执行声明的影响面，随 effect 记账。
-// 容器执行多声明一条 container：事后能看出「这次副作用起过容器」，
-// 而不是只有一句 subprocess。
+// 容器执行多声明一条 container、远程执行多声明一条 remote：事后能看出
+// 「这次副作用起过容器 / 拉起了远端进程」，而不是只有一句 subprocess。
 func requiredExposures(env string) []string {
-	if envprobe.Kind(env) == envprobe.KindContainer {
+	switch envprobe.Kind(env) {
+	case envprobe.KindContainer:
 		return []string{"subprocess", "container"}
+	case envprobe.KindRemote:
+		return []string{"subprocess", "remote"}
+	default:
+		return []string{"subprocess"}
 	}
-	return []string{"subprocess"}
 }
 
 // buildSpec 把档位 + 环境 + 已解析目录翻译成执行规格。
@@ -417,6 +450,16 @@ func buildSpec(profile config.ExecutionProfile, dir, env, effectID string) execu
 		}
 		if strings.TrimSpace(spec.Container.Name) == "" {
 			spec.Container.Name = containerNameFor(effectID)
+		}
+	}
+	// 远程参数只在环境确实是 remote 时注入——档位声明 local/container 却拿到
+	// 远程规格，就是「配置说 A、执行做 B」。执行器侧仍会再校验一遍 host 非空。
+	if envprobe.Kind(env) == envprobe.KindRemote && profile.Remote != nil {
+		spec.Remote = &executor.RemoteSpec{
+			Host:         strings.TrimSpace(profile.Remote.Host),
+			Port:         profile.Remote.Port,
+			User:         strings.TrimSpace(profile.Remote.User),
+			IdentityFile: strings.TrimSpace(profile.Remote.IdentityFile),
 		}
 	}
 	return spec
@@ -541,6 +584,11 @@ func effectSummary(res executor.Result) map[string]any {
 	if res.ContainerName != "" {
 		out["container_name"] = res.ContainerName
 		out["container_cleanup"] = res.ContainerCleanup
+	}
+	// 远程执行把「连的是哪台机器」写进 effect：事后要能回答「这次副作用落在
+	// 哪台远端」。清场结论不在这里声称——那是 exit_ledger 的 unknown 口径。
+	if res.RemoteEndpoint != "" {
+		out["remote_endpoint"] = res.RemoteEndpoint
 	}
 	return out
 }

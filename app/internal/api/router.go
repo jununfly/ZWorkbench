@@ -358,7 +358,7 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 	// 真执行器（ADR 0020 首刀）：白名单档位 + 审批门 + 本地 os/exec。
 	// 执行器无状态、无可配置项，故在此自建；证据 owner 仍由调用方注入，
 	// 保证「单一 durable owner」不变式（执行器不经手任何存储）。
-	registerExecution(mux, auth, execution.New(ev, executor.Local{}, executor.Docker{}, cfg), ev, cfg)
+	registerExecution(mux, auth, execution.New(ev, executor.Local{}, executor.Docker{}, executor.Remote{}, cfg), ev, cfg)
 
 	// 前端托管（1-1-3）：打包后窗口加载 http://127.0.0.1:<port>/ 必须拿到 SPA，
 	// 否则只会显示 404。产物缺失时该 handler 返 503 + 明确文案（fail-closed）。

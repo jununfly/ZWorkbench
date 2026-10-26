@@ -99,10 +99,28 @@ func TestProbeContainerDaemonUp(t *testing.T) {
 	}
 }
 
-func TestProbeRemoteMissingEndpoint(t *testing.T) {
+// TestProbeRemoteBareUsesSSHCLI 校验 bare "remote"（无端点）按新设计只检查
+// ssh CLI 可用性作为可达性提示：有 ssh 即可用，缺 ssh 才不可用。真实远端连通性
+// 由执行器在确认执行时按 profile 的 remote 段实测，不在只读探测里提前猜。
+func TestProbeRemoteBareUsesSSHCLI(t *testing.T) {
+	orig := lookPath
+	defer func() { lookPath = orig }()
+
+	// 有 ssh CLI → 可用
+	lookPath = func(string) (string, error) { return "/usr/bin/ssh", nil }
 	st := Probe("remote")
+	if !st.Available {
+		t.Fatalf("有 ssh CLI 时 bare remote 应可用，实际 %#v", st)
+	}
+	if st.Reason != "ssh CLI 可用" {
+		t.Fatalf("reason 不符：%q", st.Reason)
+	}
+
+	// 缺 ssh CLI → 不可用
+	lookPath = func(string) (string, error) { return "", errors.New("not found") }
+	st = Probe("remote")
 	if st.Available {
-		t.Fatalf("无端点不应可用，实际 %#v", st)
+		t.Fatalf("缺 ssh CLI 时 bare remote 不应可用，实际 %#v", st)
 	}
 	if st.Reason == "" {
 		t.Fatal("不可用必须带可读 reason")

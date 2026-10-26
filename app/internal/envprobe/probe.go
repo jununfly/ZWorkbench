@@ -97,19 +97,28 @@ func Probe(name string) Status {
 		st.Available = true
 		st.Reason = "docker daemon " + v
 	case KindRemote:
-		ep := remoteEndpoint(name)
-		if ep == "" {
-			st.Reason = "缺少远端端点（期望 remote:tcp://host:port 或 remote:host:port）"
+		// 设计：端点信息在 profile 的 remote 段，不拼进环境名（见 config 层校验）。
+		// 因此 bare "remote" 时无端点可探——只检查 ssh CLI 可用性作为可达性提示
+		// （真实远端连通性由执行器在确认执行时按真实 endpoint 实测，不在此提前猜）。
+		// 若环境名带 remote:host:port 显式端点（调试/旧形态），仍按 TCP dial 探活。
+		if ep := remoteEndpoint(name); ep != "" {
+			c, err := dialTimeout("tcp", ep, ProbeTimeout)
+			if err != nil {
+				st.Reason = "端点不可达"
+				return st
+			}
+			_ = c.Close()
+			st.Available = true
+			st.Reason = "端点可达"
 			return st
 		}
-		c, err := dialTimeout("tcp", ep, ProbeTimeout)
-		if err != nil {
-			st.Reason = "端点不可达"
+		p, err := lookPath("ssh")
+		if err != nil || p == "" {
+			st.Reason = "未找到 ssh CLI（remote 执行依赖 ssh 客户端）"
 			return st
 		}
-		_ = c.Close()
 		st.Available = true
-		st.Reason = "端点可达"
+		st.Reason = "ssh CLI 可用"
 	default:
 		st.Reason = "未知环境种类（支持 local / container / remote:<endpoint>）"
 	}
