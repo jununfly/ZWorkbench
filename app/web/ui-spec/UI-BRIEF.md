@@ -28,7 +28,7 @@ source: zagentic (zj-ui-brief S1)
 - 视觉方向经 zj 在 S3 选定并写入 UI-DESIGN.md 的 direction_choice。
 - preview 可交互、只用 catalog 内组件，经 zj 在 S6 验收通过。
 - 移植后的 app/web React 代码通过 check-web 门禁（tsc --noEmit 0 error + vite build 成功）。
-- 全程 zj-ui-* 体验待改进项已记录到 docs/plans/。
+- 全程 zj-ui-* 体验待改进项已随迭代消化（原记录于 docs/plans/ 的临时工作笔记已退役删除）。
 
 ## nav_structure (decided S2, zj 2026-10-24)
 - 主导航固定左侧，一级导航共 7 项：首页 / 工作台 / 主题 / 项目 / 统计 / 日志 / 设置。
@@ -52,4 +52,4 @@ source: zagentic (zj-ui-brief S1)
 ## source_ref
 - kind: human_dialogue
 - id: conversation:2026-10-24
-- summary: zj 指令：用 zj-ui-* skills 全量重写 web 界面；走完整 S1→S7 契约链路；prototype 验收后移植成 app/web React；体验待改进项记到 docs/plans/。
+- summary: zj 指令：用 zj-ui-* skills 全量重写 web 界面；走完整 S1→S7 契约链路；prototype 验收后移植成 app/web React（体验待改进项原记于 docs/plans/，该临时笔记已退役删除）。

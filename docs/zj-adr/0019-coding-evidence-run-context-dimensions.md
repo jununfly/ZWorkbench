@@ -7,7 +7,7 @@ authority-id: adr.coding-evidence.run-context
 
 # ADR 0019：编码证据 run 加 repo/branch/environment 上下文维度
 
-- 来源：参照 ChatGPT Codex 桌面端「composer 上下文 chips」可借鉴点（见 docs/plans/ui-spec-chatgpt-codex-layout.md），映射到 ZW 编码证据域。
+- 来源：参照 ChatGPT Codex 桌面端「composer 上下文 chips」可借鉴点（灵感沉淀自已退役的临时 ui-spec 草稿 docs/plans/ui-spec-chatgpt-codex-layout.md，结论已落入本 ADR），映射到 ZW 编码证据域。
 - 关联：ADR 0016（Go evidence B2-narrow owner）、AGENTS.md 所有权不变量。
 
 > 状态 `accepted`：经 grill 收敛（zj-grill-with-docs 技能被 override 禁用，按协议手动跑 scoping），zj 确认切片=Composer 上下文 chips、落点=编码证据「新建 run 表单」方案 A、repo=可切换被管理仓库、environment=真多环境声明、交付=后端先行分步；前端 chips 表单与 cwd fallback 作为后续节点已落地并随实现提交。
