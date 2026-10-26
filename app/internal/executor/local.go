@@ -47,6 +47,9 @@ type Spec struct {
 	Env []string
 	// MaxOutputBytes 是单条流的保留上限；<=0 走 DefaultMaxOutputBytes。
 	MaxOutputBytes int
+	// Container 非空表示在容器里执行（见 docker.go）；nil = 直接在宿主执行。
+	// 由编排层按 run 声明的 environment 决定，不来自 HTTP body。
+	Container *ContainerSpec
 }
 
 // Result 是一次执行的结果快照。
@@ -64,6 +67,11 @@ type Result struct {
 	Duration    time.Duration `json:"duration"`
 	TimedOut    bool          `json:"timed_out"`
 	Canceled    bool          `json:"canceled"`
+	// ContainerName / ContainerCleanup 只在容器执行时非空。
+	// ContainerCleanup 三态：removed / absent / "failed: <原因>" —— 清场失败
+	// 与「本来就没有容器」必须能区分，否则证据看不出到底是残留还是没建。
+	ContainerName    string `json:"container_name,omitempty"`
+	ContainerCleanup string `json:"container_cleanup,omitempty"`
 }
 
 // Executor 是执行环境的统一抽象（ADR 0020 前提 1）。
