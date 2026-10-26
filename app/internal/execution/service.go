@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/jununfly/ZWorkbench/app/internal/config"
+	"github.com/jununfly/ZWorkbench/app/internal/envprobe"
 	"github.com/jununfly/ZWorkbench/app/internal/evidence"
 	"github.com/jununfly/ZWorkbench/app/internal/executor"
 )
@@ -45,37 +46,59 @@ var (
 	ErrEnvironmentNotAllowed = errors.New("execution environment not allowed")
 	// ErrNoWorkdir：无法确定执行工作目录（reject 而不是猜一个 cwd）。
 	ErrNoWorkdir = errors.New("execution workdir undetermined")
+	// ErrExecutorUnavailable：该环境没有对应执行器（例如 container 执行器未接线，
+	// 或声明了尚未实现的 remote）。**在审批之前**就拒绝——否则会烧掉一张
+	// 审批 token 才告诉用户「跑不了」。
+	ErrExecutorUnavailable = errors.New("executor not available for environment")
 )
 
 // Service 是执行编排。构造后并发安全（内部无可变状态）。
+//
+// 按环境路由执行器而不是只持有一个：local 与 container 是两个独立的执行面，
+// 各自的失败模式不同（进程 vs 容器生命周期），混在一个实现里会变成
+// 「按 spec 字段 if/else」的隐式分支。
 type Service struct {
-	owner *evidence.Owner
-	exec  executor.Executor
-	cfg   *config.Config
+	owner     *evidence.Owner
+	local     executor.Executor
+	container executor.Executor
+	cfg       *config.Config
 }
 
-// New 注入依赖。任一为 nil 时返回 nil —— 由调用方（路由层）显式 503，
-// 而不是让一个半死掉的执行器静默接单。
-func New(owner *evidence.Owner, ex executor.Executor, cfg *config.Config) *Service {
-	if owner == nil || ex == nil || cfg == nil {
+// New 注入依赖。owner / local / cfg 任一为 nil 时返回 nil —— 由调用方（路由层）
+// 显式 503，而不是让一个半死掉的执行器静默接单。
+// container 可以为 nil：此时 container 档位在执行前被显式拒绝，不会静默降级成
+// 在宿主跑（那会让「环境」这个维度变成装饰）。
+func New(owner *evidence.Owner, local, container executor.Executor, cfg *config.Config) *Service {
+	if owner == nil || local == nil || cfg == nil {
 		return nil
 	}
-	return &Service{owner: owner, exec: ex, cfg: cfg}
+	return &Service{owner: owner, local: local, container: container, cfg: cfg}
 }
 
 // RequestResult 是「请求执行」的结果：审批单 + 解析后的执行规格。
 // 规格在此一并返回，是为了让调用方/UI 能**在批准前就看到将要跑什么**——
 // 「先批后看」等于让人盲签。
 type RequestResult struct {
-	Run                *evidence.Run       `json:"run"`
-	Approval           *evidence.Approval  `json:"approval"`
-	Profile            string              `json:"profile"`
-	Command            string              `json:"command"`
-	Args               []string            `json:"args"`
-	Dir                string              `json:"dir"`
-	TimeoutSec         int                 `json:"timeout_sec"`
-	Environment        string              `json:"environment"`
-	EnvironmentAssumed bool                `json:"environment_assumed"`
+	Run                *evidence.Run      `json:"run"`
+	Approval           *evidence.Approval `json:"approval"`
+	Profile            string             `json:"profile"`
+	Command            string             `json:"command"`
+	Args               []string           `json:"args"`
+	Dir                string             `json:"dir"`
+	TimeoutSec         int                `json:"timeout_sec"`
+	Environment        string             `json:"environment"`
+	EnvironmentAssumed bool               `json:"environment_assumed"`
+	// 容器档位才有的字段：批准前必须能看见「跑在哪个镜像、哪个目录里」。
+	Image            string `json:"image,omitempty"`
+	ContainerWorkdir string `json:"container_workdir,omitempty"`
+	ContainerNetwork string `json:"container_network,omitempty"`
+	// 环境此刻的可达性（只读探测，**仅作提示**）。
+	//
+	// 沿用 ADR 0019 的分工：可达性不阻断记账，也不阻断请求执行——
+	// 它只是让操作者在批准前知道「多半会失败」，而不是批准后才发现。
+	// 真结论永远以执行器返回为准。
+	EnvironmentAvailable bool   `json:"environment_available"`
+	EnvironmentReason    string `json:"environment_reason,omitempty"`
 }
 
 // ConfirmResult 是「确认执行」的结果。
@@ -110,6 +133,10 @@ func (s *Service) Request(runID, profileName string) (*RequestResult, error) {
 		return nil, fmt.Errorf("%w: 档位 %q 不允许在环境 %q 执行（允许：%s）",
 			ErrEnvironmentNotAllowed, profile.Name, env, profileAllowedEnvs(profile))
 	}
+	// 在执行器缺位时**先**拒绝：不烧审批 token、不留一张永远执行不了的待批单。
+	if _, err := s.executorFor(envprobe.Kind(env)); err != nil {
+		return nil, err
+	}
 
 	dir, err := s.resolveDir(run, profile)
 	if err != nil {
@@ -129,17 +156,26 @@ func (s *Service) Request(runID, profileName string) (*RequestResult, error) {
 		return nil, err
 	}
 
-	return &RequestResult{
-		Run:                updated,
-		Approval:           approval,
-		Profile:            profile.Name,
-		Command:            profile.Command,
-		Args:               profile.Args,
-		Dir:                dir,
-		TimeoutSec:         int(profile.EffectiveTimeout().Seconds()),
-		Environment:        env,
-		EnvironmentAssumed: assumed,
-	}, nil
+	probe := envprobe.Probe(env)
+	out := &RequestResult{
+		Run:                  updated,
+		Approval:             approval,
+		Profile:              profile.Name,
+		Command:              profile.Command,
+		Args:                 profile.Args,
+		Dir:                  dir,
+		TimeoutSec:           int(profile.EffectiveTimeout().Seconds()),
+		Environment:          env,
+		EnvironmentAssumed:   assumed,
+		EnvironmentAvailable: probe.Available,
+		EnvironmentReason:    probe.Reason,
+	}
+	if profile.Container != nil {
+		out.Image = profile.Container.Image
+		out.ContainerWorkdir = profile.Container.EffectiveWorkdir()
+		out.ContainerNetwork = profile.Container.EffectiveNetwork()
+	}
+	return out, nil
 }
 
 // Confirm 带审批 token 确认并执行。
@@ -174,15 +210,22 @@ func (s *Service) Confirm(ctx context.Context, runID, approvalID, token string) 
 	if err != nil {
 		return nil, err
 	}
-	if env, _ := resolveEnvironment(run.Environment); !profile.AllowsEnvironment(env) {
+	env, _ := resolveEnvironment(run.Environment)
+	if !profile.AllowsEnvironment(env) {
 		return nil, fmt.Errorf("%w: 档位 %q 不允许在环境 %q 执行",
 			ErrEnvironmentNotAllowed, profile.Name, env)
+	}
+	// 执行器必须在认领 token **之前**解析出来：先烧 token 再发现「没执行器」，
+	// 等于让一次可重试的配置问题变成一次性的凭证损耗。
+	ex, err := s.executorFor(envprobe.Kind(env))
+	if err != nil {
+		return nil, err
 	}
 
 	opID := operationID(runID, profile.Name)
 	claim, err := s.owner.ClaimEffect(
 		runID, opID, ActionExecute, profile.Name, opID,
-		"approval-required", token, 1, []string{"subprocess"},
+		"approval-required", token, 1, requiredExposures(env),
 	)
 	if err != nil {
 		return nil, err
@@ -191,24 +234,28 @@ func (s *Service) Confirm(ctx context.Context, runID, approvalID, token string) 
 		return &ConfirmResult{Claim: claim, Reason: claimReason(claim)}, nil
 	}
 
-	spec := executor.Spec{
-		Command: profile.Command,
-		Args:    profile.Args,
-		Dir:     dir,
-		Timeout: profile.EffectiveTimeout(),
-	}
+	spec := buildSpec(profile, dir, env, claim.EffectID)
 
-	// 起跑前先留痕：进程若被 kill -9，至少「它起过」这件事在证据里。
-	s.recordEvent(runID, EventExecutionStarted, map[string]any{
+	// 起跑前先留痕：进程/容器若被 kill -9，至少「它起过」这件事在证据里。
+	// 容器档位额外记 image / container_name —— 事后要能回答「跑的是哪个镜像」。
+	started := map[string]any{
 		"effect_id":   claim.EffectID,
 		"profile":     profile.Name,
 		"command":     profile.Command,
 		"args":        profile.Args,
 		"dir":         dir,
 		"timeout_sec": int(profile.EffectiveTimeout().Seconds()),
-	})
+		"environment": env,
+	}
+	if spec.Container != nil {
+		started["image"] = spec.Container.Image
+		started["container_name"] = spec.Container.Name
+		started["container_workdir"] = spec.Container.Workdir
+		started["container_network"] = spec.Container.Network
+	}
+	s.recordEvent(runID, EventExecutionStarted, started)
 
-	res, runErr := s.exec.Run(ctx, spec)
+	res, runErr := ex.Run(ctx, spec)
 	s.recordExecutionOutput(runID, claim.EffectID, res)
 
 	// effect 先收口再改 run 终态：effect 是「副作用实际发生过」的记录，
@@ -290,14 +337,22 @@ func (s *Service) recordExecutionOutput(runID, effectID string, res executor.Res
 			"redaction":    "none",
 		})
 	}
-	s.recordEvent(runID, EventExecutionFinished, map[string]any{
-		"effect_id":    effectID,
-		"exit_code":    res.ExitCode,
-		"duration_ms":  res.Duration.Milliseconds(),
-		"timed_out":    res.TimedOut,
-		"canceled":     res.Canceled,
-		"truncated":    res.Truncated,
-	})
+	finished := map[string]any{
+		"effect_id":   effectID,
+		"exit_code":   res.ExitCode,
+		"duration_ms": res.Duration.Milliseconds(),
+		"timed_out":   res.TimedOut,
+		"canceled":    res.Canceled,
+		"truncated":   res.Truncated,
+	}
+	// 容器清场结论进事件流而不只进 effect 摘要：「残留有没有清掉」是执行后
+	// 第一时间要看的东西，不该藏在 effect 里。local 执行不写这两个空字段，
+	// 免得事件里出现一堆读不出含义的 ""。
+	if res.ContainerName != "" {
+		finished["container_name"] = res.ContainerName
+		finished["container_cleanup"] = res.ContainerCleanup
+	}
+	s.recordEvent(runID, EventExecutionFinished, finished)
 }
 
 // recordEvent 写一条证据事件；失败不打断执行流程（记账抖动不该中止已经起跑的
@@ -308,6 +363,84 @@ func (s *Service) recordEvent(runID, eventType string, payload map[string]any) {
 }
 
 // ---- 解析与校验 ----
+
+// executorFor 按环境种类选执行器。缺位时显式拒绝，绝不降级成在宿主跑。
+func (s *Service) executorFor(kind string) (executor.Executor, error) {
+	switch kind {
+	case envprobe.KindLocal:
+		if s.local == nil {
+			return nil, fmt.Errorf("%w: local", ErrExecutorUnavailable)
+		}
+		return s.local, nil
+	case envprobe.KindContainer:
+		if s.container == nil {
+			return nil, fmt.Errorf("%w: container（服务未接线容器执行器）", ErrExecutorUnavailable)
+		}
+		return s.container, nil
+	default:
+		return nil, fmt.Errorf("%w: 环境种类 %q 尚无执行器（remote 见 ADR 0020 后续切片）",
+			ErrExecutorUnavailable, kind)
+	}
+}
+
+// requiredExposures 是本次执行声明的影响面，随 effect 记账。
+// 容器执行多声明一条 container：事后能看出「这次副作用起过容器」，
+// 而不是只有一句 subprocess。
+func requiredExposures(env string) []string {
+	if envprobe.Kind(env) == envprobe.KindContainer {
+		return []string{"subprocess", "container"}
+	}
+	return []string{"subprocess"}
+}
+
+// buildSpec 把档位 + 环境 + 已解析目录翻译成执行规格。
+// 容器参数只在环境确实是 container 时注入——档位声明 local 却拿到容器规格，
+// 就是「配置说 A、执行做 B」。
+func buildSpec(profile config.ExecutionProfile, dir, env, effectID string) executor.Spec {
+	spec := executor.Spec{
+		Command: profile.Command,
+		Args:    profile.Args,
+		Dir:     dir,
+		Timeout: profile.EffectiveTimeout(),
+	}
+	if envprobe.Kind(env) == envprobe.KindContainer && profile.Container != nil {
+		spec.Container = &executor.ContainerSpec{
+			Image:   profile.Container.Image,
+			Workdir: profile.Container.EffectiveWorkdir(),
+			Network: profile.Container.EffectiveNetwork(),
+			User:    profile.Container.User,
+			Env:     profile.Container.Env,
+			// 容器名在这里就定下来（而不是留给执行器随机生成），
+			// 这样 execution.started 事件能记下「将要创建哪个容器」，
+			// 出事时能直接把名字拿去 docker ps 对上。
+			Name: profile.Container.Name,
+		}
+		if strings.TrimSpace(spec.Container.Name) == "" {
+			spec.Container.Name = containerNameFor(effectID)
+		}
+	}
+	return spec
+}
+
+// containerNameFor 由 effect id 派生稳定容器名。
+// docker 名只允许 [a-zA-Z0-9_.-]，非该集合的字符一律替换成 -。
+func containerNameFor(effectID string) string {
+	var b strings.Builder
+	b.WriteString("zw-exec-")
+	for _, r := range effectID {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteByte('-')
+		}
+	}
+	name := b.String()
+	if len(name) > 60 {
+		name = name[:60]
+	}
+	return name
+}
 
 func (s *Service) findProfile(name string) (config.ExecutionProfile, error) {
 	profiles := s.cfg.ExecutionProfiles()
@@ -394,7 +527,7 @@ func claimReason(c *evidence.EffectClaim) string {
 // effectSummary 是落到 effect 结果与 run 结论里的摘要。
 // 刻意不含 stdout/stderr 全文——那两份在事件里，重复存一份只会让库无谓膨胀。
 func effectSummary(res executor.Result) map[string]any {
-	return map[string]any{
+	out := map[string]any{
 		"exit_code":    res.ExitCode,
 		"duration_ms":  res.Duration.Milliseconds(),
 		"stdout_bytes": res.StdoutBytes,
@@ -403,4 +536,11 @@ func effectSummary(res executor.Result) map[string]any {
 		"timed_out":    res.TimedOut,
 		"canceled":     res.Canceled,
 	}
+	// 容器执行必须把清场结论写进 effect：这是 ADR 0020 前提 4「不留残留」
+	// 唯一能复核的地方。没有这条，就只能靠人去机器上 docker ps 猜。
+	if res.ContainerName != "" {
+		out["container_name"] = res.ContainerName
+		out["container_cleanup"] = res.ContainerCleanup
+	}
+	return out
 }

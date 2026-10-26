@@ -37,15 +37,22 @@ func (f *fakeExec) Run(_ context.Context, spec executor.Spec) (executor.Result, 
 }
 
 type fixture struct {
-	svc   *Service
-	owner *evidence.Owner
-	exec  *fakeExec
-	cfg   *config.Config
-	repo  string
+	svc       *Service
+	owner     *evidence.Owner
+	exec      *fakeExec
+	container *fakeExec
+	cfg       *config.Config
+	repo      string
 }
 
-// newFixture 建一个内存证据库 + 一个被管理仓库 + 两个执行档位。
+// newFixture 建一个内存证据库 + 一个被管理仓库 + local / container 两类档位。
 func newFixture(t *testing.T) *fixture {
+	t.Helper()
+	return newFixtureWithContainers(t, true)
+}
+
+// newFixtureWithContainers 允许模拟「服务没接线容器执行器」的部署形态。
+func newFixtureWithContainers(t *testing.T, withContainer bool) *fixture {
 	t.Helper()
 	t.Setenv("ZW_CONFIG", filepath.Join(t.TempDir(), "config.json"))
 
@@ -58,15 +65,35 @@ func newFixture(t *testing.T) *fixture {
 	repoDir := t.TempDir()
 	cfg := config.Load()
 	cfg.SetManagedRepos(config.ManagedRepos{Repos: []config.RepoSpec{
-		{Name: "ZW", Path: repoDir, Environments: []string{"local"}},
+		{Name: "ZW", Path: repoDir, Environments: []string{"local", "container"}},
 	}})
 	cfg.SetExecutionProfiles(config.ExecutionProfiles{Profiles: []config.ExecutionProfile{
 		{Name: "echo-ok", Command: "echo", Args: []string{"hi"}, TimeoutSec: 30},
 		{Name: "in-app", Command: "go", Args: []string{"test", "./..."}, Workdir: "app"},
+		{
+			Name:         "echo-in-container",
+			Command:      "echo",
+			Args:         []string{"hi"},
+			TimeoutSec:   20,
+			Environments: []string{"container"},
+			Container:    &config.ContainerConfig{Image: "alpine:3.20", Network: "none"},
+		},
 	}})
 
 	fx := &fakeExec{res: executor.Result{ExitCode: 0, Stdout: "ok"}}
-	return &fixture{svc: New(owner, fx, cfg), owner: owner, exec: fx, cfg: cfg, repo: repoDir}
+	ctr := &fakeExec{res: executor.Result{ExitCode: 0, Stdout: "from-container", ContainerName: "zw-exec-x", ContainerCleanup: executor.CleanupRemoved}}
+	var cexec executor.Executor
+	if withContainer {
+		cexec = ctr
+	}
+	return &fixture{
+		svc:       New(owner, fx, cexec, cfg),
+		owner:     owner,
+		exec:      fx,
+		container: ctr,
+		cfg:       cfg,
+		repo:      repoDir,
+	}
 }
 
 // newRun 建一个带 local 语境的 run。
@@ -379,4 +406,188 @@ func keys(m map[string]bool) []string {
 		out = append(out, k)
 	}
 	return out
+}
+
+// ---- 容器环境（ADR 0020 container 切片）----
+//
+// 这一组的核心不是「容器能跑起来」（那由 executor 包的测试覆盖），而是
+// 编排层有没有把**环境**当成真维度：路由对不对、批准前能不能看见镜像、
+// 缺执行器时会不会静默降级到宿主跑。
+
+// 批准前必须能看见「跑在哪个镜像、哪个目录」——否则就是让人盲签。
+func TestRequestContainerProfilePreviewsImage(t *testing.T) {
+	fx := newFixture(t)
+	fx.newRun(t, "r1", "container")
+
+	out, err := fx.svc.Request("r1", "echo-in-container")
+	if err != nil {
+		t.Fatalf("请求执行：%v", err)
+	}
+	if out.Environment != "container" {
+		t.Fatalf("环境应为 container，实际 %q", out.Environment)
+	}
+	if out.Image != "alpine:3.20" {
+		t.Fatalf("批准前应能看到镜像，实际 %q", out.Image)
+	}
+	if out.ContainerWorkdir != config.DefaultContainerWorkdir {
+		t.Fatalf("容器工作目录应回退默认值 %q，实际 %q", config.DefaultContainerWorkdir, out.ContainerWorkdir)
+	}
+	if out.ContainerNetwork != "none" {
+		t.Fatalf("网络应回退 none，实际 %q", out.ContainerNetwork)
+	}
+	if fx.container.calls != 0 || fx.exec.calls != 0 {
+		t.Fatal("请求阶段只建审批，不应触达任何执行器")
+	}
+}
+
+// 缺容器执行器时必须显式拒绝，并且**不留下永远执行不了的待批单**
+// （否则操作者会批一张注定失败的单，还白烧一个 token 的注意力）。
+func TestRequestContainerWithoutExecutorRejected(t *testing.T) {
+	fx := newFixtureWithContainers(t, false)
+	fx.newRun(t, "r1", "container")
+
+	_, err := fx.svc.Request("r1", "echo-in-container")
+	if !errors.Is(err, ErrExecutorUnavailable) {
+		t.Fatalf("缺容器执行器应返回 ErrExecutorUnavailable，实际 %v", err)
+	}
+	list, err := fx.owner.ListApprovals("r1", 10)
+	if err != nil {
+		t.Fatalf("列审批：%v", err)
+	}
+	if len(list) != 0 {
+		t.Fatalf("执行器缺位时不应创建审批，实际 %d 张", len(list))
+	}
+	run, _ := fx.owner.GetRun("r1")
+	if run.Status == evidence.StatusWaitingApproval {
+		t.Fatal("执行器缺位时不应把 run 推进 waiting_approval")
+	}
+}
+
+// 环境维度必须真的改变执行规格：container 档位要拿到容器规格，
+// 且**不能**落到 local 执行器（那等于环境是装饰）。
+func TestConfirmContainerRoutesToContainerExecutor(t *testing.T) {
+	fx := newFixture(t)
+	fx.newRun(t, "r1", "container")
+	req, err := fx.svc.Request("r1", "echo-in-container")
+	if err != nil {
+		t.Fatalf("请求执行：%v", err)
+	}
+	tok, err := fx.owner.Approve(req.Approval.ApprovalID, 300)
+	if err != nil {
+		t.Fatalf("批准：%v", err)
+	}
+
+	out, err := fx.svc.Confirm(context.Background(), "r1", req.Approval.ApprovalID, tok.Token)
+	if err != nil {
+		t.Fatalf("确认执行：%v", err)
+	}
+	if !out.Executed {
+		t.Fatalf("已批准应执行，claim=%#v", out.Claim)
+	}
+	if fx.exec.calls != 0 {
+		t.Fatalf("container 档位绝不能落到 local 执行器，实际调用 %d 次", fx.exec.calls)
+	}
+	if fx.container.calls != 1 {
+		t.Fatalf("容器执行器应被调用 1 次，实际 %d", fx.container.calls)
+	}
+
+	spec := fx.container.gotSpec
+	if spec.Container == nil {
+		t.Fatal("容器执行器应收到容器规格")
+	}
+	if spec.Container.Image != "alpine:3.20" {
+		t.Fatalf("镜像不符：%q", spec.Container.Image)
+	}
+	if spec.Container.Workdir != config.DefaultContainerWorkdir {
+		t.Fatalf("容器工作目录不符：%q", spec.Container.Workdir)
+	}
+	if spec.Container.Network != "none" {
+		t.Fatalf("网络不符：%q", spec.Container.Network)
+	}
+	// 容器名必须在这里就定下来，否则出事时无法把事件里的名字对上真实容器。
+	if !strings.HasPrefix(spec.Container.Name, "zw-exec-") {
+		t.Fatalf("容器名应由 effect id 派生，实际 %q", spec.Container.Name)
+	}
+	if spec.Dir != fx.repo {
+		t.Fatalf("宿主工作目录应是被管理仓库路径，实际 %q", spec.Dir)
+	}
+}
+
+// local 档位不能沾到容器规格：档位说 local 却起容器，就是「配置说 A 做 B」。
+func TestConfirmLocalProfileHasNoContainerSpec(t *testing.T) {
+	fx := newFixture(t)
+	fx.newRun(t, "r1", "local")
+	req, _ := fx.svc.Request("r1", "echo-ok")
+	tok, _ := fx.owner.Approve(req.Approval.ApprovalID, 300)
+
+	if _, err := fx.svc.Confirm(context.Background(), "r1", req.Approval.ApprovalID, tok.Token); err != nil {
+		t.Fatalf("确认执行：%v", err)
+	}
+	if fx.exec.gotSpec.Container != nil {
+		t.Fatal("local 档位不应带容器规格")
+	}
+	if fx.container.calls != 0 {
+		t.Fatalf("local 档位不应触达容器执行器，实际 %d 次", fx.container.calls)
+	}
+}
+
+// 清场结论必须进 effect：这是「不留残留」唯一可复核的地方。
+func TestConfirmContainerRecordsCleanupInEffect(t *testing.T) {
+	fx := newFixture(t)
+	fx.newRun(t, "r1", "container")
+	req, _ := fx.svc.Request("r1", "echo-in-container")
+	tok, _ := fx.owner.Approve(req.Approval.ApprovalID, 300)
+
+	out, err := fx.svc.Confirm(context.Background(), "r1", req.Approval.ApprovalID, tok.Token)
+	if err != nil {
+		t.Fatalf("确认执行：%v", err)
+	}
+	if out.Result.ContainerCleanup != executor.CleanupRemoved {
+		t.Fatalf("结果应带清场结论，实际 %q", out.Result.ContainerCleanup)
+	}
+
+	events, err := fx.owner.ListEvents("r1", "", 200)
+	if err != nil {
+		t.Fatalf("列事件：%v", err)
+	}
+	var sawImage, sawCleanup bool
+	for _, e := range events {
+		switch e.Type {
+		case EventExecutionStarted:
+			if e.Payload["image"] == "alpine:3.20" {
+				sawImage = true
+			}
+			// 事件里的容器名必须与真实将创建的容器一致，否则出事时对不上。
+			if name, _ := e.Payload["container_name"].(string); !strings.HasPrefix(name, "zw-exec-") {
+				t.Fatalf("execution.started 应记下容器名，实际 %v", e.Payload["container_name"])
+			}
+		case EventExecutionFinished:
+			if e.Payload["container_cleanup"] == executor.CleanupRemoved {
+				sawCleanup = true
+			}
+		}
+	}
+	if !sawImage {
+		t.Fatal("execution.started 事件必须记下镜像，否则事后无法回答「跑的是哪个镜像」")
+	}
+	if !sawCleanup {
+		t.Fatal("清场结论必须落进证据（effect/事件），否则残留无法复核")
+	}
+}
+
+// 容器超时同样要 safe_stop，不能因为「容器执行器没杀干净」就记成 failed 或 completed。
+func TestConfirmContainerTimeoutSafeStops(t *testing.T) {
+	fx := newFixture(t)
+	fx.container.res = executor.Result{ExitCode: -1, TimedOut: true, ContainerCleanup: executor.CleanupRemoved}
+	fx.newRun(t, "r1", "container")
+	req, _ := fx.svc.Request("r1", "echo-in-container")
+	tok, _ := fx.owner.Approve(req.Approval.ApprovalID, 300)
+
+	out, err := fx.svc.Confirm(context.Background(), "r1", req.Approval.ApprovalID, tok.Token)
+	if err != nil {
+		t.Fatalf("确认执行：%v", err)
+	}
+	if out.Run.Status != evidence.StatusSafeStopped {
+		t.Fatalf("容器超时应 safe_stopped，实际 %s", out.Run.Status)
+	}
 }
