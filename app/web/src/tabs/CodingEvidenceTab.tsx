@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getJSON, reqJSON } from '../api';
 import { ChipSelect } from '../components/ChipSelect';
 
@@ -144,6 +144,15 @@ export function CodingEvidenceTab() {
   const [selected, setSelected] = useState<string>('');
   const [err, setErr] = useState<string>('');
   const [busy, setBusy] = useState<boolean>(false);
+
+  // —— 按 repo 过滤 runs 列表（ADR 0019 follow-up；前端过滤已加载数据，现有列即可，无需后端/索引）——
+  const [repoFilter, setRepoFilter] = useState<string>('');
+  const repoOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of runs) if (r.repo) set.add(r.repo);
+    return Array.from(set).sort();
+  }, [runs]);
+  const visibleRuns = repoFilter ? runs.filter((r) => r.repo === repoFilter) : runs;
 
   // —— 新建 run 表单（ADR 0019 上下文 chips）——
   const [context, setContext] = useState<Ctx | null>(null);
@@ -293,7 +302,7 @@ export function CodingEvidenceTab() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <h2 style={{ margin: 0 }}>编码证据</h2>
         <span style={{ fontSize: 12, color: '#888' }}>
-          CompositionOwner 生命周期 · {runs.length} 个 run
+          CompositionOwner 生命周期 · {visibleRuns.length}{repoFilter ? ` / ${runs.length}` : ''} 个 run
         </span>
         <span
           style={{
@@ -372,8 +381,34 @@ export function CodingEvidenceTab() {
               暂无 run（默认内存库，重启即空）。点「新建 run」造一条看生命周期。
             </p>
           )}
+          {runs.length > 0 && (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+              <label htmlFor="repo-filter" style={{ fontSize: 12, color: '#666' }}>按仓库</label>
+              <select
+                id="repo-filter"
+                aria-label="按仓库过滤 runs 列表"
+                value={repoFilter}
+                onChange={(e) => setRepoFilter(e.target.value)}
+                style={{ ...chipStyle, fontSize: 13 }}
+              >
+                <option value="">全部</option>
+                {repoOptions.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              {repoFilter && (
+                <button
+                  type="button"
+                  onClick={() => setRepoFilter('')}
+                  style={{ fontSize: 12, padding: '2px 6px' }}
+                >
+                  清除
+                </button>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {runs.map((r) => (
+            {visibleRuns.map((r) => (
               <div
                 key={r.run_id}
                 role="button"

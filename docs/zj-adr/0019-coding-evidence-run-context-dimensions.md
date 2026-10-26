@@ -63,7 +63,7 @@ Codex 在 prompt 输入框上方用独立可点胶囊展示「仓库 / 本地 / 
 
 ## Follow-up（后续 / 未决）
 
-- 是否需按 repo 过滤 runs 列表（若要，现有列即可，无需再加索引，按需评估）。
+- ~~按 repo 过滤 runs 列表~~ **已实现**：前端 `CodingEvidenceTab` 用已加载 runs 的 `repo` 字段做客户端过滤（原生 `<select>` + 关联 `<label>`，现有列即可，无需后端/索引）；选项取 runs 中去重 repo，含「全部」+「清除」，计数显示 `可见/总数`。
 - environment 真执行能力（container/remote）启用时，需补充真实执行接线 + 权限模型（本 ADR environment 仍为声明字段）。
 - 工作台空态织入上下文（见上表「空态织入上下文」）。
 
