@@ -5,10 +5,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync/atomic"
 
+	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/evidence"
 )
 
@@ -22,7 +25,7 @@ import (
 // safe-stop-on-violation / reconcile-identity 两个**安全方向**的 owner 动作
 // （只把 run 往终态推，不放行副作用执行）。effect 写路径（ClaimEffect/Approve）
 // 始终不开放。
-func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.HandlerFunc, ev *evidence.Owner) {
+func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.HandlerFunc, ev *evidence.Owner, cfg *config.Config) {
 	if ev == nil {
 		// 证据库不可用时显式 503，而不是让 tab 静默空白（空白会被误读成"没有证据"）。
 		mux.HandleFunc("/api/evidence/", auth(func(w http.ResponseWriter, _ *http.Request) {
@@ -61,6 +64,11 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 		}
 		if body.RunID == "" {
 			body.RunID = newRunID()
+		}
+		// environment 白名单强制（ADR 0019 Follow-up ②）：语义拒绝返 400 不返 500。
+		if err := validateRunContext(cfg, body.Repo, body.Environment); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
 		run, err := ev.CreateRunWithContext(body.RunID, body.TaskType, body.Input, body.Metadata, body.Repo, body.Branch, body.Environment)
 		if err != nil {
@@ -231,6 +239,35 @@ func registerEvidence(mux *http.ServeMux, auth func(http.HandlerFunc) http.Handl
 // 二者都是 fail-closed 的语义拒绝（404），不是服务故障（500）。
 func isNotFound(err error) bool {
 	return errors.Is(err, evidence.ErrNotFound) || errors.Is(err, evidence.ErrRunNotFound)
+}
+
+// validateRunContext 强制 run 语境的 environment 白名单（ADR 0019 Follow-up ②）。
+//
+// 语义（fail-closed，刻意保守）：
+//   - repo 为空 → 不携带语境，跳过校验（向后兼容；此时也不声称任何环境）。
+//   - repo 非空但不在「生效仓库列表」→ 拒绝：不承认一个不受管理的仓库语境。
+//   - environment 为空 → 允许（不声称环境）；非空则必须落在该仓库白名单内。
+//
+// 注意这不是「可达性」检查：环境此刻连不上不影响记账（证据包是记账侧），
+// 只有「声称了未授权环境」才拒。可达性由 envprobe 只读探测、仅作前端提示。
+func validateRunContext(cfg *config.Config, repo, environment string) error {
+	repo = strings.TrimSpace(repo)
+	if repo == "" {
+		return nil
+	}
+	spec, ok := config.ManagedRepos{Repos: resolvedRepos(cfg)}.FindRepo(repo)
+	if !ok {
+		return fmt.Errorf("unknown repo %q（不在被管理仓库列表内）", repo)
+	}
+	env := strings.TrimSpace(environment)
+	if env == "" {
+		return nil
+	}
+	if !spec.AllowsEnvironment(env) {
+		return fmt.Errorf("environment %q 不在仓库 %q 的白名单内（允许：%s）",
+			env, repo, strings.Join(spec.NormalizedEnvironments(), ", "))
+	}
+	return nil
 }
 
 var runIDFallback atomic.Uint64

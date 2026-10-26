@@ -23,11 +23,20 @@ interface EvRun {
   events?: EvEvent[];
 }
 
+// 环境可达性快照（ADR 0019 Follow-up ②）：只读探测结果，仅作提示，不参与授权。
+interface EnvStatus {
+  name: string;
+  kind: string;
+  available: boolean;
+  reason: string;
+}
+
 // 编码证据上下文维度（ADR 0019）：被管理仓库列表 + 默认选择，来自 GET /api/context。
 interface CtxRepo {
   name: string;
   path: string;
   environments: string[];
+  environment_status?: EnvStatus[];
   current_branch: string;
 }
 interface Ctx {
@@ -293,6 +302,11 @@ export function CodingEvidenceTab() {
     setFormOpen(false);
   };
 
+  // 当前所选环境的可达性快照（ADR 0019 Follow-up ②）。
+  // 只读提示：不可用**不阻断**提交——授权由后端白名单强制，可达性只影响提示文案。
+  const activeRepo = (context?.repos ?? []).find((r) => r.name === selRepo);
+  const activeEnvStatus = (activeRepo?.environment_status ?? []).find((s) => s.name === selEnv);
+
   if (err && runs.length === 0 && !detail) {
     return <pre style={{ color: RED }}>{err}</pre>;
   }
@@ -361,6 +375,11 @@ export function CodingEvidenceTab() {
                 options={(context?.repos.find((r) => r.name === selRepo)?.environments) ?? ['local']}
                 onChange={setSelEnv}
               />
+              {activeEnvStatus && !activeEnvStatus.available && (
+                <span style={{ fontSize: 11, color: '#d46b08', maxWidth: 200, lineHeight: 1.3 }}>
+                  当前不可用：{activeEnvStatus.reason}（仍可记账）
+                </span>
+              )}
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button type="submit" disabled={busy}>确认新建</button>

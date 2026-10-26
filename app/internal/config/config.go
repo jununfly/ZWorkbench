@@ -41,6 +41,59 @@ type ManagedRepos struct {
 	Repos []RepoSpec `json:"repos"`
 }
 
+// NormalizedEnvironments 返回该仓库规范化后的环境枚举：去空白、去空串、保序去重；
+// 为空时回退 ["local"]（与 /api/context 的补默认口径一致）。
+// 供「环境白名单」校验与 /api/context 输出共用，避免两处各自实现导致口径漂移。
+func (r RepoSpec) NormalizedEnvironments() []string {
+	out := make([]string, 0, len(r.Environments))
+	seen := make(map[string]struct{}, len(r.Environments))
+	for _, e := range r.Environments {
+		e = strings.TrimSpace(e)
+		if e == "" {
+			continue
+		}
+		if _, dup := seen[e]; dup {
+			continue
+		}
+		seen[e] = struct{}{}
+		out = append(out, e)
+	}
+	if len(out) == 0 {
+		return []string{"local"}
+	}
+	return out
+}
+
+// AllowsEnvironment 判断给定环境是否落在该仓库的白名单内。
+// 空环境名视为「未声明环境」，一律不允许——由调用方决定「未声明」是否跳过校验，
+// 本方法只回答白名单本身（不做默认放行，保持 fail-closed）。
+func (r RepoSpec) AllowsEnvironment(env string) bool {
+	env = strings.TrimSpace(env)
+	if env == "" {
+		return false
+	}
+	for _, e := range r.NormalizedEnvironments() {
+		if e == env {
+			return true
+		}
+	}
+	return false
+}
+
+// FindRepo 按展示名精确查找被管理仓库；找不到返回 false。
+func (m ManagedRepos) FindRepo(name string) (RepoSpec, bool) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return RepoSpec{}, false
+	}
+	for _, r := range m.Repos {
+		if strings.TrimSpace(r.Name) == name {
+			return r, true
+		}
+	}
+	return RepoSpec{}, false
+}
+
 // Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置、
 // 统一远程数据源开关，以及本地导入数据集路径。
 type Config struct {

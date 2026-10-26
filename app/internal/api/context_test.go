@@ -124,7 +124,10 @@ func TestContextAPIDefaultsToCwdRepo(t *testing.T) {
 }
 
 func TestCreateRunWithContextRoundtrip(t *testing.T) {
-	h, _ := newContextRouter(t, nil)
+	// 显式配置一个允许 container 的仓库（白名单强制后，cwd fallback 只有 local）。
+	h, _ := newContextRouter(t, []config.RepoSpec{
+		{Name: "ZWorkbench", Path: t.TempDir(), Environments: []string{"local", "container"}},
+	})
 
 	rec := doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
 		"task_type":   "coding",
@@ -151,6 +154,108 @@ func TestCreateRunWithContextRoundtrip(t *testing.T) {
 	}
 	if detail.Repo != "ZWorkbench" || detail.Branch != "main" || detail.Environment != "container" {
 		t.Fatalf("详情三字段不符：%#v", detail)
+	}
+}
+
+// TestCreateRunRejectsUnlistedEnvironment 覆盖 ADR 0019 Follow-up ② 的核心不变量：
+// 声称白名单外的环境必须 400 fail-closed，而不是静默落库。
+func TestCreateRunRejectsUnlistedEnvironment(t *testing.T) {
+	h, ev := newContextRouter(t, []config.RepoSpec{
+		{Name: "ZW", Path: t.TempDir(), Environments: []string{"local"}},
+	})
+
+	rec := doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
+		"task_type":   "coding",
+		"repo":        "ZW",
+		"environment": "container",
+	})
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("白名单外环境应 400，实际 code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	// fail-closed：被拒的请求不得留下任何 run。
+	runs, err := ev.ListRuns()
+	if err != nil {
+		t.Fatalf("ListRuns: %v", err)
+	}
+	if len(runs) != 0 {
+		t.Fatalf("被拒请求不应落库，实际有 %d 个 run", len(runs))
+	}
+}
+
+// TestCreateRunRejectsUnknownRepo：声称不受管理的仓库应 400。
+func TestCreateRunRejectsUnknownRepo(t *testing.T) {
+	h, _ := newContextRouter(t, []config.RepoSpec{
+		{Name: "ZW", Path: t.TempDir(), Environments: []string{"local"}},
+	})
+
+	rec := doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
+		"task_type":   "coding",
+		"repo":        "Ghost",
+		"environment": "local",
+	})
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("未知仓库应 400，实际 code=%d body=%s", rec.Code, rec.Body.String())
+	}
+}
+
+// TestCreateRunAllowsEmptyEnvironment：仓库已声明但不声称环境 → 允许（不构成伪造）。
+func TestCreateRunAllowsEmptyEnvironment(t *testing.T) {
+	h, _ := newContextRouter(t, []config.RepoSpec{
+		{Name: "ZW", Path: t.TempDir(), Environments: []string{"local"}},
+	})
+
+	rec := doJSON(t, h, "POST", "/api/evidence/runs?token="+testToken, map[string]any{
+		"task_type": "coding",
+		"repo":      "ZW",
+	})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("不声称环境应允许，实际 code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var run evidence.Run
+	if err := json.Unmarshal(rec.Body.Bytes(), &run); err != nil {
+		t.Fatalf("decode run: %v", err)
+	}
+	if run.Environment != "" {
+		t.Fatalf("未声称环境时应留空，实际 %q", run.Environment)
+	}
+}
+
+// TestContextAPICarriesEnvironmentStatus：/api/context 应给出每个环境的可达性快照，
+// 且 local 恒可用（只读探测，不影响授权）。
+func TestContextAPICarriesEnvironmentStatus(t *testing.T) {
+	h, _ := newContextRouter(t, []config.RepoSpec{
+		{Name: "ZW", Path: t.TempDir(), Environments: []string{"local", "staging"}},
+	})
+
+	rec := doJSON(t, h, "GET", "/api/context?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("context code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var body struct {
+		Repos []map[string]any `json:"repos"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
+		t.Fatalf("decode context: %v", err)
+	}
+	raw, ok := body.Repos[0]["environment_status"].([]any)
+	if !ok {
+		t.Fatalf("environment_status 缺失或类型不符：%v", body.Repos[0]["environment_status"])
+	}
+	if len(raw) != 2 {
+		t.Fatalf("应探测 2 个环境，实际 %d", len(raw))
+	}
+	byName := map[string]map[string]any{}
+	for _, it := range raw {
+		m, _ := it.(map[string]any)
+		name, _ := m["name"].(string)
+		byName[name] = m
+	}
+	if byName["local"] == nil || byName["local"]["available"] != true {
+		t.Fatalf("local 应可用，实际 %v", byName["local"])
+	}
+	// staging 是未知种类 → 不可用，但必须给出可读 reason（不是空）。
+	if st := byName["staging"]; st == nil || st["available"] != false || st["reason"] == "" {
+		t.Fatalf("staging 应不可用且带 reason，实际 %v", st)
 	}
 }
 

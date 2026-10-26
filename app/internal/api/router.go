@@ -11,6 +11,7 @@ import (
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/data"
 	"github.com/jununfly/ZWorkbench/app/internal/domain"
+	"github.com/jununfly/ZWorkbench/app/internal/envprobe"
 	"github.com/jununfly/ZWorkbench/app/internal/evidence"
 	"github.com/jununfly/ZWorkbench/app/internal/inspection"
 	"github.com/jununfly/ZWorkbench/app/internal/limitup"
@@ -321,32 +322,21 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 
 	// 编码证据上下文（ADR 0019）：被管理仓库列表 + 每仓当前分支，供前端 chips 预填。
 	// git 探测失败一律 unknown，本端点恒 200，绝不 500。
+	// environment_status（ADR 0019 Follow-up ②）是**只读可达性快照**：仅作展示/提示，
+	// 不参与授权判定；授权（白名单）由 POST /api/evidence/runs 强制。
 	mux.HandleFunc("GET /api/context", auth(func(w http.ResponseWriter, _ *http.Request) {
-		repos := cfg.ManagedRepos().Repos
-		// 无显式配置时，把「当前工作目录所在 git 仓库」自动登记为默认被管理仓库
-		// （如 ZWorkbench 自身），让开箱即有语境；非 git 仓库则留空。
-		if len(repos) == 0 {
-			if p, ok := vcs.Toplevel("."); ok {
-				repos = []config.RepoSpec{{
-					Name:         filepath.Base(p),
-					Path:         p,
-					Environments: []string{"local"},
-				}}
-			}
-		}
+		repos := resolvedRepos(cfg)
 		out := make([]map[string]any, 0, len(repos))
 		defaultRepo := ""
 		for i, r := range repos {
 			branch := vcs.CurrentBranch(r.Path)
-			envs := r.Environments
-			if len(envs) == 0 {
-				envs = []string{"local"}
-			}
+			envs := r.NormalizedEnvironments()
 			out = append(out, map[string]any{
-				"name":         r.Name,
-				"path":         r.Path,
-				"environments": envs,
-				"current_branch": branch,
+				"name":               r.Name,
+				"path":               r.Path,
+				"environments":       envs,
+				"environment_status": envprobe.ProbeAll(envs),
+				"current_branch":     branch,
 			})
 			if i == 0 {
 				defaultRepo = r.Name
@@ -360,13 +350,37 @@ func NewRouter(cfg *config.Config, store data.Store, tabs []domain.Tab, ev *evid
 	}))
 
 	// 本地证据（1-5-6-3）：run 生命周期 + safe-stop 事件流 + identity 完整性。
-	registerEvidence(mux, auth, ev)
+	// cfg 传入用于 environment 白名单强制（ADR 0019 Follow-up ②）。
+	registerEvidence(mux, auth, ev, cfg)
 
 	// 前端托管（1-1-3）：打包后窗口加载 http://127.0.0.1:<port>/ 必须拿到 SPA，
 	// 否则只会显示 404。产物缺失时该 handler 返 503 + 明确文案（fail-closed）。
 	mux.Handle("/", webstatic.NewHandler(webstatic.Dir(cfg.WebDir)))
 
 	return mux
+}
+
+// resolvedRepos 返回「生效的」被管理仓库列表（ADR 0019）。
+//
+// 优先用显式配置；为空时把 cwd 所在 git 仓库自动登记为默认仓库（开箱即有语境）。
+// /api/context 输出与 POST /api/evidence/runs 的白名单校验**共用本函数**，
+// 以保证「前端能选到的仓库/环境」与「后端愿意接受的」口径永不漂移——
+// 若两处各写一套 fallback，就会出现前端可选但后端 400（或反之）的裂缝。
+func resolvedRepos(cfg *config.Config) []config.RepoSpec {
+	if cfg == nil {
+		return nil
+	}
+	if repos := cfg.ManagedRepos().Repos; len(repos) > 0 {
+		return repos
+	}
+	if p, ok := vcs.Toplevel("."); ok {
+		return []config.RepoSpec{{
+			Name:         filepath.Base(p),
+			Path:         p,
+			Environments: []string{"local"},
+		}}
+	}
+	return nil
 }
 
 func bearer(h string) string {
