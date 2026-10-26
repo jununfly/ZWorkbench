@@ -205,7 +205,10 @@ func (o *Owner) DenyApproval(approvalID, reason string) (*Approval, error) {
 		}, nil); err != nil {
 			return err
 		}
+		// row 是 UPDATE 之前读的快照，状态仍是 pending；返回前必须反映实际结果，
+		// 否则调用方（API/UI）会拿到「已拒绝但 status=pending」的自相矛盾响应。
 		out = row.toApproval()
+		out.Status = "denied"
 		out.DecisionReason = reason
 		return nil
 	})
