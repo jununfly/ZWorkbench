@@ -52,3 +52,13 @@ app/.workbuddy/
 # Build-time mtime marker used by scripts/build-desktop.sh and scripts/check-web.sh.
 app/web/.build-marker
 app/bin/.build-marker
+
+# Stray local build artifacts (empty temp files / vite temp config / check-web marker).
+# Reproducible via `go build` / `npm run build`; never source.
+/app/web/.zw-web-built
+/app/web/6rp1qkpt
+/app/web/vite.config.ts.timestamp-*.mjs
+/main
+
+# Codex agent local session state — machine-specific, never commit.
+.codex/
