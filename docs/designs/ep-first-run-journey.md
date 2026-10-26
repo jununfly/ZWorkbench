@@ -22,8 +22,8 @@ authority-id: design.first-run-journey
 1. 干净环境（仅 python3.9+）`pip install .`。
 2. `zworkbench run --prompt "..."`（或 `zworkbench demo`）：自动脚手架 `case-root + workspace + state` 子目录；`--codex` 缺省按 PATH 探测并打印解析路径；Provider 默认 `fake-loopback`（零外部凭证）。
 3. 默认路径即 `local_read_only_run`，结束写 `--db`（默认 `case_root/state/composition.sqlite3`）。
-4. （可选）`zworkbench run ... --open`：子进程自动拉起 `ui-host`（仍 loopback、仍只读）。
-5. stdout 末尾追加 `next_steps` 数组（可复制的 `zworkbench ui-host --review` 或 `zworkbench ui --db <实际 db 路径>`），无需读 README 即可在浏览器打开看到自己 run 的 recorded view。
+4. （原「`run --open` 自动拉起只读 `ui-host`」**已下线**——ADR 0018 层二，2026-10-26：`--open` 标志与只读 `ui-host` 一并删除，argparse 直接拒绝该标志。）
+5. stdout 末尾追加 `next_steps` 数组（`doctor` / `snapshot` / `export` / `write propose` 等），无需读 README 即可继续操作。原指向 `ui-host --review` / `ui --db` 的步骤已随 ADR 0018 层二移除；**recorded view 改由 Go 工作台（`app/`，默认 `:18080`）承载**。
 
 ## 验收线（机械可判定）
 

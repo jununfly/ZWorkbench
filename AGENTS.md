@@ -108,7 +108,7 @@ unknown，而不是把实现状态误写成目标已实现。本文件只补充�
 | 记录、诊断和回放 | [架构 wiki](docs/architecture/ta-overview.md)；[composition.py](src/zworkbench/composition.py) |
 | 评测 fixture、阈值和证据 | [fixtures](evaluation/fixtures/)；[evaluation runners](evaluation/runner/) |
 | 安装、升级、许可证和退出 | [optional Provider exit inventory](docs/references/optional-provider-exit-inventory.md) |
-| 界面引用注册表与评审标注模式 | [R1 设计实体](docs/designs/pd-ui-reference-system.md)（**retired 2026-10-24，ADR 0018**；原 implementation accepted 作历史保留）；[ui_ref.py](src/zworkbench/ui_ref.py)；[ui_matrix.py](src/zworkbench/ui_matrix.py) |
+| 界面引用注册表与评审标注模式 | **已整体退役（2026-10-24 ADR 0018 层一 + 层二）**：设计实体 [pd-ui-reference-system.md](docs/designs/pd-ui-reference-system.md) 标 retired；20 个 `ui_*.py` 实现模块、`ui-ref`/`ui-host`/`ui-build`/`ui` 四个 CLI 子命令与 43 个 `test_ui_*.py` 已删除；守卫见 [test_r1_layer2_retirement.py](tests/test_r1_layer2_retirement.py) |
 | Python 包入口和命令 | [pyproject.toml](pyproject.toml)；[README.md](README.md)；代码中的 --help 输出是命令事实源 |
 
 ### Source map
@@ -122,20 +122,6 @@ src/zworkbench/
   write_run.py         S2 write-seam orchestrator: owner-backed control-plane driver (create_worktree + apply_diff)
   write_seam.py        S2 write seam: isolated worktree + local commit, no push, single owner
   composition_cli.py   owner snapshot/backup/restore CLI
-  ui_ref.py            UI reference declarations, lifecycle and manifest digest  // RETIRED 2026-10-24 (ADR 0018); code removal pending layer 2
-  ui_manifest.py       build receipt, local artifact store and code location
-  ui_runtime.py        rendered attributes and review-session instance identity
-  ui_token.py          ui-ref/v1 review token and deep link contract
-  ui_review.py         local review annotation mode: panel, gestures and exit
-  ui_host.py           read-only loopback host serving the three views
-  ui_script.py         review-mode behaviour layer (ADR 0005), review mode only
-  ui_style.py          style layer, independent of the reference protocol
-  ui_build.py          build entry point producing manifests and receipts
-  ui_view_model.py     control-plane facade: owner state to redacted view model
-  ui_matrix.py         PRD coverage specification and counting contract
-  ui_home.py           home view declarations and fixture renderer
-  ui_task_detail.py    task-detail view declarations and fixture renderer
-  ui_record_view.py    record-view declarations and fixture renderer
 
 tests/
   behavior and regression tests for owner, adapter, orchestration and CLI

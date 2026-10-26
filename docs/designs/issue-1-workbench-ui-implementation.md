@@ -19,6 +19,17 @@ coverage: round-1-readonly
 
 # Issue #1：Workbench UI 实现规格
 
+> ⚠️ **RETIRED / 已退役（2026-10-26 · ADR 0018 层二）**
+>
+> 本规格描述的 Round-1 只读工作台 UI（三视图 + 评审标注 + token/深链 + 构建/manifest + 矩阵）
+> 及其实现已从 Python 侧**整体删除**：20 个 `ui_*.py`（8206 行）、`ui-ref`/`ui-host`/`ui-build`/`ui`
+> 四个 CLI 子命令、43 个 `test_ui_*.py` 全部下线，守卫见
+> [test_r1_layer2_retirement.py](../../tests/test_r1_layer2_retirement.py)。
+>
+> 本文保留作**架构演进历史证据**，其中引用的模块名、CLI 命令与文件行号均已不存在。
+> 产品 UI 面现由 Go 后端 + React 前端承担（`app/`）。权威决策见
+> [ADR 0018](../zj-adr/0018-retire-r1-ui-reference-system.md)。
+
 本文是 Issue #1 的界面实现规格，说明如何把设计原型落成可维护、可验证的工作台界面。
 它不替代产品需求、架构 ownership 或安全边界。
 

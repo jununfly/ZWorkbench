@@ -7,6 +7,8 @@
 >
 > 权威边界见 [ADR 0015（supersedes ADR 0013）](../docs/zj-adr/0015-go-full-pivot-supersedes-0013.md) 与 [ADR 0016（B2 提前）](../docs/zj-adr/0016-coding-evidence-b2-pulled-forward.md)。
 >
+> **补充（2026-10-26，ADR 0018 层二）**：`zworkbench ui-host` / `ui` / `ui-ref` / `ui-build` 四个子命令与其背后的 20 个 `ui_*.py` 模块已从 Python 侧整体删除。下方"原始契约"章节是**历史证据**，其中引用的 `cli.py` 行号与命令均已不存在，仅作演进记录保留。
+>
 > 状态：`frozen` —— 仅供阅读/参考，停止新开发。
 
 # ZWorkbench desktop shell
