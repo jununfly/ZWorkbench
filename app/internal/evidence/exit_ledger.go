@@ -2,9 +2,14 @@
 // ADR 0016 (formerly roadmap 1-6-6 / 1-4-3) 的 Go B2-narrow 移植。
 //
 // 核心不变式（fail-closed，逐字对齐 Python）：
-//   - provider_remote_zero_residue 永远 = "unknown/delegated"。本地/owner
+//   - provider_remote_zero_residue 默认 = "unknown/delegated"。本地/owner
 //     证据绝不能升级成「Provider 已清场」的证明。attach_receipt 若 receipt
 //     声称其他值即拒。
+//   - **唯一例外**：真远程执行（ssh 拉起远端进程）后，事实字段 provider / endpoint
+//     必须记**真实值**（provider="ssh"、endpoint=真实 host:port），但
+//     provider_remote_zero_residue **仍**记 "unknown" —— 远端进程跑在另一台机器上，
+//     本机无法验证残留是否清除，绝不声称「已清场 / 零残留」。这是 ADR 0020 前提 4
+//     的诚实化收窄（见 RecordRemoteProviderExitLedger）。
 //   - owner 库绝不摄入原始凭证：含 secret/token/password/credential/api_key
 //     字段且带非 unknown 真值、或值呈 ak-/ark-/hex64 形状，一律拒。
 // 默认（loopback/fake）产品路径无真实远程 provider，caliber 天然是
@@ -201,6 +206,114 @@ func (o *Owner) RecordProviderExitLedgerOnce(runID string, providerIdentity map[
 		return existing[0], nil
 	}
 	return o.RecordProviderExitLedger(runID, providerIdentity)
+}
+
+// RecordRemoteProviderExitLedger 记录一次**真实远程执行**的 provider 侧退出台账。
+//
+// 与 RecordProviderExitLedger（loopback 默认全部 unknown/delegated）的关键区别：
+// 真远程执行**确实**经过了一个外部 provider（ssh 拉起的远端机器），所以
+//   - provider 记为真实值 "ssh"（不空不 delegated）；
+//   - endpoint 记为**真实** host:port（不是 unknown）；
+//   - 但 provider_remote_zero_residue **仍**记 "unknown" —— 远端进程跑在另一台机器上，
+//     本机无法验证其残留是否清除，绝不声称「已清场 / 零残留」。
+//
+// 这就是 ADR 0020 前提 4 的诚实化收窄：loopback 默认口径硬编码 unknown/delegated
+// （因为根本没有真实远程 provider）；真远程执行后，provider / endpoint 这两个
+// 事实字段必须如实填真值，但「清场」这个无法在本机复核的结论仍保持 unknown，
+// 不默认升级。endpoint 为空时显式拒绝——不把一次真实远程执行记录成 unknown 端点。
+func (o *Owner) RecordRemoteProviderExitLedger(runID, endpoint, accountScope string) (*ProviderExitLedger, error) {
+	if err := requireText(runID, "run_id"); err != nil {
+		return nil, err
+	}
+	ep := strings.TrimSpace(endpoint)
+	as := strOrUnknown(accountScope)
+	if ep == "" {
+		return nil, fmt.Errorf("%w: 真实远程执行必须有 endpoint（host:port），不能记成 unknown", ErrBadArgument)
+	}
+
+	statuses := defaultExitStatuses()
+	surface := defaultSurfaceObservations()
+	unknownFields := sortedKeys(statuses)
+
+	ts := nowUTC()
+	ledgerID := newID()
+
+	so, err := jsonString(surface)
+	if err != nil {
+		return nil, err
+	}
+	sj, err := jsonString(statuses)
+	if err != nil {
+		return nil, err
+	}
+	uj, err := jsonString(unknownFields)
+	if err != nil {
+		return nil, err
+	}
+
+	var out *ProviderExitLedger
+	if err := o.transact(func(tx *sql.Tx) error {
+		if _, err := o.runRow(tx, runID); err != nil {
+			return err
+		}
+		if _, e := tx.Exec(`
+			INSERT INTO provider_exit_ledger(
+				ledger_id, run_id, provider, endpoint, account_scope,
+				exit_mode, exit_status, provider_remote_zero_residue,
+				surface_observations_json, statuses_json, unknown_fields_json,
+				local_state_fingerprint, evidence_class, recorded_at
+			) VALUES (?, ?, 'ssh', ?, ?, 'remote-ssh-execution', 'unknown/safe-stop',
+				'unknown', ?, ?, ?, 'unknown', 'remote-provider', ?)`,
+			ledgerID, runID, ep, as, so, sj, uj, ts,
+		); e != nil {
+			return fmt.Errorf("写入 provider_exit_ledger (remote) 失败：%w", e)
+		}
+		if e := o.appendEventTx(tx, runID, "provider.exit.ledger.recorded", map[string]any{
+			"ledger_id":                   ledgerID,
+			"provider":                    "ssh",
+			"endpoint":                    ep,
+			"caliber":                     "remote-engaged/zero-residue-unknown",
+			"provider_remote_zero_residue": "unknown",
+		}, nil); e != nil {
+			return e
+		}
+		out = &ProviderExitLedger{
+			LedgerID:                  ledgerID,
+			RunID:                     runID,
+			Provider:                  "ssh",
+			Endpoint:                  ep,
+			AccountScope:              as,
+			ExitMode:                  "remote-ssh-execution",
+			ExitStatus:                "unknown/safe-stop",
+			ProviderRemoteZeroResidue: "unknown",
+			SurfaceObservations:       surface,
+			Statuses:                  statuses,
+			UnknownFields:             unknownFields,
+			LocalStateFingerprint:     "unknown",
+			EvidenceClass:             "remote-provider",
+			RecordedAt:                ts,
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// RecordRemoteProviderExitLedgerOnce 每 run 至多记一条真实远程 provider 退出台账。
+// 幂等：run 已有 remote-provider 类条目则直接返回首条，不追加（与
+// RecordProviderExitLedgerOnce 同口径，保证 harness / adapter 层只产生一条）。
+func (o *Owner) RecordRemoteProviderExitLedgerOnce(runID, endpoint, accountScope string) (*ProviderExitLedger, error) {
+	existing, err := o.ProviderExitLedgerForRun(runID)
+	if err != nil {
+		return nil, err
+	}
+	for _, e := range existing {
+		if e.EvidenceClass == "remote-provider" {
+			return e, nil
+		}
+	}
+	return o.RecordRemoteProviderExitLedger(runID, endpoint, accountScope)
 }
 
 // AttachProviderExitReceipt 追加一条 owner 提供的、已脱敏的 Provider 退出回执

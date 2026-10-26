@@ -219,6 +219,90 @@ func TestProviderExitLedgerForRun_MixedClasses(t *testing.T) {
 	}
 }
 
+// TestRecordRemoteProviderExitLedger_HonestCaliber 校验真远程执行后的诚实口径：
+// provider/endpoint 记真实值，但 provider_remote_zero_residue 仍 unknown
+// （本机无法验证远端残留）。这是 ADR 0020 前提 4 的收窄——不默认升级为已清场。
+func TestRecordRemoteProviderExitLedger_HonestCaliber(t *testing.T) {
+	ow := newExitLedgerOwner(t)
+	if _, err := ow.CreateRun("r1", "task", nil, nil); err != nil {
+		t.Fatalf("CreateRun: %v", err)
+	}
+	rec, err := ow.RecordRemoteProviderExitLedger("r1", "192.168.1.10:22", "")
+	if err != nil {
+		t.Fatalf("RecordRemoteProviderExitLedger: %v", err)
+	}
+	if rec.Provider != "ssh" {
+		t.Fatalf("provider 应为 ssh, 实际 %q", rec.Provider)
+	}
+	if rec.Endpoint != "192.168.1.10:22" {
+		t.Fatalf("endpoint 应为真实 host:port, 实际 %q", rec.Endpoint)
+	}
+	// 关键：清场结论仍 unknown，不声称已清场。
+	if rec.ProviderRemoteZeroResidue != "unknown" {
+		t.Fatalf("provider_remote_zero_residue 应为 unknown, 实际 %q", rec.ProviderRemoteZeroResidue)
+	}
+	if rec.EvidenceClass != "remote-provider" {
+		t.Fatalf("evidence_class 应为 remote-provider, 实际 %q", rec.EvidenceClass)
+	}
+	// 与 loopback 条目必须可区分：同一 run 上两种证据并存。
+	if _, err := ow.RecordProviderExitLedger("r1", map[string]string{"provider": "workbuddy-code"}); err != nil {
+		t.Fatalf("record loopback: %v", err)
+	}
+	all, err := ow.ProviderExitLedgerForRun("r1")
+	if err != nil {
+		t.Fatalf("ForRun: %v", err)
+	}
+	if len(all) != 2 {
+		t.Fatalf("应有 2 条(remote-provider + local-inventory), 实际 %d", len(all))
+	}
+	classes := map[string]bool{}
+	for _, e := range all {
+		classes[e.EvidenceClass] = true
+	}
+	if !classes["remote-provider"] || !classes["local-inventory"] {
+		t.Fatalf("两类证据缺一: %+v", classes)
+	}
+}
+
+// TestRecordRemoteProviderExitLedger_RequiresEndpoint 校验真实远程执行必须有真
+// 实 endpoint；空 endpoint 显式拒绝，不能把一次真实远程执行记成 unknown 端点。
+func TestRecordRemoteProviderExitLedger_RequiresEndpoint(t *testing.T) {
+	ow := newExitLedgerOwner(t)
+	if _, err := ow.CreateRun("r1", "task", nil, nil); err != nil {
+		t.Fatalf("CreateRun: %v", err)
+	}
+	if _, err := ow.RecordRemoteProviderExitLedger("r1", "", ""); !errors.Is(err, ErrBadArgument) {
+		t.Fatalf("空 endpoint 应拒 ErrBadArgument, 实际: %v", err)
+	}
+}
+
+// TestRecordRemoteProviderExitLedgerOnce_Idempotent 校验幂等：run 已有
+// remote-provider 条目则直接返回首条，不追加新 entry。
+func TestRecordRemoteProviderExitLedgerOnce_Idempotent(t *testing.T) {
+	ow := newExitLedgerOwner(t)
+	if _, err := ow.CreateRun("r1", "task", nil, nil); err != nil {
+		t.Fatalf("CreateRun: %v", err)
+	}
+	a, err := ow.RecordRemoteProviderExitLedgerOnce("r1", "10.0.0.1:2222", "")
+	if err != nil {
+		t.Fatalf("once#1: %v", err)
+	}
+	b, err := ow.RecordRemoteProviderExitLedgerOnce("r1", "10.0.0.2:22", "")
+	if err != nil {
+		t.Fatalf("once#2: %v", err)
+	}
+	if a.LedgerID != b.LedgerID {
+		t.Fatalf("once 应幂等返回同一条: %s vs %s", a.LedgerID, b.LedgerID)
+	}
+	all, err := ow.ProviderExitLedgerForRun("r1")
+	if err != nil {
+		t.Fatalf("ForRun: %v", err)
+	}
+	if len(all) != 1 {
+		t.Fatalf("应只 1 条, 实际 %d", len(all))
+	}
+}
+
 // TestProviderExitLedgerForRun_Chronological 用两条 recorded_at 明确不同的记录
 // 验证 ForRun 的时间序契约（这是 ORDER BY 唯一有业务语义的一层）。
 func TestProviderExitLedgerForRun_Chronological(t *testing.T) {
