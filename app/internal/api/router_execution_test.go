@@ -2,11 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 
 	"github.com/jununfly/ZWorkbench/app/internal/config"
 	"github.com/jununfly/ZWorkbench/app/internal/evidence"
+	"github.com/jununfly/ZWorkbench/app/internal/execution"
 )
 
 // 执行 API 的契约（ADR 0020）：
@@ -19,6 +21,14 @@ import (
 // 让接线本身被端到端验证（真起进程、真记账），而不是只测假对象。
 func newExecRouter(t *testing.T) (http.Handler, *evidence.Owner, string) {
 	t.Helper()
+	return newExecRouterWithProfiles(t, []config.ExecutionProfile{
+		{Name: "echo-ok", Command: "echo", Args: []string{"hi"}, TimeoutSec: 20},
+	})
+}
+
+// newExecRouterWithProfiles 允许用例自定义档位集合（例如容器档位）。
+func newExecRouterWithProfiles(t *testing.T, profiles []config.ExecutionProfile) (http.Handler, *evidence.Owner, string) {
+	t.Helper()
 	ev, err := evidence.Open(":memory:")
 	if err != nil {
 		t.Fatalf("evidence.Open: %v", err)
@@ -28,11 +38,9 @@ func newExecRouter(t *testing.T) (http.Handler, *evidence.Owner, string) {
 	repoDir := t.TempDir()
 	cfg := &config.Config{Port: "18080", Token: testToken}
 	cfg.SetManagedRepos(config.ManagedRepos{Repos: []config.RepoSpec{
-		{Name: "ZW", Path: repoDir, Environments: []string{"local"}},
+		{Name: "ZW", Path: repoDir, Environments: []string{"local", "container"}},
 	}})
-	cfg.SetExecutionProfiles(config.ExecutionProfiles{Profiles: []config.ExecutionProfile{
-		{Name: "echo-ok", Command: "echo", Args: []string{"hi"}, TimeoutSec: 20},
-	}})
+	cfg.SetExecutionProfiles(config.ExecutionProfiles{Profiles: profiles})
 	return NewRouter(cfg, nil, nil, ev), ev, repoDir
 }
 
@@ -372,4 +380,81 @@ func containsAny(s string, subs ...string) bool {
 		}
 	}
 	return false
+}
+
+// 容器档位必须在 profiles 里暴露镜像/容器内目录/网络：
+// 审批面板只显示命令等于让人在看不见执行边界的情况下签字。
+func TestListExecutionProfilesExposesContainerFields(t *testing.T) {
+	h, _, _ := newExecRouterWithProfiles(t, []config.ExecutionProfile{
+		{
+			Name:         "echo-ctr",
+			Command:      "echo",
+			Args:         []string{"hi"},
+			Environments: []string{"container"},
+			Container:    &config.ContainerConfig{Image: "alpine:3.20", Network: "bridge"},
+		},
+	})
+
+	rec := doJSON(t, h, "GET", "/api/execution/profiles?token="+testToken, nil)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("code=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var out struct {
+		Profiles []struct {
+			Name             string   `json:"name"`
+			Environments     []string `json:"environments"`
+			Image            string   `json:"image"`
+			ContainerWorkdir string   `json:"container_workdir"`
+			ContainerNetwork string   `json:"container_network"`
+		} `json:"profiles"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("decode: %v (%s)", err, rec.Body.String())
+	}
+	if len(out.Profiles) != 1 {
+		t.Fatalf("期望 1 个档位，实际 %d", len(out.Profiles))
+	}
+	p := out.Profiles[0]
+	if p.Image != "alpine:3.20" {
+		t.Fatalf("应暴露镜像，实际 %q", p.Image)
+	}
+	if p.ContainerWorkdir != config.DefaultContainerWorkdir {
+		t.Fatalf("应暴露容器内工作目录（默认 %q），实际 %q", config.DefaultContainerWorkdir, p.ContainerWorkdir)
+	}
+	if p.ContainerNetwork != "bridge" {
+		t.Fatalf("应暴露网络，实际 %q", p.ContainerNetwork)
+	}
+	if len(p.Environments) != 1 || p.Environments[0] != "container" {
+		t.Fatalf("应暴露环境声明，实际 %v", p.Environments)
+	}
+}
+
+// 「该环境没有执行器」是请求层面可判定的拒绝，不能返 500 让监控以为服务崩了。
+func TestExecutionStatusMapsExecutorUnavailableTo400(t *testing.T) {
+	err := fmt.Errorf("wrap: %w", execution.ErrExecutorUnavailable)
+	if got := executionStatus(err); got != http.StatusBadRequest {
+		t.Fatalf("ErrExecutorUnavailable 应映射 400，实际 %d", got)
+	}
+}
+
+// 容器档位 + local run：环境不匹配必须 400，且绝不能静默降级成在宿主跑。
+func TestExecuteContainerProfileOnLocalRunRejected(t *testing.T) {
+	h, _, _ := newExecRouterWithProfiles(t, []config.ExecutionProfile{
+		{
+			Name:         "echo-ctr",
+			Command:      "echo",
+			Environments: []string{"container"},
+			Container:    &config.ContainerConfig{Image: "alpine:3.20"},
+		},
+	})
+	runID := createRun(t, h) // local 语境
+
+	rec := doJSON(t, h, "POST", "/api/evidence/runs/"+runID+"/execute?token="+testToken,
+		map[string]any{"profile": "echo-ctr"})
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("环境不匹配应 400，实际 %d body=%s", rec.Code, rec.Body.String())
+	}
+	if !containsAny(rec.Body.String(), "environment", "环境") {
+		t.Fatalf("错误应说明环境不匹配，实际 %s", rec.Body.String())
+	}
 }

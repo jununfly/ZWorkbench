@@ -48,7 +48,7 @@ func registerExecution(
 			if len(envs) == 0 {
 				envs = []string{"local"}
 			}
-			out = append(out, map[string]any{
+			item := map[string]any{
 				"name":               p.Name,
 				"command":            p.Command,
 				"args":               p.Args,
@@ -56,7 +56,15 @@ func registerExecution(
 				"environment_status": envprobe.ProbeAll(envs),
 				"timeout_sec":        int(p.EffectiveTimeout().Seconds()),
 				"workdir":            p.Workdir,
-			})
+			}
+			// 容器档位要把「跑在哪个镜像/哪个目录/有没有网络」一并暴露：
+			// 审批面板若只显示命令，等于让人在看不见执行边界的情况下签字。
+			if p.Container != nil {
+				item["image"] = p.Container.Image
+				item["container_workdir"] = p.Container.EffectiveWorkdir()
+				item["container_network"] = p.Container.EffectiveNetwork()
+			}
+			out = append(out, item)
 		}
 		writeJSON(w, map[string]any{"profiles": out})
 	}))
@@ -168,6 +176,9 @@ func executionStatus(err error) int {
 	case errors.Is(err, execution.ErrProfileNotFound),
 		errors.Is(err, execution.ErrEnvironmentNotAllowed),
 		errors.Is(err, execution.ErrNoWorkdir),
+		// 该环境没有执行器（未接线 / 尚未实现）：这是「你指定了一个服务当前
+		// 跑不了的环境」，属于请求层面可判定的拒绝，不是服务故障。
+		errors.Is(err, execution.ErrExecutorUnavailable),
 		errors.Is(err, evidence.ErrBadArgument),
 		errors.Is(err, evidence.ErrInvalidTransition),
 		errors.Is(err, evidence.ErrApproval):

@@ -146,6 +146,10 @@ interface ExecProfile {
   environment_status?: ExecEnvStatus[];
   timeout_sec: number;
   workdir: string;
+  // 容器档位才有：审批前必须能看见执行边界（镜像 / 容器内目录 / 网络）。
+  image?: string;
+  container_workdir?: string;
+  container_network?: string;
 }
 interface EvApproval {
   approval_id: string;
@@ -168,6 +172,10 @@ interface ExecResult {
   duration: number;
   timed_out: boolean;
   canceled: boolean;
+  // 容器执行才有：容器名与清场结论（removed / absent / "failed: 原因"）。
+  // 必须显示——「残留有没有清掉」是执行后第一件要看的事。
+  container_name?: string;
+  container_cleanup?: string;
 }
 interface ExecConfirm {
   claim?: { status: string; reason: string; attempt: number };
@@ -701,6 +709,13 @@ export function CodingEvidenceTab() {
                 >
                   {activeProfile.command} {activeProfile.args.join(' ')} · {activeProfile.timeout_sec}s ·{' '}
                   {activeProfile.environments.join('/')}
+                  {activeProfile.image && (
+                    <>
+                      {' '}· 镜像 {activeProfile.image}
+                      {activeProfile.container_workdir ? ` · 容器内 ${activeProfile.container_workdir}` : ''}
+                      {activeProfile.container_network ? ` · 网络 ${activeProfile.container_network}` : ''}
+                    </>
+                  )}
                   {activeProfileEnv && !activeProfileEnv.available && (
                     <span style={{ color: '#d46b08' }}>
                       {' '}
@@ -784,6 +799,22 @@ export function CodingEvidenceTab() {
                         {execOut.result?.canceled && ' · 已取消（run 已 safe_stopped）'}
                         {execOut.result?.truncated && ' · 输出已截断'}
                       </div>
+                      {execOut.result?.container_cleanup && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            marginTop: 2,
+                            color: execOut.result.container_cleanup.startsWith('failed') ? RED : '#666',
+                            fontFamily: 'ui-monospace, monospace',
+                            wordBreak: 'break-all',
+                          }}
+                        >
+                          容器 {execOut.result.container_name || '(未记录)'} · 清场{' '}
+                          {execOut.result.container_cleanup}
+                          {execOut.result.container_cleanup.startsWith('failed') &&
+                            '（残留需手动 docker rm -f）'}
+                        </div>
+                      )}
                       {execOut.result?.stdout && (
                         <pre style={{ background: '#fff', padding: 6, maxHeight: 180, overflow: 'auto' }}>
                           {execOut.result.stdout}
