@@ -20,7 +20,7 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0001：CompositionOwner 是唯一 durable owner](0001-composition-owner-is-the-unique-durable-owner.md)
 - [ADR 0002：映射版本只摘要引用语义](0002-ui-map-digests-reference-semantics-only.md)
 - [ADR 0003：工作台宿主是经回环提供的服务端渲染 HTML](0003-workbench-host-is-server-rendered-html-over-loopback.md)
-- [ADR 0004：宿主交互证据来自经 CDP 驱动的本机浏览器](0004-host-interaction-evidence-comes-from-a-local-browser-over-cdp.md)
+- [ADR 0004：宿主交互证据来自经 CDP 驱动的本机浏览器](0004-host-interaction-evidence-comes-from-a-local-browser-over-cdp.md)（`accepted`：方法论继续有效；**Python 侧实现 `tests/browser.py` 已于 2026-10-26 随宿主退役**，4 条 CDP 顺序规则沉淀在本文「实现附注」，重建面在 Go/Electron 侧）
 - [ADR 0005：评审模式携带一层最小行为脚本](0005-review-mode-carries-a-minimal-behaviour-layer.md)（`accepted`）
 - [ADR 0006：宿主服务的 manifest 只有一个 build 身份——全树 receipt](0006-one-build-identity-for-served-manifests.md)（`accepted`）
 - [ADR 0008：host enforcement 必须 fail-closed 且可测试](0008-host-enforcement-is-fail-closed-and-testable.md)（`accepted`）
@@ -32,6 +32,6 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0015：Go 全 pivot —— 取代 ADR 0013 的桌面壳偏离边界；主运行时=Go（app/），Electron 改 spawn Go 二进制，Python 核心降为可选 sidecar](0015-go-full-pivot-supersedes-0013.md)（`accepted`，Human 2026-10-14 于 roadmap 1-5 确认；`supersedes 0013`；**B1/B2 路线被 0016 局部 supersede**，2026-10-14 选 B 提前 B2）
 - [ADR 0016：coding-evidence 路线 B2 提前——C26/C28 用 Go 重写进 app/，B1 sidecar 退出（局部 supersede 0015）](0016-coding-evidence-b2-pulled-forward.md)（`accepted`，Human 2026-10-14 于 roadmap 1-5-6 选 B 确认）
 - [ADR 0017：真实数据源接入策略——统一 datasource 契约 + 东方财富免费源 + 本地可导入数据集 + fallback 语义收敛](0017-real-data-source-integration.md)（`accepted`，Human 2026-10-24 于 P1 解耦评审确认；取代 roadmap 1-2-1~1-2-5 作为数据源决策事实源）
-- [ADR 0014：UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启；`browser()` 工厂抛 SkipTest，默认全量回归回到分钟级有界](0014-ui-engine-tests-gated-by-default.md)（`accepted`，Human 2026-10-14 于 roadmap 1-4-2 选型 a 确认）
+- [ADR 0014：UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启；`browser()` 工厂抛 SkipTest，默认全量回归回到分钟级有界](0014-ui-engine-tests-gated-by-default.md)（**`superseded` by 0018**，2026-10-26：门控主体 `tests/browser.py` 随零消费者退役，`ZW_UI_ENGINE` 不再是任何契约的一部分；两条教训（真引擎须默认关、无界真因可能在等待原语）仍成立 —— 原为 `accepted`，Human 2026-10-14 于 roadmap 1-4-2 选型 a 确认）
 - [ADR 0019：编码证据 run 加 repo/branch/environment 上下文维度（参照 Codex composer chips）](0019-coding-evidence-run-context-dimensions.md)（`accepted`，Human 2026-10-26 于 grill 收敛 + 实现提交确认）
-- [ADR 0020：编码证据 真执行器（epic，从 ADR 0019 Follow-up 拆分）](0020-coding-evidence-real-executor-epic.md)（`partially-accepted`，2026-10-26：首刀 local-only 已落地——白名单档位 + 审批门 + 本地 os/exec + owner 记账 + API + 前端面板，三条终态路径经真实 server e2e 验证；container/remote 执行器与 exit_ledger 断言修正仍 open）
+- [ADR 0020：编码证据 真执行器（epic，从 ADR 0019 Follow-up 拆分）](0020-coding-evidence-real-executor-epic.md)（`partially-accepted`，2026-10-26：首刀 local-only 已落地——白名单档位 + 审批门 + 本地 os/exec + owner 记账 + API + 前端面板；同日补 container 切片——docker CLI 执行器 + 显式清场三态证据 + 网络隔离，真 docker e2e 30 项通过；remote 执行器仍 open，`exit_ledger` 断言修正已收窄为「仅 remote 触发」）
