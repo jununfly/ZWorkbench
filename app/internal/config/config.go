@@ -4,9 +4,12 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/jununfly/ZWorkbench/app/internal/datasource"
 )
@@ -94,6 +97,168 @@ func (m ManagedRepos) FindRepo(name string) (RepoSpec, bool) {
 	return RepoSpec{}, false
 }
 
+// 执行档位相关常量（ADR 0020 首刀）。
+const (
+	// DefaultExecutionTimeout 是档位未声明 timeout_sec 时的执行上限。
+	// 与 Python CLI 的 run 默认 300s 对齐，避免两处对「一次执行能跑多久」口径不一。
+	DefaultExecutionTimeout = 300 * time.Second
+	// MaxExecutionTimeout 是档位 timeout_sec 的硬上限：再长会让 HTTP 侧与
+	// 证据回看都失去意义，也容易掩盖挂死。
+	MaxExecutionTimeout = 3600 * time.Second
+)
+
+// shellMetaChars 是命令里一律禁止出现的字符。
+//
+// 理由：执行器用 os/exec 直接 exec 目标程序、**从不经过 shell**，所以这些字符
+// 不会带来注入；但让一个写着 `go; rm -rf` 的档位通过校验，等于让配置读起来
+// 像 shell 而实际行为不同 —— 这种「读起来和跑起来不一样」是整个 epic 最该
+// 避免的歧义，因此一律在配置层拒绝，而不是留给运行时解释。
+const shellMetaChars = ";|&$`><()\\'\"\n\r\t"
+
+// ExecutionProfile 是预置执行档位（ADR 0020）：一次执行请求只能引用档位名，
+// 不能携带任意 argv。这是本 epic 的安全边界 —— HTTP 面永远拿不到「跑任意命令」
+// 的能力，只能从配置白名单里挑一个。
+type ExecutionProfile struct {
+	// Name 是档位在 UI/API 中的引用键，全局唯一。
+	Name string `json:"name"`
+	// Command 是固定可执行文件：裸名走 PATH（LookPath），或绝对路径。
+	Command string `json:"command"`
+	// Args 是固定参数，按原样传给程序，不经过 shell 解析。
+	Args []string `json:"args"`
+	// Environments 是该档位允许执行的环境；首刀只接受 local。
+	// 声明 container/remote 会被 Validate 拒绝 —— 不静默声称支持尚未实现的能力。
+	Environments []string `json:"environments"`
+	// TimeoutSec 是单次执行超时秒数；<=0 走 DefaultExecutionTimeout。
+	TimeoutSec int `json:"timeout_sec"`
+	// Workdir 是相对被管理仓库 Path 的工作目录；空 = 仓库根，绝对路径 = 原样。
+	Workdir string `json:"workdir"`
+}
+
+// Validate 校验档位自洽性。fail-closed：任何「看起来能跑但跑不起来」的配置
+// 都在这里当场拒绝，不留给运行时。
+func (p ExecutionProfile) Validate() error {
+	name := strings.TrimSpace(p.Name)
+	if name == "" {
+		return fmt.Errorf("execution profile: name 不能为空")
+	}
+	cmd := strings.TrimSpace(p.Command)
+	if cmd == "" {
+		return fmt.Errorf("execution profile %q: command 不能为空", name)
+	}
+	if strings.ContainsAny(cmd, " \t\n\r") {
+		return fmt.Errorf("execution profile %q: command 不能包含空白（参数请放进 args）", name)
+	}
+	if strings.ContainsAny(cmd, shellMetaChars) {
+		return fmt.Errorf("execution profile %q: command 不能包含 shell 元字符 %q", name, cmd)
+	}
+	for i, a := range p.Args {
+		if strings.ContainsAny(a, "\n\r") {
+			return fmt.Errorf("execution profile %q: args[%d] 不能包含换行", name, i)
+		}
+	}
+	if p.TimeoutSec < 0 {
+		return fmt.Errorf("execution profile %q: timeout_sec 不能为负（0 表示用默认 %v）", name, DefaultExecutionTimeout)
+	}
+	if time.Duration(p.TimeoutSec)*time.Second > MaxExecutionTimeout {
+		return fmt.Errorf("execution profile %q: timeout_sec 不能超过 %v", name, MaxExecutionTimeout)
+	}
+	for _, env := range p.Environments {
+		e := strings.TrimSpace(env)
+		if e == "" {
+			continue
+		}
+		if e != "local" {
+			return fmt.Errorf("execution profile %q: environment %q 未实现（ADR 0020 首刀只支持 local；container/remote 见后续切片）", name, e)
+		}
+	}
+	return nil
+}
+
+// EffectiveTimeout 返回实际执行上限：未声明用默认值。
+func (p ExecutionProfile) EffectiveTimeout() time.Duration {
+	if p.TimeoutSec <= 0 {
+		return DefaultExecutionTimeout
+	}
+	d := time.Duration(p.TimeoutSec) * time.Second
+	if d > MaxExecutionTimeout {
+		return MaxExecutionTimeout
+	}
+	return d
+}
+
+// AllowsEnvironment 判断该档位是否允许在给定环境执行。
+// 未声明则回退「只允许 local」，与首刀只有本地执行器的事实一致（fail-closed）。
+func (p ExecutionProfile) AllowsEnvironment(env string) bool {
+	env = strings.TrimSpace(env)
+	if env == "" {
+		return false
+	}
+	allowed := make(map[string]struct{}, len(p.Environments))
+	for _, e := range p.Environments {
+		if e = strings.TrimSpace(e); e != "" {
+			allowed[e] = struct{}{}
+		}
+	}
+	if len(allowed) == 0 {
+		return env == "local"
+	}
+	_, ok := allowed[env]
+	return ok
+}
+
+// ResolveDir 解析执行工作目录：空 Workdir → 仓库路径；相对 → 拼到仓库路径；
+// 绝对 → 原样。仓库路径也为空时返回空串，由执行层决定是否拒绝。
+func (p ExecutionProfile) ResolveDir(repoPath string) string {
+	repoPath = strings.TrimSpace(repoPath)
+	wd := strings.TrimSpace(p.Workdir)
+	switch {
+	case wd == "":
+		return repoPath
+	case filepath.IsAbs(wd):
+		return wd
+	case repoPath == "":
+		return ""
+	default:
+		return filepath.Join(repoPath, wd)
+	}
+}
+
+// ExecutionProfiles 是执行档位列表的持久化形态（ADR 0020）。
+type ExecutionProfiles struct {
+	Profiles []ExecutionProfile `json:"profiles"`
+}
+
+// Validate 校验整张列表：逐个自洽 + 名字不重复（Name 是执行请求的唯一引用键，
+// 重名会让「跑哪个」变成未定义行为）。
+func (m ExecutionProfiles) Validate() error {
+	seen := make(map[string]struct{}, len(m.Profiles))
+	for _, p := range m.Profiles {
+		if err := p.Validate(); err != nil {
+			return err
+		}
+		name := strings.TrimSpace(p.Name)
+		if _, dup := seen[name]; dup {
+			return fmt.Errorf("execution profile %q: 名字重复（必须全局唯一）", name)
+		}
+		seen[name] = struct{}{}
+	}
+	return nil
+}
+
+// FindProfile 按名字精确查找档位（容忍首尾空白）；找不到返回 false。
+func (m ExecutionProfiles) FindProfile(name string) (ExecutionProfile, bool) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return ExecutionProfile{}, false
+	}
+	for _, p := range m.Profiles {
+		if strings.TrimSpace(p.Name) == name {
+			return p, true
+		}
+	}
+	return ExecutionProfile{}, false
+}
+
 // Config 持有本地服务的端口、一次性鉴权 token、证据库路径、LLM provider 配置、
 // 统一远程数据源开关，以及本地导入数据集路径。
 type Config struct {
@@ -110,16 +275,18 @@ type Config struct {
 	ds     DataSourceConfig
 	df     DataFiles
 	mr     ManagedRepos
+	ep     ExecutionProfiles
 	mu     sync.RWMutex
 }
 
-// persistFile 是 config.json 的完整形态。三个段落共用一次保存，
+// persistFile 是 config.json 的完整形态。各段落共用一次保存，
 // 避免「存 LLM 把数据源配置抹掉」这类静默丢配置。
 type persistFile struct {
-	LLM           LLMConfig        `json:"llm"`
-	DataSource    DataSourceConfig `json:"data_source"`
-	DataFiles     DataFiles        `json:"data_files"`
-	ManagedRepos  ManagedRepos     `json:"managed_repos"`
+	LLM               LLMConfig         `json:"llm"`
+	DataSource        DataSourceConfig  `json:"data_source"`
+	DataFiles         DataFiles         `json:"data_files"`
+	ManagedRepos      ManagedRepos      `json:"managed_repos"`
+	ExecutionProfiles ExecutionProfiles `json:"execution_profiles"`
 }
 
 // LLMConfig 是「设置 / LLM」页可编辑的 provider 配置，持久化到 config.json。
@@ -222,6 +389,23 @@ func (c *Config) SetDataFiles(d DataFiles) {
 	c.df = d
 }
 
+// ExecutionProfiles 返回预置执行档位快照（并发安全，ADR 0020）。
+func (c *Config) ExecutionProfiles() ExecutionProfiles {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.ep
+}
+
+// SetExecutionProfiles 原子写入预置执行档位（并发安全）。
+func (c *Config) SetExecutionProfiles(e ExecutionProfiles) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.ep = e
+}
+
+// SaveExecutionProfiles 将预置执行档位写回 config.json（权限 0600，ADR 0020）。
+func (c *Config) SaveExecutionProfiles() error { return c.save() }
+
 // llmPath 返回 config.json 路径（env ZW_CONFIG 覆盖，默认 cwd ./config.json）。
 func (c *Config) llmPath() string {
 	p := os.Getenv("ZW_CONFIG")
@@ -242,6 +426,7 @@ func (c *Config) load() {
 		c.SetDataFiles(loadDataFilesFromEnv(c.DataFiles()))
 		// 即使无 config.json，env 覆盖仍应生效（与数据源/导入路径一致）。
 		c.SetManagedRepos(loadManagedReposFromEnv(c.ManagedRepos()))
+		c.SetExecutionProfiles(loadExecutionProfilesFromEnv(c.ExecutionProfiles()))
 		return
 	}
 	var f persistFile
@@ -258,6 +443,7 @@ func (c *Config) load() {
 	c.SetDataSource(datasource.LoadFromEnv(ds))
 	c.SetDataFiles(loadDataFilesFromEnv(f.DataFiles))
 	c.SetManagedRepos(loadManagedReposFromEnv(f.ManagedRepos))
+	c.SetExecutionProfiles(loadExecutionProfilesFromEnv(f.ExecutionProfiles))
 }
 
 // loadDataFilesFromEnv 用 ZW_MASTERY_PATH / ZW_PORTFOLIO_PATH 覆盖给定的导入路径：
@@ -286,16 +472,36 @@ func loadManagedReposFromEnv(base ManagedRepos) ManagedRepos {
 	return ManagedRepos{Repos: repos}
 }
 
+// loadExecutionProfilesFromEnv 用 ZW_EXEC_PROFILES（JSON 数组）覆盖执行档位列表：
+// env 优先于 config.json（与 ZW_MANAGED_REPOS 同序）。非法 JSON 静默忽略。
+func loadExecutionProfilesFromEnv(base ExecutionProfiles) ExecutionProfiles {
+	v := strings.TrimSpace(os.Getenv("ZW_EXEC_PROFILES"))
+	if v == "" {
+		return base
+	}
+	var profiles []ExecutionProfile
+	if err := json.Unmarshal([]byte(v), &profiles); err != nil {
+		return base
+	}
+	return ExecutionProfiles{Profiles: profiles}
+}
+
 // LoadLLM 从 config.json 读取 LLM 配置（兼容入口，内部读取完整文件）。
 func (c *Config) LoadLLM() { c.load() }
 
 // LoadDataSource 从 config.json 读取数据源配置（env 覆盖仍生效）。
 func (c *Config) LoadDataSource() { c.load() }
 
-// save 把三段配置一起写回 config.json（权限 0600）。
+// save 把各段配置一起写回 config.json（权限 0600）。
 // 必须整体写：分开写会让「保存 LLM」把数据源开关抹掉，属于静默丢配置。
 func (c *Config) save() error {
-	f := persistFile{LLM: c.LLM(), DataSource: c.DataSource(), DataFiles: c.DataFiles(), ManagedRepos: c.ManagedRepos()}
+	f := persistFile{
+		LLM:               c.LLM(),
+		DataSource:        c.DataSource(),
+		DataFiles:         c.DataFiles(),
+		ManagedRepos:      c.ManagedRepos(),
+		ExecutionProfiles: c.ExecutionProfiles(),
+	}
 	data, err := json.MarshalIndent(f, "", "  ")
 	if err != nil {
 		return err
