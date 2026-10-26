@@ -16,7 +16,6 @@ import shutil
 import socket
 import subprocess
 import sys
-import threading
 from pathlib import Path
 import re
 import uuid
@@ -52,10 +51,6 @@ from .write_seam import WriteSeamError
 
 
 CLI_SCHEMA = "zworkbench-cli/v1"
-LOOPBACK = "127.0.0.1"
-#: Addresses that keep the service on this machine. Anything else would put
-#: review material, including manifest identity, on the network.
-LOOPBACK_ADDRESSES = frozenset({LOOPBACK, "localhost", "::1"})
 #: The single sanctioned source for Provider profiles. The product loads
 #: Provider configuration ONLY from this file; it must never silently fall back
 #: to ~/.codex/config.toml (which can carry the operator's real bearer token and
@@ -148,15 +143,6 @@ def _parser() -> argparse.ArgumentParser:
     run.add_argument("--export", type=Path, help="optional case-local owner JSON export path")
     run.add_argument("--backup", type=Path, help="optional empty case-local backup directory")
     run.add_argument("--summary", type=Path, help="optional case-local JSON summary path")
-    run.add_argument(
-        "--open",
-        action="store_true",
-        default=False,
-        help=(
-            "run 成功完成后自动拉起只读 ui-host（loopback 端口）回看价值视图；"
-            "ui-host 不接 Provider、不开 owner DB、不发起 run。denied/failed 不拉起"
-        ),
-    )
     run.set_defaults(handler=_run_command)
 
     # ------------------------------------------------------------------
@@ -324,176 +310,6 @@ def _parser() -> argparse.ArgumentParser:
     restore.add_argument("backup_directory", type=Path)
     restore.add_argument("--replace", action="store_true", help="explicitly replace an existing target DB")
     restore.set_defaults(handler=_restore_command)
-
-    ui_ref = commands.add_parser(
-        "ui-ref",
-        help="read-only UI reference manifest queries",
-        description=(
-            "Query a stored UI reference manifest artifact. The command is "
-            "read-only: it makes no network request, starts no run and changes "
-            "no owner state."
-        ),
-    )
-    ui_ref.add_argument("--store", required=True, type=Path, help="local manifest artifact directory")
-    ui_ref_commands = ui_ref.add_subparsers(dest="ui_ref_command", required=True)
-
-    ui_ref_identity = ui_ref_commands.add_parser("identity", help="print the artifact identity")
-    ui_ref_identity.add_argument("--ui-map", required=True, help="expected manifest digest")
-    ui_ref_identity.add_argument("--build", required=True, help="expected build receipt digest")
-
-    ui_ref_list = ui_ref_commands.add_parser("list", help="list declared references")
-    ui_ref_list.add_argument("--ui-map", required=True, help="expected manifest digest")
-    ui_ref_list.add_argument("--build", required=True, help="expected build receipt digest")
-
-    ui_ref_resolve = ui_ref_commands.add_parser("resolve", help="resolve one reference")
-    ui_ref_resolve.add_argument("ref")
-    ui_ref_resolve.add_argument("--ui-map", required=True, help="expected manifest digest")
-    ui_ref_resolve.add_argument("--build", required=True, help="expected build receipt digest")
-
-    ui_ref.set_defaults(handler=_ui_ref_command)
-
-    ui_host = commands.add_parser(
-        "ui-host",
-        help="serve the declared UI views for local review",
-        description=(
-            "Serve the declared views on a loopback port for local review. "
-            "The command is read-only: it opens no owner database, starts no "
-            "run and changes no owner state. It takes no --db for that reason. "
-            "Interrupt it to stop; the port is released before it exits."
-        ),
-    )
-    ui_host.add_argument(
-        "--host",
-        default=LOOPBACK,
-        help=(
-            "bind address; only loopback is accepted, because the host "
-            "renders review material rather than a network service"
-        ),
-    )
-    ui_host.add_argument(
-        "--port",
-        type=int,
-        default=0,
-        help="bind port; the default asks the OS for a free one",
-    )
-    ui_host.add_argument(
-        "--review",
-        action="store_true",
-        help=(
-            "enable the local review annotation mode; off by default, so a "
-            "normal page carries no overlay, panel, token or script"
-        ),
-    )
-    ui_host.set_defaults(handler=_ui_host_command)
-
-    ui = commands.add_parser(
-        "ui",
-        help="serve the writable workbench UI backed by a real owner DB (dogfood)",
-        description=(
-            "Serve the workbench UI wired to a real CompositionOwner. Unlike "
-            "ui-host, this opens --db, renders real runs through owner_view_source, "
-            "and wires every write seam (composer send, approval execution, "
-            "scenario state, reconcile). It changes owner state, so point it at a "
-            "scratch DB you can discard."
-        ),
-    )
-    ui.add_argument(
-        "--db",
-        required=True,
-        type=Path,
-        help="path to the CompositionOwner sqlite database; created if absent",
-    )
-    ui.add_argument(
-        "--host",
-        default=LOOPBACK,
-        help="bind address; only loopback is accepted",
-    )
-    ui.add_argument(
-        "--port",
-        type=int,
-        default=0,
-        help="bind port; the default asks the OS for a free one",
-    )
-    ui.add_argument(
-        "--review",
-        action="store_true",
-        help="enable the local review annotation mode",
-    )
-    # Run-execution args (optional). When --case-root, --workspace and --codex are
-    # all supplied, the dogfood UI becomes a real executor: every started run is
-    # driven to completion through LocalReadOnlyRunOrchestrator with these flags.
-    # Omitting them keeps the command create+start only (the original control
-    # surface). The real-Provider gate stays fail-closed by default.
-    ui.add_argument("--case-root", type=Path, help="case-local root directory; enables run execution when set with --workspace and --codex")
-    ui.add_argument("--workspace", type=Path, help="existing workspace inside --case-root")
-    ui.add_argument("--codex", type=Path, help="fixed executable path for Codex app-server")
-    ui.add_argument("--code-home", type=Path, help="case-local CODEX_HOME path")
-    ui.add_argument("--event-log", type=Path, help="case-local Codex event log path")
-    ui.add_argument("--provider", default="fake-loopback", help="non-secret Provider identity")
-    ui.add_argument("--model", default="fake-model", help="non-secret model identity")
-    ui.add_argument("--endpoint", default="http://127.0.0.1:11434", help="loopback Provider endpoint")
-    ui.add_argument(
-        "--provider-profile",
-        default=None,
-        help=(
-            "select an explicitly configured remote/custom Provider by name from "
-            "the sanctioned provider config at "
-            "/Users/bilibili/Documents/zw-providers.toml; authorizes its "
-            "non-loopback endpoint and switches the adapter off the ollama "
-            "default. Omit to keep the ollama fallback"
-        ),
-    )
-    ui.add_argument("--timeout", type=float, default=300.0, help="maximum turn wait in seconds")
-    ui.add_argument(
-        "--host-enforcement",
-        action="store_true",
-        default=False,
-        help=(
-            "make ZWorkbench the single sandbox authority (ADR 0008 intent): "
-            "launch Codex with --dangerously-bypass-approvals-and-sandbox"
-        ),
-    )
-    ui.add_argument(
-        "--real-provider-gate",
-        action="store_true",
-        default=False,
-        help=(
-            "explicitly consent to a real Provider egress/billing path. Required "
-            "when --provider-profile is set; keeps the loopback/fake baseline "
-            "from silently reaching a real Provider (ADR 0008 host enforcement; ADR 0010 active read-path boundary). Without "
-            "it, a real profile is denied."
-        ),
-    )
-    ui.set_defaults(handler=_ui_command)
-
-    ui_build = commands.add_parser(
-        "ui-build",
-        help="generate and store the UI reference manifest artifacts",
-        description=(
-            "Generate the UI reference manifest for every view from the "
-            "declaring sources and store each artifact under its own identity. "
-            "The build only reads sources and writes artifacts: it starts no "
-            "run, opens no owner database and changes no owner state. The "
-            "produced --store directory is what `ui-ref` queries against, which "
-            "closes the R1 review-token -> code loop on the AI side."
-        ),
-    )
-    ui_build.add_argument(
-        "--root",
-        type=Path,
-        default=None,
-        help=(
-            "repository root that contains src/zworkbench; defaults to the "
-            "package's own repository root"
-        ),
-    )
-    ui_build.add_argument(
-        "--store",
-        required=True,
-        type=Path,
-        help="local manifest artifact directory to write the generated artifacts into",
-    )
-    ui_build.set_defaults(handler=_ui_build_command)
 
     # ------------------------------------------------------------------
     # doctor — the read-only first-run self-check.  It
@@ -778,12 +594,6 @@ def _build_next_steps(
             "precondition": None,
         },
         {
-            "command": "zworkbench ui-host --open",
-            "purpose_zh": "在 loopback 只读端口打开评审 UI，回看本 run 的价值视图",
-            "read_only": True,
-            "precondition": "run 已完成（本 run 末带 --open 即走此路）",
-        },
-        {
             "command": "zworkbench snapshot --db {0}".format(db),
             "purpose_zh": "查看 owner 持久状态快照（runs / events / replays 投影）",
             "read_only": True,
@@ -930,14 +740,6 @@ def _run_command(args: argparse.Namespace) -> int:
     if args.summary:
         _write_json(_resolve(args.summary), payload)
     print(json.dumps(payload, ensure_ascii=False, indent=2), flush=True)
-    # 1-9-3 --open: only a completed run has something worth reviewing, so the
-    # read-only ui-host (loopback only, no DB, no run) is launched after the
-    # payload is flushed. A denied/failed run never opens a host. The host
-    # blocks on its own signal-wait loop; the run returns 0 once the user
-    # interrupts it and the port is released.
-    if args.open and result.status == "completed":
-        open_args = argparse.Namespace(host=LOOPBACK, port=0, review=False)
-        _ui_host_command(open_args)
     return 1 if artifact_error else (0 if result.status == "completed" else 1)
 
 
@@ -1345,59 +1147,6 @@ def _write_push_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _ui_ref_command(args: argparse.Namespace) -> int:
-    """Answer one read-only manifest query.
-
-    The caller must name both halves of the artifact identity, so the stored
-    current manifest can never silently answer for a different version.
-    """
-    from .ui_manifest import load_manifest
-    from .ui_ref import resolve as resolve_ui_ref
-
-    loaded = load_manifest(_resolve(args.store), ui_map=args.ui_map, build=args.build)
-    if loaded["outcome"] != "found":
-        print(json.dumps(_ui_ref_payload(loaded), ensure_ascii=False, indent=2))
-        return 3
-
-    manifest = loaded["manifest"]
-    if args.ui_ref_command == "identity":
-        result: Dict[str, Any] = {
-            "outcome": "found",
-            "ui_map": manifest["ui_map"],
-            "build": manifest["build"],
-            "schema": manifest["schema"],
-            "declared": len(manifest["refs"]),
-        }
-    elif args.ui_ref_command == "list":
-        result = {
-            "outcome": "found",
-            "refs": [
-                {
-                    "ref": entry["ref"],
-                    "semantic_zh": entry["semantic_zh"],
-                    "kind": entry["kind"],
-                    "view": entry["view"],
-                }
-                for entry in manifest["refs"]
-            ],
-        }
-    else:
-        result = resolve_ui_ref(manifest, args.ref, ui_map=args.ui_map)
-
-    print(json.dumps(_ui_ref_payload(result), ensure_ascii=False, indent=2))
-    return 0 if result["outcome"] == "found" else 3
-
-
-def _ui_ref_payload(result: Dict[str, Any]) -> Dict[str, Any]:
-    status = "completed" if result["outcome"] == "found" else result["outcome"]
-    return {
-        "schema": CLI_SCHEMA,
-        "command": "ui-ref",
-        "status": status,
-        "result": result,
-    }
-
-
 def _owner_command_payload(command: str, value: Any) -> Dict[str, Any]:
     return {"schema": CLI_SCHEMA, "command": command, "status": "completed", "result": value}
 
@@ -1428,137 +1177,6 @@ def _restore_command(args: argparse.Namespace) -> int:
     return 0
 
 
-def _ui_host_command(args: argparse.Namespace) -> int:
-    """Serve the declared views until interrupted, then release the port.
-
-    The announcement is written before the serving loop starts, so a caller
-    that has read the line can connect straight away without polling. Stopping
-    is reported on the same stream, which is what lets a supervisor tell a
-    clean exit from a killed process.
-    """
-    import signal as signal_module
-
-    from .ui_host import serve_workbench
-
-    if args.host not in LOOPBACK_ADDRESSES:
-        raise SystemExit(
-            "ui-host binds loopback only; {0!r} would expose review material "
-            "on the network".format(args.host)
-        )
-
-    host = serve_workbench(bind=(args.host, args.port), review=args.review)
-    _announce(
-        {
-            "event": "serving",
-            "mode": "read-only",
-            "review": bool(args.review),
-            "base_url": host.base_url,
-        }
-    )
-
-    stopping = threading.Event()
-
-    def _stop(signum: int, frame: Any) -> None:
-        stopping.set()
-
-    previous = {
-        number: signal_module.signal(number, _stop)
-        for number in (signal_module.SIGINT, signal_module.SIGTERM)
-    }
-    try:
-        stopping.wait()
-    finally:
-        for number, handler in previous.items():
-            signal_module.signal(number, handler)
-        host.close()
-        _announce({"event": "stopped", "base_url": host.base_url})
-    return 0
-
-
-def _ui_command(args: argparse.Namespace) -> int:
-    """Serve the writable workbench UI against a real owner DB (dogfood).
-
-    Opens ``--db`` as a CompositionOwner, renders real runs through
-    ``owner_view_source``, and wires every write seam so the composer send,
-    approval execution, scenario state machine and reconcile controls are live.
-    This is the dogfood entry the read-only ``ui-host`` deliberately is not.
-    """
-
-    import signal as signal_module
-
-    from .ui_approval import owner_approval_source
-    from .ui_host import serve_workbench
-    from .ui_reconcile import owner_reconcile_source
-    from .ui_run import owner_command_source, owner_command_source_with_executor
-    from .ui_scenario_state import owner_scenario_source
-    from .ui_view_model import owner_view_source
-
-    if args.host not in LOOPBACK_ADDRESSES:
-        raise SystemExit(
-            "ui binds loopback only; {0!r} would expose owner state "
-            "on the network".format(args.host)
-        )
-
-    owner = CompositionOwner(args.db)
-    # Execution is opt-in: when the run-config trio (case-root / workspace / codex)
-    # is provided, started runs are driven to completion through
-    # LocalReadOnlyRunOrchestrator with the same explicit gate the `run` command
-    # uses. Without them the command stays create+start only (control surface).
-    execution_enabled = bool(args.case_root and args.workspace and args.codex)
-    if execution_enabled:
-        run_config = _run_config(args, database=args.db)
-        command_source = owner_command_source_with_executor(owner, run_config, timeout=args.timeout)
-    else:
-        command_source = owner_command_source(owner)
-    stopping = threading.Event()
-    host = None
-    try:
-        host = serve_workbench(
-            view_source=owner_view_source(owner),
-            command_source=command_source,
-            approval_source=owner_approval_source(owner),
-            reconcile_source=owner_reconcile_source(owner),
-            scenario_source=owner_scenario_source(owner),
-            bind=(args.host, args.port),
-            review=args.review,
-        )
-        _announce(
-            {
-                "event": "serving",
-                "mode": "dogfood",
-                "db": str(owner.database),
-                "review": bool(args.review),
-                "execution": "enabled" if execution_enabled else "disabled",
-                "real_provider_gate": bool(args.real_provider_gate),
-                "base_url": host.base_url,
-            }
-        )
-
-        def _stop(signum: int, frame: Any) -> None:
-            stopping.set()
-
-        previous = {
-            number: signal_module.signal(number, _stop)
-            for number in (signal_module.SIGINT, signal_module.SIGTERM)
-        }
-        try:
-            stopping.wait()
-        finally:
-            for number, handler in previous.items():
-                signal_module.signal(number, handler)
-            if host is not None:
-                host.close()
-            _announce(
-                {
-                    "event": "stopped",
-                    "base_url": host.base_url if host is not None else None,
-                }
-            )
-    finally:
-        owner.close()
-    return 0
-
-
 def _doctor_command(args: argparse.Namespace) -> int:
     """Read-only first-run self-check; exit 0 when ready, 1 when not.
 
@@ -1578,55 +1196,6 @@ def _doctor_command(args: argparse.Namespace) -> int:
     payload = {"command": "doctor", **report.to_dict()}
     print(json.dumps(payload, ensure_ascii=False, indent=2))
     return 0 if report.ready else 1
-
-
-def _ui_build_command(args: argparse.Namespace) -> int:
-    """Generate and store every view manifest against one shared receipt.
-
-    The produced --store directory is the artifact `ui-ref` reads, so after
-    this command the AI side of the R1 loop (token -> code) is reachable: copy
-    a review token's ref/ui_map/build and run `ui-ref resolve` against the
-    same --store.
-    """
-
-    from .ui_build import build_ui_artifacts, served_source_root_and_sources
-
-    # Default root adapts to a source checkout or an installed wheel; an
-    # explicit --root always wins.
-    root = (
-        _resolve(args.root)
-        if args.root is not None
-        else served_source_root_and_sources()[0]
-    )
-    store = _resolve(args.store)
-    try:
-        result = build_ui_artifacts(root, store)
-    except OSError as exc:
-        raise SystemExit(
-            "ui-build could not read the declaring sources under {0!r}: {1}. "
-            "Pass --root to point at the repository that contains src/zworkbench."
-            .format(str(root), type(exc).__name__)
-        )
-    payload = {
-        "schema": CLI_SCHEMA,
-        "command": "ui-build",
-        "status": "completed",
-        "root": str(root),
-        "store": str(store),
-        "build": result["receipt"]["build"],
-        "sources": [entry["repo_path"] for entry in result["receipt"]["sources"]],
-        "views": {
-            view: {"ui_map": identity["ui_map"], "build": identity["build"]}
-            for view, identity in result["views"].items()
-        },
-    }
-    print(json.dumps(payload, ensure_ascii=False, indent=2))
-    return 0
-
-
-def _announce(payload: Dict[str, Any]) -> None:
-    """Emit one line and flush, so a reader is never blocked by buffering."""
-    print(json.dumps(payload, ensure_ascii=False), flush=True)
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:

@@ -167,8 +167,9 @@ class ZeroConfigRunTests(unittest.TestCase):
 
     def test_run_appends_next_steps_on_completed(self) -> None:
         # 1-9-3 价值演示缝合：成功 run 末 stdout 必须附 next_steps 价值闭环数组，
-        # 五项键齐全、read_only 为 bool、只读步骤引用真实 db/case_root、唯一的
+        # 四项键齐全、read_only 为 bool、只读步骤引用真实 db/case_root、唯一的
         # 非只读步骤（write propose）用 <本地 git 仓库> 占位并在 precondition 注明 worktree-root。
+        # R1 层二（ADR 0018）后 ui-host 项已移除，故为四项。
         codex = self._fake_codex(self.root)
         status, payload = self._run(
             [
@@ -185,7 +186,7 @@ class ZeroConfigRunTests(unittest.TestCase):
         self.assertEqual(payload["status"], "completed")
         self.assertIn("next_steps", payload)
         steps = payload["next_steps"]
-        self.assertEqual(len(steps), 5)
+        self.assertEqual(len(steps), 4)
         required_keys = {"command", "purpose_zh", "read_only", "precondition"}
         for step in steps:
             self.assertEqual(required_keys, set(step.keys()))
@@ -193,6 +194,10 @@ class ZeroConfigRunTests(unittest.TestCase):
         db = str(self.root / "state" / "composition.sqlite3")
         commands = [step["command"] for step in steps]
         self.assertTrue(any(db in cmd for cmd in commands))
+        # R1 层二后不再推荐已下线的 ui-host，next_steps 不得指向退役命令。
+        self.assertFalse(
+            [cmd for cmd in commands if "ui-host" in cmd or "ui-ref" in cmd or "ui-build" in cmd]
+        )
         propose = next(step for step in steps if step["command"].startswith("zworkbench write propose"))
         self.assertFalse(propose["read_only"])
         self.assertIn("<本地 git 仓库>", propose["command"])
@@ -219,70 +224,36 @@ class ZeroConfigRunTests(unittest.TestCase):
         self.assertEqual(payload["status"], "denied")
         self.assertNotIn("next_steps", payload)
 
-    def test_open_launches_read_only_ui_host_on_completed(self) -> None:
-        # 1-9-3 --open：completed 后在打印 run payload 之后自动复用只读 ui-host
-        # （loopback 强制、无 --db、无 run）。monkeypatch 避免阻塞，校验入参。
-        from unittest import mock
+    def _subcommand_choices(self) -> dict:
+        from zworkbench.cli import _parser
 
-        from zworkbench.cli import LOOPBACK
+        actions = [
+            action
+            for action in _parser()._actions
+            if isinstance(action, argparse._SubParsersAction)
+        ]
+        self.assertEqual(len(actions), 1, "expected exactly one top-level subparser group")
+        return actions[0].choices
 
-        codex = self._fake_codex(self.root)
-        captured: dict = {}
-        sentinel = object()
+    def test_open_flag_is_retired_after_r1_layer2(self) -> None:
+        # R1 层二（ADR 0018）：`run --open` 随只读 ui-host 一并下线。标志必须从
+        # 解析器里彻底消失，不能留成"接受但静默 no-op"——那会让操作者以为宿主
+        # 还在监听，实际没有端口。
+        run_parser = self._subcommand_choices()["run"]
+        flags = {
+            option
+            for action in run_parser._actions
+            for option in action.option_strings
+        }
+        self.assertNotIn("--open", flags)
 
-        def _fake_host(args: "argparse.Namespace") -> int:
-            captured["args"] = args
-            return 0
-
-        with mock.patch("zworkbench.cli._ui_host_command", _fake_host):
-            status, payload = self._run(
-                [
-                    "run",
-                    "--prompt",
-                    "inspect the fixture and return the marker",
-                    "--codex",
-                    str(codex),
-                    "--run-id",
-                    "open-1",
-                    "--open",
-                ]
-            )
-        self.assertEqual(status, 0)
-        self.assertEqual(payload["status"], "completed")
-        self.assertIn("args", captured)
-        self.assertEqual(captured["args"].host, LOOPBACK)
-        self.assertEqual(captured["args"].review, False)
-        self.assertEqual(captured["args"].port, 0)
-
-    def test_open_does_not_launch_when_denied(self) -> None:
-        # denied 路径即便带 --open 也不拉起 ui-host（无 UI 可看，且避免阻塞）。
-        from unittest import mock
-
-        os.environ["PATH"] = ""
-        called = {"count": 0}
-
-        def _fake_host(args: "argparse.Namespace") -> int:
-            called["count"] += 1
-            return 0
-
-        with mock.patch("zworkbench.cli._ui_host_command", _fake_host):
-            status, payload = self._run(
-                [
-                    "run",
-                    "--case-root",
-                    str(self.root),
-                    "--workspace",
-                    str(self.root),
-                    "--prompt",
-                    "summarize the README",
-                    "--run-id",
-                    "open-denied",
-                    "--open",
-                ]
-            )
-        self.assertEqual(status, 2)
-        self.assertEqual(payload["status"], "denied")
-        self.assertEqual(called["count"], 0)
+    def test_r1_ui_commands_are_retired(self) -> None:
+        # ui / ui-host / ui-ref / ui-build 四个 R1 本地 UI 子命令全部下线；
+        # 产品 UI 面由 Go 后端 + React 前端承担。
+        choices = self._subcommand_choices()
+        for command in ("ui", "ui-host", "ui-ref", "ui-build"):
+            with self.subTest(command=command):
+                self.assertNotIn(command, choices)
 
     def test_classify_run_error_maps_exception_families(self) -> None:
         # 1-9-4 timeout/failed 区分：纯函数把异常归到 operator-facing 桶。
