@@ -10,20 +10,27 @@ env PYTHONPATH=src python -m unittest discover -s tests -p "test_*.py" -v
 `evaluation/`、`scripts/`（靠 `-m` 把 cwd 放进 `sys.path`）。换目录跑会得到
 一批 `ModuleNotFoundError` 伪影。
 
-## UI 真引擎门（ADR 0014）— 当前无消费者
+## UI 真引擎门 — 已退役（2026-10-26）
 
-- `tests/browser.py` 驱动本机 Chrome（ADR 0004 证据通道），仍保留为受认可的真引擎
-  证据通道；但 R1 层二（ADR 0018，2026-10-24）删除了全部 43 个 `test_ui_*.py` 后，
-  **仓库内已无任何测试引用它**（`ZW_UI_ENGINE` 门控只剩代码本身）。
-- 若将来重新需要真引擎证据，直接复用该模块；若确认永不再用，应连同 ADR 0004 一起
-  立项退役，而不是让一个零消费者的通道长期悬空。
-- `chrome_available()` 语义不变：只回答"本机是否有引擎"。
+- `tests/browser.py`（ADR 0004 CDP 通道）与 `ZW_UI_ENGINE` 门控（ADR 0014）**均已删除**。
+  它唯一的消费者是 R1 层二（ADR 0018）删掉的 43 个 `test_ui_*.py`；此后模块零消费者、自身
+  无测试覆盖，按「有消费者的能力才配留在产品树里」退役，而不是继续悬空。
+- 判据（可复核）：`git grep` 含隐藏目录零代码命中；`.github/` 只有 `web-build.yml`，零 CI 命中。
+- **方法论没丢**：4 条 CDP 顺序规则（视口模拟须在导航后 / 只有 `http://127.0.0.1` 是安全上下文 /
+  调试目标须筛选不得取 `targets[0]` / 夹具只经上下文管理器暴露）与「引擎缺席即 `unknown`」
+  的口径，全部沉淀在 ADR 0004 的「实现附注」。
+- 若将来重新需要真引擎证据：承载面是 **Go / Electron 侧**（chromedp 或 Playwright-CDP 驱动
+  `127.0.0.1:18080` 的 SPA），不要回头复刻这个 Python 客户端——它服务的 Python 宿主已随
+  ADR 0015 的 Go 全 pivot 消失。
 
-## 当前基线（2026-10-26，ADR 0018 层二收口后）
+## 当前基线（2026-10-26，ADR 0018 层二收口 + `tests/browser.py` 退役后）
 
 - **502 tests / ~45s / skipped=1 / OK（exit 0）**。
 - 相对上一基线（1261 tests / ~188s / skipped=110）：R1 层二删除了 43 个 `test_ui_*.py`，
-  skipped 从 110 降到 1 是同一原因——被 skip 的一大批正是真引擎/浏览器门用例。
+  skipped 从 110 降到 1 也是同一原因——被 skip 的一大批正是真引擎/浏览器门用例。剩下的这 1 个
+  skip 与浏览器无关，是 `test_worker_orphan_detection.py` 的 `ps enumeration unavailable on
+  this host`（本机 `ps` 被环境拒绝）。
+- 删 `tests/browser.py`（336 行）**不改变用例数**：它是测试支撑模块、不是测试用例，且零消费者。
 - 变更纪律：删测试必须与删实现同一批次推进，且删除后**非 ui 套件基线不得变化**
   （本次剥离前后均为 484 个非 ui 用例全绿）。
 
