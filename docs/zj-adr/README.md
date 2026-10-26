@@ -34,3 +34,4 @@ ADR 不保留 grilling 问题、候选项、反例、测量或原始证据；它
 - [ADR 0017：真实数据源接入策略——统一 datasource 契约 + 东方财富免费源 + 本地可导入数据集 + fallback 语义收敛](0017-real-data-source-integration.md)（`accepted`，Human 2026-10-24 于 P1 解耦评审确认；取代 roadmap 1-2-1~1-2-5 作为数据源决策事实源）
 - [ADR 0014：UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启；`browser()` 工厂抛 SkipTest，默认全量回归回到分钟级有界](0014-ui-engine-tests-gated-by-default.md)（`accepted`，Human 2026-10-14 于 roadmap 1-4-2 选型 a 确认）
 - [ADR 0019：编码证据 run 加 repo/branch/environment 上下文维度（参照 Codex composer chips）](0019-coding-evidence-run-context-dimensions.md)（`accepted`，Human 2026-10-26 于 grill 收敛 + 实现提交确认）
+- [ADR 0020：编码证据 真执行器（epic，从 ADR 0019 Follow-up 拆分）](0020-coding-evidence-real-executor-epic.md)（`proposed`，2026-10-26 zj 指令拆分为独立 epic；范围与 4 落地前提已界定，排期待确认）

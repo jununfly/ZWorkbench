@@ -55,7 +55,7 @@ Codex 在 prompt 输入框上方用独立可点胶囊展示「仓库 / 本地 / 
 
 - **R1 git 运行时可用性**：容器内/远程环境可能无 git 二进制 → CurrentBranch 失败封闭为 unknown；不阻塞启动。
 - **R2 范围膨胀**："多仓库 + 多环境"本质接近 epic → 严格按节点切分，后端先行、前端 chips 独立。
-- **R3 environment 真多环境**：ZW 当前无 container/remote 执行器 → environment 仍为**声明字段**，但已补「授权（白名单强制）+ 可达性（只读探测）」两层前置契约；**真执行器本身**（起容器/连远程并驱动 run 生命周期）仍未实现，见 Follow-up。
+- **R3 environment 真多环境**：ZW 当前无 container/remote 执行器 → environment 仍为**声明字段**，但已补「授权（白名单强制）+ 可达性（只读探测）」两层前置契约；**真执行器本身**（起容器/连远程并驱动 run 生命周期）仍未实现，见 ADR 0020（已拆分为独立 epic）。
 - **R4 路径安全**：repo.Path 来自配置（可信），非用户请求输入；仍作 exec 参数传入（非 shell 字符串拼接）。
 - **R5 旧 config.json 兼容**：新增 persistFile 段缺失时 load 静默忽略，沿用默认。
 
@@ -67,16 +67,17 @@ Codex 在 prompt 输入框上方用独立可点胶囊展示「仓库 / 本地 / 
 | 环境 chip（本地） | run.environment 列（多环境声明）+ 白名单强制 + `envprobe` 可达性 | 已实现（后端 + 探测） |
 | 分支 chip | git current_branch + run.branch 列 | 已实现（后端） |
 | chips 可点表单 | 编码证据新建 run 表单（ChipSelect popover，M3 #6750A4） | 已实现（前端） |
-| 空态织入上下文 | 工作台空态 | 后续（不在本 ADR） |
+| 空态织入上下文 | 工作台空态（零 run 时展示 当前仓库·分支·环境 + 可达性） | 已实现（前端） |
 | 权限显式化（完全访问） | 不映射（ZW 本地优先） | 不采纳 |
 
 ## Follow-up（后续 / 未决）
 
 - ~~按 repo 过滤 runs 列表~~ **已实现**：前端 `CodingEvidenceTab` 用已加载 runs 的 `repo` 字段做客户端过滤（原生 `<select>` + 关联 `<label>`，现有列即可，无需后端/索引）；选项取 runs 中去重 repo，含「全部」+「清除」，计数显示 `可见/总数`。
 - ~~environment 真执行能力（container/remote）的前置契约~~ **已实现（决策 6）**：`environment` 拆成「授权＝白名单强制（400 fail-closed）」+「可达性＝`envprobe` 只读探测（`/api/context.environment_status`，仅提示不阻断记账）」两条路径。配套：`config.RepoSpec.NormalizedEnvironments/AllowsEnvironment`、`config.ManagedRepos.FindRepo`、`api.resolvedRepos`（与 `/api/context` 共用）、`internal/envprobe`（纯标准库）；前端在环境 chip 下显示「当前不可用：<reason>（仍可记账）」。
-- **真执行器（仍未实现）**：起容器/连远程并**驱动 run 生命周期**（start → 执行 → 退出码记账 → complete/fail）。落地前提已明确：① 执行器抽象（`os/exec` 调 docker CLI 可过零依赖守卫，不引 SDK）；② 超时/取消与日志采集；③ 审批门（沿用 `waiting_approval` 状态，非静默放行）；④ 与 `exit_ledger`「无真实远程 provider」断言对齐（真执行后该断言需按证据 caliber 修正，不得默认升级为「已清场」）。
-- 工作台空态织入上下文（见上表「空态织入上下文」）。
+- ~~工作台空态织入上下文~~ **已实现（前端）**：零 run 时空态从 `GET /api/context` 拉取默认上下文并织入展示（当前仓库 · 当前分支 · 默认环境 + 环境可达性提示：可用 / 当前不可用：<reason>（仍可记账））；挂载即拉取，与新建 run 表单共用同一 context 源，无需后端改动。
+- **真执行器已拆分为独立 epic**：见 [ADR 0020](0020-coding-evidence-real-executor-epic.md)。本 ADR 仅落地「上下文维度 + 授权/可达性前置契约」；**真执行器**（起容器/连远程并驱动 run 生命周期：start → 执行 → 退出码记账 → complete/fail）不在本 ADR 范围，其落地前提（执行器抽象 / 超时取消与日志采集 / 审批门 / 与 `exit_ledger` 断言对齐）移至 ADR 0020 作为 epic 级能力单独追踪。
 
 ## Status
 
 ACCEPTED 2026-10-26（zj，grill 收敛 + 实现提交确认）。后端 + 前端 chips 表单 + cwd fallback 均已随实现提交落地。
+Follow-up ③ 空态织入已于 2026-10-26 落地（前端，`CodingEvidenceTab` 零 run 空态织入默认上下文）；真执行器已拆分为独立 epic ADR 0020，本 ADR Follow-up 不再挂起该能力。
