@@ -129,8 +129,8 @@ tests/
 app/internal/
   evidence/            Go durable owner (B2-narrow): run 7 状态机 + effect/approval + identity chain + exit ledger
   envprobe/            执行环境只读可达性探测；**绝不驱动执行**
-  executor/            真执行器抽象 + Local（os/exec，不经 shell，纯粹标准库）
-  execution/           执行编排：白名单档位 + 审批门（进程内复用 ClaimEffect）+ owner 记账
+  executor/            真执行器抽象 + Local（os/exec，不经 shell）+ Docker（docker CLI，显式清场）；纯粹标准库
+  execution/           执行编排：白名单档位 + 审批门（进程内复用 ClaimEffect）+ 按环境路由执行器 + owner 记账
 
 evaluation/
   fixtures/             isolated, versioned test inputs and fake services
@@ -151,7 +151,7 @@ evaluation/
 - 插件配置迁移、Harness session 导入和 CompositionOwner backup/restore 是不同合同，必须分别验证和分别记录。
 - 关键身份至少维持 run_id → parent/child run → dsh session/turn → worker run → codex thread/turn → event/effect/artifact 的可查询关系。字段不暴露时记录 unknown，不猜测填值。
 - 状态不确定、effect 未 reconcile 或关键 identity 缺失时，状态是 unknown/safe-stopped，不是成功。
-- **真实执行只允许经预置档位发起**（config `execution_profiles` / env `ZW_EXEC_PROFILES`）：HTTP 面只接受档位名，不接受任意 command/args；执行器不经 shell；真实副作用前必须显式 approval（ADR 0020）。执行结果（退出码、输出、副作用）一律由 owner 记账，执行器不得自成第二事实源。
+- **真实执行只允许经预置档位发起**（config `execution_profiles` / env `ZW_EXEC_PROFILES`）：HTTP 面只接受档位名，不接受任意 command/args；执行器不经 shell；真实副作用前必须显式 approval（ADR 0020）。执行结果（退出码、输出、副作用）一律由 owner 记账，执行器不得自成第二事实源。容器执行额外两条：① 必须显式清场（`docker rm -f`，不用 `--rm`）并把三态结论（`removed`/`absent`/`failed: …`）写进证据——没有证据就不声称已清场；② `network` 默认 `none`，需要联网的档位必须显式声明 `bridge`，`host` 一律拒绝。
 
 ### DSH plugin rules
 

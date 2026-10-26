@@ -37,6 +37,7 @@ ADR 0019 把 `environment` 字段做成了**声明 + 两层前置契约**（授�
    而审批门本身也是 HTTP 打开的，安全边界会退化成「有 token + 点一次同意」。
 2. **首刀环境 = local only**。`ExecutionProfile.Validate` 主动拒绝
    `container` / `remote` —— 不静默声称支持尚未实现的能力。
+   （`container` 已于同日 container 切片放开，见下节；`remote` 仍拒绝。）
 3. **审批门 = 复用 approvals 表**，开放 `RequestApproval` / `Approve` /
    `DenyApproval` 三个写路径（此前 `router_evidence.go` 明确不开放）。
 
@@ -58,9 +59,82 @@ ADR 0019 把 `environment` 字段做成了**声明 + 两层前置契约**（授�
 
 `exit_ledger` 的硬编码断言是「本地/owner 证据不能声称 Provider 清场」
 （`provider_remote_zero_residue` 强制 `unknown/delegated`）。**local 执行器
-不产生任何远程 provider 残留**，这条断言依然正确，无需修改。只有 container /
-remote 执行器落地后，才需要按证据 caliber 修正它 —— 届时「起过容器」本身
-就是需要单独记账的副作用面。
+不产生任何远程 provider 残留**，这条断言依然正确，无需修改。
+
+（原文此处预测「container / remote 落地后需修正它」。container 切片落地后该预测被
+收窄为**仅 remote 触发** —— 容器是本机资源，与「远程 provider 残留」正交，
+详见下文「前提 4 的修正」。）
+
+## container 切片落地（2026-10-26）
+
+环境维度从「local only」扩到 `local + container`。范围仍是**白名单档位**，
+没有引入任意 argv —— 容器只改变「在哪跑」，不改变「允许跑什么」。
+
+### 新增面
+
+- `config.ContainerConfig`（挂在 `ExecutionProfile.Container`）：`image` 必填，
+  另有 `workdir`（**容器内**绝对路径，默认 `/workspace`）、`network`（`none`/`bridge`）、
+  `user`、`env`、`name`。环境声明与容器段**必须成对**：
+  声明 container 却没容器段（不知道跑哪个镜像）、给了容器段却没声明 container
+  环境（配置读起来和跑起来不一致），两个方向都当场拒绝。
+- `executor.Docker`：走 `docker run` CLI（不引 SDK，零依赖守卫不变）。
+  argv 由纯函数 `buildRunArgs` 产出并被逐字断言 —— 「容器里到底跑什么」
+  完全由这段 argv 决定，必须能被精确测试。
+- `execution` 按 `envprobe.Kind` 路由：`local` → `Local`，`container` → `Docker`。
+  容器执行器缺位时**在审批之前**拒绝：不烧 token，也不留下一张注定执行不了的待批单。
+- 证据：`execution.started` 记 `image` / `container_name` / `container_workdir` /
+  `container_network`；`execution.finished` 与 effect 摘要记 `container_name` /
+  `container_cleanup`。请求阶段（批准前）就能看到镜像与容器内目录 —— 否则是让人盲签。
+
+### 五个值得记下的判断
+
+1. **不用 `--rm`，改成显式 `docker rm -f`。** `--rm` 把清场交给 daemon 且不可观测：
+   成功与否都不会回到我们这里。自己调用才有 `container_cleanup` 可写。
+2. **清场结论是三态，不是 bool**：`removed` / `absent`（docker 报 `No such container`，
+   即无残留）/ `failed: <原因>`。「没清干净」与「本来就没建」压成同一个 false，
+   证据就无法回答「要不要人去手动清场」。
+3. **杀 docker CLI ≠ 杀容器。** `exec.CommandContext` 只杀我们起的客户端进程，
+   容器仍在 daemon 里跑。所以超时/取消后必须显式 `docker rm -f`，且用**独立
+   context**（原 ctx 此刻已作废，拿它清场等于不清）。
+4. **`network` 只允许 `none` / `bridge`，拒绝 `host`。** `host` 让容器直接共享宿主
+   网络栈，实质削弱隔离，与「档位是受限执行」的定位冲突。默认 `none`：
+   需要联网的档位必须显式写 `bridge`，让边界保持可读。
+5. **宿主目录必须先存在。** docker 对不存在的 `-v` 源会**静默创建空目录**，命令于是
+   跑在空仓库上并返回成功 —— 这是最危险的假成功。执行器起容器前 `os.Stat` 校验。
+
+另外两条执行器层判定：
+
+- docker CLI 退出码 **125 = `docker run` 自身失败**（daemon 不可用、参数非法），
+  **不是**容器内程序的结论。当程序退出码处理会在证据里留下读不出真假的
+  「exit 125」，因此返 error。
+- 每个容器打 `--label zworkbench.execution=1`。服务被 SIGKILL 时清场代码没机会跑，
+  label 是事后用 `docker ps -a --filter label=zworkbench.execution=1` 找出残留的
+  唯一手段（而不是靠人记得起过哪些容器）。
+
+### 前提 4 的修正：container 落地**也不该**改 `exit_ledger`
+
+本 ADR 早先预测「container / remote 落地后需按证据 caliber 修正 exit_ledger」。
+container 切片落地后逐行核对，这个预测**部分不成立**：
+
+`provider_remote_zero_residue` 的语义是「**远程 provider** 是否留下残留」，硬编码
+`unknown/delegated`。容器是**本机资源**：既不涉及远程 provider，也不产生 provider 侧
+状态。把容器残留塞进这个字段，会让 `unknown/delegated` 从「provider 侧不确定」被读成
+「容器也没清干净」—— 语义被污染，正是该 ADR 前提 4 自己反对的「默认升级」。
+
+因此本切片**不修改** `exit_ledger`，而是为容器残留新开一条**正交**证据面
+（`container_cleanup` 三态）。前提 4 仍然 open，且只在 **remote 执行器**落地时
+才真正触发。这是对原预测的收窄，不是漏做。
+
+### container 的已知限制（诚实标注）
+
+- 容器默认用户多为 root，写进挂载目录的文件在宿主上属主是 root。配置提供
+  `container.user` 但**默认不设**：强行改 uid 会让 golang / node 这类镜像直接跑不起来，
+  于是选择「显式优于默认」。
+- 未设 `--memory` / `--cpus` 上限（配置面未开）。
+- `network=none` 只约束容器**运行时**；镜像本地不存在时 docker 会 `pull`，
+  那一步仍有网络出口。
+- 无构建缓存卷，每次执行都是冷启动（`go test` 这类命令会明显变慢）。
+- 服务进程被 SIGKILL 时容器会残留，需按 label 人工 `docker rm -f`。
 
 ## Invariants（约束，沿用 ADR 0019 / AGENTS.md）
 
@@ -81,9 +155,14 @@ remote 执行器落地后，才需要按证据 caliber 修正它 —— 届时�
 | 未 approve 前不触真实副作用 | ✅ | 单测 `TestConfirmWithoutApprovalDoesNotExecute`（断言 executor 调用次数为 0）；e2e 步骤 3 `executed=false / denied: approval_missing_or_not_approved` |
 | approve 后才起进程 | ✅ | e2e 步骤 4-5；单测 `TestConfirmWithApprovalExecutesAndCompletes` |
 | 一次性 token 不可重放 | ✅ | 单测 `TestConfirmTokenReplayIsDenied`；e2e 步骤 6 `denied: run_terminal:completed` |
-| 零依赖守卫（含 `CGO_ENABLED=0 go build`） | ✅ | `go test ./internal/buildguard/` 全绿；`go mod` 无新增依赖 |
-| container / remote 环境 | ⬜ 待后续切片 | `ExecutionProfile.Validate` 现主动拒绝这两类，不静默声称支持 |
-| `exit_ledger` 断言按证据 caliber 修正 | ⬜ 待 container/remote 切片 | local 执行不产生远程残留，当前断言仍正确 |
+| 零依赖守卫（含 `CGO_ENABLED=0 go build`） | ✅ | `go test ./internal/buildguard/` 全绿；`go.mod` 无新增依赖（docker 走 CLI，未引 SDK） |
+| container 环境驱动 run 生命周期，退出码正确记账 | ✅ | e2e（真 docker / `python:3.13-slim`）：`cat /etc/os-release` → `exit=0` / `run.completed`，输出为容器内 Debian（宿主是 macOS）；`sh -c 'exit 7'` → `exit=7` / `run.failed` |
+| container 超时不挂死、进 safe 终态 | ✅ | e2e：`sleep 30` + `timeout_sec=2` → `timed_out=true` / `run.safe_stopped`；单测 `TestDockerTimeoutCleansUp` |
+| container 执行后不留残留 | ✅ | e2e 每次执行后 `docker ps -a --filter label=zworkbench.execution=1` 为空；`container_cleanup=removed`；单测 `TestDockerSuccessRecordsCleanup` / `TestDockerCleanupFailureIsRecorded` / `TestDockerCleanupAbsentIsDistinct` |
+| 容器网络隔离默认生效 | ✅ | e2e：`network=none` 下容器内 `urlopen` 报 `Network is unreachable`（exit 1）；配置层拒绝 `host` |
+| 环境维度不被降级（container 档位不会落到宿主执行） | ✅ | 单测 `TestConfirmContainerRoutesToContainerExecutor` / `TestConfirmLocalProfileHasNoContainerSpec`；e2e 步骤 5：container 档位 + local run → 400 |
+| remote 环境 | ⬜ 待后续切片 | `ExecutionProfile.Validate` 仍主动拒绝 `remote[:…]`，不静默声称支持 |
+| `exit_ledger` 断言按证据 caliber 修正 | ⬜ 仅在 remote 切片触发 | **本 ADR 已修正原预测**：`provider_remote_zero_residue` 只表达「远程 provider 残留」，容器是本机资源，塞进去会污染语义；容器残留另开正交的 `container_cleanup` 证据面 |
 
 已知限制（诚实标注，不当作已解决）：
 
@@ -112,16 +191,20 @@ remote 执行器落地后，才需要按证据 caliber 修正它 —— 届时�
 | 执行审批门 | `evidence.WaitForApproval` + `ListApprovals` + `ClaimEffect`（进程内复用） | ✅ 首刀 |
 | 执行 API | `internal/api/router_execution.go`（profiles / execute / confirm / approve / deny） | ✅ 首刀 |
 | 前端执行面板 | `CodingEvidenceTab`（档位选择 + 待审批 + 一次性 token + 结果） | ✅ 首刀 |
-| 真实执行容器 | `docker` CLI 执行器 | ⬜ 后续切片 |
+| 真实执行容器 | `executor.Docker`（`docker run` CLI + 显式 `docker rm -f` 清场）+ `config.ContainerConfig` | ✅ container 切片 |
 | 真实执行远程 | SSH / API 起进程 | ⬜ 后续切片 |
 
 ## Status
 
-PARTIALLY ACCEPTED 2026-10-26（zj 拍板三项后首刀落地）。
+PARTIALLY ACCEPTED 2026-10-26（zj 拍板三项后首刀落地；同日补 container 切片）。
 
 - **已落地（首刀）**：local 环境的真执行 + 白名单档位 + 审批门 + owner 记账 +
   API + 前端面板。三条终态路径（completed / failed / safe_stopped）均经真实
   server 的 e2e 验证，零依赖守卫全绿。
-- **仍 open**：container / remote 执行器（前提 1 的另两类环境），以及随之而来的
-  `exit_ledger` 断言修正（前提 4）。这两个是同一条依赖链上的后续切片，
-  未完成前 `ExecutionProfile.Validate` 会主动拒绝声明这两类环境。
+- **已落地（container 切片）**：`container` 环境真执行（docker CLI，不经 SDK）+
+  容器参数校验（image / workdir / network / user / env）+ 按环境路由执行器 +
+  显式清场与三态清场证据 + 前端暴露镜像与清场结论。真 docker e2e 30 项全通过。
+- **仍 open**：`remote` 执行器（前提 1 的最后一类环境），以及随之而来的
+  `exit_ledger` 断言修正（前提 4）。**注意**：前提 4 只在 remote 落地时触发，
+  container 落地不触发（理由见上文「前提 4 的修正」）。`ExecutionProfile.Validate`
+  仍主动拒绝 `remote[:…]`。
