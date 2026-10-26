@@ -2,9 +2,20 @@
 adr: 0014
 title: UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启
 date: 2026-10-14
-status: accepted
-related: [0004, roadmap 1-4-1 / 1-4-2]
+status: superseded
+superseded-by: [0018]
+related: [0004, 0018, roadmap 1-4-1 / 1-4-2]
 ---
+
+> **本 ADR 已失效（2026-10-26）。** 门控的**主体**已被删除：`ZW_UI_ENGINE` 的唯一实现是
+> `tests/browser.py` 的 `browser()` 工厂，而该模块在 R1 层二（ADR 0018）后零消费者、自身无
+> 测试，已于 2026-10-26 按 A 方案退役。**消费者消失（43 个 `test_ui_*.py`）→ 门控失去对象 →
+> 环境变量一并作废**，`ZW_UI_ENGINE` 不再是任何契约的一部分。
+>
+> 保留本文的价值只是历史：它记录了两条仍然成立的教训——① 真引擎测试必须默认关闭、显式开启，
+> 否则全量门禁必然无界；② 无界的真因可能是**等待原语**（`_WebSocket.read` 涓流字节让
+> `while len(chunk) < count` 退化为无界慢读），而不是测试数量。重建真引擎证据时（承载面在
+> Go/Electron 侧，见 ADR 0004 实现附注）这两条照样适用。
 
 # ADR 0014：UI 真引擎测试默认加门——`ZW_UI_ENGINE=1` 显式开启
 
