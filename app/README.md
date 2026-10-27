@@ -2,7 +2,6 @@
 
 > 提案方向 B（见 `docs/designs/zw-go-electron-architecture.md`）。**推翻 ADR 0013 前提，需 zj 显式接受。**
 > 当前为骨架：无业务逻辑，纯 stdlib Go 服务 + React 多 tab 壳 + Electron 宿主。
-> 📌 闭环后的未完成项（1→100 收尾）见 [`ROADMAP.md`](ROADMAP.md)（事实源 `roadmap-zw-go-1to100.json`，只经 `zj-roadmap-driven` CLI 读写）。
 
 ## 目录
 
